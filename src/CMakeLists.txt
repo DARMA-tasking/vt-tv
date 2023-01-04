@@ -74,6 +74,10 @@ add_library(
 
 add_library(${VT_DWV_LIBRARY_NS} ALIAS ${VT_DWV_LIBRARY})
 
+target_link_libraries(
+  ${VT_DWV_LIBRARY} PUBLIC ${VTK_LIBRARIES}
+)
+
 target_include_directories(
   ${VT_DWV_LIBRARY} PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>

@@ -24,6 +24,8 @@ if(NOT CMAKE_CXX_STANDARD)
 endif()
 message(STATUS "CMAKE_CXX_STANDARD: ${CMAKE_CXX_STANDARD}")
 
+include(cmake/load_packages.cmake)
+
 add_custom_target(vt_dwv_examples)
 add_custom_target(vt_dwv_tests)
 

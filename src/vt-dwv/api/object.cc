@@ -3,7 +3,7 @@
 // *****************************************************************************
 //
 //                                 object.cc
-//                 DARMA/checkpoint => Serialization Library
+//      DARMA/vt-dwv => Virtual Transport -- Distributed Work Visualizer
 //
 // Copyright 2019 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
@@ -42,6 +42,8 @@
 */
 
 #include "vt-dwv/api/object.h"
+
+// #include <vtkRenderingCoreModule.h>
 
 namespace vt { namespace dwv {
 
