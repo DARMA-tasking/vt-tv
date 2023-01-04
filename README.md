@@ -1,6 +1,4 @@
-# DARMA-tasking template repository
-
-Template repository with base configuration.
+# VT-DWV -- Distributed Work Visualizer
 
 Included workflows:
 * [*check-pr-fixes-issue*](https://github.com/DARMA-tasking/check-pr-fixes-issue) - checking if PR description contains phrase "Fixes #issue", and if PR title, description and branch mention the same issue number
