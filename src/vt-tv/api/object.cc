@@ -2,8 +2,8 @@
 //@HEADER
 // *****************************************************************************
 //
-//                                 object.h
-//      DARMA/vt-dwv => Virtual Transport -- Distributed Work Visualizer
+//                                 object.cc
+//             DARMA/vt-tv => Virtual Transport -- Task Visualizer
 //
 // Copyright 2019 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
@@ -41,15 +41,10 @@
 //@HEADER
 */
 
-#if !defined INCLUDED_VT_DWV_API_OBJECT_H
-#define INCLUDED_VT_DWV_API_OBJECT_H
+#include "vt-tv/api/object.h"
 
-namespace vt { namespace dwv {
+// #include <vtkRenderingCoreModule.h>
 
-struct Object {
+namespace vt { namespace tv {
 
-};
-
-}} /* end namesapce vt::dwv */
-
-#endif /*INCLUDED_VT_DWV_API_OBJECT_H*/
+}} /* end namesapce vt::tv */

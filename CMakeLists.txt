@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.17 FATAL_ERROR)
-project(vt-dwv)
+project(vt-tv)
 
 # Try to find ccache to speed up compilation
 find_program(ccache_binary ccache)
@@ -13,8 +13,8 @@ file(
   ${CMAKE_CURRENT_SOURCE_DIR}/src/*.h
 )
 
-set(VT_DWV_LIBRARY vt-dwv CACHE INTERNAL "" FORCE)
-set(VT_DWV_LIBRARY_NS vt::lib::vt-dwv)
+set(VT_TV_LIBRARY vt-tv CACHE INTERNAL "" FORCE)
+set(VT_TV_LIBRARY_NS vt::lib::vt-tv)
 
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -26,8 +26,8 @@ message(STATUS "CMAKE_CXX_STANDARD: ${CMAKE_CXX_STANDARD}")
 
 include(cmake/load_packages.cmake)
 
-add_custom_target(vt_dwv_examples)
-add_custom_target(vt_dwv_tests)
+add_custom_target(vt_tv_examples)
+add_custom_target(vt_tv_tests)
 
 set(PROJECT_BIN_DIR     ${CMAKE_CURRENT_BINARY_DIR})
 set(PROJECT_BASE_DIR    ${CMAKE_CURRENT_SOURCE_DIR})
@@ -41,12 +41,12 @@ add_subdirectory(examples)
 add_subdirectory(tests)
 
 configure_file(
-  cmake/vtDWVConfig.cmake.in
-  "${PROJECT_BINARY_DIR}/vtDWVConfig.cmake" @ONLY
+  cmake/vtTVConfig.cmake.in
+  "${PROJECT_BINARY_DIR}/vtTVConfig.cmake" @ONLY
 )
 
 install(
-  FILES        "${PROJECT_BINARY_DIR}/vtDWVConfig.cmake"
+  FILES        "${PROJECT_BINARY_DIR}/vtTVConfig.cmake"
   DESTINATION  cmake
   COMPONENT    lib
 )

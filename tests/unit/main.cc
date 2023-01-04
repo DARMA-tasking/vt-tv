@@ -3,7 +3,7 @@
 // *****************************************************************************
 //
 //                                   main.cc
-//      DARMA/vt-dwv => Virtual Transport -- Distributed Work Visualizer
+//             DARMA/vt-tv => Virtual Transport -- Task Visualizer
 //
 // Copyright 2019 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
@@ -60,7 +60,7 @@ int main(int argc, char **argv) {
 
   int ret = 0;
   {
-    vt::dwv::tests::unit::TestHarness::store_cmdline_args(argc, argv);
+    vt::tv::tests::unit::TestHarness::store_cmdline_args(argc, argv);
     ret = RUN_ALL_TESTS();
   }
 

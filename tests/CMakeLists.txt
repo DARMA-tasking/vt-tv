@@ -28,11 +28,11 @@ file(
   "${PROJECT_TEST_UNIT_DIR}/*.cc"
 )
 
-macro(vt_dwv_link_target target has_mpi)
+macro(vt_tv_link_target target has_mpi)
   target_include_directories(${target} PUBLIC ${PROJECT_TEST_UNIT_DIR})
   target_include_directories(${target} PRIVATE ${PROJECT_GTEST_INCLUDE_DIR})
   target_link_libraries(${target} PRIVATE gtest)
-  target_link_libraries(${target} PUBLIC ${VT_DWV_LIBRARY})
+  target_link_libraries(${target} PUBLIC ${VT_TV_LIBRARY})
 endmacro()
 
 set(
@@ -59,15 +59,15 @@ foreach(TEST_FULL ${PROJECT_TEST_LIST})
     ${PROJECT_TEST_UNIT_DIR}/${TEST}.cc
   )
 
-  vt_dwv_link_target(${TEST} 0)
+  vt_tv_link_target(${TEST} 0)
 
   add_test(
-    vt-dwv:${TEST}
+    vt-tv:${TEST}
     ${CMAKE_CURRENT_BINARY_DIR}/${TEST}
   )
 
   set_tests_properties(
-    vt-dwv:${TEST}
+    vt-tv:${TEST}
     PROPERTIES TIMEOUT 60
     FAIL_REGULAR_EXPRESSION "FAILED;should be deleted but never is"
     PASS_REGULAR_EXPRESSION "PASSED"

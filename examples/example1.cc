@@ -3,7 +3,7 @@
 // *****************************************************************************
 //
 //                                example1.cc
-//      DARMA/vt-dwv => Virtual Transport -- Distributed Work Visualizer
+//             DARMA/vt-tv => Virtual Transport -- Task Visualizer
 //
 // Copyright 2019 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
@@ -41,10 +41,10 @@
 //@HEADER
 */
 
-#include <vt-dwv/api/object.h>
+#include <vt-tv/api/object.h>
 
 int main() {
-  vt::dwv::Object o{};
+  vt::tv::Object o{};
   (void)o;
   return 0;
 }

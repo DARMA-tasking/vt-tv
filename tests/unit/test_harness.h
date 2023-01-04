@@ -3,7 +3,7 @@
 // *****************************************************************************
 //
 //                                test_harness.h
-//      DARMA/vt-dwv => Virtual Transport -- Distributed Work Visualizer
+//             DARMA/vt-tv => Virtual Transport -- Task Visualizer
 //
 // Copyright 2019 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
@@ -41,15 +41,15 @@
 //@HEADER
 */
 
-#if !defined INCLUDED_VT_DWV_TEST_HARNESS
-#define INCLUDED_VT_DWV_TEST_HARNESS
+#if !defined INCLUDED_VT_TV_TEST_HARNESS
+#define INCLUDED_VT_TV_TEST_HARNESS
 
 #include <gtest/gtest.h>
 
 #include <vector>
 #include <string>
 
-namespace vt { namespace dwv { namespace tests { namespace unit {
+namespace vt { namespace tv { namespace tests { namespace unit {
 
 template <typename TestBase>
 struct TestHarnessAny : TestBase {
@@ -87,6 +87,6 @@ std::vector<std::string> TestHarnessAny<TestBase>::orig_args_;
 
 using TestHarness = TestHarnessAny<testing::Test>;
 
-}}}} // end namespace vt::dwv::tests::unit
+}}}} // end namespace vt::tv::tests::unit
 
-#endif /*INCLUDED_VT_DWV_TEST_HARNESS*/
+#endif /*INCLUDED_VT_TV_TEST_HARNESS*/

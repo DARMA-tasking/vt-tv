@@ -1,5 +1,5 @@
 
-macro(add_test_for_example_vt_dwv test_name test_exec)
+macro(add_test_for_example_vt_tv test_name test_exec)
   add_test(
     ${test_name} ${test_exec} ${ARGN}
   )
@@ -32,14 +32,14 @@ foreach(EXAMPLE_FULL ${PROJECT_EXAMPLES})
 
   target_include_directories(${EXAMPLE} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/../src)
 
-  add_test_for_example_vt_dwv(
-    vt-dwv:${EXAMPLE}
+  add_test_for_example_vt_tv(
+    vt-tv:${EXAMPLE}
     ${CMAKE_CURRENT_BINARY_DIR}/${EXAMPLE}
   )
 
   target_link_libraries(
     ${EXAMPLE}
     PUBLIC
-    ${VT_DWV_LIBRARY_NS}
+    ${VT_TV_LIBRARY_NS}
   )
 endforeach()
