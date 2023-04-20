@@ -55,7 +55,7 @@ install(
 nanobind_build_library(nanobind SHARED)
 
 # Compile an extension library
-add_library(my_ext MODULE ${CMAKE_CURRENT_SOURCE_DIR}/py_module_example.cc)
+add_library(my_ext MODULE ${CMAKE_CURRENT_SOURCE_DIR}/circle.cc)
 
 # .. and link it against the nanobind parts
 message(STATUS "vtk libraries: ${VTK_LIBRARIES}")
