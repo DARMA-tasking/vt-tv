@@ -51,3 +51,31 @@ install(
   COMPONENT    lib
 )
 
+# Build the core parts of nanobind once
+nanobind_build_library(nanobind SHARED)
+
+# Compile an extension library
+add_library(my_ext MODULE ${CMAKE_CURRENT_SOURCE_DIR}/py_module_example.cc)
+
+# .. and link it against the nanobind parts
+message(STATUS "vtk libraries: ${VTK_LIBRARIES}")
+target_link_libraries(my_ext PUBLIC ${VTK_LIBRARIES})
+target_link_libraries(my_ext PRIVATE nanobind)
+
+# .. enable size optimizations
+nanobind_opt_size(my_ext)
+
+# .. enable link time optimization
+nanobind_lto(my_ext)
+
+# .. disable the stack protector
+nanobind_disable_stack_protector(my_ext)
+
+# .. set the Python extension suffix
+nanobind_extension(my_ext)
+
+# .. set important compilation flags
+nanobind_compile_options(my_ext)
+
+# .. set important linker flags
+nanobind_link_options(my_ext)
