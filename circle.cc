@@ -30,9 +30,6 @@ void Circle::render() {
   vtkNew<vtkRenderWindow> renderWindow;
   renderWindow->AddRenderer(renderer);
 
-  vtkNew<vtkRenderWindowInteractor> renderWindowInteractor;
-  renderWindowInteractor->SetRenderWindow(renderWindow);
-
   renderWindow->SetWindowName("Circle");
   renderWindow->Render();
 
