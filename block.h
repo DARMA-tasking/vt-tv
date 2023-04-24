@@ -39,7 +39,7 @@ public:
   void attach_object_id(uint64_t);
 
   std::string to_string() const;
-  
+
   friend std::ostream & operator << (std::ostream &out, const Block &b);
 
   Block(uint64_t, uint64_t, double, std::unordered_set<uint64_t>);
