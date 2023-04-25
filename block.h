@@ -12,7 +12,6 @@
 #include <iostream>
 #include <list>
 #include <map>
-#include <format>
 #include <unordered_set>
 
 namespace nb = nanobind;
@@ -29,14 +28,37 @@ private:
   uint64_t home_id;
   double size = 0;
   std::unordered_set<uint64_t> attached_object_ids;
-public:
-  uint64_t get_id() const { return this->index; };
-  uint64_t get_home_id() const { return this->home_id; };
-  double get_size() const { return this->size; };
-  std::unordered_set<uint64_t> get_attached_object_ids() const { return this->attached_object_ids; };
 
+  /**
+   * Return block object ids.
+   */
+  std::unordered_set<uint64_t> get_attached_object_ids() const { return this->attached_object_ids; };
+public:
+  /**
+   * Return block ID.
+   */
+  uint64_t get_id() const { return this->index; };
+
+  /**
+   * Return block home ID.
+   */
+  uint64_t get_home_id() const { return this->home_id; };
+
+  /**
+   * Return block size.
+   */
+  double get_size() const { return this->size; };
+
+  
+  /**
+   * Try to detach object ID from block and return length.
+   */
   uint64_t detach_object_id(uint64_t);
-  void attach_object_id(uint64_t);
+
+  /**
+   * Attach object ID to block.
+   */
+  void attach_object_id(uint64_t o_id) { this->attached_object_ids.insert(o_id); };
 
   std::string to_string() const;
 

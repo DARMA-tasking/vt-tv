@@ -13,19 +13,18 @@ Block::Block(uint64_t b_id,
 {}
 
 uint64_t Block::detach_object_id(uint64_t o_id) {
-  try {
+  if(auto search = this->attached_object_ids.find(o_id);
+    search != this->attached_object_ids.end()) {
     this->attached_object_ids.erase(o_id);
   }
-  catch(const nb::type_error e) {
-    std::cerr << e.what() << '\n';
+  else {
+    throw nb::type_error(
+      "object id " + std::to_string(o_id) +
+      " is not attached to block " + std::to_string(this->get_id())
+    );
   }
   return this->attached_object_ids.size();
 }
-
-void Block::attach_object_id(uint64_t o_id) {
-  this->attached_object_ids.insert(o_id);
-}
-
 
 std::string Block::to_string() const {
   std::string out;
