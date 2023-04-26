@@ -2,7 +2,7 @@
 //@HEADER
 // *****************************************************************************
 //
-//                                example1.cc
+//                                phase_work.h
 //             DARMA/vt-tv => Virtual Transport -- Task Visualizer
 //
 // Copyright 2019 National Technology & Engineering Solutions of Sandia, LLC
@@ -41,52 +41,43 @@
 //@HEADER
 */
 
-// Classes specific to this example
-#include <vtkPolyData.h>
-#include <vtkPolyDataMapper.h>
-#include <vtkRegularPolygonSource.h>
-// Generic VTK pipeline elements
-#include <vtkActor.h>
-#include <vtkRenderWindow.h>
-#include <vtkRenderWindowInteractor.h>
-#include <vtkRenderer.h>
-// Auxiliary class
-#include <vtkNamedColors.h>
-#include <vtkNew.h>
-#include <vtkProperty.h>
+#if !defined INCLUDED_VT_TV_API_PHASE_WORK_H
+#define INCLUDED_VT_TV_API_PHASE_WORK_H
 
+#include "vt-tv/api/types.h"
+#include "vt-tv/api/object_work.h"
 
-int main() {
-  vtkNew<vtkNamedColors> colors;
+#include <unordered_map>
 
-  // Create a circle
-  vtkNew<vtkRegularPolygonSource> polygonSource;
-  // Comment this line to generate a disk instead of a circle.
-  //polygonSource->GeneratePolygonOff();
-  polygonSource->SetNumberOfSides(50);
-  polygonSource->SetRadius(5);
-  polygonSource->SetCenter(0, 0, 0);
+namespace vt::tv {
 
-  // Visualize
-  vtkNew<vtkPolyDataMapper> mapper;
-  mapper->SetInputConnection(polygonSource->GetOutputPort());
+/**
+ * \struct PhaseWork
+ *
+ * \brief The work for a given phase
+ */
+struct PhaseWork {
 
-  vtkNew<vtkActor> actor;
-  actor->SetMapper(mapper);
-  actor->GetProperty()->SetColor(colors->GetColor3d("Cornsilk").GetData());
+  /**
+   * \brief Construct phase work
+   *
+   * \param[in] in_phase the phase
+   * \param[in] in_objects objects' work for the phase
+   */
+  PhaseWork(
+    PhaseType in_phase,
+    std::unordered_map<ElementIDType, ObjectWork> in_objects
+  ) : phase_(in_phase),
+      objects_(std::move(in_objects))
+  { }
 
-  vtkNew<vtkRenderer> renderer;
-  renderer->AddActor(actor);
-  renderer->SetBackground(colors->GetColor3d("Blue").GetData());
+private:
+  /// Phase identifier
+  PhaseType phase_ = 0;
+  /// Object work for this phase
+  std::unordered_map<ElementIDType, ObjectWork> objects_;
+};
 
-  vtkNew<vtkRenderWindow> renderWindow;
-  renderWindow->AddRenderer(renderer);
+} /* end namesapce vt::tv */
 
-  vtkNew<vtkRenderWindowInteractor> renderWindowInteractor;
-  renderWindowInteractor->SetRenderWindow(renderWindow);
-
-  renderWindow->SetWindowName("Circle");
-  renderWindow->Render();
-  renderWindowInteractor->Start();
-  return 0;
-}
+#endif /*INCLUDED_VT_TV_API_PHASE_WORK_H*/

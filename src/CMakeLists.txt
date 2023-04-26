@@ -1,6 +1,7 @@
 set(
   TOP_LEVEL_SUBDIRS
   api
+  utility
 )
 
 set(VT_TV_INSTALL_DESTINATION "include/vt-tv")
@@ -78,6 +79,14 @@ target_link_libraries(
   ${VT_TV_LIBRARY} PUBLIC ${VTK_LIBRARIES}
 )
 
+target_link_libraries(
+  ${VT_TV_LIBRARY} PUBLIC ${JSON_LIBRARY}
+)
+
+target_link_libraries(
+  ${VT_TV_LIBRARY} PUBLIC ${FMT_LIBRARY}
+)
+
 target_include_directories(
   ${VT_TV_LIBRARY} PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
@@ -107,8 +116,13 @@ install(
   COMPONENT                 runtime
 )
 
+install(TARGETS ${FMT_LIBRARY} EXPORT ${VT_TV_LIBRARY})
+install(TARGETS ${JSON_LIBRARY} EXPORT ${VT_TV_LIBRARY})
+
 export(
   TARGETS                   ${VT_TV_LIBRARY}
+                            ${FMT_LIBRARY}
+                            ${JSON_LIBRARY}
   FILE                      "vtTVTargets.cmake"
   NAMESPACE                 vt::lib::
 )

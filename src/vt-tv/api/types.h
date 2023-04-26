@@ -2,7 +2,7 @@
 //@HEADER
 // *****************************************************************************
 //
-//                                example1.cc
+//                                 types.h
 //             DARMA/vt-tv => Virtual Transport -- Task Visualizer
 //
 // Copyright 2019 National Technology & Engineering Solutions of Sandia, LLC
@@ -41,52 +41,20 @@
 //@HEADER
 */
 
-// Classes specific to this example
-#include <vtkPolyData.h>
-#include <vtkPolyDataMapper.h>
-#include <vtkRegularPolygonSource.h>
-// Generic VTK pipeline elements
-#include <vtkActor.h>
-#include <vtkRenderWindow.h>
-#include <vtkRenderWindowInteractor.h>
-#include <vtkRenderer.h>
-// Auxiliary class
-#include <vtkNamedColors.h>
-#include <vtkNew.h>
-#include <vtkProperty.h>
+#if !defined INCLUDED_VT_TV_API_TYPES_H
+#define INCLUDED_VT_TV_API_TYPES_H
 
+#include <cstdint>
 
-int main() {
-  vtkNew<vtkNamedColors> colors;
+namespace vt::tv {
 
-  // Create a circle
-  vtkNew<vtkRegularPolygonSource> polygonSource;
-  // Comment this line to generate a disk instead of a circle.
-  //polygonSource->GeneratePolygonOff();
-  polygonSource->SetNumberOfSides(50);
-  polygonSource->SetRadius(5);
-  polygonSource->SetCenter(0, 0, 0);
+using PhaseType = uint64_t;
+using NodeType = int16_t;
+using ElementIDType = uint64_t;
+using SubphaseType = uint16_t;
+using UniqueIndexBitType = uint64_t;
+using TimeType = double;
 
-  // Visualize
-  vtkNew<vtkPolyDataMapper> mapper;
-  mapper->SetInputConnection(polygonSource->GetOutputPort());
+} /* end namesapce vt::tv */
 
-  vtkNew<vtkActor> actor;
-  actor->SetMapper(mapper);
-  actor->GetProperty()->SetColor(colors->GetColor3d("Cornsilk").GetData());
-
-  vtkNew<vtkRenderer> renderer;
-  renderer->AddActor(actor);
-  renderer->SetBackground(colors->GetColor3d("Blue").GetData());
-
-  vtkNew<vtkRenderWindow> renderWindow;
-  renderWindow->AddRenderer(renderer);
-
-  vtkNew<vtkRenderWindowInteractor> renderWindowInteractor;
-  renderWindowInteractor->SetRenderWindow(renderWindow);
-
-  renderWindow->SetWindowName("Circle");
-  renderWindow->Render();
-  renderWindowInteractor->Start();
-  return 0;
-}
+#endif /*INCLUDED_VT_TV_API_TYPES_H*/

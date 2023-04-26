@@ -2,7 +2,7 @@
 //@HEADER
 // *****************************************************************************
 //
-//                              test_object.cc
+//                           test_json_reader.cc
 //             DARMA/vt-tv => Virtual Transport -- Task Visualizer
 //
 // Copyright 2019 National Technology & Engineering Solutions of Sandia, LLC
@@ -44,14 +44,27 @@
 #include <gtest/gtest.h>
 #include "test_harness.h"
 
-#include <vt-tv/api/object.h>
+#include <vt-tv/api/info.h>
+#include <vt-tv/utility/json_reader.h>
 
-namespace vt { namespace tv { namespace tests { namespace unit {
+#include <fmt-vt/format.h>
 
-struct TestObject : TestHarness { };
+#include <string>
 
-TEST_F(TestObject, test_object_1) {
-  vt::tv::Object o{};
+namespace vt::tv::tests::unit {
+
+struct TestJSONReader : TestHarness { };
+
+TEST_F(TestJSONReader, test_json_reader_1) {
+  // @todo: fix this path
+  std::string path = "/Users/jliffla/codes/vt/vt-tv/tests/unit/lb_test_data";
+
+  utility::JSONReader reader{0, path + "/data.0.json"};
+  reader.readFile();
+  auto info = reader.parseFile();
+
+  fmt::print("Object info size={}\n", info->getObjectInfo().size());
+  fmt::print("Num ranks={}\n", info->getNumRanks());
 }
 
-}}}} // end namespace vt::tv::tests::unit
+} // end namespace vt::tv::tests::unit

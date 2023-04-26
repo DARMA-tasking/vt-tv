@@ -1,4 +1,4 @@
-find_package(Python 3.8 COMPONENTS Interpreter Development.Module REQUIRED)
+find_package(Python 3.8...3.9 COMPONENTS Interpreter Development.Module REQUIRED)
 
 # Detect the installed nanobind package and import it into CMake
 message(STATUS "Python executable: ${Python_EXECUTABLE}")

@@ -2,7 +2,7 @@
 //@HEADER
 // *****************************************************************************
 //
-//                                 object.h
+//                               object_work.h
 //             DARMA/vt-tv => Virtual Transport -- Task Visualizer
 //
 // Copyright 2019 National Technology & Engineering Solutions of Sandia, LLC
@@ -41,15 +41,50 @@
 //@HEADER
 */
 
-#if !defined INCLUDED_VT_TV_API_OBJECT_H
-#define INCLUDED_VT_TV_API_OBJECT_H
+#if !defined INCLUDED_VT_TV_API_OBJECT_WORK_H
+#define INCLUDED_VT_TV_API_OBJECT_WORK_H
 
-namespace vt { namespace tv {
+#include "vt-tv/api/types.h"
 
-struct Object {
+#include <unordered_map>
+#include <vector>
 
+namespace vt::tv {
+
+/**
+ * \struct ObjectWork
+ *
+ * \brief Holds work for an object for a given phase
+ */
+struct ObjectWork {
+
+  /**
+   * \brief Construct \c ObjectWork for a given phase
+   *
+   * \param[in] in_id the object identifier
+   * \param[in] in_whole_phase_load the load for the whole phase
+   * \param[in] in_subphase_loads the subphase load breakdown
+   */
+  ObjectWork(
+    ElementIDType in_id,
+    TimeType in_whole_phase_load,
+    std::unordered_map<SubphaseType, TimeType> const& in_subphase_loads
+  ) : id_(in_id),
+      whole_phase_load_(in_whole_phase_load),
+      subphase_loads_(in_subphase_loads)
+  { }
+
+private:
+  /// Element ID
+  ElementIDType id_ = 0;
+  /// Load for the object for a given phaseElementIDType
+  TimeType whole_phase_load_ = 0.;
+  /// Load broken down into subphases
+  std::unordered_map<SubphaseType, TimeType> subphase_loads_;
+
+  /// @todo: add communications
 };
 
-}} /* end namesapce vt::tv */
+} /* end namesapce vt::tv */
 
-#endif /*INCLUDED_VT_TV_API_OBJECT_H*/
+#endif /*INCLUDED_VT_TV_API_OBJECT_WORK_H*/

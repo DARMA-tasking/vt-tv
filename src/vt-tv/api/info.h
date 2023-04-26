@@ -2,7 +2,7 @@
 //@HEADER
 // *****************************************************************************
 //
-//                                 rank.h
+//                                  info.h
 //             DARMA/vt-tv => Virtual Transport -- Task Visualizer
 //
 // Copyright 2019 National Technology & Engineering Solutions of Sandia, LLC
@@ -41,47 +41,90 @@
 //@HEADER
 */
 
-#if !defined INCLUDED_VT_TV_API_RANK_H
-#define INCLUDED_VT_TV_API_RANK_H
+#if !defined INCLUDED_VT_TV_API_INFO_H
+#define INCLUDED_VT_TV_API_INFO_H
 
-#include "vt-tv/api/phase_work.h"
+#include "vt-tv/api/types.h"
+#include "vt-tv/api/rank.h"
+#include "vt-tv/api/object_info.h"
+
+#include <unordered_map>
 
 namespace vt::tv {
 
 /**
- * \struct Rank
+ * \struct Info
  *
- * \brief All the data for a given \c Rank
+ * \brief All the information for a set of ranks and phases.
+ *
+ * @todo: Elaborate this...
+ *
  */
-struct Rank {
+struct Info {
 
-  /**
-   * \brief Construct a rank data
-   *
-   * \param[in] in_rank the rank
-   * \param[in] in_phase_info all the phase info
-   */
-  Rank(
-    NodeType in_rank,
-    std::unordered_map<PhaseType, PhaseWork> in_phase_info
-  ) : rank_(in_rank),
-      phase_info_(std::move(in_phase_info))
+  Info(
+    std::unordered_map<ElementIDType, ObjectInfo> in_object_info,
+    std::unordered_map<NodeType, Rank> in_ranks
+  ) : object_info_(std::move(in_object_info)),
+      ranks_(std::move(in_ranks))
   { }
 
   /**
-   * \brief Get the rank ID
+   * \brief Add more information about a new rank
    *
-   * \return rank ID
+   * \param[in] object_info object information to merge with existing data
+   * \param[in] r the rank work
    */
-  NodeType getRankID() const { return rank_; }
+  void addInfo(
+    std::unordered_map<ElementIDType, ObjectInfo> object_info,
+    Rank r
+  ) {
+    for (auto x : object_info) {
+      object_info_.emplace(
+        std::piecewise_construct,
+        std::forward_as_tuple(x.first),
+        std::forward_as_tuple(std::move(x.second))
+      );
+    }
+    assert(ranks_.find(r.getRankID()) == ranks_.end() && "Must not exist");
+    ranks_.emplace(
+      std::piecewise_construct,
+      std::forward_as_tuple(r.getRankID()),
+      std::forward_as_tuple(std::move(r))
+    );
+  }
+
+  /**
+   * \brief Get all object info
+   *
+   * \return map of object info
+   */
+  auto getObjectInfo() const { return object_info_; }
+
+  /**
+   * \brief Get work for a given rank
+   *
+   * \param[in] rank the rank
+   *
+   * \return all the rank work
+   */
+  Rank& getRank(NodeType rank) { return ranks_.at(rank); }
+
+  /**
+   * \brief Get number of ranks stored here
+   *
+   * \return number of ranks
+   */
+  std::size_t getNumRanks() const { return ranks_.size(); }
 
 private:
-  /// The rank ID
-  NodeType rank_ = 0;
-  /// Work for each phase
-  std::unordered_map<PhaseType, PhaseWork> phase_info_;
+  /// All the object info that doesn't change across phases
+  std::unordered_map<ElementIDType, ObjectInfo> object_info_;
+
+  /// Work for each rank across phases
+  std::unordered_map<NodeType, Rank> ranks_;
 };
 
 } /* end namesapce vt::tv */
 
-#endif /*INCLUDED_VT_TV_API_RANK_H*/
+#endif /*INCLUDED_VT_TV_API_INFO_H*/
