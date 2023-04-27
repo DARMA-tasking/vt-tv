@@ -161,7 +161,9 @@ std::unique_ptr<Info> JSONReader::parseFile() {
               }
             }
 
-            objects.try_emplace(object, ObjectWork{object, time, subphase_loads});
+            objects.try_emplace(
+              object, ObjectWork{object, time, std::move(subphase_loads)}
+            );
           }
         }
       }
