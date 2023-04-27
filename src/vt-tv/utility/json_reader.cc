@@ -161,8 +161,21 @@ std::unique_ptr<Info> JSONReader::parseFile() {
               }
             }
 
+            std::unordered_map<std::string, ObjectWork::VariantType> user_defined;
+            if (task.find("user_defined") != task.end()) {
+              auto user_defined = task["user_defined"];
+              if (user_defined.is_object()) {
+                for (auto& [key, value] : user_defined.items()) {
+                  user_defined[key] = value;
+                }
+              }
+            }
+
             objects.try_emplace(
-              object, ObjectWork{object, time, std::move(subphase_loads)}
+              object,
+              ObjectWork{
+                object, time, std::move(subphase_loads), std::move(user_defined)
+              }
             );
           }
         }

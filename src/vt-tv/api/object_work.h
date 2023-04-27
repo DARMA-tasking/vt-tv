@@ -48,6 +48,8 @@
 
 #include <unordered_map>
 #include <vector>
+#include <variant>
+#include <string>
 
 namespace vt::tv {
 
@@ -57,6 +59,8 @@ namespace vt::tv {
  * \brief Holds work for an object for a given phase
  */
 struct ObjectWork {
+  /// Possible user-defined types for a task
+  using VariantType = std::variant<int, double, std::string>;
 
   /**
    * \brief Construct \c ObjectWork for a given phase
@@ -64,14 +68,17 @@ struct ObjectWork {
    * \param[in] in_id the object identifier
    * \param[in] in_whole_phase_load the load for the whole phase
    * \param[in] in_subphase_loads the subphase load breakdown
+   * \param[in] in_user_defined the user-defined fields in json
    */
   ObjectWork(
     ElementIDType in_id,
     TimeType in_whole_phase_load,
-    std::unordered_map<SubphaseType, TimeType> const& in_subphase_loads
+    std::unordered_map<SubphaseType, TimeType> in_subphase_loads,
+    std::unordered_map<std::string, VariantType> in_user_defined = {}
   ) : id_(in_id),
       whole_phase_load_(in_whole_phase_load),
-      subphase_loads_(in_subphase_loads)
+      subphase_loads_(std::move(in_subphase_loads)),
+      user_defined_(std::move(in_user_defined))
   { }
 
   /**
@@ -102,6 +109,8 @@ private:
   TimeType whole_phase_load_ = 0.;
   /// Load broken down into subphases
   std::unordered_map<SubphaseType, TimeType> subphase_loads_;
+  // User-defined field---used to populate the memory block
+  std::unordered_map<std::string, VariantType> user_defined_;
 
   /// @todo: add communications
 };
