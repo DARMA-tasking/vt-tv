@@ -43,6 +43,8 @@
 
 #include "vt-tv/api/types.h"
 #include "vt-tv/utility/json_reader.h"
+#include "vt-tv/utility/decompression_input_container.h"
+#include "vt-tv/utility/input_iterator.h"
 
 #include <nlohmann/json.hpp>
 #include <fmt-vt/core.h>
@@ -83,7 +85,9 @@ void JSONReader::readFile() {
   using json = nlohmann::json;
 
   if (isCompressed()) {
-    assert(false && "Compressed JSON files are not currently handled");
+    DecompressionInputContainer c(filename_);
+    json j = json::parse(c);
+    json_ = std::make_unique<json>(std::move(j));
   } else {
     std::ifstream is(filename_, std::ios::binary);
     assert(is.good() && "File must be good");
