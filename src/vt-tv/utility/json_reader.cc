@@ -140,10 +140,8 @@ std::unique_ptr<Info> JSONReader::parseFile() {
               }
             }
 
-            object_info.emplace(
-              std::piecewise_construct,
-              std::forward_as_tuple(object),
-              std::forward_as_tuple(ObjectInfo{object, home, migratable, index_arr})
+            object_info.try_emplace(
+              object, ObjectInfo{object, home, migratable, std::move(index_arr)}
             );
 
             std::unordered_map<SubphaseType, TimeType> subphase_loads;
@@ -163,31 +161,19 @@ std::unique_ptr<Info> JSONReader::parseFile() {
               }
             }
 
-            objects.emplace(
-              std::piecewise_construct,
-              std::forward_as_tuple(object),
-              std::forward_as_tuple(ObjectWork{object, time, subphase_loads})
-            );
+            objects.try_emplace(object, ObjectWork{object, time, subphase_loads});
           }
         }
       }
 
-      phase_info.emplace(
-        std::piecewise_construct,
-        std::forward_as_tuple(id),
-        std::forward_as_tuple(PhaseWork{id, std::move(objects)})
-      );
+      phase_info.try_emplace(id, PhaseWork{id, std::move(objects)});
     }
   }
 
   Rank r{rank_, std::move(phase_info)};
 
   std::unordered_map<NodeType, Rank> rank_info;
-  rank_info.emplace(
-    std::piecewise_construct,
-    std::forward_as_tuple(rank_),
-    std::forward_as_tuple(std::move(r))
-  );
+  rank_info.try_emplace(rank_, std::move(r));
 
   return std::make_unique<Info>(std::move(object_info), std::move(rank_info));
 }

@@ -79,21 +79,11 @@ struct Info {
     std::unordered_map<ElementIDType, ObjectInfo> object_info, Rank r
   ) {
     for (auto x : object_info) {
-      if (object_info_.find(x.first) == object_info.end()) {
-        object_info_.emplace(
-          std::piecewise_construct,
-          std::forward_as_tuple(x.first),
-          std::forward_as_tuple(std::move(x.second))
-        );
-      }
+      object_info_.try_emplace(x.first, std::move(x.second));
     }
-    assert(ranks_.find(r.getRankID()) == ranks_.end() && "Rank must not exist");
 
-    ranks_.emplace(
-      std::piecewise_construct,
-      std::forward_as_tuple(r.getRankID()),
-      std::forward_as_tuple(std::move(r))
-    );
+    assert(ranks_.find(r.getRankID()) == ranks_.end() && "Rank must not exist");
+    ranks_.try_emplace(r.getRankID(), std::move(r));
   }
 
   /**
