@@ -75,6 +75,13 @@ struct Rank {
    */
   NodeType getRankID() const { return rank_; }
 
+  /**
+   * \brief Get all the phase work
+   *
+   * \return the phase work
+   */
+  auto const& getPhaseWork() const { return phase_info_; }
+
 private:
   /// The rank ID
   NodeType rank_ = 0;

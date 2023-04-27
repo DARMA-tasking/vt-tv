@@ -59,12 +59,39 @@ TEST_F(TestJSONReader, test_json_reader_1) {
   // @todo: fix this path
   std::string path = "/Users/jliffla/codes/vt/vt-tv/tests/unit/lb_test_data";
 
-  utility::JSONReader reader{0, path + "/data.0.json"};
+  NodeType rank = 0;
+  utility::JSONReader reader{rank, path + "/data.0.json"};
   reader.readFile();
   auto info = reader.parseFile();
 
-  fmt::print("Object info size={}\n", info->getObjectInfo().size());
+  auto const& obj_info = info->getObjectInfo();
+
+  fmt::print("Object info size={}\n", obj_info.size());
   fmt::print("Num ranks={}\n", info->getNumRanks());
+
+  EXPECT_EQ(info->getNumRanks(), 1);
+
+  for (auto const& [elm_id, oi] : obj_info) {
+    fmt::print(
+      "elm_id={:x}, home={}, migratable={}, index_array size={}\n",
+      elm_id, oi.getHome(), oi.isMigratable(), oi.getIndexArray().size()
+    );
+    EXPECT_EQ(elm_id, oi.getID());
+
+    // for this dataset, no migrations happen so all objects should be on home
+    EXPECT_EQ(oi.getHome(), rank);
+  }
+
+  auto& rank_info = info->getRank(rank);
+  EXPECT_EQ(rank_info.getRankID(), rank);
+
+  auto& phases = rank_info.getPhaseWork();
+  for (auto const& [phase, phase_work] : phases) {
+    fmt::print("phase={}\n", phase);
+    for (auto const& [elm_id, work] : phase_work.getObjectWork()) {
+      fmt::print("\t elm_id={:x}: load={}\n", elm_id, work.getLoad());
+    }
+  }
 }
 
 } // end namespace vt::tv::tests::unit

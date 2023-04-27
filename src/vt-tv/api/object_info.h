@@ -84,6 +84,29 @@ struct ObjectInfo {
    */
   ElementIDType getID() const { return id_; }
 
+  /**
+   * \brief Get the home rank for this object (the rank responsible for it)
+   *
+   * \return the home rank
+   */
+  NodeType getHome() const { return home_; }
+
+  /**
+   * \brief Get whether the object is migratable
+   *
+   * \return whether it is migratable
+   */
+  bool isMigratable() const { return migratable_; }
+
+  /**
+   * \brief Get the logical index for the task (if one exists)
+   *
+   * \note For singleton objects this may be empty.
+   *
+   * \return the index array
+   */
+  auto const& getIndexArray() const { return index_; }
+
 private:
   /// Unique identifier across all ranks for the object
   ElementIDType id_ = 0;

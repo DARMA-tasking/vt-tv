@@ -71,6 +71,20 @@ struct PhaseWork {
       objects_(std::move(in_objects))
   { }
 
+  /**
+   * \brief Get the phase ID
+   *
+   * \return the phase ID
+   */
+  PhaseType getPhase() const { return phase_; }
+
+  /**
+   * \brief Get object work
+   *
+   * \return the object work
+   */
+  auto const& getObjectWork() const { return objects_; }
+
 private:
   /// Phase identifier
   PhaseType phase_ = 0;

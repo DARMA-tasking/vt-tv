@@ -76,17 +76,19 @@ struct Info {
    * \param[in] r the rank work
    */
   void addInfo(
-    std::unordered_map<ElementIDType, ObjectInfo> object_info,
-    Rank r
+    std::unordered_map<ElementIDType, ObjectInfo> object_info, Rank r
   ) {
     for (auto x : object_info) {
-      object_info_.emplace(
-        std::piecewise_construct,
-        std::forward_as_tuple(x.first),
-        std::forward_as_tuple(std::move(x.second))
-      );
+      if (object_info_.find(x.first) == object_info.end()) {
+        object_info_.emplace(
+          std::piecewise_construct,
+          std::forward_as_tuple(x.first),
+          std::forward_as_tuple(std::move(x.second))
+        );
+      }
     }
-    assert(ranks_.find(r.getRankID()) == ranks_.end() && "Must not exist");
+    assert(ranks_.find(r.getRankID()) == ranks_.end() && "Rank must not exist");
+
     ranks_.emplace(
       std::piecewise_construct,
       std::forward_as_tuple(r.getRankID()),
@@ -99,7 +101,7 @@ struct Info {
    *
    * \return map of object info
    */
-  auto getObjectInfo() const { return object_info_; }
+  auto& getObjectInfo() const { return object_info_; }
 
   /**
    * \brief Get work for a given rank

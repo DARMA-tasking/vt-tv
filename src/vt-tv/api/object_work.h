@@ -74,6 +74,27 @@ struct ObjectWork {
       subphase_loads_(in_subphase_loads)
   { }
 
+  /**
+   * \brief Get element ID
+   *
+   * \return the element ID
+   */
+  ElementIDType getID() const { return id_; }
+
+  /**
+   * \brief Get the load (in time) for the whole phase
+   *
+   * \return the load
+   */
+  TimeType getLoad() const { return whole_phase_load_; }
+
+  /**
+   * \brief Get the subphase loads
+   *
+   * \return the subphase loads
+   */
+  auto const& getSubphaseLoads() { return subphase_loads_; }
+
 private:
   /// Element ID
   ElementIDType id_ = 0;
