@@ -86,9 +86,23 @@ TEST_F(TestJSONReader, test_json_reader_1) {
   EXPECT_EQ(rank_info.getRankID(), rank);
 
   auto& phases = rank_info.getPhaseWork();
+
+  // for this dataset, expect that all phases have the same objects
+  std::set<ElementIDType> phase_0_objects;
+  // and we should have a phase 0
+  auto const& phase_0_object_work = phases.find(0)->second.getObjectWork();
+
+  for (auto const& [elm_id, _] : phase_0_object_work) {
+    phase_0_objects.insert(elm_id);
+  }
+
   for (auto const& [phase, phase_work] : phases) {
     fmt::print("phase={}\n", phase);
+    // sizes should be consistent
+    EXPECT_EQ(phase_work.getObjectWork().size(), phase_0_objects.size());
     for (auto const& [elm_id, work] : phase_work.getObjectWork()) {
+      // object should be found in phase 0
+      EXPECT_TRUE(phase_0_objects.find(elm_id) != phase_0_objects.end());
       fmt::print("\t elm_id={:x}: load={}\n", elm_id, work.getLoad());
     }
   }
