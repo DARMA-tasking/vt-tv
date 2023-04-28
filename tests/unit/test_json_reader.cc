@@ -49,15 +49,19 @@
 
 #include <fmt-vt/format.h>
 
+#include "cmake_config.h"
+
 #include <string>
+#include <filesystem>
+#include <iostream>
 
 namespace vt::tv::tests::unit {
 
 struct TestJSONReader : TestHarness { };
 
 TEST_F(TestJSONReader, test_json_reader_1) {
-  // @todo: fix this path
-  std::string path = "/Users/jliffla/codes/vt/vt-tv/tests/unit/lb_test_data";
+  std::filesystem::path p = std::filesystem::path(SRC_DIR) / "tests/unit/lb_test_data" ;
+  std::string path = std::filesystem::absolute(p).string();
 
   NodeType rank = 0;
   utility::JSONReader reader{rank, path + "/data.0.json"};

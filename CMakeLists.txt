@@ -45,6 +45,11 @@ configure_file(
   "${PROJECT_BINARY_DIR}/vtTVConfig.cmake" @ONLY
 )
 
+configure_file(
+  ${PROJECT_BASE_DIR}/cmake/cmake_config.h.in
+  ${PROJECT_BASE_DIR}/tests/unit/cmake_config.h @ONLY
+)
+
 install(
   FILES        "${PROJECT_BINARY_DIR}/vtTVConfig.cmake"
   DESTINATION  cmake

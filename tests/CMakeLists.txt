@@ -38,6 +38,7 @@ endmacro()
 set(
   TEST_HEADER_FILES
   ${PROJECT_TEST_UNIT_DIR}/test_harness.h
+  ${PROJECT_TEST_UNIT_DIR}/cmake_config.h
 )
 
 set(
