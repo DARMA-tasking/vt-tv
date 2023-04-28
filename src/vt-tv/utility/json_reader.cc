@@ -144,9 +144,19 @@ std::unique_ptr<Info> JSONReader::parseFile() {
               }
             }
 
-            object_info.try_emplace(
-              object, ObjectInfo{object, home, migratable, std::move(index_arr)}
-            );
+            ObjectInfo oi{object, home, migratable, std::move(index_arr)};
+
+            if (task["entity"].find("collection_id") != task["entity"].end()) {
+              oi.setIsCollection(true);
+              oi.setMetaID(task["entity"]["collection_id"]);
+            }
+
+            if (task["entity"].find("objgroup_id") != task["entity"].end()) {
+              oi.setIsObjGroup(true);
+              oi.setMetaID(task["entity"]["objgroup_id"]);
+            }
+
+            object_info.try_emplace(object, std::move(oi));
 
             std::unordered_map<SubphaseType, TimeType> subphase_loads;
 

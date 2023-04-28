@@ -110,6 +110,12 @@ void JSONGenerator::outputObjectMetaData(nlohmann::json& j, ElementIDType id) co
       j["index"][i] = idx_array[i];
     }
   }
+
+  if (object_info.getIsCollection()) {
+    j["collection_id"] = object_info.getMetaID();
+  } else if (object_info.getIsObjGroup()) {
+    j["objgroup_id"] = object_info.getMetaID();
+  }
 }
 
 } /* end namesapce vt::tv::utility */

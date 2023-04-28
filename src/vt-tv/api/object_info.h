@@ -107,6 +107,52 @@ struct ObjectInfo {
    */
   auto const& getIndexArray() const { return index_; }
 
+  /**
+   * \brief Set whether this object is part of a collection
+   *
+   * \param[in] is_collection if it is part of a collection
+   */
+  void setIsCollection(bool is_collection) { is_collection_ = is_collection; }
+
+  /**
+   * \brief Set whether this object is part of an object group
+   *
+   * \param[in] is_objgroup if it is part of an object group
+   */
+  void setIsObjGroup(bool is_objgroup) { is_objgroup_ = is_objgroup; }
+
+  /**
+   * \brief Get whether it's part of a collection
+   *
+   * \return whether it is
+   */
+  bool getIsCollection() const { return is_collection_; }
+
+  /**
+   * \brief Get whether it's part of a object group
+   *
+   * \return whether it is
+   */
+  bool getIsObjGroup() const { return is_objgroup_; }
+
+  /**
+   * \brief Set the meta ID. Will only be set if it is part of a collection of
+   * object group. If it is part of a collection it will be the \c
+   * VirtualProxyType bits from VT. If it is part of a object group, it will be
+   * the \c ObjGroupProxyType bits from VT. Both of these IDs uniquely represent
+   * the collection or object group for a run
+   *
+   * \param[in] in_meta_id the id to set
+   */
+  void setMetaID(CollectionObjGroupIDType in_meta_id) { meta_id_ = in_meta_id; }
+
+  /**
+   * \brief Get the meta ID.
+   *
+   * \return the meta ID
+   */
+  CollectionObjGroupIDType getMetaID() const { return meta_id_; }
+
 private:
   /// Unique identifier across all ranks for the object
   ElementIDType id_ = 0;
@@ -116,6 +162,12 @@ private:
   bool migratable_ = false;
   /// Optional: index for the element
   std::vector<UniqueIndexBitType> index_;
+  /// Optional: the objgroup or collection ID
+  CollectionObjGroupIDType meta_id_ = 0;
+  /// Whether it's an objgroup
+  bool is_objgroup_ = false;
+  /// Whether it's an collection
+  bool is_collection_ = false;
 };
 
 } /* end namesapce vt::tv */
