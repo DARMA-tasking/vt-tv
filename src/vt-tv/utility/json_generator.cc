@@ -78,7 +78,15 @@ std::unique_ptr<nlohmann::json> JSONGenerator::generateJSON() const {
       }
     }
 
-    // @todo: add user-defined fields
+    auto const& user_defined = work.getUserDefined();
+    for (auto const& [key, val] : user_defined) {
+      // can't capture structured binding in C++17 (wait for 20!)
+      auto const& key2 = key;
+      std::visit([&](auto&& arg) {
+        j["tasks"][task_index]["user_defined"][key2] = arg;
+      }, val);
+    }
+
     // @todo: add communications
   }
 

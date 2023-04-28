@@ -102,6 +102,13 @@ struct ObjectWork {
    */
   auto const& getSubphaseLoads() const { return subphase_loads_; }
 
+  /**
+   * \brief Get user-defined fields
+   *
+   * \return user-defined fields
+   */
+  auto const& getUserDefined() const { return user_defined_; }
+
 private:
   /// Element ID
   ElementIDType id_ = 0;
