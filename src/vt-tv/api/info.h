@@ -2,7 +2,7 @@
 //@HEADER
 // *****************************************************************************
 //
-//                                 object.cc
+//                                  info.h
 //             DARMA/vt-tv => Virtual Transport -- Task Visualizer
 //
 // Copyright 2019 National Technology & Engineering Solutions of Sandia, LLC
@@ -41,10 +41,82 @@
 //@HEADER
 */
 
-#include "vt-tv/api/object.h"
+#if !defined INCLUDED_VT_TV_API_INFO_H
+#define INCLUDED_VT_TV_API_INFO_H
 
-// #include <vtkRenderingCoreModule.h>
+#include "vt-tv/api/types.h"
+#include "vt-tv/api/rank.h"
+#include "vt-tv/api/object_info.h"
 
-namespace vt { namespace tv {
+#include <unordered_map>
 
-}} /* end namesapce vt::tv */
+namespace vt::tv {
+
+/**
+ * \struct Info
+ *
+ * \brief All the information for a set of ranks and phases.
+ *
+ * @todo: Elaborate this...
+ *
+ */
+struct Info {
+
+  Info(
+    std::unordered_map<ElementIDType, ObjectInfo> in_object_info,
+    std::unordered_map<NodeType, Rank> in_ranks
+  ) : object_info_(std::move(in_object_info)),
+      ranks_(std::move(in_ranks))
+  { }
+
+  /**
+   * \brief Add more information about a new rank
+   *
+   * \param[in] object_info object information to merge with existing data
+   * \param[in] r the rank work
+   */
+  void addInfo(
+    std::unordered_map<ElementIDType, ObjectInfo> object_info, Rank r
+  ) {
+    for (auto x : object_info) {
+      object_info_.try_emplace(x.first, std::move(x.second));
+    }
+
+    assert(ranks_.find(r.getRankID()) == ranks_.end() && "Rank must not exist");
+    ranks_.try_emplace(r.getRankID(), std::move(r));
+  }
+
+  /**
+   * \brief Get all object info
+   *
+   * \return map of object info
+   */
+  auto& getObjectInfo() const { return object_info_; }
+
+  /**
+   * \brief Get work for a given rank
+   *
+   * \param[in] rank the rank
+   *
+   * \return all the rank work
+   */
+  Rank const& getRank(NodeType rank) const { return ranks_.at(rank); }
+
+  /**
+   * \brief Get number of ranks stored here
+   *
+   * \return number of ranks
+   */
+  std::size_t getNumRanks() const { return ranks_.size(); }
+
+private:
+  /// All the object info that doesn't change across phases
+  std::unordered_map<ElementIDType, ObjectInfo> object_info_;
+
+  /// Work for each rank across phases
+  std::unordered_map<NodeType, Rank> ranks_;
+};
+
+} /* end namesapce vt::tv */
+
+#endif /*INCLUDED_VT_TV_API_INFO_H*/

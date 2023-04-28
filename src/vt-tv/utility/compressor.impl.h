@@ -2,10 +2,10 @@
 //@HEADER
 // *****************************************************************************
 //
-//                              test_object.cc
+//                              compressor.impl.h
 //             DARMA/vt-tv => Virtual Transport -- Task Visualizer
 //
-// Copyright 2019 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2019-2021 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -41,17 +41,52 @@
 //@HEADER
 */
 
-#include <gtest/gtest.h>
-#include "test_harness.h"
+#if !defined INCLUDED_VT_TV_UTILITY_COMPRESS_COMPRESSOR_IMPL_H
+#define INCLUDED_VT_TV_UTILITY_COMPRESS_COMPRESSOR_IMPL_H
 
-#include <vt-tv/api/object.h>
+#include "vt-tv/utility/compressor.h"
 
-namespace vt { namespace tv { namespace tests { namespace unit {
+namespace vt::tv::utility {
 
-struct TestObject : TestHarness { };
-
-TEST_F(TestObject, test_object_1) {
-  vt::tv::Object o{};
+template <typename StreamLike>
+bool Compressor::write(StreamLike& s, uint8_t const* buffer, std::size_t const size) {
+  constexpr auto finish_writing = false;
+  return writeImpl(s, buffer, size, finish_writing);
 }
 
-}}}} // end namespace vt::tv::tests::unit
+template <typename StreamLike>
+bool Compressor::writeImpl(
+  StreamLike& s, uint8_t const* buffer, std::size_t const size, bool finish_
+) {
+  assert(enc_ && "Must have a valid compressor");
+
+  uint8_t const* cur = buffer;
+  std::size_t rem = size;
+
+  while (rem > 0 or (finish_ and not BrotliEncoderIsFinished(enc_))) {
+    std::size_t avail_out = buf_size_;
+    uint8_t* next_out = out_buf_.get();
+
+    auto op = finish_ ? BROTLI_OPERATION_FINISH : BROTLI_OPERATION_PROCESS;
+    bool ret = BrotliEncoderCompressStream(
+      enc_, op, &rem, &cur, &avail_out, &next_out, nullptr
+    );
+    if (!ret) {
+      assert(false && "Failed to stream compression data out\n");
+      return false;
+    }
+    s.write(reinterpret_cast<char*>(out_buf_.get()), buf_size_ - avail_out);
+  }
+
+  return true;
+}
+
+template <typename StreamLike>
+bool Compressor::finish(StreamLike& s) {
+  constexpr auto finish_writing = true;
+  return writeImpl(s, nullptr, 0, finish_writing);
+}
+
+} /* end namespace vt::tv::utility */
+
+#endif /*INCLUDED_VT_TV_UTILITY_COMPRESS_COMPRESSOR_IMPL_H*/

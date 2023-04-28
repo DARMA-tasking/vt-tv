@@ -41,15 +41,54 @@
 //@HEADER
 */
 
-#if !defined INCLUDED_VT_TV_API_rank_H
-#define INCLUDED_VT_TV_API_rank_H
+#if !defined INCLUDED_VT_TV_API_RANK_H
+#define INCLUDED_VT_TV_API_RANK_H
 
-namespace vt { namespace tv {
+#include "vt-tv/api/phase_work.h"
 
+namespace vt::tv {
+
+/**
+ * \struct Rank
+ *
+ * \brief All the data for a given \c Rank
+ */
 struct Rank {
 
+  /**
+   * \brief Construct a rank data
+   *
+   * \param[in] in_rank the rank
+   * \param[in] in_phase_info all the phase info
+   */
+  Rank(
+    NodeType in_rank,
+    std::unordered_map<PhaseType, PhaseWork> in_phase_info
+  ) : rank_(in_rank),
+      phase_info_(std::move(in_phase_info))
+  { }
+
+  /**
+   * \brief Get the rank ID
+   *
+   * \return rank ID
+   */
+  NodeType getRankID() const { return rank_; }
+
+  /**
+   * \brief Get all the phase work
+   *
+   * \return the phase work
+   */
+  auto const& getPhaseWork() const { return phase_info_; }
+
+private:
+  /// The rank ID
+  NodeType rank_ = 0;
+  /// Work for each phase
+  std::unordered_map<PhaseType, PhaseWork> phase_info_;
 };
 
-}} /* end namesapce vt::tv */
+} /* end namesapce vt::tv */
 
-#endif /*INCLUDED_VT_TV_API_rank_H*/
+#endif /*INCLUDED_VT_TV_API_RANK_H*/

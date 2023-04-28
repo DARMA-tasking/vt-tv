@@ -2,7 +2,7 @@
 //@HEADER
 // *****************************************************************************
 //
-//                                 object.h
+//                               json_reader.h
 //             DARMA/vt-tv => Virtual Transport -- Task Visualizer
 //
 // Copyright 2019 National Technology & Engineering Solutions of Sandia, LLC
@@ -41,15 +41,62 @@
 //@HEADER
 */
 
-#if !defined INCLUDED_VT_TV_API_OBJECT_H
-#define INCLUDED_VT_TV_API_OBJECT_H
+#if !defined INCLUDED_VT_TV_UTILITY_JSON_READER_H
+#define INCLUDED_VT_TV_UTILITY_JSON_READER_H
 
-namespace vt { namespace tv {
+#include "vt-tv/api/types.h"
+#include "vt-tv/api/info.h"
 
-struct Object {
+#include <nlohmann/json.hpp>
 
+#include <string>
+#include <memory>
+
+namespace vt::tv::utility {
+
+/**
+ * \struct JSONReader
+ *
+ * \brief Reader for JSON files in the LBDataType format.
+ */
+struct JSONReader {
+
+  /**
+   * \brief Construct the reader
+   *
+   * \param[in] in_filename the file name to read
+   */
+  JSONReader(NodeType in_rank, std::string const& in_filename)
+    : rank_(in_rank),
+      filename_(in_filename)
+  { }
+
+  /**
+   * \brief Check if the file is compressed or not
+   *
+   * \return whether the file is compressed
+   */
+  bool isCompressed() const;
+
+  /**
+   * \brief Read the JSON file
+   */
+  void readFile();
+
+  /**
+   * \brief Parse the json into vt-tv's data structure Info, with a single rank
+   * filled out
+   *
+   * \return vt-tv Info
+   */
+  std::unique_ptr<Info> parseFile();
+
+private:
+  NodeType rank_ = 0;
+  std::string filename_;
+  std::unique_ptr<nlohmann::json> json_ = nullptr;
 };
 
-}} /* end namesapce vt::tv */
+} /* end namesapce vt::tv::utility */
 
-#endif /*INCLUDED_VT_TV_API_OBJECT_H*/
+#endif /*INCLUDED_VT_TV_UTILITY_JSON_READER_H*/

@@ -41,8 +41,6 @@
 //@HEADER
 */
 
-#include <vt-tv/api/object.h>
-
 // Classes specific to this example
 #include <vtkPolyData.h>
 #include <vtkPolyDataMapper.h>

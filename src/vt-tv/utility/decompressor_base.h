@@ -2,10 +2,10 @@
 //@HEADER
 // *****************************************************************************
 //
-//                                 phase.h
+//                             decompressor_base.h
 //             DARMA/vt-tv => Virtual Transport -- Task Visualizer
 //
-// Copyright 2019 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2019-2021 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -41,26 +41,26 @@
 //@HEADER
 */
 
-#if !defined INCLUDED_VT_TV_API_PHASE_H
-#define INCLUDED_VT_TV_API_PHASE_H
+#if !defined INCLUDED_VT_TV_UTILITY_COMPRESS_DECOMPRESSOR_BASE_H
+#define INCLUDED_VT_TV_UTILITY_COMPRESS_DECOMPRESSOR_BASE_H
 
-#include "vt-tv/api/rank.h"
+#include <string>
+#include <cstdlib>
 
-#include <unordered_map>
+namespace vt::tv::utility {
 
-namespace vt { namespace tv {
-
-struct Phase {
-  using RankID = int;
-
-  Rank& getRank(RankID id) {
-    return ranks_.find(id)->second;
-  }
-
-private:
-  std::unordered_map<RankID, Rank> ranks_;
+/**
+ * \struct DecompressorBase
+ *
+ * \brief Base class for decompressor without the stream type to avoid
+ * propagation.
+ */
+struct DecompressorBase {
+  virtual ~DecompressorBase() = default;
+  virtual bool done() const = 0;
+  virtual std::size_t read(uint8_t* output_buffer, std::size_t bytes_to_output) = 0;
 };
 
-}} /* end namesapce vt::tv */
+} /* end namespace vt::tv::utility */
 
-#endif /*INCLUDED_VT_TV_API_PHASE_H*/
+#endif /*INCLUDED_VT_TV_UTILITY_COMPRESS_DECOMPRESSOR_BASE_H*/
