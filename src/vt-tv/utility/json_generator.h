@@ -2,7 +2,7 @@
 //@HEADER
 // *****************************************************************************
 //
-//                                  info.h
+//                             json_generator.h
 //             DARMA/vt-tv => Virtual Transport -- Task Visualizer
 //
 // Copyright 2019 National Technology & Engineering Solutions of Sandia, LLC
@@ -41,82 +41,58 @@
 //@HEADER
 */
 
-#if !defined INCLUDED_VT_TV_API_INFO_H
-#define INCLUDED_VT_TV_API_INFO_H
+#if !defined INCLUDED_VT_TV_UTILITY_JSON_GENERATOR_H
+#define INCLUDED_VT_TV_UTILITY_JSON_GENERATOR_H
 
 #include "vt-tv/api/types.h"
-#include "vt-tv/api/rank.h"
-#include "vt-tv/api/object_info.h"
+#include "vt-tv/api/info.h"
 
-#include <unordered_map>
+#include <nlohmann/json.hpp>
 
-namespace vt::tv {
+#include <memory>
+
+namespace vt::tv::utility {
 
 /**
- * \struct Info
+ * \struct JSONGenerator
  *
- * \brief All the information for a set of ranks and phases.
- *
- * @todo: Elaborate this...
- *
+ * \brief Generates JSON from vt-tv data structures
  */
-struct Info {
+struct JSONGenerator {
 
-  Info(
-    std::unordered_map<ElementIDType, ObjectInfo> in_object_info,
-    std::unordered_map<NodeType, Rank> in_ranks
-  ) : object_info_(std::move(in_object_info)),
-      ranks_(std::move(in_ranks))
+  /**
+   * \brief Construct the reader
+   *
+   * \param[in] in_filename the file name to read
+   */
+  JSONGenerator(Info const& in_info, NodeType in_rank, PhaseType in_phase)
+    : info_(in_info),
+      rank_(in_rank),
+      phase_(in_phase)
   { }
 
   /**
-   * \brief Add more information about a new rank
+   * \brief Generate JSON for given rank and phase
    *
-   * \param[in] object_info object information to merge with existing data
-   * \param[in] r the rank work
+   * \return the json
    */
-  void addInfo(
-    std::unordered_map<ElementIDType, ObjectInfo> object_info, Rank r
-  ) {
-    for (auto x : object_info) {
-      object_info_.try_emplace(x.first, std::move(x.second));
-    }
+  std::unique_ptr<nlohmann::json> generateJSON() const;
 
-    assert(ranks_.find(r.getRankID()) == ranks_.end() && "Rank must not exist");
-    ranks_.try_emplace(r.getRankID(), std::move(r));
-  }
-
+protected:
   /**
-   * \brief Get all object info
+   * \internal \brief Output the meta-data for a given object
    *
-   * \return map of object info
+   * \param[in] j where in the json to output it
+   * \param[in] id the id of the object
    */
-  auto& getObjectInfo() const { return object_info_; }
-
-  /**
-   * \brief Get work for a given rank
-   *
-   * \param[in] rank the rank
-   *
-   * \return all the rank work
-   */
-  Rank const& getRank(NodeType rank) const { return ranks_.at(rank); }
-
-  /**
-   * \brief Get number of ranks stored here
-   *
-   * \return number of ranks
-   */
-  std::size_t getNumRanks() const { return ranks_.size(); }
+  void outputObjectMetaData(nlohmann::json& j, ElementIDType id) const;
 
 private:
-  /// All the object info that doesn't change across phases
-  std::unordered_map<ElementIDType, ObjectInfo> object_info_;
-
-  /// Work for each rank across phases
-  std::unordered_map<NodeType, Rank> ranks_;
+  Info const& info_;
+  NodeType rank_ = 0;
+  PhaseType phase_ = 0;
 };
 
-} /* end namesapce vt::tv */
+} /* end namesapce vt::tv::utility */
 
-#endif /*INCLUDED_VT_TV_API_INFO_H*/
+#endif /*INCLUDED_VT_TV_UTILITY_JSON_GENERATOR_H*/

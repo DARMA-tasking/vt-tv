@@ -100,7 +100,7 @@ struct ObjectWork {
    *
    * \return the subphase loads
    */
-  auto const& getSubphaseLoads() { return subphase_loads_; }
+  auto const& getSubphaseLoads() const { return subphase_loads_; }
 
 private:
   /// Element ID

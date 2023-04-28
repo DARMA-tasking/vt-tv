@@ -2,7 +2,7 @@
 //@HEADER
 // *****************************************************************************
 //
-//                                  info.h
+//                            json_generator.cc
 //             DARMA/vt-tv => Virtual Transport -- Task Visualizer
 //
 // Copyright 2019 National Technology & Engineering Solutions of Sandia, LLC
@@ -41,82 +41,67 @@
 //@HEADER
 */
 
-#if !defined INCLUDED_VT_TV_API_INFO_H
-#define INCLUDED_VT_TV_API_INFO_H
+#include "vt-tv/utility/json_generator.h"
 
-#include "vt-tv/api/types.h"
-#include "vt-tv/api/rank.h"
-#include "vt-tv/api/object_info.h"
+#include <nlohmann/json.hpp>
 
-#include <unordered_map>
+namespace vt::tv::utility {
 
-namespace vt::tv {
+std::unique_ptr<nlohmann::json> JSONGenerator::generateJSON() const {
+  using json = nlohmann::json;
 
-/**
- * \struct Info
- *
- * \brief All the information for a set of ranks and phases.
- *
- * @todo: Elaborate this...
- *
- */
-struct Info {
+  auto const& rank_info = info_.getRank(rank_);
+  auto const& phases = rank_info.getPhaseWork();
+  assert(phase_work.find(phase_) != phase_work.end() and "Must have phase");
+  auto const& phase_work = phases.at(phase_);
+  auto const& object_work = phase_work.getObjectWork();
 
-  Info(
-    std::unordered_map<ElementIDType, ObjectInfo> in_object_info,
-    std::unordered_map<NodeType, Rank> in_ranks
-  ) : object_info_(std::move(in_object_info)),
-      ranks_(std::move(in_ranks))
-  { }
+  json j;
+  j["id"] = phase_;
 
-  /**
-   * \brief Add more information about a new rank
-   *
-   * \param[in] object_info object information to merge with existing data
-   * \param[in] r the rank work
-   */
-  void addInfo(
-    std::unordered_map<ElementIDType, ObjectInfo> object_info, Rank r
-  ) {
-    for (auto x : object_info) {
-      object_info_.try_emplace(x.first, std::move(x.second));
+  std::size_t task_index = 0;
+  for (auto const& [elm_id, work] : object_work) {
+    auto load = work.getLoad();
+    auto const& subphase_loads = work.getSubphaseLoads();
+
+    // assume resource is cpu for now (we have not added others yet)
+    j["tasks"][task_index]["resource"] = "cpu";
+    j["tasks"][task_index]["node"] = rank_;
+    j["tasks"][task_index]["time"] = load;
+
+    outputObjectMetaData(j["tasks"][task_index]["entity"], elm_id);
+
+    if (subphase_loads.size() > 0) {
+      for (std::size_t i = 0; i < subphase_loads.size(); i++) {
+        j["tasks"][task_index]["subphases"][i]["id"] = i;
+        j["tasks"][task_index]["subphases"][i]["time"] = subphase_loads.at(i);
+      }
     }
 
-    assert(ranks_.find(r.getRankID()) == ranks_.end() && "Rank must not exist");
-    ranks_.try_emplace(r.getRankID(), std::move(r));
+    // @todo: add user-defined fields
+    // @todo: add communications
   }
 
-  /**
-   * \brief Get all object info
-   *
-   * \return map of object info
-   */
-  auto& getObjectInfo() const { return object_info_; }
+  return std::make_unique<json>(std::move(j));
+}
 
-  /**
-   * \brief Get work for a given rank
-   *
-   * \param[in] rank the rank
-   *
-   * \return all the rank work
-   */
-  Rank const& getRank(NodeType rank) const { return ranks_.at(rank); }
+void JSONGenerator::outputObjectMetaData(nlohmann::json& j, ElementIDType id) const {
+  auto const& object_info_map = info_.getObjectInfo();
 
-  /**
-   * \brief Get number of ranks stored here
-   *
-   * \return number of ranks
-   */
-  std::size_t getNumRanks() const { return ranks_.size(); }
+  assert(object_info_map.find(id) != object_info_map.end() && "Object must exist");
+  auto const& object_info = object_info_map.find(id)->second;
 
-private:
-  /// All the object info that doesn't change across phases
-  std::unordered_map<ElementIDType, ObjectInfo> object_info_;
+  j["type"] = "object";
+  j["id"] = id;
+  j["home"] = object_info.getHome();
+  j["migratable"] = object_info.isMigratable();
 
-  /// Work for each rank across phases
-  std::unordered_map<NodeType, Rank> ranks_;
-};
+  auto const& idx_array = object_info.getIndexArray();
+  if (idx_array.size() > 0) {
+    for (std::size_t i = 0; i < idx_array.size(); i++) {
+      j["index"][i] = idx_array[i];
+    }
+  }
+}
 
-} /* end namesapce vt::tv */
-
-#endif /*INCLUDED_VT_TV_API_INFO_H*/
+} /* end namesapce vt::tv::utility */
