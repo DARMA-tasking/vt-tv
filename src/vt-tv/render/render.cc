@@ -41,30 +41,6 @@
 //@HEADER
 */
 
-#include <vtkActor.h>
-#include <vtkRenderWindow.h>
-#include <vtkRenderWindowInteractor.h>
-#include <vtkRenderer.h>
-#include <vtkNamedColors.h>
-#include <vtkNew.h>
-#include <vtkProperty.h>
-#include <vtkCamera.h>
-#include <vtkPolyData.h>
-#include <vtkPolyDataMapper.h>
-#include <vtkDoubleArray.h>
-#include <vtkPointData.h>
-#include <vtkGlyphSource2D.h>
-#include <vtkGlyph2D.h>
-#include <vtkTransform.h>
-#include <vtkTransformPolyDataFilter.h>
-#include <vtkColorTransferFunction.h>
-#include <vtkScalarBarActor.h>
-#include <vtkTextProperty.h>
-#include <vtkArrayCalculator.h>
-#include <vtkThresholdPoints.h>
-#include <vtkWindowToImageFilter.h>
-#include <vtkPNGWriter.h>
-
 #include "vt-tv/render/render.h"
 
 // #include <nanobind/nanobind.h>
@@ -75,8 +51,12 @@
 
 namespace vt { namespace tv {
 
+Render::Render(std::unordered_map<PhaseType, PhaseWork> in_phase_info)
+: phase_info_(std::move(in_phase_info))
+{ };
+
 /*static*/ vtkNew<vtkColorTransferFunction> Render::createColorTransferFunction(
-  double range[2], double avg_load = 0, ColorType ct = ColorType::Default
+  double range[2], double avg_load, ColorType ct
 ) {
   vtkNew<vtkColorTransferFunction> ctf;
   ctf->SetNanColorRGBA(1., 1., 1., 0.);
@@ -159,6 +139,23 @@ namespace vt { namespace tv {
   position->SetValue(x, y, 0.0);
 
   return scalar_bar_actor;
+}
+
+/* static */ std::tuple<uint64_t, uint64_t, uint64_t> Render::global_id_to_cartesian(
+    uint64_t flat_id, std::tuple<uint64_t, uint64_t, uint64_t> grid_sizes
+) {
+  // Sanity check
+  uint64_t n01 = std::get<0>(grid_sizes) * std::get<1>(grid_sizes);
+  if (flat_id < 0 || flat_id >= n01 * std::get<2>(grid_sizes)) {
+    return {NULL, NULL, NULL};
+  }
+
+  // Compute successive Euclidean divisions
+  uint64_t quot1 = flat_id / n01;
+  uint64_t rem1 = flat_id % n01;
+  uint64_t quot2 = rem1 / std::get<0>(grid_sizes);
+  uint64_t rem2 = rem1 % std::get<0>(grid_sizes);
+  return {rem2, quot2, quot1};
 }
 
 /*static*/ void Render::createPipeline(
@@ -261,7 +258,7 @@ namespace vt { namespace tv {
     glypher->SetInputData(thresh_out);
     glypher->SetScaleModeToScaleByScalar();
     glypher->SetScaleFactor(glyph_factor);
-    Glypher->Update();
+    glypher->Update();
     glypher->GetOutput()->GetPointData()->SetActiveScalars("Load");
 
     // Raise glyphs slightly for visibility
@@ -303,6 +300,71 @@ namespace vt { namespace tv {
   writer->SetFileName("test.png");
   writer->SetCompressionLevel(2);
   writer->Write();
+}
+
+void Render::generate() {
+  // Create vector of number of objects per phase
+  std::vector<uint64_t> n_objects_list;
+  for (auto const& [phase, phase_work] : this->phase_info_) {
+    n_objects_list.push_back(phase_work.getObjectWork().size());
+  }
+
+  // Create vector of vectors of object loads per phase
+  std::vector<std::vector<TimeType>> phases_object_loads;
+  for (auto const& [phase, phase_work] : this->phase_info_) {
+    std::vector<TimeType> object_loads;
+    for (auto const& [elm_id, work] : phase_work.getObjectWork()) {
+      object_loads.push_back(work.getLoad());
+    }
+    phases_object_loads.push_back(object_loads);
+  }
+
+  // Find min max values of loads for phase 0 for visualization scaling
+  auto max_load = *max_element(std::begin(phases_object_loads[0]), std::end(phases_object_loads[0]));
+  auto min_load = *min_element(std::begin(phases_object_loads[0]), std::end(phases_object_loads[0]));
+
+  // Assign number of objects as number of actors in the visualization
+  uint64_t n_actors = n_objects_list[0];
+
+  // Add objects in visualization as spheres and scale them appropriately
+  vtkNew<vtkNamedColors> colors;
+  vtkNew<vtkRenderer> renderer;
+  std::vector<std::string> color_vector = {"Red", "Green", "Cornsilk"};
+  for (uint64_t actor_i = 0; actor_i < n_actors; actor_i++)
+  {
+    // Create a sphere
+    vtkNew<vtkSphereSource> sphereSource;
+    sphereSource->SetRadius(pow(phases_object_loads[0][actor_i] / (max_load-min_load), 2) * 0.5);
+    const auto [i, j, k] = this->global_id_to_cartesian(actor_i, {5, 5, 1});
+    sphereSource->SetCenter(i, j, k);
+
+    // Make the surface smooth.
+    sphereSource->SetPhiResolution(100);
+    sphereSource->SetThetaResolution(100);
+
+    // Add sphere to mapper
+    vtkNew<vtkPolyDataMapper> mapper;
+    mapper->SetInputConnection(sphereSource->GetOutputPort());
+
+    // Add actor to render
+    vtkNew<vtkActor> actor;
+    actor->SetMapper(mapper);
+    actor->GetProperty()->SetColor(colors->GetColor3d(color_vector[2]).GetData());
+    renderer->AddActor(actor);
+  }
+
+  // Set background color
+  renderer->SetBackground(colors->GetColor3d("steelblue").GetData());
+
+  vtkNew<vtkRenderWindow> renderWindow;
+  renderWindow->AddRenderer(renderer);
+
+  vtkNew<vtkRenderWindowInteractor> renderWindowInteractor;
+  renderWindowInteractor->SetRenderWindow(renderWindow);
+
+  renderWindow->SetWindowName("Render");
+  renderWindow->Render();
+  renderWindowInteractor->Start();
 }
 
 }} /* end namesapce vt::tv */

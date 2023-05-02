@@ -81,6 +81,7 @@ TEST_F(TestJSONReader, test_json_reader_1) {
       elm_id, oi.getHome(), oi.isMigratable(), oi.getIndexArray().size()
     );
     EXPECT_EQ(elm_id, oi.getID());
+    fmt::print("elm_id: {}, oi.getID: {}\n", elm_id, oi.getID());
 
     // for this dataset, no migrations happen so all objects should be on home
     EXPECT_EQ(oi.getHome(), rank);
@@ -94,7 +95,9 @@ TEST_F(TestJSONReader, test_json_reader_1) {
   // for this dataset, expect that all phases have the same objects
   std::set<ElementIDType> phase_0_objects;
   // and we should have a phase 0
-  auto const& phase_0_object_work = phases.find(0)->second.getObjectWork();
+  auto const& phase_0 = phases.find(0);
+  fmt::print("phase_0 type: {}", typeid(phase_0).name());
+  auto const& phase_0_object_work = phase_0->second.getObjectWork();
 
   for (auto const& [elm_id, _] : phase_0_object_work) {
     phase_0_objects.insert(elm_id);

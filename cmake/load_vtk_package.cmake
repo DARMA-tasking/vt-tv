@@ -12,6 +12,7 @@ find_package(
   RenderingFreeType
   RenderingOpenGL2
   RenderingGL2PSOpenGL2
+  RenderingAnnotation
 )
 
 message(STATUS "VTK libraries: ${VTK_LIBRARIES}")

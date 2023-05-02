@@ -2,7 +2,7 @@
 //@HEADER
 // *****************************************************************************
 //
-//                                 render.h
+//                                example2.cc
 //             DARMA/vt-tv => Virtual Transport -- Task Visualizer
 //
 // Copyright 2019 National Technology & Engineering Solutions of Sandia, LLC
@@ -41,9 +41,6 @@
 //@HEADER
 */
 
-#if !defined INCLUDED_VT_TV_RENDER_RENDER_H
-#define INCLUDED_VT_TV_RENDER_RENDER_H
-
 #include <vtkActor.h>
 #include <vtkRenderWindow.h>
 #include <vtkRenderWindowInteractor.h>
@@ -61,69 +58,59 @@
 #include <vtkTransform.h>
 #include <vtkTransformPolyDataFilter.h>
 #include <vtkColorTransferFunction.h>
-#include <vtkScalarBarActor.h>
 #include <vtkTextProperty.h>
 #include <vtkArrayCalculator.h>
 #include <vtkThresholdPoints.h>
 #include <vtkWindowToImageFilter.h>
 #include <vtkPNGWriter.h>
-#include <vtkRegularPolygonSource.h>
-#include <vtkSphereSource.h>
 
-#include "vt-tv/api/rank.h"
+#include <vt-tv/api/info.h>
+#include <vt-tv/utility/json_reader.h>
+
 #include <fmt-vt/format.h>
-#include <ostream>
-#include <cmath>
-#include <algorithm>
-#include <iterator>
-#include <cstdlib>
-#include <tuple>
 
-namespace vt { namespace tv {
+#include "../tests/unit/cmake_config.h"
 
-struct Render {
-private:
-  enum ColorType {
-    Default,
-    BlueToRed,
-    HotSpot,
-    WhiteToBlack
-  };
+#include <vt-tv/render/render.h>
 
-  std::unordered_map<PhaseType, PhaseWork> phase_info_;
+int main() {
+  using namespace vt;
+  using namespace tv;
+  // Read JSON file and input data
 
-  static vtkNew<vtkColorTransferFunction> createColorTransferFunction(
-    double range[2], double avg_load = 0, ColorType ct = ColorType::Default
-  );
+  std::filesystem::path p = std::filesystem::path(SRC_DIR) / "tests/unit/lb_test_data" ;
+  std::string path = std::filesystem::absolute(p).string();
 
-  static vtkNew<vtkScalarBarActor> createScalarBarActor(
-    vtkPolyDataMapper* mapper, std::string title, double x, double y
-  );
+  NodeType rank = 0;
+  utility::JSONReader reader{rank, path + "/data.0.json"};
+  reader.readFile();
+  auto info = reader.parseFile();
 
-  static std::tuple<uint64_t, uint64_t, uint64_t> global_id_to_cartesian(
-    uint64_t flat_id, std::tuple<uint64_t, uint64_t, uint64_t> grid_sizes
-  );
+  auto const& obj_info = info->getObjectInfo();
 
-public:
-  Render(std::unordered_map<PhaseType, PhaseWork> in_phase_info);
+  fmt::print("Object info size={}\n", obj_info.size());
+  fmt::print("Num ranks={}\n", info->getNumRanks());
 
-  static void createPipeline(
-    vtkPoints* rank_points,
-    vtkCellArray* rank_lines,
-    vtkDoubleArray* qois,
-    double qoi_range[2],
-    vtkPolyData* object_mesh,
-    double glyph_factor,
-    double load_range[2],
-    int phase,
-    int iteration,
-    double imbalance,
-    int win_size
-  );
+  for (auto const& [elm_id, oi] : obj_info) {
+    fmt::print(
+      "elm_id={:x}, home={}, migratable={}, index_array size={}\n",
+      elm_id, oi.getHome(), oi.isMigratable(), oi.getIndexArray().size()
+    );
+  }
 
-  void generate(/*bool save_meshes, bool gen_vizqoi*/);
-};
+  auto& rank_info = info->getRank(rank);
 
-}} /* end namesapce vt::tv */
+  auto& phases = rank_info.getPhaseWork();
 
-#endif /*INCLUDED_VT_TV_RENDER_RENDER_H*/
+  for (auto const& [phase, phase_work] : phases) {
+    fmt::print("phase={}\n", phase);
+    for (auto const& [elm_id, work] : phase_work.getObjectWork()) {
+      fmt::print("\t elm_id={:x}: load={}\n", elm_id, work.getLoad());
+    }
+  }
+
+  // Instantiate render
+  auto r = Render(phases);
+  r.generate();
+  return 0;
+}
