@@ -55,6 +55,27 @@ Render::Render(std::unordered_map<PhaseType, PhaseWork> in_phase_info)
 : phase_info_(std::move(in_phase_info))
 { };
 
+void Render::compute_object_load_range() {
+  // Initialize space-time object QOI range attributes
+  TimeType oq_max = -1 * std::numeric_limits<double>::infinity();
+  TimeType ol;
+
+  // Iterate over all phases
+  for (auto const& [_, phase_work] : this->phase_info_) {
+    // Iterate over all objects in phase
+    for (auto const& [elm_id, work] : phase_work.getObjectWork()) {
+      // Update maximum object load
+      ol = work.getLoad();
+      if (ol > oq_max) {
+        oq_max = ol;
+      }
+    }
+  }
+
+  // Update extrema attribute
+  this->object_load_max_ = oq_max;
+}
+
 /*static*/ vtkNew<vtkColorTransferFunction> Render::createColorTransferFunction(
   double range[2], double avg_load, ColorType ct
 ) {

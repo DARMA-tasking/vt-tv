@@ -78,9 +78,16 @@
 #include <iterator>
 #include <cstdlib>
 #include <tuple>
+#include<limits>
 
 namespace vt { namespace tv {
 
+
+/**
+ * \struct Render
+ *
+ * \brief Handler for visualisation
+ */
 struct Render {
 private:
   enum ColorType {
@@ -91,6 +98,14 @@ private:
   };
 
   std::unordered_map<PhaseType, PhaseWork> phase_info_;
+  TimeType object_load_max_;
+
+  /**
+   * \brief Decide object quantity storage type and compute it.
+   *
+   * \return void
+   */
+  void compute_object_load_range();
 
   static vtkNew<vtkColorTransferFunction> createColorTransferFunction(
     double range[2], double avg_load = 0, ColorType ct = ColorType::Default
@@ -100,11 +115,24 @@ private:
     vtkPolyDataMapper* mapper, std::string title, double x, double y
   );
 
+  /**
+   * \brief Map global index to its Cartesian grid coordinates.
+   *
+   * \param[in] flat_id the index of the entity in the phase
+   * \param[in] grid_sizes number of entities per dimension x,y,z
+   *
+   * \return i,j,k Cartesian coordinates
+   */
   static std::tuple<uint64_t, uint64_t, uint64_t> global_id_to_cartesian(
     uint64_t flat_id, std::tuple<uint64_t, uint64_t, uint64_t> grid_sizes
   );
 
 public:
+  /**
+   * \brief Construct render
+   *
+   * \param[in] in_phase_info the phases
+   */
   Render(std::unordered_map<PhaseType, PhaseWork> in_phase_info);
 
   static void createPipeline(
