@@ -69,6 +69,7 @@
 #include <vtkPNGWriter.h>
 #include <vtkRegularPolygonSource.h>
 #include <vtkSphereSource.h>
+#include <vtkBitArray.h>
 
 #include "vt-tv/api/rank.h"
 #include <fmt-vt/format.h>
@@ -78,7 +79,8 @@
 #include <iterator>
 #include <cstdlib>
 #include <tuple>
-#include<limits>
+#include <limits>
+#include <map>
 
 namespace vt { namespace tv {
 
@@ -99,6 +101,7 @@ private:
 
   std::unordered_map<PhaseType, PhaseWork> phase_info_;
   TimeType object_load_max_;
+  std::string object_qoi_ = "load";
 
   /**
    * \brief Decide object quantity storage type and compute it.
@@ -106,6 +109,24 @@ private:
    * \return void
    */
   void compute_object_load_range();
+
+  /**
+   * \brief Map ranks to polygonal mesh.
+   *
+   * \param[in] iteration phase index
+   *
+   * \return rank mesh
+   */
+  vtkPolyData* create_rank_mesh_(PhaseType iteration) const;
+
+  /**
+   * \brief Map objects to polygonal mesh.
+   *
+   * \param[in] phase phase
+   *
+   * \return object mesh
+   */
+  vtkPolyData* create_object_mesh_(PhaseWork phase) const;
 
   static vtkNew<vtkColorTransferFunction> createColorTransferFunction(
     double range[2], double avg_load = 0, ColorType ct = ColorType::Default

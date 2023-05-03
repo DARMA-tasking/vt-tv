@@ -76,6 +76,42 @@ void Render::compute_object_load_range() {
   this->object_load_max_ = oq_max;
 }
 
+vtkPolyData* Render::create_rank_mesh_(PhaseType iteration) const {
+}
+
+vtkPolyData* Render::create_object_mesh_(PhaseWork phase) const {
+  // Retrieve number of mesh points and bail out early if empty set
+  uint64_t n_o = phase.getObjectWork().size();
+
+  // Create point array for object quantity of interest
+  vtkNew<vtkDoubleArray> q_arr;
+  q_arr->SetName(this->object_qoi_.c_str());
+  q_arr->SetNumberOfTuples(n_o);
+
+  // Load array must be added when it is not the object QOI
+  vtkNew<vtkDoubleArray> l_arr;
+  if (object_qoi_ != "load") {
+    l_arr->SetName("load");
+    l_arr->SetNumberOfTuples(n_o);
+  }
+
+  // Create bit array for object migratability
+  vtkNew<vtkBitArray> b_arr;
+  b_arr->SetName("migratable");
+  b_arr->SetNumberOfTuples(n_o);
+
+  // Create and size point set
+  vtkNew<vtkPoints> points;
+  points->SetNumberOfPoints(n_o);
+
+  // Retrieve elements constant across all ranks
+  PhaseType p_id = phase.getPhase();
+  std::string object_qoi = this->object_qoi_;
+
+  // @todo
+  // Iterate over ranks and objects to create mesh points
+}
+
 /*static*/ vtkNew<vtkColorTransferFunction> Render::createColorTransferFunction(
   double range[2], double avg_load, ColorType ct
 ) {
