@@ -72,6 +72,8 @@
 #include <vtkBitArray.h>
 
 #include "vt-tv/api/rank.h"
+#include "vt-tv/api/info.h"
+
 #include <fmt-vt/format.h>
 #include <ostream>
 #include <cmath>
@@ -81,6 +83,7 @@
 #include <tuple>
 #include <limits>
 #include <map>
+#include <unordered_set>
 
 namespace vt { namespace tv {
 
@@ -100,6 +103,7 @@ private:
   };
 
   std::unordered_map<PhaseType, PhaseWork> phase_info_;
+  Info info_;
   TimeType object_load_max_;
   std::string object_qoi_ = "load";
 
@@ -109,6 +113,13 @@ private:
    * \return void
    */
   void compute_object_load_range();
+
+  /**
+   * \brief get ranks belonging to phase
+   *
+   * \return set of ranks
+   */
+  std::unordered_set<NodeType> getRanks(PhaseType phase_in) const;
 
   /**
    * \brief Map ranks to polygonal mesh.
@@ -153,8 +164,9 @@ public:
    * \brief Construct render
    *
    * \param[in] in_phase_info the phases
+   * \param[in] in_info info about the ranks and phases
    */
-  Render(std::unordered_map<PhaseType, PhaseWork> in_phase_info);
+  Render(std::unordered_map<PhaseType, PhaseWork> in_phase_info, Info in_info);
 
   static void createPipeline(
     vtkPoints* rank_points,

@@ -51,8 +51,9 @@
 
 namespace vt { namespace tv {
 
-Render::Render(std::unordered_map<PhaseType, PhaseWork> in_phase_info)
+Render::Render(std::unordered_map<PhaseType, PhaseWork> in_phase_info, Info in_info)
 : phase_info_(std::move(in_phase_info))
+, info_(in_info)
 { };
 
 void Render::compute_object_load_range() {
@@ -74,6 +75,16 @@ void Render::compute_object_load_range() {
 
   // Update extrema attribute
   this->object_load_max_ = oq_max;
+}
+
+std::unordered_set<NodeType> Render::getRanks(PhaseType phase_in) const {
+  fmt::print("Getting Ranks in phase: {}\n", phase_in);
+  std::unordered_set<NodeType> rankSet;
+  for (auto const& [_, objInfo] : this->info_.getObjectInfo()) {
+    fmt::print("  rank: {}\n", objInfo.getHome());
+    rankSet.insert(objInfo.getHome());
+  }
+  return rankSet;
 }
 
 vtkPolyData* Render::create_rank_mesh_(PhaseType iteration) const {
@@ -106,6 +117,7 @@ vtkPolyData* Render::create_object_mesh_(PhaseWork phase) const {
 
   // Retrieve elements constant across all ranks
   PhaseType p_id = phase.getPhase();
+  std::unordered_set<NodeType> ranks = this->getRanks(p_id);
   std::string object_qoi = this->object_qoi_;
 
   // @todo
@@ -362,7 +374,9 @@ vtkPolyData* Render::create_object_mesh_(PhaseWork phase) const {
 void Render::generate() {
   // Create vector of number of objects per phase
   std::vector<uint64_t> n_objects_list;
+  vtkPolyData* testPolyData;
   for (auto const& [phase, phase_work] : this->phase_info_) {
+    testPolyData = this->create_object_mesh_(phase_work);
     n_objects_list.push_back(phase_work.getObjectWork().size());
   }
 

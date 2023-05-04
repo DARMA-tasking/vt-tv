@@ -110,7 +110,7 @@ int main() {
   }
 
   // Instantiate render
-  auto r = Render(phases);
+  auto r = Render(phases, *info);
   r.generate();
   return 0;
 }
