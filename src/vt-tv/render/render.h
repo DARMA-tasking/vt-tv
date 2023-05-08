@@ -84,9 +84,34 @@
 #include <limits>
 #include <map>
 #include <unordered_set>
+#include <set>
 
 namespace vt { namespace tv {
 
+template <typename T>
+struct Triplet {
+  T one;
+  T two;
+  T three;
+  Triplet(T a, T b, T c)
+  : one(a)
+  , two(b)
+  , three(c){};
+  constexpr T operator[](uint64_t index) {
+    switch (index)
+    {
+    case 0:
+      return one;
+    case 1:
+      return two;
+    case 2:
+      return three;
+    default:
+      throw std::out_of_range("Index must be < 3");
+      break;
+    }
+  }
+};
 
 /**
  * \struct Render
@@ -102,24 +127,47 @@ private:
     WhiteToBlack
   };
 
+  // General phase info
   std::unordered_map<PhaseType, PhaseWork> phase_info_;
   Info info_;
-  TimeType object_load_max_;
+  uint64_t n_ranks_;
+
+  // Geometric parameters
+  Triplet<uint64_t> grid_size_ = Triplet((uint64_t)1,(uint64_t)1,(uint64_t)1);
+  std::set<uint64_t> rank_dims_;
+  double object_jitter_;
+  double grid_resolution_ = 1.0;
+  uint64_t max_o_per_dim_ = 0;
+
+  // numeric parameters
+  std::tuple<TimeType, TimeType> object_load_range_;
+
+  // Maximum object atribute values
+  TimeType object_load_max_ = 0.0;
+  double object_volume_max_ = 0.0;
+
+  // quantities of interest
+  std::string rank_qoi_;
   std::string object_qoi_ = "load";
+  bool continuous_object_qoi_;
+
+  // output parameters
+  std::string output_dir_;
+  std::string output_file_stem_;
 
   /**
    * \brief Decide object quantity storage type and compute it.
    *
-   * \return void
+   * \return load range
    */
-  void compute_object_load_range();
+  std::tuple<TimeType, TimeType> compute_object_load_range();
 
   /**
    * \brief get ranks belonging to phase
    *
    * \return set of ranks
    */
-  std::unordered_set<NodeType> getRanks(PhaseType phase_in) const;
+  std::vector<NodeType> getRanks(PhaseType phase_in) const;
 
   /**
    * \brief Map ranks to polygonal mesh.
@@ -128,7 +176,7 @@ private:
    *
    * \return rank mesh
    */
-  vtkPolyData* create_rank_mesh_(PhaseType iteration) const;
+  vtkPolyData* create_rank_mesh_(PhaseType iteration);
 
   /**
    * \brief Map objects to polygonal mesh.
@@ -137,7 +185,7 @@ private:
    *
    * \return object mesh
    */
-  vtkPolyData* create_object_mesh_(PhaseWork phase) const;
+  vtkPolyData* create_object_mesh_(PhaseWork phase);
 
   static vtkNew<vtkColorTransferFunction> createColorTransferFunction(
     double range[2], double avg_load = 0, ColorType ct = ColorType::Default
@@ -155,8 +203,8 @@ private:
    *
    * \return i,j,k Cartesian coordinates
    */
-  static std::tuple<uint64_t, uint64_t, uint64_t> global_id_to_cartesian(
-    uint64_t flat_id, std::tuple<uint64_t, uint64_t, uint64_t> grid_sizes
+  static Triplet<uint64_t> global_id_to_cartesian(
+    uint64_t flat_id, Triplet<uint64_t> grid_sizes
   );
 
 public:
@@ -167,6 +215,31 @@ public:
    * \param[in] in_info info about the ranks and phases
    */
   Render(std::unordered_map<PhaseType, PhaseWork> in_phase_info, Info in_info);
+
+  /**
+   * \brief Construct render
+   *
+  * \param[in] in_qoi_request description of rank and object quantities of interest
+  * \param[in] in_continuous_object_qoi always treat object QOI as continuous or not
+  * \param[in] in_phase_info phase info
+  * \param[in] in_info general info
+  * \param[in] in_grid_size triplet containing grid sizes in each dimension
+  * \param[in] in_object_jitter coefficient of random jitter with magnitude < 1
+  * \param[in] in_output_dir output directory
+  * \param[in] in_output_file_stem file name stem
+  * \param[in] in_resolution grid_resolution value
+   */
+  Render(
+    Triplet<std::string> in_qoi_request,
+    bool in_continuous_object_qoi,
+    std::unordered_map<PhaseType, PhaseWork> in_phase_info,
+    Info in_info,
+    Triplet<uint64_t> in_grid_size,
+    double in_object_jitter,
+    std::string in_output_dir,
+    std::string in_output_file_stem,
+    double in_resolution
+  );
 
   static void createPipeline(
     vtkPoints* rank_points,
