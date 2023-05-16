@@ -71,6 +71,10 @@
 #include <vtkSphereSource.h>
 #include <vtkBitArray.h>
 
+#include <vtkPolyDataWriter.h>
+#include <vtkExodusIIWriter.h>
+#include <vtkXMLPolyDataWriter.h>
+
 #include "vt-tv/api/rank.h"
 #include "vt-tv/api/info.h"
 
@@ -170,13 +174,22 @@ private:
   std::vector<NodeType> getRanks(PhaseType phase_in) const;
 
   /**
+   * \brief Create mapping of objects in ranks
+   *
+   * \param[in] phase phase index
+   *
+   * \return mapping
+   */
+  std::unordered_map<NodeType, std::unordered_map<ElementIDType, ObjectWork>> create_object_mapping_(PhaseType phase);
+
+  /**
    * \brief Map ranks to polygonal mesh.
    *
    * \param[in] iteration phase index
    *
    * \return rank mesh
    */
-  vtkPolyData* create_rank_mesh_(PhaseType iteration);
+  vtkNew<vtkPolyData> create_rank_mesh_(PhaseType iteration);
 
   /**
    * \brief Map objects to polygonal mesh.
@@ -185,7 +198,7 @@ private:
    *
    * \return object mesh
    */
-  vtkPolyData* create_object_mesh_(PhaseWork phase);
+  vtkNew<vtkPolyData> create_object_mesh_(PhaseWork phase);
 
   static vtkNew<vtkColorTransferFunction> createColorTransferFunction(
     double range[2], double avg_load = 0, ColorType ct = ColorType::Default
@@ -205,6 +218,10 @@ private:
    */
   static Triplet<uint64_t> global_id_to_cartesian(
     uint64_t flat_id, Triplet<uint64_t> grid_sizes
+  );
+
+  static std::vector<uint64_t> global_id_to_cartesian(
+    uint64_t flat_id, std::vector<uint64_t> grid_sizes
   );
 
 public:
@@ -253,6 +270,11 @@ public:
     int iteration,
     double imbalance,
     int win_size
+  );
+
+  void createObjectPipeline(
+    vtkPolyData* object_mesh,
+    vtkPolyData* rank_mesh
   );
 
   void generate(/*bool save_meshes, bool gen_vizqoi*/);

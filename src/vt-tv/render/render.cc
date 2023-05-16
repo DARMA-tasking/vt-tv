@@ -54,7 +54,16 @@ namespace vt { namespace tv {
 Render::Render(std::unordered_map<PhaseType, PhaseWork> in_phase_info, Info in_info)
 : phase_info_(std::move(in_phase_info))
 , info_(in_info)
-{ };
+, n_ranks_(in_info.getNumRanks())
+{
+  this->grid_size_.one = 2;
+  this->grid_size_.two = 2;
+  this->grid_size_.three = 1;
+  for (uint64_t d = 0 ; d < 3 ; d++) {
+    if(grid_size_[d] > 1) rank_dims_.insert(d);
+  }
+  max_o_per_dim_ = 0;
+};
 
 Render::Render(
   Triplet<std::string> in_qoi_request,
@@ -118,19 +127,46 @@ std::tuple<TimeType, TimeType> Render::compute_object_load_range() {
 }
 
 std::vector<NodeType> Render::getRanks(PhaseType phase_in) const {
-  fmt::print("Getting Ranks in phase: {}\n", phase_in);
+  // fmt::print("Getting Ranks in phase: {}\n", phase_in);
   std::vector<NodeType> rankSet;
   for (auto const& [_, objInfo] : this->info_.getObjectInfo()) {
-    fmt::print("  rank: {}\n", objInfo.getHome());
+    // fmt::print("  rank: {}\n", objInfo.getHome());
     rankSet.push_back(objInfo.getHome());
   }
   return rankSet;
 }
 
-vtkPolyData* Render::create_rank_mesh_(PhaseType iteration) {
+std::unordered_map<NodeType, std::unordered_map<ElementIDType, ObjectWork>> Render::create_object_mapping_(PhaseType phase) {
+  std::unordered_map<NodeType, std::unordered_map<ElementIDType, ObjectWork>> object_mapping;
+
+  fmt::print("\n\n");
+  fmt::print("  -creating object mapping-\n");
+  fmt::print("  phase: {}\n", phase);
+  fmt::print("  n_ranks: {}\n", this->n_ranks_);
+
+  // Add each rank and its corresponding objects at the given phase to the object mapping
+  for (uint64_t rank_id = 0; rank_id < this->n_ranks_; rank_id++) {
+    fmt::print("  rank_id: {}\n", rank_id);
+    object_mapping.insert(std::make_pair(rank_id, this->info_.getRankObjects(rank_id, phase)));
+  }
+
+  fmt::print("  -finished creating object mapping-\n");
+  return object_mapping;
+}
+
+vtkNew<vtkPolyData> Render::create_rank_mesh_(PhaseType iteration) {
+  fmt::print("\n\n");
+  fmt::print("-----creating rank mesh for phase {} -----\n", iteration);
   vtkNew<vtkPoints> rank_points_;
   rank_points_->SetNumberOfPoints(this->n_ranks_);
+
+  vtkNew<vtkDoubleArray> rank_arr;
+  rank_arr->SetName("rank qoi");
+  rank_arr->SetNumberOfTuples(this->n_ranks_);
+
+  fmt::print("\n  Number of ranks in phase: {}\n", this->n_ranks_);
   for (uint64_t rank_id = 0; rank_id < this->n_ranks_; rank_id++) {
+    fmt::print("  rankID: {}\n", rank_id);
     Triplet cartesian = this->global_id_to_cartesian(rank_id, this->grid_size_);
     Triplet offsets = Triplet(
       cartesian.one * this->grid_resolution_,
@@ -139,16 +175,22 @@ vtkPolyData* Render::create_rank_mesh_(PhaseType iteration) {
       );
     // Insert point based on cartesian coordinates
     rank_points_->SetPoint(rank_id, offsets.one, offsets.two, offsets.three);
+
+    // rank_arr->SetTuple1(rank_id, /* qoi */);
   }
 
   vtkNew<vtkPolyData> pd_mesh;
   pd_mesh->SetPoints(rank_points_);
+  fmt::print("-----created rank mesh for phase {} -----\n", iteration);
   return pd_mesh;
 }
 
-vtkPolyData* Render::create_object_mesh_(PhaseWork phase) {
+vtkNew<vtkPolyData> Render::create_object_mesh_(PhaseWork phase) {
+  fmt::print("\n\n");
+  fmt::print("-----creating object mesh for phase {} -----\n", phase.getPhase());
   // Retrieve number of mesh points and bail out early if empty set
-  uint64_t n_o = phase.getObjectWork().size();
+  uint64_t n_o = this->info_.getPhaseObjects(phase.getPhase(), this->n_ranks_).size();
+  fmt::print("\nNumber of objects in phase: {} -----\n", n_o);
 
   // Create point array for object quantity of interest
   vtkNew<vtkDoubleArray> q_arr;
@@ -181,66 +223,127 @@ vtkPolyData* Render::create_object_mesh_(PhaseWork phase) {
   uint64_t point_index = 0;
   std::map<ObjectInfo, uint64_t> point_to_index;
 
-  // Iterate through ranks
-  for (uint64_t rank_id = 0; rank_id < this->n_ranks_; rank_id++) {
-    // Find objects in this rank
-    for (auto const& [objectID, objectInfo] : this->info_.getObjectInfo()) {
-      if(objectInfo.getHome() == rank_id) {
+  auto object_mapping = this->create_object_mapping_(p_id);
 
+  fmt::print("object_mapping size: {}\n", object_mapping.size());
+
+  // Iterate through object mapping
+  for (auto const& [rankID, objects] : object_mapping) {
+    fmt::print("rankID: {}\n", rankID);
+    Triplet ijk = this->global_id_to_cartesian(rankID, Triplet((uint64_t)2, (uint64_t)2, (uint64_t)1));
+    fmt::print("cartesian: [{}, {}, {}]\n",ijk.one, ijk.two, ijk.three);
+
+    Triplet offsets(ijk.one * this->grid_resolution_, ijk.two * this->grid_resolution_, ijk.three * this->grid_resolution_);
+    fmt::print("offsets: [{}, {}, {}]\n", offsets.one, offsets.two, offsets.three);
+
+    // Compute local object block parameters
+    uint64_t n_o_rank = objects.size();
+    fmt::print("n_o_rank: {}\n",n_o_rank);
+
+    // @TODO add rank_dims_ struct attribute
+    // n_o_per_dim = math.ceil(n_o_rank ** (1. / len(self.__rank_dims)))
+    uint64_t n_o_per_dim = ceil( pow( n_o_rank, 1.0 / 2) );
+    if (n_o_per_dim > this->max_o_per_dim_) {
+      this->max_o_per_dim_ = n_o_per_dim;
+    }
+    double o_resolution = this->grid_resolution_ / (n_o_per_dim + 1.);
+
+    // Create point coordinates
+    std::vector<uint64_t> rank_size = {1, 1, 1};
+    for (uint64_t d = 0; d < 3; d++) {
+      if (auto f = this->rank_dims_.find(d); f != this->rank_dims_.end()) {
+        rank_size[d] = n_o_per_dim;
+      } else rank_size[d] = 1;
+    }
+    fmt::print("rank_size: ");
+    for (auto s : rank_size) {
+      fmt::print("{}, ", s);
+    }
+    fmt::print("\n");
+
+    std::vector<double> centering = {0, 0, 0};
+    for (uint64_t d = 0; d < 3; d++) {
+      if (auto f = this->rank_dims_.find(d); f != this->rank_dims_.end()) {
+        centering[d] = 0.5 * o_resolution * (n_o_per_dim - 1.0);
+      } else {
+        centering[d] = 0.0;
       }
     }
+    fmt::print("centering: ");
+    for (auto c : centering) {
+      fmt::print("{}, ", c);
+    }
+    fmt::print("\n");
+
+    auto const& rank = this->info_.getRank(rankID);
+
+    //@TODO: clean this stuff up
+
+    struct cmpByMigratableThenID {
+      cmpByMigratableThenID(const Info& info) :info_(info) {}
+      bool operator()(const ObjectWork& lhs, const ObjectWork& rhs) const {
+        ElementIDType lhsID = lhs.getID();
+        ElementIDType rhsID = rhs.getID();
+        bool migratableLhs = info_.getObjectInfo().at(lhsID).isMigratable();
+        bool migratableRhs = info_.getObjectInfo().at(rhsID).isMigratable();
+        if(migratableLhs != migratableRhs) {
+            return migratableLhs < migratableRhs; // non-migratable comes first
+        }
+        return lhsID < rhsID; // Then sort by ID
+      }
+      private:
+      Info info_;
+    };
+    std::map<ObjectWork, uint64_t, cmpByMigratableThenID> ordered_objects(cmpByMigratableThenID(this->info_));
+
+    for (auto const& [objectID, objectWork] : objects) {
+      bool migratable = this->info_.getObjectInfo().at(objectID).isMigratable();
+      ordered_objects.insert(std::make_pair(objectWork, migratable));
+    }
+
+    // Add rank objects to point set
+    int i = 0;
+    for (auto const& [objectWork, sentinel] : ordered_objects) {
+      // fmt::print("Object ID: {}, sentinel: {}\n", objectWork.getID(), sentinel);
+
+      // Insert point using offset and rank coordinates
+      std::vector<double> currentPointPosition = {0, 0, 0};
+      int d = 0;
+      for (auto c : this->global_id_to_cartesian(i, rank_size)) {
+        currentPointPosition[d] = offsets[d] - centering[d] + (/* jitter + */ c) * o_resolution;
+        d++;
+      }
+      fmt::print("currentPointPosition: ");
+      for (auto pd : currentPointPosition) {
+        fmt::print("{}, ", pd);
+      }
+      fmt::print("\n");
+
+      fmt::print("  point index: {}\n", point_index);
+      fmt::print(" N points: {}\n", points->GetNumberOfPoints());
+      points->SetPoint(
+        point_index,
+        currentPointPosition[0],
+        currentPointPosition[1],
+        currentPointPosition[2]
+      );
+
+      // Set object attributes
+      q_arr->SetTuple1(point_index, objectWork.getLoad());
+      b_arr->SetTuple1(point_index, sentinel);
+      i++;
+      point_index++;
+    }
+
   }
 
   vtkNew<vtkPolyData> pd_mesh;
-
+  pd_mesh->SetPoints(points);
+  pd_mesh->GetPointData()->SetScalars(q_arr);
+  pd_mesh->GetPointData()->AddArray(b_arr);
+  fmt::print("\n\n");
+  fmt::print("-----finished creating object mesh-----\n");
   return pd_mesh;
-
-
-  // for (auto const& [objectID, objectInfo] : this->info_.getObjectInfo()) {
-  //   // Determine rank offsets
-  //   // @TODO change values to struct values, change syntax
-  //   fmt::print("rank_id: {}\n",rank_id);
-  //   const auto [i, j, k] = this->global_id_to_cartesian(rank_id, std::make_tuple(2,2,1));
-  //   fmt::print("cartesian: [{}, {}, {}]\n",i,j,k);
-  //   std::tuple<uint64_t, uint64_t, uint64_t> offsets = std::make_tuple(i*this->grid_resolution_, j*this->grid_resolution_, k*this->grid_resolution_);
-  //   const auto [o1, o2, o3] = offsets;
-  //   fmt::print("offsets: [{}, {}, {}]\n",o1,o2,o3);
-
-  //   // Compute local object block parameters
-  //   uint64_t n_o_rank = objects.size();
-  //   fmt::print("n_o_rank: {}\n",n_o_rank);
-  //   // @TODO add rank_dims_ struct attribute
-  //   // n_o_per_dim = math.ceil(n_o_rank ** (1. / len(self.__rank_dims)))
-  //   uint64_t n_o_per_dim = ceil( pow( n_o_rank, 1.0 / 2) );
-  //   if (n_o_per_dim > this->max_o_per_dim_) {
-  //     this->max_o_per_dim_ = n_o_per_dim;
-  //   }
-  //   double o_resolution = this->grid_resolution_ / (n_o_per_dim + 1.);
-
-  //   // Create point coordinates
-  //   std::set<uint64_t> rank_size;
-  //   for (uint64_t d = 0; d < 3; d++) {
-  //     if (auto f = this->rank_dims_.find(d); f != this->rank_dims_.end())
-  //     rank_size.insert(n_o_per_dim); else rank_size.insert(1);
-  //   }
-  //   std::set<double> centering;
-  //   for (uint64_t d = 0; d < 3; d++) {
-  //     if (auto f = this->rank_dims_.find(d); f != this->rank_dims_.end()) {
-  //       centering.insert(0.5 * o_resolution * (n_o_per_dim - 1.0));
-  //     } else {
-  //       centering.insert(0.0);
-  //     }
-  //   }
-
-  //   // Order objects of current rank
-  //   // NodeType r = ranks[rank_id];
-  //   // std::map<ElementIDType,TimeType> objects_list;
-  //   // objects_list = std::sort(objects.begin(), objects.end(), [](uint64_t x)
-  //   //                                                           {
-  //   //                                                             return x.getID();
-  //   //                                                           });
-  //   rank_id++;
-  // }
 }
 
 /*static*/ vtkNew<vtkColorTransferFunction> Render::createColorTransferFunction(
@@ -327,6 +430,27 @@ vtkPolyData* Render::create_object_mesh_(PhaseWork phase) {
   position->SetValue(x, y, 0.0);
 
   return scalar_bar_actor;
+}
+
+/* static */ std::vector<uint64_t> Render::global_id_to_cartesian(
+    uint64_t flat_id, std::vector<uint64_t> grid_sizes
+) {
+  std::vector<uint64_t> cartesian = {0, 0, 0};
+  // Sanity check
+  uint64_t n01 = grid_sizes[0] * grid_sizes[1];
+  if (flat_id < 0 || flat_id >= n01 * grid_sizes[2]) {
+    throw std::out_of_range("Index error");
+  }
+
+  // Compute successive Euclidean divisions
+  uint64_t quot1 = flat_id / n01;
+  uint64_t rem1 = flat_id % n01;
+  uint64_t quot2 = rem1 / grid_sizes[0];
+  uint64_t rem2 = rem1 % grid_sizes[0];
+  cartesian[0] = rem2;
+  cartesian[1] = quot2;
+  cartesian[2] = quot1;
+  return cartesian;
 }
 
 /* static */ Triplet<uint64_t> Render::global_id_to_cartesian(
@@ -490,12 +614,159 @@ vtkPolyData* Render::create_object_mesh_(PhaseWork phase) {
   writer->Write();
 }
 
+/*static*/ void Render::createObjectPipeline(
+  vtkPolyData* object_mesh,
+  vtkPolyData* rank_mesh
+) {
+  vtkNew<vtkRenderer> renderer;
+  renderer->SetBackground(1.0, 1.0, 1.0);
+  renderer->GetActiveCamera()->ParallelProjectionOn();
+
+  vtkNew<vtkGlyphSource2D> rank_glyph;
+  rank_glyph->SetGlyphTypeToSquare();
+  rank_glyph->SetScale(.95);
+  rank_glyph->FilledOn();
+  rank_glyph->CrossOff();
+  vtkNew<vtkGlyph2D> rank_glypher;
+  rank_glypher->SetSourceConnection(rank_glyph->GetOutputPort());
+  rank_glypher->SetInputData(rank_mesh);
+  rank_glypher->SetScaleModeToDataScalingOff();
+
+  //Lower glyphs slightly for visibility
+  vtkNew<vtkTransform> z_lower;
+  z_lower->Translate(0.0, 0.0, -0.01);
+  vtkNew<vtkTransformPolyDataFilter> trans;
+  trans->SetTransform(z_lower);
+  trans->SetInputConnection(rank_glypher->GetOutputPort());
+
+  vtkNew<vtkPolyDataMapper> rank_mapper;
+  rank_mapper->SetInputConnection(trans->GetOutputPort());
+  // rank_mapper->SetLookupTable(createColorTransferFunction({0,0.01}));
+  // rank_mapper->SetScalarRange({0,0.01});
+
+  vtkNew<vtkActor> rank_actor;
+  rank_actor->SetMapper(rank_mapper);
+  auto qoi_actor = createScalarBarActor(rank_mapper, "Rank XXX", 0.5, 0.9);
+  qoi_actor->DrawBelowRangeSwatchOn();
+  qoi_actor->SetBelowRangeAnnotation("<");
+  qoi_actor->DrawAboveRangeSwatchOn();
+  qoi_actor->SetAboveRangeAnnotation(">");
+  renderer->AddActor(rank_actor);
+  renderer->AddActor2D(qoi_actor);
+
+  // vtkNew<vtkLookupTable> bw_lut;
+  // bw_lut->SetTableRange((0.0, self.__max_object_volume));
+  // bw_lut->SetSaturationRange(0, 0);
+  // bw_lut->SetHueRange(0, 0);
+  // bw_lut->SetValueRange(1, 0);
+  // bw_lut->SetNanColor(1.0, 1.0, 1.0, 0.0);
+  // bw_lut->Build();
+
+  vtkNew<vtkArrayCalculator> sqrtT;
+  sqrtT->SetInputData(object_mesh);
+  sqrtT->AddScalarArrayName("Load");
+  char const* sqrtT_str = "sqrt(Load)";
+  sqrtT->SetFunction(sqrtT_str);
+  sqrtT->SetResultArrayName(sqrtT_str);
+  sqrtT->Update();
+  auto sqrtT_out = sqrtT->GetDataSetOutput();
+  sqrtT_out->GetPointData()->SetActiveScalars("Migratable");
+
+  std::vector<std::tuple<double, std::string>> items{{0.0, "Square"}, {1.0, "Circle"}};
+  vtkPolyDataMapper* glyph_mapper_out = nullptr;
+  for (auto&& [k,v] : items) {
+    vtkNew<vtkThresholdPoints> thresh;
+    thresh->SetInputData(sqrtT_out);
+    thresh->ThresholdBetween(k, k);
+    thresh->Update();
+    auto thresh_out = thresh->GetOutput();
+    if (not thresh_out->GetNumberOfPoints())
+      continue;
+    thresh_out->GetPointData()->SetActiveScalars(sqrtT_str);
+
+    // Glyph by square root of object loads
+    vtkNew<vtkGlyphSource2D> glyph;
+    if (v == "Square") {
+      glyph->SetGlyphTypeToSquare();
+    } else {
+      glyph->SetGlyphTypeToCircle();
+    }
+    glyph->SetResolution(32);
+    glyph->SetScale(1.0);
+    glyph->FilledOn();
+    glyph->CrossOff();
+    vtkNew<vtkGlyph3D> glypher;
+    glypher->SetSourceConnection(glyph->GetOutputPort());
+    glypher->SetInputData(thresh_out);
+    glypher->SetScaleModeToScaleByScalar();
+    glypher->SetScaleFactor(0.5);
+    glypher->Update();
+    glypher->GetOutput()->GetPointData()->SetActiveScalars("Load");
+
+    // Raise glyphs slightly for visibility
+    vtkNew<vtkTransform> z_raise;
+    z_raise->Translate(0.0, 0.0, 0.01);
+    vtkNew<vtkTransformPolyDataFilter> trans;
+    trans->SetTransform(z_raise);
+    trans->SetInputData(glypher->GetOutput());
+
+    // Create mapper and actor for glyphs
+    vtkNew<vtkPolyDataMapper> glyph_mapper;
+    glyph_mapper_out = glyph_mapper;
+    glyph_mapper->SetInputConnection(trans->GetOutputPort());
+    // glyph_mapper->SetLookupTable(createColorTransferFunction({0,0.01}, 0, BlueToRed));
+    // glyph_mapper->SetScalarRange({0,0.01});
+    vtkNew<vtkActor> glyph_actor;
+    glyph_actor->SetMapper(glyph_mapper);
+    renderer->AddActor(glyph_actor);
+  }
+
+  if (glyph_mapper_out) {
+    auto load_actor = createScalarBarActor(glyph_mapper_out, "Object Load", 0.55, 0.55);
+    renderer->AddActor2D(load_actor);
+  }
+
+  renderer->ResetCamera();
+  vtkNew<vtkRenderWindow> render_window;
+  render_window->AddRenderer(renderer);
+  render_window->SetWindowName("LBAF");
+  render_window->SetSize(100, 100);
+  render_window->Render();
+
+  vtkNew<vtkWindowToImageFilter> w2i;
+  w2i->SetInput(render_window);
+  w2i->SetScale(3);
+
+  vtkNew<vtkPNGWriter> writer;
+  writer->SetInputConnection(w2i->GetOutputPort());
+  writer->SetFileName("test.png");
+  writer->SetCompressionLevel(2);
+  writer->Write();
+}
+
 void Render::generate() {
   // Create vector of number of objects per phase
   std::vector<uint64_t> n_objects_list;
-  vtkPolyData* testPolyData;
   for (auto const& [phase, phase_work] : this->phase_info_) {
-    testPolyData = this->create_object_mesh_(phase_work);
+    // vtkPolyData* testPolyData = this->create_object_mesh_(phase_work);
+    vtkNew<vtkPolyData> object_mesh = this->create_object_mesh_(phase_work);
+    vtkNew<vtkPolyData> rank_mesh = this->create_rank_mesh_(phase_work.getPhase());
+
+    this->createObjectPipeline(
+      object_mesh.Get(), rank_mesh.Get()
+    );
+
+    vtkNew<vtkXMLPolyDataWriter> writer;
+    writer->SetFileName("test.vtp");
+    writer->SetInputData(object_mesh);
+    writer->Write();
+
+    vtkNew<vtkXMLPolyDataWriter> writer2;
+    writer2->SetFileName("test2.vtp");
+    writer2->SetInputData(rank_mesh);
+    writer2->Write();
+
+    exit(1);
     n_objects_list.push_back(phase_work.getObjectWork().size());
   }
 
@@ -525,8 +796,9 @@ void Render::generate() {
     // Create a sphere
     vtkNew<vtkSphereSource> sphereSource;
     sphereSource->SetRadius(pow(phases_object_loads[0][actor_i] / (max_load-min_load), 2) * 0.5);
-    const auto [i, j, k] = this->global_id_to_cartesian(actor_i, {5, 5, 1});
-    sphereSource->SetCenter(i, j, k);
+    std::vector<uint64_t> test_dims = {5, 5, 1};
+    auto test_coordinates = this->global_id_to_cartesian(actor_i, test_dims);
+    sphereSource->SetCenter(test_coordinates[0], test_coordinates[1], test_coordinates[2]);
 
     // Make the surface smooth.
     sphereSource->SetPhiResolution(100);

@@ -86,26 +86,51 @@ int main() {
   reader.readFile();
   auto info = reader.parseFile();
 
+  NodeType rank1 = 1;
+  utility::JSONReader reader1{rank1, path + "/data.1.json"};
+  reader1.readFile();
+  auto info1 = reader1.parseFile();
+
+  NodeType rank2 = 2;
+  utility::JSONReader reader2{rank2, path + "/data.2.json"};
+  reader2.readFile();
+  auto info2 = reader2.parseFile();
+
+  NodeType rank3 = 3;
+  utility::JSONReader reader3{rank3, path + "/data.3.json"};
+  reader3.readFile();
+  auto info3 = reader3.parseFile();
+
+  info->addInfo(info1->getObjectInfo(), info1->getRank(rank1));
+  info->addInfo(info2->getObjectInfo(), info2->getRank(rank2));
+  info->addInfo(info3->getObjectInfo(), info3->getRank(rank3));
+
+  info->getPhaseObjects(1,4);
+  fmt::print("===================\n");
+  info->getAllObjects(4);
+
+  fmt::print("===================\n");
+
   auto const& obj_info = info->getObjectInfo();
 
   fmt::print("Object info size={}\n", obj_info.size());
   fmt::print("Num ranks={}\n", info->getNumRanks());
 
-  for (auto const& [elm_id, oi] : obj_info) {
-    fmt::print(
-      "elm_id={:x}, home={}, migratable={}, index_array size={}\n",
-      elm_id, oi.getHome(), oi.isMigratable(), oi.getIndexArray().size()
-    );
-  }
+  // for (auto const& [elm_id, oi] : obj_info) {
+  //   fmt::print(
+  //     "elm_id={:x}, home={}, migratable={}, index_array size={}\n",
+  //     elm_id, oi.getHome(), oi.isMigratable(), oi.getIndexArray().size()
+  //   );
+  // }
 
   auto& rank_info = info->getRank(rank);
 
   auto& phases = rank_info.getPhaseWork();
 
   for (auto const& [phase, phase_work] : phases) {
-    fmt::print("phase={}\n", phase);
+    // fmt::print("phase={}\n", phase);
     for (auto const& [elm_id, work] : phase_work.getObjectWork()) {
-      fmt::print("\t elm_id={:x}: load={}\n", elm_id, work.getLoad());
+      // fmt::print("\t elm_id={:x}: load={}\n", elm_id, work.getLoad());
     }
   }
 

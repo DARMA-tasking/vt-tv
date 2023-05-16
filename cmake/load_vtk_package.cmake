@@ -4,6 +4,7 @@ find_package(
   RenderingCore
   IOExodus
   IOParallel
+  IOXML
   CommonColor
   CommonCore
   CommonDataModel
