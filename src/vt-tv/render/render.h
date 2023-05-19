@@ -139,7 +139,6 @@ private:
   // Geometric parameters
   Triplet<uint64_t> grid_size_ = Triplet((uint64_t)1,(uint64_t)1,(uint64_t)1);
   std::set<uint64_t> rank_dims_;
-  double object_jitter_;
   double grid_resolution_ = 1.0;
   uint64_t max_o_per_dim_ = 0;
 
@@ -158,6 +157,10 @@ private:
   // output parameters
   std::string output_dir_;
   std::string output_file_stem_;
+
+  // Jitter per object
+  double object_jitter_ = 0.5;
+  std::unordered_map<ElementIDType, std::vector<double>> jitter_dims_;
 
   /**
    * \brief Decide object quantity storage type and compute it.

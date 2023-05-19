@@ -63,6 +63,19 @@ Render::Render(std::unordered_map<PhaseType, PhaseWork> in_phase_info, Info in_i
     if(grid_size_[d] > 1) rank_dims_.insert(d);
   }
   max_o_per_dim_ = 0;
+
+  // Initialize jitter
+  std::srand(std::time(nullptr));
+  auto const& allObjects = info_.getAllObjects(n_ranks_);
+  for (auto const& [objectID, objectWork] : allObjects) {
+    std::vector<double> jitterDims;
+    for (uint64_t d = 0; d < 3; d++) {
+      if (auto f = this->rank_dims_.find(d); f != this->rank_dims_.end()) {
+        jitterDims.push_back(((double)std::rand()/RAND_MAX - 0.5) * object_jitter_);
+      } else jitterDims.push_back(0);
+    }
+    jitter_dims_.insert(std::make_pair(objectID, jitterDims));
+  }
 };
 
 Render::Render(
@@ -310,7 +323,8 @@ vtkNew<vtkPolyData> Render::create_object_mesh_(PhaseWork phase) {
       std::vector<double> currentPointPosition = {0, 0, 0};
       int d = 0;
       for (auto c : this->global_id_to_cartesian(i, rank_size)) {
-        currentPointPosition[d] = offsets[d] - centering[d] + (/* jitter + */ c) * o_resolution;
+        currentPointPosition[d] = offsets[d] - centering[d] + (
+          jitter_dims_.at(objectWork.getID())[d] + c) * o_resolution;
         d++;
       }
       fmt::print("currentPointPosition: ");
@@ -757,16 +771,17 @@ void Render::generate() {
     );
 
     vtkNew<vtkXMLPolyDataWriter> writer;
-    writer->SetFileName("test.vtp");
+    std::string object_mesh_filename = "object_mesh_" + std::to_string(phase) + ".vtp";
+    writer->SetFileName(object_mesh_filename.c_str());
     writer->SetInputData(object_mesh);
     writer->Write();
 
     vtkNew<vtkXMLPolyDataWriter> writer2;
-    writer2->SetFileName("test2.vtp");
+    std::string rank_mesh_filneame = "rank_mesh_" + std::to_string(phase) + ".vtp";
+    writer2->SetFileName(rank_mesh_filneame.c_str());
     writer2->SetInputData(rank_mesh);
     writer2->Write();
 
-    exit(1);
     n_objects_list.push_back(phase_work.getObjectWork().size());
   }
 
