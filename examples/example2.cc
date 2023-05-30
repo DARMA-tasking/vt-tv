@@ -78,7 +78,7 @@ int main() {
   using namespace tv;
   // Read JSON file and input data
 
-  std::filesystem::path p = std::filesystem::path(SRC_DIR) / "tests/unit/lb_test_data" ;
+  std::filesystem::path p = "/Users/pierrepebay/Develop/LB-analysis-framework/data/synthetic_lb_data"; //std::filesystem::path(SRC_DIR) / "tests/unit/lb_test_data" ;
   std::string path = std::filesystem::absolute(p).string();
 
   uint64_t n_ranks = 4;
@@ -92,11 +92,12 @@ int main() {
     info->addInfo(tmpInfo->getObjectInfo(), tmpInfo->getRank(rank));
   }
 
-  info->getPhaseObjects(1,4);
+  info->getPhaseObjects(0,4);
   fmt::print("===================\n");
   info->getAllObjects(4);
 
   fmt::print("===================\n");
+  info->normalizeEdges(0,4);
 
   auto const& obj_info = info->getObjectInfo();
 

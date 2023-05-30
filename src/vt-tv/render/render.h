@@ -70,6 +70,8 @@
 #include <vtkRegularPolygonSource.h>
 #include <vtkSphereSource.h>
 #include <vtkBitArray.h>
+#include <vtkLine.h>
+#include <vtkCellData.h>
 
 #include <vtkPolyDataWriter.h>
 #include <vtkExodusIIWriter.h>

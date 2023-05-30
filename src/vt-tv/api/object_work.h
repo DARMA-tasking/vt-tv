@@ -44,7 +44,7 @@
 #if !defined INCLUDED_VT_TV_API_OBJECT_WORK_H
 #define INCLUDED_VT_TV_API_OBJECT_WORK_H
 
-#include "vt-tv/api/types.h"
+#include "vt-tv/api/object_communicator.h"
 
 #include <unordered_map>
 #include <vector>
@@ -78,7 +78,8 @@ struct ObjectWork {
   ) : id_(in_id),
       whole_phase_load_(in_whole_phase_load),
       subphase_loads_(std::move(in_subphase_loads)),
-      user_defined_(std::move(in_user_defined))
+      user_defined_(std::move(in_user_defined)),
+      communicator_(id_)
   { }
 
   /**
@@ -109,6 +110,60 @@ struct ObjectWork {
    */
   auto const& getUserDefined() const { return user_defined_; }
 
+  /**
+   * \brief set communications for this object
+   *
+   * \return void
+   */
+  void setCommunications(ObjectCommunicator c) {
+    assert(c.get_object_id() == id_);
+    communicator_ = c;
+  };
+
+  /**
+   * \brief add sent communication to this object
+   *
+   * \return void
+   */
+  void addSentCommunications(ElementIDType to_id, double bytes) {
+    communicator_.addSent(to_id, bytes);
+  };
+
+  /**
+   * \brief add received communication to this object
+   *
+   * \return void
+   */
+  void addReceivedCommunications(ElementIDType from_id, double bytes) {
+    communicator_.addReceived(from_id, bytes);
+  };
+
+  // void normalizeEdges(Info& i) {
+  //   auto const& received = communicator_.get_received();
+  //   for (auto const& [elm, bytes] : received) {
+  //     i.getPhaseObjects(elm).addSentCommunications(id_, bytes);
+  //   }
+
+  //   auto const& sent = communicator_.get_sent();
+  //   for (auto const& [elm, bytes] : send) {
+  //     pw.getObject(elm).addSentCommunications(id_, bytes);
+  //   }
+  // }
+
+  /**
+   * \brief get received communications for this object
+   */
+  std::map<ElementIDType, double>& getReceived() {
+    return communicator_.get_received();
+  }
+
+  /**
+   * \brief get sent communications for this object
+   */
+  std::map<ElementIDType, double>& getSent() {
+    return communicator_.get_sent();
+  }
+
 private:
   /// Element ID
   ElementIDType id_ = 0;
@@ -120,6 +175,7 @@ private:
   std::unordered_map<std::string, VariantType> user_defined_;
 
   /// @todo: add communications
+  ObjectCommunicator communicator_;
 };
 
 } /* end namesapce vt::tv */

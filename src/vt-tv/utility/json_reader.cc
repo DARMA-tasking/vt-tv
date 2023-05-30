@@ -48,6 +48,7 @@
 
 #include <nlohmann/json.hpp>
 #include <fmt-vt/core.h>
+#include <fmt-vt/format.h>
 
 #include <fstream>
 
@@ -184,7 +185,7 @@ std::unique_ptr<Info> JSONReader::parseFile() {
                 }
               }
             }
-
+            fmt::print(" Add object {}\n", (ElementIDType)object);
             objects.try_emplace(
               object,
               ObjectWork{
@@ -195,6 +196,35 @@ std::unique_ptr<Info> JSONReader::parseFile() {
         }
       }
 
+      auto communications = phase["communications"];
+      if (communications.is_array()) {
+        for (auto const& comm : communications) {
+          auto type = comm["type"];
+          if (type == "SendRecv") {
+            auto bytes = comm["bytes"];
+            auto messages = comm["messages"];
+
+            auto from = comm["from"];
+            auto to = comm["to"];
+
+            ElementIDType from_id = from["id"];
+            ElementIDType to_id = to["id"];
+
+            assert(bytes.is_number());
+            assert(from_id.is_number());
+            assert(to_id.is_number());
+
+            fmt::print(" From: {}, to: {}\n", from_id, to_id);
+
+            // Object on this rank sent data
+            if (objects.find(from_id) != objects.end()) {
+              objects.at(from_id).addSentCommunications(to_id, bytes);
+            } else if (objects.find(to_id) != objects.end()) {
+              objects.at(to_id).addReceivedCommunications(from_id, bytes);
+            }
+          }
+        }
+      }
       phase_info.try_emplace(id, PhaseWork{id, std::move(objects)});
     }
   }

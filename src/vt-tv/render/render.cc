@@ -238,7 +238,7 @@ vtkNew<vtkPolyData> Render::create_object_mesh_(PhaseWork phase) {
 
   // Iterate over ranks and objects to create mesh points
   uint64_t point_index = 0;
-  std::map<ObjectInfo, uint64_t> point_to_index;
+  std::map<ElementIDType, uint64_t> objectid_to_index;
 
   auto object_mapping = this->create_object_mapping_(p_id);
 
@@ -331,15 +331,67 @@ vtkNew<vtkPolyData> Render::create_object_mesh_(PhaseWork phase) {
       b_arr->SetTuple1(point_index, sentinel);
       i++;
       point_index++;
+      objectid_to_index.insert(std::make_pair(objectWork.getID(), point_index));
     }
+  }
 
+  vtkNew<vtkDoubleArray> lineValuesArray;
+  lineValuesArray->SetName("bytes");
+  vtkNew<vtkCellArray> lines;
+  uint64_t n_e = 0;
+  auto phaseObjects = this->info_.getPhaseObjects(phase.getPhase(), this->n_ranks_);
+
+  for (auto& [id, objWork] : phaseObjects) {
+    fmt::print("id {}\n", id);
+    std::map<ElementIDType, double>& receivedCommunications = objWork.getSent();
+    fmt::print("map size: {}\n", receivedCommunications.size());
+    for (auto& [from_id, bytes] : receivedCommunications) {
+      fmt::print("id {} <-> from_id {}\n", id, from_id);
+      vtkNew<vtkLine> line;
+      lineValuesArray->InsertNextTuple1(bytes);
+      line->GetPointIds()->SetId(0, objectid_to_index.at(id));
+      line->GetPointIds()->SetId(1, objectid_to_index.at(from_id));
+      lines->InsertNextCell(line);
+    }
   }
 
   vtkNew<vtkPolyData> pd_mesh;
   pd_mesh->SetPoints(points);
+  pd_mesh->SetLines(lines);
   pd_mesh->GetPointData()->SetScalars(q_arr);
   pd_mesh->GetPointData()->AddArray(b_arr);
+  pd_mesh->GetCellData()->SetScalars(lineValuesArray);
+
   fmt::print("-----finished creating object mesh-----\n");
+
+  // Setup the visualization pipeline
+  vtkNew<vtkNamedColors> namedColors;
+  vtkNew<vtkPolyData> linesPolyData;
+  linesPolyData->SetPoints(points);
+  linesPolyData->SetLines(lines);
+  linesPolyData->GetCellData()->SetScalars(lineValuesArray);
+  vtkNew<vtkPolyDataMapper> mapper;
+  mapper->SetInputData(linesPolyData);
+
+  vtkNew<vtkActor> actor;
+  actor->SetMapper(mapper);
+  actor->GetProperty()->SetLineWidth(4);
+
+  vtkNew<vtkRenderer> renderer;
+  renderer->AddActor(actor);
+  renderer->SetBackground(namedColors->GetColor3d("SlateGray").GetData());
+
+  vtkNew<vtkRenderWindow> window;
+  window->SetWindowName("Colored Lines");
+  window->AddRenderer(renderer);
+
+  vtkNew<vtkRenderWindowInteractor> interactor;
+  interactor->SetRenderWindow(window);
+
+  // Visualize
+  window->Render();
+  interactor->Start();
+
   return pd_mesh;
 }
 

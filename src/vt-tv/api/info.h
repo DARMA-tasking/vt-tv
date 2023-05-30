@@ -206,7 +206,7 @@ struct Info {
         }
       }
     }
-    fmt::print("Size of all objects: {}", objects.size());
+    fmt::print("Size of all objects: {}\n", objects.size());
     return objects;
   }
 
@@ -216,6 +216,51 @@ struct Info {
    * \return number of ranks
    */
   std::size_t getNumRanks() const { return ranks_.size(); }
+
+  /**
+   * \brief Normalize communications for a phase: ensure receives and sends coincide
+   *
+   * \return void
+   */
+  void normalizeEdges(PhaseType phase, uint64_t n_ranks) {
+    fmt::print("---- Normalizing Edges for phase {} ----\n", phase);
+    auto phaseObjects = getPhaseObjects(phase, n_ranks);
+    for (auto& [id1, objectWork1] : phaseObjects) {
+      auto& sent1 = objectWork1.getSent();
+      auto& received1 = objectWork1.getReceived();
+      for (auto& [id2, objectWork2] : phaseObjects) {
+        // No communications to oneself
+        if (id1 != id2) {
+          fmt::print("--Communication between object {} and object {}\n\n", id1, id2);
+          auto& sent2 = objectWork2.getSent();
+          auto& received2 = objectWork2.getReceived();
+          // Communications existing on object 2, to be added on object 1
+          fmt::print("  Communications existing on object {}, to be added on object {}:\n", id2, id1);
+          if (sent2.find(id1) != sent2.end()) {
+            fmt::print("    adding sent from object {} to received by object {}\n", id2, id1);
+            objectWork1.addReceivedCommunications(id2, sent2.at(id1));
+          } else if (received2.find(id1) != received2.end()) {
+            fmt::print("    adding received from object {} to sent by object {}\n", id2, id1);
+            objectWork1.addSentCommunications(id2, received2.at(id1));
+          } else {
+            fmt::print("    None\n");
+          }
+          // Communications existing on object 1, to be added on object 2
+          fmt::print("  Communications existing on object {}, to be added on object {}:\n", id1, id2);
+          if (sent1.find(id2) != sent1.end()) {
+            fmt::print("    adding sent from object {} to received by object {}\n", id1, id2);
+            objectWork2.addReceivedCommunications(id1, sent1.at(id2));
+          } else if (received2.find(id1) != received2.end()) {
+            fmt::print("    adding received from object {} to sent by object {}\n", id1, id2);
+            objectWork2.addSentCommunications(id1, received1.at(id2));
+          } else {
+            fmt::print("    None\n");
+          }
+          fmt::print("\n");
+        }
+      }
+    }
+  }
 
 private:
   /// All the object info that doesn't change across phases
