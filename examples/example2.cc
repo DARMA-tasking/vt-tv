@@ -81,29 +81,16 @@ int main() {
   std::filesystem::path p = std::filesystem::path(SRC_DIR) / "tests/unit/lb_test_data" ;
   std::string path = std::filesystem::absolute(p).string();
 
-  NodeType rank = 0;
-  utility::JSONReader reader{rank, path + "/data.0.json"};
-  reader.readFile();
-  auto info = reader.parseFile();
+  uint64_t n_ranks = 4;
 
-  NodeType rank1 = 1;
-  utility::JSONReader reader1{rank1, path + "/data.1.json"};
-  reader1.readFile();
-  auto info1 = reader1.parseFile();
+  std::unique_ptr<Info> info = std::make_unique<Info>();
 
-  NodeType rank2 = 2;
-  utility::JSONReader reader2{rank2, path + "/data.2.json"};
-  reader2.readFile();
-  auto info2 = reader2.parseFile();
-
-  NodeType rank3 = 3;
-  utility::JSONReader reader3{rank3, path + "/data.3.json"};
-  reader3.readFile();
-  auto info3 = reader3.parseFile();
-
-  info->addInfo(info1->getObjectInfo(), info1->getRank(rank1));
-  info->addInfo(info2->getObjectInfo(), info2->getRank(rank2));
-  info->addInfo(info3->getObjectInfo(), info3->getRank(rank3));
+  for (NodeType rank = 0; rank < n_ranks; rank++) {
+    utility::JSONReader reader{rank, path + "/data." + std::to_string(rank) + ".json"};
+    reader.readFile();
+    auto tmpInfo = reader.parseFile();
+    info->addInfo(tmpInfo->getObjectInfo(), tmpInfo->getRank(rank));
+  }
 
   info->getPhaseObjects(1,4);
   fmt::print("===================\n");
@@ -123,7 +110,7 @@ int main() {
   //   );
   // }
 
-  auto& rank_info = info->getRank(rank);
+  auto& rank_info = info->getRank(0);
 
   auto& phases = rank_info.getPhaseWork();
 

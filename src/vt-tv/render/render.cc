@@ -140,10 +140,8 @@ std::tuple<TimeType, TimeType> Render::compute_object_load_range() {
 }
 
 std::vector<NodeType> Render::getRanks(PhaseType phase_in) const {
-  // fmt::print("Getting Ranks in phase: {}\n", phase_in);
   std::vector<NodeType> rankSet;
   for (auto const& [_, objInfo] : this->info_.getObjectInfo()) {
-    // fmt::print("  rank: {}\n", objInfo.getHome());
     rankSet.push_back(objInfo.getHome());
   }
   return rankSet;
@@ -152,14 +150,12 @@ std::vector<NodeType> Render::getRanks(PhaseType phase_in) const {
 std::unordered_map<NodeType, std::unordered_map<ElementIDType, ObjectWork>> Render::create_object_mapping_(PhaseType phase) {
   std::unordered_map<NodeType, std::unordered_map<ElementIDType, ObjectWork>> object_mapping;
 
-  fmt::print("\n\n");
   fmt::print("  -creating object mapping-\n");
-  fmt::print("  phase: {}\n", phase);
-  fmt::print("  n_ranks: {}\n", this->n_ranks_);
+  fmt::print("   phase: {}\n", phase);
+  fmt::print("   n_ranks: {}\n", this->n_ranks_);
 
   // Add each rank and its corresponding objects at the given phase to the object mapping
   for (uint64_t rank_id = 0; rank_id < this->n_ranks_; rank_id++) {
-    fmt::print("  rank_id: {}\n", rank_id);
     object_mapping.insert(std::make_pair(rank_id, this->info_.getRankObjects(rank_id, phase)));
   }
 
@@ -177,9 +173,8 @@ vtkNew<vtkPolyData> Render::create_rank_mesh_(PhaseType iteration) {
   rank_arr->SetName("rank qoi");
   rank_arr->SetNumberOfTuples(this->n_ranks_);
 
-  fmt::print("\n  Number of ranks in phase: {}\n", this->n_ranks_);
+  fmt::print("  Number of ranks in phase: {}\n", this->n_ranks_);
   for (uint64_t rank_id = 0; rank_id < this->n_ranks_; rank_id++) {
-    fmt::print("  rankID: {}\n", rank_id);
     Triplet cartesian = this->global_id_to_cartesian(rank_id, this->grid_size_);
     Triplet offsets = Triplet(
       cartesian.one * this->grid_resolution_,
@@ -203,7 +198,7 @@ vtkNew<vtkPolyData> Render::create_object_mesh_(PhaseWork phase) {
   fmt::print("-----creating object mesh for phase {} -----\n", phase.getPhase());
   // Retrieve number of mesh points and bail out early if empty set
   uint64_t n_o = this->info_.getPhaseObjects(phase.getPhase(), this->n_ranks_).size();
-  fmt::print("\nNumber of objects in phase: {} -----\n", n_o);
+  fmt::print("Number of objects in phase: {} -----\n", n_o);
 
   // Create point array for object quantity of interest
   vtkNew<vtkDoubleArray> q_arr;
@@ -242,16 +237,12 @@ vtkNew<vtkPolyData> Render::create_object_mesh_(PhaseWork phase) {
 
   // Iterate through object mapping
   for (auto const& [rankID, objects] : object_mapping) {
-    fmt::print("rankID: {}\n", rankID);
     Triplet ijk = this->global_id_to_cartesian(rankID, Triplet((uint64_t)2, (uint64_t)2, (uint64_t)1));
-    fmt::print("cartesian: [{}, {}, {}]\n",ijk.one, ijk.two, ijk.three);
 
     Triplet offsets(ijk.one * this->grid_resolution_, ijk.two * this->grid_resolution_, ijk.three * this->grid_resolution_);
-    fmt::print("offsets: [{}, {}, {}]\n", offsets.one, offsets.two, offsets.three);
 
     // Compute local object block parameters
     uint64_t n_o_rank = objects.size();
-    fmt::print("n_o_rank: {}\n",n_o_rank);
 
     // @TODO add rank_dims_ struct attribute
     // n_o_per_dim = math.ceil(n_o_rank ** (1. / len(self.__rank_dims)))
@@ -268,11 +259,6 @@ vtkNew<vtkPolyData> Render::create_object_mesh_(PhaseWork phase) {
         rank_size[d] = n_o_per_dim;
       } else rank_size[d] = 1;
     }
-    fmt::print("rank_size: ");
-    for (auto s : rank_size) {
-      fmt::print("{}, ", s);
-    }
-    fmt::print("\n");
 
     std::vector<double> centering = {0, 0, 0};
     for (uint64_t d = 0; d < 3; d++) {
@@ -282,11 +268,6 @@ vtkNew<vtkPolyData> Render::create_object_mesh_(PhaseWork phase) {
         centering[d] = 0.0;
       }
     }
-    fmt::print("centering: ");
-    for (auto c : centering) {
-      fmt::print("{}, ", c);
-    }
-    fmt::print("\n");
 
     auto const& rank = this->info_.getRank(rankID);
 
@@ -317,7 +298,6 @@ vtkNew<vtkPolyData> Render::create_object_mesh_(PhaseWork phase) {
     // Add rank objects to point set
     int i = 0;
     for (auto const& [objectWork, sentinel] : ordered_objects) {
-      // fmt::print("Object ID: {}, sentinel: {}\n", objectWork.getID(), sentinel);
 
       // Insert point using offset and rank coordinates
       std::vector<double> currentPointPosition = {0, 0, 0};
@@ -327,14 +307,7 @@ vtkNew<vtkPolyData> Render::create_object_mesh_(PhaseWork phase) {
           jitter_dims_.at(objectWork.getID())[d] + c) * o_resolution;
         d++;
       }
-      fmt::print("currentPointPosition: ");
-      for (auto pd : currentPointPosition) {
-        fmt::print("{}, ", pd);
-      }
-      fmt::print("\n");
 
-      fmt::print("  point index: {}\n", point_index);
-      fmt::print(" N points: {}\n", points->GetNumberOfPoints());
       points->SetPoint(
         point_index,
         currentPointPosition[0],
@@ -355,7 +328,6 @@ vtkNew<vtkPolyData> Render::create_object_mesh_(PhaseWork phase) {
   pd_mesh->SetPoints(points);
   pd_mesh->GetPointData()->SetScalars(q_arr);
   pd_mesh->GetPointData()->AddArray(b_arr);
-  fmt::print("\n\n");
   fmt::print("-----finished creating object mesh-----\n");
   return pd_mesh;
 }
