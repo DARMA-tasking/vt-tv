@@ -56,9 +56,21 @@ Render::Render(std::unordered_map<PhaseType, PhaseWork> in_phase_info, Info in_i
 , info_(in_info)
 , n_ranks_(in_info.getNumRanks())
 {
-  this->grid_size_.one = 2;
-  this->grid_size_.two = 2;
-  this->grid_size_.three = 1;
+  // Generically set rank grid dimensions according to the total number of ranks
+
+  grid_size_[2] = 1; // we assume 2D representation
+
+  int sqrt_n_ranks = std::sqrt(n_ranks_);
+  if(sqrt_n_ranks * sqrt_n_ranks == n_ranks_) {
+    // n_ranks is a perfect square
+    grid_size_[0] = sqrt_n_ranks;
+    grid_size_[1] = sqrt_n_ranks;
+  } else {
+    // n_ranks is not a perfect square
+    grid_size_[0] = sqrt_n_ranks; // floor
+    grid_size_[1] = sqrt_n_ranks + 1; // ceil
+  }
+
   for (uint64_t d = 0 ; d < 3 ; d++) {
     if(grid_size_[d] > 1) rank_dims_.insert(d);
   }
@@ -68,29 +80,29 @@ Render::Render(std::unordered_map<PhaseType, PhaseWork> in_phase_info, Info in_i
   std::srand(std::time(nullptr));
   auto const& allObjects = info_.getAllObjects(n_ranks_);
   for (auto const& [objectID, objectWork] : allObjects) {
-    std::vector<double> jitterDims;
+    std::array<double, 3> jitterDims;
     for (uint64_t d = 0; d < 3; d++) {
       if (auto f = this->rank_dims_.find(d); f != this->rank_dims_.end()) {
-        jitterDims.push_back(((double)std::rand()/RAND_MAX - 0.5) * object_jitter_);
-      } else jitterDims.push_back(0);
+        jitterDims[d] = ((double)std::rand()/RAND_MAX - 0.5) * object_jitter_;
+      } else jitterDims[d] = 0;
     }
     jitter_dims_.insert(std::make_pair(objectID, jitterDims));
   }
 };
 
 Render::Render(
-  Triplet<std::string> in_qoi_request,
+  std::array<std::string, 3> in_qoi_request,
   bool in_continuous_object_qoi,
   std::unordered_map<PhaseType, PhaseWork> in_phase_info,
   Info in_info,
-  Triplet<uint64_t> in_grid_size,
+  std::array<uint64_t, 3> in_grid_size,
   double in_object_jitter,
   std::string in_output_dir,
   std::string in_output_file_stem,
   double in_resolution
 )
-: rank_qoi_(in_qoi_request.one)
-, object_qoi_(in_qoi_request.three)
+: rank_qoi_(in_qoi_request[0])
+, object_qoi_(in_qoi_request[2])
 , continuous_object_qoi_(in_continuous_object_qoi)
 , phase_info_(in_phase_info)
 , info_(in_info)
@@ -108,8 +120,6 @@ Render::Render(
     if(grid_size_[d] > 1) rank_dims_.insert(d);
   }
   max_o_per_dim_ = 0;
-
-  // @TODO compute constant per object jitter
 
   // Initialize load range
   this->object_load_range_ = this->compute_object_load_range();
@@ -175,14 +185,14 @@ vtkNew<vtkPolyData> Render::create_rank_mesh_(PhaseType iteration) {
 
   fmt::print("  Number of ranks in phase: {}\n", this->n_ranks_);
   for (uint64_t rank_id = 0; rank_id < this->n_ranks_; rank_id++) {
-    Triplet cartesian = this->global_id_to_cartesian(rank_id, this->grid_size_);
-    Triplet offsets = Triplet(
-      cartesian.one * this->grid_resolution_,
-      cartesian.two * this->grid_resolution_,
-      cartesian.three * this->grid_resolution_
-      );
+    std::array<uint64_t, 3> cartesian = this->global_id_to_cartesian(rank_id, this->grid_size_);
+    std::array<double, 3> offsets = {
+      cartesian[0] * this->grid_resolution_,
+      cartesian[1] * this->grid_resolution_,
+      cartesian[2] * this->grid_resolution_
+    };
     // Insert point based on cartesian coordinates
-    rank_points_->SetPoint(rank_id, offsets.one, offsets.two, offsets.three);
+    rank_points_->SetPoint(rank_id, offsets[0], offsets[1], offsets[2]);
 
     // rank_arr->SetTuple1(rank_id, /* qoi */);
   }
@@ -226,7 +236,6 @@ vtkNew<vtkPolyData> Render::create_object_mesh_(PhaseWork phase) {
   std::vector<NodeType> ranks = this->getRanks(p_id);
   std::string object_qoi = this->object_qoi_;
 
-  // @todo
   // Iterate over ranks and objects to create mesh points
   uint64_t point_index = 0;
   std::map<ObjectInfo, uint64_t> point_to_index;
@@ -237,30 +246,32 @@ vtkNew<vtkPolyData> Render::create_object_mesh_(PhaseWork phase) {
 
   // Iterate through object mapping
   for (auto const& [rankID, objects] : object_mapping) {
-    Triplet ijk = this->global_id_to_cartesian(rankID, Triplet((uint64_t)2, (uint64_t)2, (uint64_t)1));
+    std::array<uint64_t, 3> ijk = this->global_id_to_cartesian(rankID, this->grid_size_);
 
-    Triplet offsets(ijk.one * this->grid_resolution_, ijk.two * this->grid_resolution_, ijk.three * this->grid_resolution_);
+    std::array<double, 3> offsets = {
+      ijk[0] * this->grid_resolution_,
+      ijk[1] * this->grid_resolution_,
+      ijk[2] * this->grid_resolution_
+    };
 
     // Compute local object block parameters
     uint64_t n_o_rank = objects.size();
 
-    // @TODO add rank_dims_ struct attribute
-    // n_o_per_dim = math.ceil(n_o_rank ** (1. / len(self.__rank_dims)))
-    uint64_t n_o_per_dim = ceil( pow( n_o_rank, 1.0 / 2) );
+    uint64_t n_o_per_dim = ceil( pow( n_o_rank, 1.0 / this->rank_dims_.size()) );
     if (n_o_per_dim > this->max_o_per_dim_) {
       this->max_o_per_dim_ = n_o_per_dim;
     }
     double o_resolution = this->grid_resolution_ / (n_o_per_dim + 1.);
 
     // Create point coordinates
-    std::vector<uint64_t> rank_size = {1, 1, 1};
+    std::array<uint64_t, 3> rank_size = {1, 1, 1};
     for (uint64_t d = 0; d < 3; d++) {
       if (auto f = this->rank_dims_.find(d); f != this->rank_dims_.end()) {
         rank_size[d] = n_o_per_dim;
       } else rank_size[d] = 1;
     }
 
-    std::vector<double> centering = {0, 0, 0};
+    std::array<double, 3> centering = {0, 0, 0};
     for (uint64_t d = 0; d < 3; d++) {
       if (auto f = this->rank_dims_.find(d); f != this->rank_dims_.end()) {
         centering[d] = 0.5 * o_resolution * (n_o_per_dim - 1.0);
@@ -300,7 +311,7 @@ vtkNew<vtkPolyData> Render::create_object_mesh_(PhaseWork phase) {
     for (auto const& [objectWork, sentinel] : ordered_objects) {
 
       // Insert point using offset and rank coordinates
-      std::vector<double> currentPointPosition = {0, 0, 0};
+      std::array<double, 3> currentPointPosition = {0, 0, 0};
       int d = 0;
       for (auto c : this->global_id_to_cartesian(i, rank_size)) {
         currentPointPosition[d] = offsets[d] - centering[d] + (
@@ -418,10 +429,10 @@ vtkNew<vtkPolyData> Render::create_object_mesh_(PhaseWork phase) {
   return scalar_bar_actor;
 }
 
-/* static */ std::vector<uint64_t> Render::global_id_to_cartesian(
-    uint64_t flat_id, std::vector<uint64_t> grid_sizes
+/* static */ std::array<uint64_t, 3> Render::global_id_to_cartesian(
+    uint64_t flat_id, std::array<uint64_t, 3> grid_sizes
 ) {
-  std::vector<uint64_t> cartesian = {0, 0, 0};
+  std::array<uint64_t, 3> cartesian = {0, 0, 0};
   // Sanity check
   uint64_t n01 = grid_sizes[0] * grid_sizes[1];
   if (flat_id < 0 || flat_id >= n01 * grid_sizes[2]) {
@@ -437,23 +448,6 @@ vtkNew<vtkPolyData> Render::create_object_mesh_(PhaseWork phase) {
   cartesian[1] = quot2;
   cartesian[2] = quot1;
   return cartesian;
-}
-
-/* static */ Triplet<uint64_t> Render::global_id_to_cartesian(
-    uint64_t flat_id, Triplet<uint64_t> grid_sizes
-) {
-  // Sanity check
-  uint64_t n01 = grid_sizes.one * grid_sizes.two;
-  if (flat_id < 0 || flat_id >= n01 * grid_sizes.three) {
-    throw std::out_of_range("Index error");
-  }
-
-  // Compute successive Euclidean divisions
-  uint64_t quot1 = flat_id / n01;
-  uint64_t rem1 = flat_id % n01;
-  uint64_t quot2 = rem1 / grid_sizes.one;
-  uint64_t rem2 = rem1 % grid_sizes.one;
-  return Triplet(rem2, quot2, quot1);
 }
 
 /*static*/ void Render::createPipeline(
@@ -711,7 +705,7 @@ void Render::generate() {
     // Create a sphere
     vtkNew<vtkSphereSource> sphereSource;
     sphereSource->SetRadius(pow(phases_object_loads[0][actor_i] / (max_load-min_load), 2) * 0.5);
-    std::vector<uint64_t> test_dims = {5, 5, 1};
+    std::array<uint64_t, 3> test_dims = {5, 5, 1};
     auto test_coordinates = this->global_id_to_cartesian(actor_i, test_dims);
     sphereSource->SetCenter(test_coordinates[0], test_coordinates[1], test_coordinates[2]);
 

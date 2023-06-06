@@ -89,33 +89,9 @@
 #include <map>
 #include <unordered_set>
 #include <set>
+#include <array>
 
 namespace vt { namespace tv {
-
-template <typename T>
-struct Triplet {
-  T one;
-  T two;
-  T three;
-  Triplet(T a, T b, T c)
-  : one(a)
-  , two(b)
-  , three(c){};
-  constexpr T operator[](uint64_t index) {
-    switch (index)
-    {
-    case 0:
-      return one;
-    case 1:
-      return two;
-    case 2:
-      return three;
-    default:
-      throw std::out_of_range("Index must be < 3");
-      break;
-    }
-  }
-};
 
 /**
  * \struct Render
@@ -137,7 +113,7 @@ private:
   uint64_t n_ranks_;
 
   // Geometric parameters
-  Triplet<uint64_t> grid_size_ = Triplet((uint64_t)1,(uint64_t)1,(uint64_t)1);
+  std::array<uint64_t, 3> grid_size_ = {1, 1, 1};
   std::set<uint64_t> rank_dims_;
   double grid_resolution_ = 1.0;
   uint64_t max_o_per_dim_ = 0;
@@ -160,7 +136,7 @@ private:
 
   // Jitter per object
   double object_jitter_ = 0.5;
-  std::unordered_map<ElementIDType, std::vector<double>> jitter_dims_;
+  std::unordered_map<ElementIDType, std::array<double, 3>> jitter_dims_;
 
   /**
    * \brief Decide object quantity storage type and compute it.
@@ -219,12 +195,8 @@ private:
    *
    * \return i,j,k Cartesian coordinates
    */
-  static Triplet<uint64_t> global_id_to_cartesian(
-    uint64_t flat_id, Triplet<uint64_t> grid_sizes
-  );
-
-  static std::vector<uint64_t> global_id_to_cartesian(
-    uint64_t flat_id, std::vector<uint64_t> grid_sizes
+  static std::array<uint64_t, 3> global_id_to_cartesian(
+    uint64_t flat_id, std::array<uint64_t, 3> grid_sizes
   );
 
 public:
@@ -250,11 +222,11 @@ public:
   * \param[in] in_resolution grid_resolution value
    */
   Render(
-    Triplet<std::string> in_qoi_request,
+    std::array<std::string, 3> in_qoi_request,
     bool in_continuous_object_qoi,
     std::unordered_map<PhaseType, PhaseWork> in_phase_info,
     Info in_info,
-    Triplet<uint64_t> in_grid_size,
+    std::array<uint64_t, 3> in_grid_size,
     double in_object_jitter,
     std::string in_output_dir,
     std::string in_output_file_stem,
