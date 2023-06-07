@@ -2,7 +2,7 @@
 //@HEADER
 // *****************************************************************************
 //
-//                           test_json_reader.cc
+//                                example2.cc
 //             DARMA/vt-tv => Virtual Transport -- Task Visualizer
 //
 // Copyright 2019 National Technology & Engineering Solutions of Sandia, LLC
@@ -41,78 +41,88 @@
 //@HEADER
 */
 
-#include <gtest/gtest.h>
-#include "test_harness.h"
+#include <vtkActor.h>
+#include <vtkRenderWindow.h>
+#include <vtkRenderWindowInteractor.h>
+#include <vtkRenderer.h>
+#include <vtkNamedColors.h>
+#include <vtkNew.h>
+#include <vtkProperty.h>
+#include <vtkCamera.h>
+#include <vtkPolyData.h>
+#include <vtkPolyDataMapper.h>
+#include <vtkDoubleArray.h>
+#include <vtkPointData.h>
+#include <vtkGlyphSource2D.h>
+#include <vtkGlyph2D.h>
+#include <vtkTransform.h>
+#include <vtkTransformPolyDataFilter.h>
+#include <vtkColorTransferFunction.h>
+#include <vtkTextProperty.h>
+#include <vtkArrayCalculator.h>
+#include <vtkThresholdPoints.h>
+#include <vtkWindowToImageFilter.h>
+#include <vtkPNGWriter.h>
 
 #include <vt-tv/api/info.h>
 #include <vt-tv/utility/json_reader.h>
 
 #include <fmt-vt/format.h>
 
-#include "cmake_config.h"
+#include "../tests/unit/cmake_config.h"
 
-#include <string>
-#include <filesystem>
-#include <iostream>
+#include <vt-tv/render/render.h>
 
-namespace vt::tv::tests::unit {
+int main() {
+  using namespace vt;
+  using namespace tv;
+  // Read JSON file and input data
 
-struct TestJSONReader : TestHarness { };
-
-TEST_F(TestJSONReader, test_json_reader_1) {
   std::filesystem::path p = std::filesystem::path(SRC_DIR) / "tests/unit/lb_test_data" ;
   std::string path = std::filesystem::absolute(p).string();
 
-  NodeType rank = 0;
-  utility::JSONReader reader{rank, path + "/data.0.json"};
-  reader.readFile();
-  auto info = reader.parseFile();
+  uint64_t n_ranks = 4;
+
+  std::unique_ptr<Info> info = std::make_unique<Info>();
+
+  for (NodeType rank = 0; rank < n_ranks; rank++) {
+    utility::JSONReader reader{rank, path + "/data." + std::to_string(rank) + ".json"};
+    reader.readFile();
+    auto tmpInfo = reader.parseFile();
+    info->addInfo(tmpInfo->getObjectInfo(), tmpInfo->getRank(rank));
+  }
+
+  info->getPhaseObjects(1,4);
+  fmt::print("===================\n");
+  info->getAllObjects(4);
+
+  fmt::print("===================\n");
 
   auto const& obj_info = info->getObjectInfo();
 
   fmt::print("Object info size={}\n", obj_info.size());
   fmt::print("Num ranks={}\n", info->getNumRanks());
 
-  EXPECT_EQ(info->getNumRanks(), 1);
+  // for (auto const& [elm_id, oi] : obj_info) {
+  //   fmt::print(
+  //     "elm_id={:x}, home={}, migratable={}, index_array size={}\n",
+  //     elm_id, oi.getHome(), oi.isMigratable(), oi.getIndexArray().size()
+  //   );
+  // }
 
-  for (auto const& [elm_id, oi] : obj_info) {
-    fmt::print(
-      "elm_id={:x}, home={}, migratable={}, index_array size={}\n",
-      elm_id, oi.getHome(), oi.isMigratable(), oi.getIndexArray().size()
-    );
-    EXPECT_EQ(elm_id, oi.getID());
-    fmt::print("elm_id: {}, oi.getID: {}\n", elm_id, oi.getID());
-
-    // for this dataset, no migrations happen so all objects should be on home
-    EXPECT_EQ(oi.getHome(), rank);
-  }
-
-  auto& rank_info = info->getRank(rank);
-  EXPECT_EQ(rank_info.getRankID(), rank);
+  auto& rank_info = info->getRank(0);
 
   auto& phases = rank_info.getPhaseWork();
 
-  // for this dataset, expect that all phases have the same objects
-  std::set<ElementIDType> phase_0_objects;
-  // and we should have a phase 0
-  auto const& phase_0 = phases.find(0);
-  fmt::print("phase_0 type: {}", typeid(phase_0).name());
-  auto const& phase_0_object_work = phase_0->second.getObjectWork();
-
-  for (auto const& [elm_id, _] : phase_0_object_work) {
-    phase_0_objects.insert(elm_id);
-  }
-
   for (auto const& [phase, phase_work] : phases) {
-    fmt::print("phase={}\n", phase);
-    // sizes should be consistent
-    EXPECT_EQ(phase_work.getObjectWork().size(), phase_0_objects.size());
+    // fmt::print("phase={}\n", phase);
     for (auto const& [elm_id, work] : phase_work.getObjectWork()) {
-      // object should be found in phase 0
-      EXPECT_TRUE(phase_0_objects.find(elm_id) != phase_0_objects.end());
-      fmt::print("\t elm_id={:x}: load={}\n", elm_id, work.getLoad());
+      // fmt::print("\t elm_id={:x}: load={}\n", elm_id, work.getLoad());
     }
   }
-}
 
-} // end namespace vt::tv::tests::unit
+  // Instantiate render
+  auto r = Render(phases, *info);
+  r.generate();
+  return 0;
+}

@@ -1,6 +1,7 @@
 set(
   TOP_LEVEL_SUBDIRS
   api
+  render
   utility
 )
 

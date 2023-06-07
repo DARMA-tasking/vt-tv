@@ -67,9 +67,37 @@
 #include <vtkThresholdPoints.h>
 #include <vtkWindowToImageFilter.h>
 #include <vtkPNGWriter.h>
+#include <vtkRegularPolygonSource.h>
+#include <vtkSphereSource.h>
+#include <vtkBitArray.h>
+
+#include <vtkPolyDataWriter.h>
+#include <vtkExodusIIWriter.h>
+#include <vtkXMLPolyDataWriter.h>
+
+#include "vt-tv/api/rank.h"
+#include "vt-tv/api/info.h"
+
+#include <fmt-vt/format.h>
+#include <ostream>
+#include <cmath>
+#include <algorithm>
+#include <iterator>
+#include <cstdlib>
+#include <tuple>
+#include <limits>
+#include <map>
+#include <unordered_set>
+#include <set>
+#include <array>
 
 namespace vt { namespace tv {
 
+/**
+ * \struct Render
+ *
+ * \brief Handler for visualisation
+ */
 struct Render {
 private:
   enum ColorType {
@@ -79,6 +107,78 @@ private:
     WhiteToBlack
   };
 
+  // General phase info
+  std::unordered_map<PhaseType, PhaseWork> phase_info_;
+  Info info_;
+  uint64_t n_ranks_;
+
+  // Geometric parameters
+  std::array<uint64_t, 3> grid_size_ = {1, 1, 1};
+  std::set<uint64_t> rank_dims_;
+  double grid_resolution_ = 1.0;
+  uint64_t max_o_per_dim_ = 0;
+
+  // numeric parameters
+  std::tuple<TimeType, TimeType> object_load_range_;
+
+  // Maximum object atribute values
+  TimeType object_load_max_ = 0.0;
+  double object_volume_max_ = 0.0;
+
+  // quantities of interest
+  std::string rank_qoi_;
+  std::string object_qoi_ = "load";
+  bool continuous_object_qoi_;
+
+  // output parameters
+  std::string output_dir_;
+  std::string output_file_stem_;
+
+  // Jitter per object
+  double object_jitter_ = 0.5;
+  std::unordered_map<ElementIDType, std::array<double, 3>> jitter_dims_;
+
+  /**
+   * \brief Decide object quantity storage type and compute it.
+   *
+   * \return load range
+   */
+  std::tuple<TimeType, TimeType> compute_object_load_range();
+
+  /**
+   * \brief get ranks belonging to phase
+   *
+   * \return set of ranks
+   */
+  std::vector<NodeType> getRanks(PhaseType phase_in) const;
+
+  /**
+   * \brief Create mapping of objects in ranks
+   *
+   * \param[in] phase phase index
+   *
+   * \return mapping
+   */
+  std::unordered_map<NodeType, std::unordered_map<ElementIDType, ObjectWork>> create_object_mapping_(PhaseType phase);
+
+  /**
+   * \brief Map ranks to polygonal mesh.
+   *
+   * \param[in] iteration phase index
+   *
+   * \return rank mesh
+   */
+  vtkNew<vtkPolyData> create_rank_mesh_(PhaseType iteration);
+
+  /**
+   * \brief Map objects to polygonal mesh.
+   *
+   * \param[in] phase phase
+   *
+   * \return object mesh
+   */
+  vtkNew<vtkPolyData> create_object_mesh_(PhaseWork phase);
+
   static vtkNew<vtkColorTransferFunction> createColorTransferFunction(
     double range[2], double avg_load = 0, ColorType ct = ColorType::Default
   );
@@ -87,7 +187,52 @@ private:
     vtkPolyDataMapper* mapper, std::string title, double x, double y
   );
 
+  /**
+   * \brief Map global index to its Cartesian grid coordinates.
+   *
+   * \param[in] flat_id the index of the entity in the phase
+   * \param[in] grid_sizes number of entities per dimension x,y,z
+   *
+   * \return i,j,k Cartesian coordinates
+   */
+  static std::array<uint64_t, 3> global_id_to_cartesian(
+    uint64_t flat_id, std::array<uint64_t, 3> grid_sizes
+  );
+
 public:
+  /**
+   * \brief Construct render
+   *
+   * \param[in] in_phase_info the phases
+   * \param[in] in_info info about the ranks and phases
+   */
+  Render(std::unordered_map<PhaseType, PhaseWork> in_phase_info, Info in_info);
+
+  /**
+   * \brief Construct render
+   *
+  * \param[in] in_qoi_request description of rank and object quantities of interest
+  * \param[in] in_continuous_object_qoi always treat object QOI as continuous or not
+  * \param[in] in_phase_info phase info
+  * \param[in] in_info general info
+  * \param[in] in_grid_size triplet containing grid sizes in each dimension
+  * \param[in] in_object_jitter coefficient of random jitter with magnitude < 1
+  * \param[in] in_output_dir output directory
+  * \param[in] in_output_file_stem file name stem
+  * \param[in] in_resolution grid_resolution value
+   */
+  Render(
+    std::array<std::string, 3> in_qoi_request,
+    bool in_continuous_object_qoi,
+    std::unordered_map<PhaseType, PhaseWork> in_phase_info,
+    Info in_info,
+    std::array<uint64_t, 3> in_grid_size,
+    double in_object_jitter,
+    std::string in_output_dir,
+    std::string in_output_file_stem,
+    double in_resolution
+  );
+
   static void createPipeline(
     vtkPoints* rank_points,
     vtkCellArray* rank_lines,
@@ -101,6 +246,13 @@ public:
     double imbalance,
     int win_size
   );
+
+  void createObjectPipeline(
+    vtkPolyData* object_mesh,
+    vtkPolyData* rank_mesh
+  );
+
+  void generate(/*bool save_meshes, bool gen_vizqoi*/);
 };
 
 }} /* end namesapce vt::tv */

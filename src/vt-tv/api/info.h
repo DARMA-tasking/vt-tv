@@ -48,6 +48,8 @@
 #include "vt-tv/api/rank.h"
 #include "vt-tv/api/object_info.h"
 
+#include <fmt-vt/format.h>
+
 #include <unordered_map>
 
 namespace vt::tv {
@@ -68,6 +70,8 @@ struct Info {
   ) : object_info_(std::move(in_object_info)),
       ranks_(std::move(in_ranks))
   { }
+
+  Info() { };
 
   /**
    * \brief Add more information about a new rank
@@ -101,6 +105,110 @@ struct Info {
    * \return all the rank work
    */
   Rank const& getRank(NodeType rank) const { return ranks_.at(rank); }
+
+  /**
+   * \brief Get all objects for a given rank and phase
+   *
+   * \param[in] rank_id the rank
+   * \param[in] phase the phase
+   *
+   * \return the objects
+   */
+  std::unordered_map<ElementIDType, ObjectWork> getRankObjects(NodeType rank_id, PhaseType phase) {
+    std::unordered_map<ElementIDType, ObjectWork> objects;
+
+    // Get Rank info for specified rank
+    auto& rank_info = this->getRank(rank_id);
+
+    // Get history of phases for this rank
+    auto& phase_history_at_rank = rank_info.getPhaseWork();
+
+    // Get phase work at specified phase
+    auto const& phase_work_at_rank = phase_history_at_rank.find(phase);
+
+    // Get all objects at specified phase
+    auto const& object_work_at_phase_at_rank = phase_work_at_rank->second.getObjectWork();
+
+    for (auto const& [elm_id, obj_work] : object_work_at_phase_at_rank) {
+      objects.insert(std::make_pair(elm_id, obj_work));
+    }
+
+    return objects;
+  }
+
+  /**
+   * \brief Get all objects in all ranks for a given phase
+   *
+   * \param[in] phase the phase
+   * \param[in] n_ranks the total number of ranks
+   *
+   * \return the objects
+   */
+  std::unordered_map<ElementIDType, ObjectWork> getPhaseObjects(PhaseType phase, uint64_t n_ranks) {
+    // fmt::print("Phase: {}\n", phase);
+
+    // Map of objects at given phase
+    std::unordered_map<ElementIDType, ObjectWork> objects_at_phase;
+
+    // Go through all ranks and get all objects at given phase
+    for (uint64_t rank = 0; rank < n_ranks; rank++) {
+      // fmt::print("  Rank: {}\n",rank);
+      // Get Rank info for specified rank
+      auto& rank_info = this->getRank(rank);
+
+      // Get history of phases for this rank
+      auto& phase_history = rank_info.getPhaseWork();
+
+      // Get phase work at specified phase
+      auto const& phase_work = phase_history.find(phase);
+
+      // Get all objects at specified phase
+      auto const& object_work_at_phase = phase_work->second.getObjectWork();
+
+      for (auto const& [elm_id, obj_work] : object_work_at_phase) {
+        // fmt::print("    Object Id: {}\n", elm_id);
+        objects_at_phase.insert(std::make_pair(elm_id, obj_work));
+      }
+    }
+    return objects_at_phase;
+  }
+
+  /**
+   * \brief Get all objects for all ranks and phases
+   *
+   * \param[in] n_ranks the total number of ranks
+   *
+   * \return the objects
+   */
+  std::unordered_map<ElementIDType, ObjectWork> getAllObjects(uint64_t n_ranks) {
+
+    // Map of objects at given phase
+    std::unordered_map<ElementIDType, ObjectWork> objects;
+
+    // Go through all ranks and get all objects at given phase
+    for (uint64_t rank = 0; rank < n_ranks; rank++) {
+      // fmt::print("Rank: {}\n",rank);
+      // Get Rank info for specified rank
+      auto& rank_info = this->getRank(rank);
+
+      // Get history of phases for this rank
+      auto& phase_history = rank_info.getPhaseWork();
+
+      // Go through history of all phases
+      for (auto const& [phase, phase_work] : phase_history) {
+        // fmt::print("|->  Phase: {}\n", phase);
+        // Get all objects at this phase
+        auto const& object_work_at_phase = phase_work.getObjectWork();
+
+        for (auto const& [elm_id, obj_work] : object_work_at_phase) {
+          // fmt::print("|    |-> Object Id: {}\n", elm_id);
+          objects.insert(std::make_pair(elm_id, obj_work));
+        }
+      }
+    }
+    fmt::print("Size of all objects: {}", objects.size());
+    return objects;
+  }
 
   /**
    * \brief Get number of ranks stored here

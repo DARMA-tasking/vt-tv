@@ -30,6 +30,7 @@
 #include <nanobind/stl/string.h>
 
 #include <string>
+#include <cstdio>
 
 namespace nb = nanobind;
 

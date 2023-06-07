@@ -4,6 +4,7 @@ find_package(
   RenderingCore
   IOExodus
   IOParallel
+  IOXML
   CommonColor
   CommonCore
   CommonDataModel
@@ -12,6 +13,7 @@ find_package(
   RenderingFreeType
   RenderingOpenGL2
   RenderingGL2PSOpenGL2
+  RenderingAnnotation
 )
 
 message(STATUS "VTK libraries: ${VTK_LIBRARIES}")
