@@ -161,7 +161,7 @@ private:
    *
    * \return mapping
    */
-  std::unordered_map<NodeType, std::unordered_map<ElementIDType, ObjectWork>> create_object_mapping_(PhaseType phase);
+  std::map<NodeType, std::unordered_map<ElementIDType, ObjectWork>> create_object_mapping_(PhaseType phase);
 
   /**
    * \brief Map ranks to polygonal mesh.

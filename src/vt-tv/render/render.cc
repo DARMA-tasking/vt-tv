@@ -157,8 +157,8 @@ std::vector<NodeType> Render::getRanks(PhaseType phase_in) const {
   return rankSet;
 }
 
-std::unordered_map<NodeType, std::unordered_map<ElementIDType, ObjectWork>> Render::create_object_mapping_(PhaseType phase) {
-  std::unordered_map<NodeType, std::unordered_map<ElementIDType, ObjectWork>> object_mapping;
+std::map<NodeType, std::unordered_map<ElementIDType, ObjectWork>> Render::create_object_mapping_(PhaseType phase) {
+  std::map<NodeType, std::unordered_map<ElementIDType, ObjectWork>> object_mapping;
 
   fmt::print("  -creating object mapping-\n");
   fmt::print("   phase: {}\n", phase);
@@ -239,10 +239,10 @@ vtkNew<vtkPolyData> Render::create_object_mesh_(PhaseWork phase) {
   // Iterate over ranks and objects to create mesh points
   uint64_t point_index = 0;
   std::map<ElementIDType, uint64_t> objectid_to_index;
+  // sent_volumes is a vector to store the communications ("from" object id, "sent to" object id, and volume)
+  std::vector<std::tuple<ElementIDType, ElementIDType, double>> sent_volumes;
 
   auto object_mapping = this->create_object_mapping_(p_id);
-
-  fmt::print("object_mapping size: {}\n", object_mapping.size());
 
   // Iterate through object mapping
   for (auto const& [rankID, objects] : object_mapping) {
@@ -280,35 +280,36 @@ vtkNew<vtkPolyData> Render::create_object_mesh_(PhaseWork phase) {
       }
     }
 
-    auto const& rank = this->info_.getRank(rankID);
+    auto& rank = this->info_.getRank(rankID);
 
     //@TODO: clean this stuff up
 
-    struct cmpByMigratableThenID {
-      cmpByMigratableThenID(const Info& info) :info_(info) {}
-      bool operator()(const ObjectWork& lhs, const ObjectWork& rhs) const {
-        ElementIDType lhsID = lhs.getID();
-        ElementIDType rhsID = rhs.getID();
-        bool migratableLhs = info_.getObjectInfo().at(lhsID).isMigratable();
-        bool migratableRhs = info_.getObjectInfo().at(rhsID).isMigratable();
-        if(migratableLhs != migratableRhs) {
-            return migratableLhs < migratableRhs; // non-migratable comes first
-        }
-        return lhsID < rhsID; // Then sort by ID
+    auto cmpByMigratableThenID = [this](const std::pair<ObjectWork, uint64_t>& a,
+                                    const std::pair<ObjectWork, uint64_t>& b) {
+      ElementIDType lhsID = std::get<0>(a).getID();
+      ElementIDType rhsID = std::get<0>(b).getID();
+      bool migratableLhs = this->info_.getObjectInfo().at(lhsID).isMigratable();
+      bool migratableRhs = this->info_.getObjectInfo().at(rhsID).isMigratable();
+      if(migratableLhs != migratableRhs) {
+          return migratableLhs < migratableRhs; // non-migratable comes first
       }
-      private:
-      Info info_;
+      return lhsID < rhsID; // Then sort by ID
     };
-    std::map<ObjectWork, uint64_t, cmpByMigratableThenID> ordered_objects(cmpByMigratableThenID(this->info_));
 
-    for (auto const& [objectID, objectWork] : objects) {
+    std::vector<std::pair<ObjectWork, uint64_t>> ordered_objects;
+
+    for (auto& [objectID, objectWork] : objects) {
       bool migratable = this->info_.getObjectInfo().at(objectID).isMigratable();
-      ordered_objects.insert(std::make_pair(objectWork, migratable));
+      ordered_objects.push_back(std::make_pair(objectWork, migratable));
     }
+
+    // Sort objects
+    std::sort(ordered_objects.begin(), ordered_objects.end(), cmpByMigratableThenID);
 
     // Add rank objects to point set
     int i = 0;
-    for (auto const& [objectWork, sentinel] : ordered_objects) {
+    for (auto& [objectWork, sentinel] : ordered_objects) {
+      // fmt::print("Object ID: {}, sentinel: {}\n", objectWork.getID(), sentinel);
 
       // Insert point using offset and rank coordinates
       std::array<double, 3> currentPointPosition = {0, 0, 0};
@@ -329,9 +330,15 @@ vtkNew<vtkPolyData> Render::create_object_mesh_(PhaseWork phase) {
       // Set object attributes
       q_arr->SetTuple1(point_index, objectWork.getLoad());
       b_arr->SetTuple1(point_index, sentinel);
+
+      auto objSent = objectWork.getSent();
+      for (auto [k, v] : objSent) {
+        sent_volumes.push_back(std::make_tuple(point_index, k, v));
+      }
+
       i++;
-      point_index++;
       objectid_to_index.insert(std::make_pair(objectWork.getID(), point_index));
+      point_index++;
     }
   }
 
@@ -339,18 +346,38 @@ vtkNew<vtkPolyData> Render::create_object_mesh_(PhaseWork phase) {
   lineValuesArray->SetName("bytes");
   vtkNew<vtkCellArray> lines;
   uint64_t n_e = 0;
-  auto phaseObjects = this->info_.getPhaseObjects(phase.getPhase(), this->n_ranks_);
+  std::map<std::tuple<ElementIDType, ElementIDType>, std::tuple<uint64_t, double>> edge_values;
 
-  for (auto& [id, objWork] : phaseObjects) {
-    fmt::print("id {}\n", id);
-    std::map<ElementIDType, double>& receivedCommunications = objWork.getSent();
-    fmt::print("map size: {}\n", receivedCommunications.size());
-    for (auto& [from_id, bytes] : receivedCommunications) {
-      fmt::print("id {} <-> from_id {}\n", id, from_id);
+  fmt::print("Creating inter-object communication edges:\n");
+  for(auto& [pt_index, k, v] : sent_volumes) {
+    // sort the point index and the object id in the "ij" tuple
+    std::tuple<ElementIDType, ElementIDType> ij;
+    if (pt_index <= objectid_to_index.at(k)) {
+      ij = {pt_index, objectid_to_index.at(k)};
+    }
+    else {
+      ij = {objectid_to_index.at(k), pt_index};
+    }
+
+    std::tuple<uint64_t, double> edge_value;
+    if (auto e_ij = edge_values.find(ij); e_ij != edge_values.end()) {
+      // If the line already exist we just update the volume
+      auto current_edge = std::get<0>(edge_values.at(ij));
+      auto current_v = std::get<1>(edge_values.at(ij));
+      edge_values.at(ij) = {current_edge, current_v + v};
+      lineValuesArray->SetTuple1(std::get<0>(edge_values.at(ij)), std::get<1>(edge_values.at(ij)));
+      fmt::print("\tupdating edge {} ({}--{}): {}\n", current_edge, std::get<0>(ij), std::get<1>(ij), current_v+v);
+    }
+    else {
+      // If it doesn't, we create it
+      fmt::print("\tcreating edge {} ({}--{}): {}\n", n_e, std::get<0>(ij), std::get<1>(ij), v);
+      edge_value = {n_e, v};
+      edge_values.insert({ij, edge_value});
+      n_e += 1;
+      lineValuesArray->InsertNextTuple1(v);
       vtkNew<vtkLine> line;
-      lineValuesArray->InsertNextTuple1(bytes);
-      line->GetPointIds()->SetId(0, objectid_to_index.at(id));
-      line->GetPointIds()->SetId(1, objectid_to_index.at(from_id));
+      line->GetPointIds()->SetId(0, std::get<0>(ij));
+      line->GetPointIds()->SetId(1, std::get<1>(ij));
       lines->InsertNextCell(line);
     }
   }
