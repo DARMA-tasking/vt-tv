@@ -125,7 +125,7 @@ Render::Render(
   this->object_load_range_ = this->compute_object_load_range();
 };
 
-std::tuple<TimeType, TimeType> Render::compute_object_load_range() {
+std::pair<TimeType, TimeType> Render::compute_object_load_range() {
   // Initialize space-time object QOI range attributes
   TimeType oq_max = -1 * std::numeric_limits<double>::infinity();
   TimeType oq_min = std::numeric_limits<double>::infinity();
@@ -673,7 +673,7 @@ vtkNew<vtkPolyData> Render::create_object_mesh_(PhaseWork phase) {
   writer->Write();
 }
 
-/*static*/ void Render::createObjectPipeline(
+/*static*/ void Render::createPipeline2(
   vtkPolyData* object_mesh,
   vtkPolyData* rank_mesh
 ) {
@@ -681,6 +681,7 @@ vtkNew<vtkPolyData> Render::create_object_mesh_(PhaseWork phase) {
   renderer->SetBackground(1.0, 1.0, 1.0);
   renderer->GetActiveCamera()->ParallelProjectionOn();
 
+  // Rank glyphs
   vtkNew<vtkGlyphSource2D> rank_glyph;
   rank_glyph->SetGlyphTypeToSquare();
   rank_glyph->SetScale(.95);
@@ -700,24 +701,49 @@ vtkNew<vtkPolyData> Render::create_object_mesh_(PhaseWork phase) {
 
   vtkNew<vtkPolyDataMapper> rank_mapper;
   rank_mapper->SetInputConnection(trans->GetOutputPort());
-  // rank_mapper->SetLookupTable(createColorTransferFunction({0,0.01}));
-  // rank_mapper->SetScalarRange({0,0.01});
 
   vtkNew<vtkActor> rank_actor;
   rank_actor->SetMapper(rank_mapper);
-  auto qoi_actor = createScalarBarActor(rank_mapper, "Rank XXX", 0.5, 0.9);
-  qoi_actor->DrawBelowRangeSwatchOn();
-  qoi_actor->SetBelowRangeAnnotation("<");
-  qoi_actor->DrawAboveRangeSwatchOn();
-  qoi_actor->SetAboveRangeAnnotation(">");
+
+  // Object glyphs
+  vtkNew<vtkGlyphSource2D> object_glyph;
+  object_glyph->SetGlyphTypeToCircle();
+  object_glyph->SetScale(0.2);
+  object_glyph->FilledOn();
+  object_glyph->CrossOff();
+  vtkNew<vtkGlyph2D> object_glypher;
+  object_glypher->SetSourceConnection(object_glyph->GetOutputPort());
+  object_glypher->SetInputData(object_mesh);
+  object_glypher->SetScaleModeToDataScalingOff();
+
+  vtkNew<vtkPolyDataMapper> object_mapper;
+  object_mapper->SetInputConnection(object_glypher->GetOutputPort());
+
+  vtkNew<vtkActor> object_actor;
+  object_actor->SetMapper(object_mapper);
+
+  // Edges
+  vtkNew<vtkPolyDataMapper> edge_mapper;
+  edge_mapper->SetInputData(object_mesh);
+  edge_mapper->SetScalarModeToUseCellData();
+  edge_mapper->SetScalarRange(0.0, 40);
+
+  vtkNew<vtkActor> edge_actor;
+  edge_actor->SetMapper(edge_mapper);
+  edge_actor->GetProperty()->SetLineWidth(10);
+
+  // Create renderer
   renderer->AddActor(rank_actor);
-  renderer->AddActor2D(qoi_actor);
+  renderer->AddActor(object_actor);
+  renderer->AddActor(edge_actor);
+  vtkNew<vtkNamedColors> colors;
+  renderer->SetBackground(colors->GetColor3d("steelblue").GetData());
 
   renderer->ResetCamera();
   vtkNew<vtkRenderWindow> render_window;
   render_window->AddRenderer(renderer);
   render_window->SetWindowName("LBAF");
-  render_window->SetSize(100, 100);
+  render_window->SetSize(500, 500);
   render_window->Render();
 
   vtkNew<vtkWindowToImageFilter> w2i;
@@ -734,13 +760,18 @@ vtkNew<vtkPolyData> Render::create_object_mesh_(PhaseWork phase) {
 void Render::generate() {
   // Create vector of number of objects per phase
   std::vector<uint64_t> n_objects_list;
-  for (auto const& [phase, phase_work] : this->phase_info_) {
+  std::pair<TimeType, TimeType> load_range = this->compute_object_load_range();
+  double load_min = std::get<0>(load_range);
+  double load_max = std::get<1>(load_range);
+  double range[2] = {load_min, load_max};
+  for(auto const& [phase, phase_work] : this->phase_info_) {
     // vtkPolyData* testPolyData = this->create_object_mesh_(phase_work);
     vtkNew<vtkPolyData> object_mesh = this->create_object_mesh_(phase_work);
     vtkNew<vtkPolyData> rank_mesh = this->create_rank_mesh_(phase_work.getPhase());
 
-    this->createObjectPipeline(
-      object_mesh.Get(), rank_mesh.Get()
+    this->createPipeline2(
+      object_mesh.GetPointer(),
+      rank_mesh.GetPointer()
     );
 
     vtkNew<vtkXMLPolyDataWriter> writer;

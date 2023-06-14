@@ -72,6 +72,7 @@
 #include <vtkBitArray.h>
 #include <vtkLine.h>
 #include <vtkCellData.h>
+#include <vtkLookupTable.h>
 
 #include <vtkPolyDataWriter.h>
 #include <vtkExodusIIWriter.h>
@@ -121,7 +122,7 @@ private:
   uint64_t max_o_per_dim_ = 0;
 
   // numeric parameters
-  std::tuple<TimeType, TimeType> object_load_range_;
+  std::pair<TimeType, TimeType> object_load_range_;
 
   // Maximum object atribute values
   TimeType object_load_max_ = 0.0;
@@ -145,7 +146,7 @@ private:
    *
    * \return load range
    */
-  std::tuple<TimeType, TimeType> compute_object_load_range();
+  std::pair<TimeType, TimeType> compute_object_load_range();
 
   /**
    * \brief get ranks belonging to phase
@@ -249,7 +250,7 @@ public:
     int win_size
   );
 
-  void createObjectPipeline(
+  void createPipeline2(
     vtkPolyData* object_mesh,
     vtkPolyData* rank_mesh
   );
