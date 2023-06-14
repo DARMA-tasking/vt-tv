@@ -29,7 +29,7 @@ private:
   /**
    * Summarize one-way communicator properties and check for errors.
    */
-  std::vector<double> summarize_unidirectional(std::string direction) const {
+  std::vector<double> summarizeUnidirectional(std::string direction) const {
     // Initialize list of volumes
     std::vector<double> volumes;
 
@@ -59,29 +59,29 @@ public:
    *
    * \return id
    */
-  ElementIDType get_object_id() { return object_id_; };
+  ElementIDType getObjectId() { return object_id_; };
 
   /**
    * Return all from_object=volume pairs received by object.
    */
-  std::map<ElementIDType, double>& get_received() { return this->received_; };
+  std::map<ElementIDType, double>& getReceived() { return this->received_; };
 
   /**
    * Return the volume of a message received from an object if any.
    */
-  double get_received_from_object(ElementIDType id) const {
+  double getReceivedFromObject(ElementIDType id) const {
     return this->received_.at(id);
   }
 
   /**
    * Return all to_object=volume pairs sent from object.
    */
-  std::map<ElementIDType, double>& get_sent() { return this->sent_; };
+  std::map<ElementIDType, double>& getSent() { return this->sent_; };
 
   /**
    * Return the volume of a message sent to an object if any.
    */
-  double get_sent_to_object(ElementIDType id) const {
+  double getSentToObject(ElementIDType id) const {
     return this->sent_.at(id);
   }
 
@@ -90,10 +90,10 @@ public:
    */
   std::pair<std::vector<double>, std::vector<double>> summarize() const {
     // Summarize sent communications
-    std::vector<double> w_sent = this->summarize_unidirectional("to");
+    std::vector<double> w_sent = this->summarizeUnidirectional("to");
 
     // Summarize received communications
-    std::vector<double> w_recv = this->summarize_unidirectional("from");
+    std::vector<double> w_recv = this->summarizeUnidirectional("from");
 
     return std::make_pair(w_sent, w_recv);
   }

@@ -116,7 +116,7 @@ struct ObjectWork {
    * \return void
    */
   void setCommunications(ObjectCommunicator c) {
-    assert(c.get_object_id() == id_);
+    assert(c.getObjectId() == id_);
     communicator_ = c;
   };
 
@@ -138,30 +138,18 @@ struct ObjectWork {
     communicator_.addReceived(from_id, bytes);
   };
 
-  // void normalizeEdges(Info& i) {
-  //   auto const& received = communicator_.get_received();
-  //   for (auto const& [elm, bytes] : received) {
-  //     i.getPhaseObjects(elm).addSentCommunications(id_, bytes);
-  //   }
-
-  //   auto const& sent = communicator_.get_sent();
-  //   for (auto const& [elm, bytes] : send) {
-  //     pw.getObject(elm).addSentCommunications(id_, bytes);
-  //   }
-  // }
-
   /**
    * \brief get received communications for this object
    */
   std::map<ElementIDType, double>& getReceived() {
-    return communicator_.get_received();
+    return communicator_.getReceived();
   }
 
   /**
    * \brief get sent communications for this object
    */
   std::map<ElementIDType, double>& getSent() {
-    return communicator_.get_sent();
+    return communicator_.getSent();
   }
 
 private:
