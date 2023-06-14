@@ -90,7 +90,7 @@ struct PhaseWork {
    *
    * \return void
    */
-  void setCommunications(ElementIDType o_id, ObjectCommunicator c) { objects_.at(o_id).setCommunications(c); };
+  void setCommunications(ElementIDType o_id, ObjectCommunicator& c) { objects_.at(o_id).setCommunications(c); };
 
 private:
   /// Phase identifier

@@ -115,7 +115,7 @@ struct ObjectWork {
    *
    * \return void
    */
-  void setCommunications(ObjectCommunicator c) {
+  void setCommunications(ObjectCommunicator& c) {
     assert(c.getObjectId() == id_);
     communicator_ = c;
   };
