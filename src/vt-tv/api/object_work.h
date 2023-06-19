@@ -141,14 +141,14 @@ struct ObjectWork {
   /**
    * \brief get received communications for this object
    */
-  std::map<ElementIDType, double>& getReceived() {
+  std::map<ElementIDType, double> getReceived() const {
     return communicator_.getReceived();
   }
 
   /**
    * \brief get sent communications for this object
    */
-  std::map<ElementIDType, double>& getSent() {
+  std::map<ElementIDType, double> getSent() const {
     return communicator_.getSent();
   }
 

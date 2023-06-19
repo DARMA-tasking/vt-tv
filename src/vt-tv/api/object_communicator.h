@@ -59,12 +59,12 @@ public:
    *
    * \return id
    */
-  ElementIDType getObjectId() { return object_id_; };
+  ElementIDType getObjectId() const { return object_id_; };
 
   /**
    * Return all from_object=volume pairs received by object.
    */
-  std::map<ElementIDType, double>& getReceived() { return this->received_; };
+  std::map<ElementIDType, double> getReceived() const { return this->received_; };
 
   /**
    * Return the volume of a message received from an object if any.
@@ -76,7 +76,7 @@ public:
   /**
    * Return all to_object=volume pairs sent from object.
    */
-  std::map<ElementIDType, double>& getSent() { return this->sent_; };
+  std::map<ElementIDType, double> getSent() const { return this->sent_; };
 
   /**
    * Return the volume of a message sent to an object if any.
