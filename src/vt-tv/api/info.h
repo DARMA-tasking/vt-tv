@@ -114,14 +114,14 @@ struct Info {
    *
    * \return the objects
    */
-  std::unordered_map<ElementIDType, ObjectWork> getRankObjects(NodeType rank_id, PhaseType phase) {
+  std::unordered_map<ElementIDType, ObjectWork> getRankObjects(NodeType rank_id, PhaseType phase) const {
     std::unordered_map<ElementIDType, ObjectWork> objects;
 
     // Get Rank info for specified rank
-    auto& rank_info = this->getRank(rank_id);
+    auto const& rank_info = this->getRank(rank_id);
 
     // Get history of phases for this rank
-    auto& phase_history_at_rank = rank_info.getPhaseWork();
+    auto const& phase_history_at_rank = rank_info.getPhaseWork();
 
     // Get phase work at specified phase
     auto const& phase_work_at_rank = phase_history_at_rank.find(phase);
@@ -144,7 +144,7 @@ struct Info {
    *
    * \return the objects
    */
-  std::unordered_map<ElementIDType, ObjectWork> getPhaseObjects(PhaseType phase, uint64_t n_ranks) {
+  std::unordered_map<ElementIDType, ObjectWork> getPhaseObjects(PhaseType phase, uint64_t n_ranks) const {
     // fmt::print("Phase: {}\n", phase);
 
     // Map of objects at given phase
@@ -154,10 +154,10 @@ struct Info {
     for (uint64_t rank = 0; rank < n_ranks; rank++) {
       // fmt::print("  Rank: {}\n",rank);
       // Get Rank info for specified rank
-      auto& rank_info = this->getRank(rank);
+      auto const& rank_info = this->getRank(rank);
 
       // Get history of phases for this rank
-      auto& phase_history = rank_info.getPhaseWork();
+      auto const& phase_history = rank_info.getPhaseWork();
 
       // Get phase work at specified phase
       auto const& phase_work = phase_history.find(phase);
@@ -174,13 +174,50 @@ struct Info {
   }
 
   /**
+   * \brief Create mapping of all objects in all ranks for a given phase (made for allowing changes to these objects)
+   *
+   * \param[in] phase the phase
+   * \param[in] n_ranks the total number of ranks
+   *
+   * \return the objects
+   */
+  std::unordered_map<ElementIDType, ObjectWork> createPhaseObjectsMapping_(PhaseType phase, uint64_t n_ranks) {
+    // fmt::print("Phase: {}\n", phase);
+
+    // Map of objects at given phase
+    std::unordered_map<ElementIDType, ObjectWork> objects_at_phase;
+
+    // Go through all ranks and get all objects at given phase
+    for (uint64_t rank = 0; rank < n_ranks; rank++) {
+      // fmt::print("  Rank: {}\n",rank);
+      // Get Rank info for specified rank
+      auto& rank_info = ranks_.at(rank);
+
+      // Get history of phases for this rank
+      auto& phase_history = rank_info.getPhaseWork();
+
+      // Get phase work at specified phase
+      auto phase_work = phase_history.find(phase);
+
+      // Get all objects at specified phase
+      auto& object_work_at_phase = phase_work->second.getObjectWork();
+
+      for (auto& [elm_id, obj_work] : object_work_at_phase) {
+        // fmt::print("    Object Id: {}\n", elm_id);
+        objects_at_phase.insert(std::make_pair(elm_id, obj_work));
+      }
+    }
+    return objects_at_phase;
+  }
+
+  /**
    * \brief Get all objects for all ranks and phases
    *
    * \param[in] n_ranks the total number of ranks
    *
    * \return the objects
    */
-  std::unordered_map<ElementIDType, ObjectWork> getAllObjects(uint64_t n_ranks) {
+  std::unordered_map<ElementIDType, ObjectWork> getAllObjects(uint64_t n_ranks) const {
 
     // Map of objects at given phase
     std::unordered_map<ElementIDType, ObjectWork> objects;
@@ -189,10 +226,10 @@ struct Info {
     for (uint64_t rank = 0; rank < n_ranks; rank++) {
       // fmt::print("Rank: {}\n",rank);
       // Get Rank info for specified rank
-      auto& rank_info = this->getRank(rank);
+      auto const& rank_info = this->getRank(rank);
 
       // Get history of phases for this rank
-      auto& phase_history = rank_info.getPhaseWork();
+      auto const& phase_history = rank_info.getPhaseWork();
 
       // Go through history of all phases
       for (auto const& [phase, phase_work] : phase_history) {
@@ -206,7 +243,7 @@ struct Info {
         }
       }
     }
-    fmt::print("Size of all objects: {}", objects.size());
+    fmt::print("Size of all objects: {}\n", objects.size());
     return objects;
   }
 
@@ -216,6 +253,51 @@ struct Info {
    * \return number of ranks
    */
   std::size_t getNumRanks() const { return ranks_.size(); }
+
+  /**
+   * \brief Normalize communications for a phase: ensure receives and sends coincide
+   *
+   * \return void
+   */
+  void normalizeEdges(PhaseType phase, uint64_t n_ranks) {
+    fmt::print("---- Normalizing Edges for phase {} ----\n", phase);
+    auto phaseObjects = createPhaseObjectsMapping_(phase, n_ranks);
+    for (auto& [id1, objectWork1] : phaseObjects) {
+      auto const& sent1 = objectWork1.getSent();
+      auto const& received1 = objectWork1.getReceived();
+      for (auto& [id2, objectWork2] : phaseObjects) {
+        // No communications to oneself
+        if (id1 != id2) {
+          fmt::print("--Communication between object {} and object {}\n\n", id1, id2);
+          auto const& sent2 = objectWork2.getSent();
+          auto const& received2 = objectWork2.getReceived();
+          // Communications existing on object 2, to be added on object 1
+          fmt::print("  Communications existing on object {}, to be added on object {}:\n", id2, id1);
+          if (sent2.find(id1) != sent2.end()) {
+            fmt::print("    adding sent from object {} to received by object {}\n", id2, id1);
+            objectWork1.addReceivedCommunications(id2, sent2.at(id1));
+          } else if (received2.find(id1) != received2.end()) {
+            fmt::print("    adding received from object {} to sent by object {}\n", id2, id1);
+            objectWork1.addSentCommunications(id2, received2.at(id1));
+          } else {
+            fmt::print("    None\n");
+          }
+          // Communications existing on object 1, to be added on object 2
+          fmt::print("  Communications existing on object {}, to be added on object {}:\n", id1, id2);
+          if (sent1.find(id2) != sent1.end()) {
+            fmt::print("    adding sent from object {} to received by object {}\n", id1, id2);
+            objectWork2.addReceivedCommunications(id1, sent1.at(id2));
+          } else if (received2.find(id1) != received2.end()) {
+            fmt::print("    adding received from object {} to sent by object {}\n", id1, id2);
+            objectWork2.addSentCommunications(id1, received1.at(id2));
+          } else {
+            fmt::print("    None\n");
+          }
+          fmt::print("\n");
+        }
+      }
+    }
+  }
 
 private:
   /// All the object info that doesn't change across phases

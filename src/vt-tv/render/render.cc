@@ -125,7 +125,7 @@ Render::Render(
   this->object_load_range_ = this->compute_object_load_range();
 };
 
-std::tuple<TimeType, TimeType> Render::compute_object_load_range() {
+std::pair<TimeType, TimeType> Render::compute_object_load_range() {
   // Initialize space-time object QOI range attributes
   TimeType oq_max = -1 * std::numeric_limits<double>::infinity();
   TimeType oq_min = std::numeric_limits<double>::infinity();
@@ -157,8 +157,8 @@ std::vector<NodeType> Render::getRanks(PhaseType phase_in) const {
   return rankSet;
 }
 
-std::unordered_map<NodeType, std::unordered_map<ElementIDType, ObjectWork>> Render::create_object_mapping_(PhaseType phase) {
-  std::unordered_map<NodeType, std::unordered_map<ElementIDType, ObjectWork>> object_mapping;
+std::map<NodeType, std::unordered_map<ElementIDType, ObjectWork>> Render::create_object_mapping_(PhaseType phase) {
+  std::map<NodeType, std::unordered_map<ElementIDType, ObjectWork>> object_mapping;
 
   fmt::print("  -creating object mapping-\n");
   fmt::print("   phase: {}\n", phase);
@@ -238,11 +238,11 @@ vtkNew<vtkPolyData> Render::create_object_mesh_(PhaseWork phase) {
 
   // Iterate over ranks and objects to create mesh points
   uint64_t point_index = 0;
-  std::map<ObjectInfo, uint64_t> point_to_index;
+  std::map<ElementIDType, uint64_t> objectid_to_index;
+  // sent_volumes is a vector to store the communications ("from" object id, "sent to" object id, and volume)
+  std::vector<std::tuple<ElementIDType, ElementIDType, double>> sent_volumes;
 
   auto object_mapping = this->create_object_mapping_(p_id);
-
-  fmt::print("object_mapping size: {}\n", object_mapping.size());
 
   // Iterate through object mapping
   for (auto const& [rankID, objects] : object_mapping) {
@@ -280,35 +280,36 @@ vtkNew<vtkPolyData> Render::create_object_mesh_(PhaseWork phase) {
       }
     }
 
-    auto const& rank = this->info_.getRank(rankID);
+    auto& rank = this->info_.getRank(rankID);
 
     //@TODO: clean this stuff up
 
-    struct cmpByMigratableThenID {
-      cmpByMigratableThenID(const Info& info) :info_(info) {}
-      bool operator()(const ObjectWork& lhs, const ObjectWork& rhs) const {
-        ElementIDType lhsID = lhs.getID();
-        ElementIDType rhsID = rhs.getID();
-        bool migratableLhs = info_.getObjectInfo().at(lhsID).isMigratable();
-        bool migratableRhs = info_.getObjectInfo().at(rhsID).isMigratable();
-        if(migratableLhs != migratableRhs) {
-            return migratableLhs < migratableRhs; // non-migratable comes first
-        }
-        return lhsID < rhsID; // Then sort by ID
+    auto cmpByMigratableThenID = [this](const std::pair<ObjectWork, uint64_t>& a,
+                                    const std::pair<ObjectWork, uint64_t>& b) {
+      ElementIDType lhsID = std::get<0>(a).getID();
+      ElementIDType rhsID = std::get<0>(b).getID();
+      bool migratableLhs = this->info_.getObjectInfo().at(lhsID).isMigratable();
+      bool migratableRhs = this->info_.getObjectInfo().at(rhsID).isMigratable();
+      if(migratableLhs != migratableRhs) {
+          return migratableLhs < migratableRhs; // non-migratable comes first
       }
-      private:
-      Info info_;
+      return lhsID < rhsID; // Then sort by ID
     };
-    std::map<ObjectWork, uint64_t, cmpByMigratableThenID> ordered_objects(cmpByMigratableThenID(this->info_));
 
-    for (auto const& [objectID, objectWork] : objects) {
+    std::vector<std::pair<ObjectWork, uint64_t>> ordered_objects;
+
+    for (auto& [objectID, objectWork] : objects) {
       bool migratable = this->info_.getObjectInfo().at(objectID).isMigratable();
-      ordered_objects.insert(std::make_pair(objectWork, migratable));
+      ordered_objects.push_back(std::make_pair(objectWork, migratable));
     }
+
+    // Sort objects
+    std::sort(ordered_objects.begin(), ordered_objects.end(), cmpByMigratableThenID);
 
     // Add rank objects to point set
     int i = 0;
-    for (auto const& [objectWork, sentinel] : ordered_objects) {
+    for (auto& [objectWork, sentinel] : ordered_objects) {
+      // fmt::print("Object ID: {}, sentinel: {}\n", objectWork.getID(), sentinel);
 
       // Insert point using offset and rank coordinates
       std::array<double, 3> currentPointPosition = {0, 0, 0};
@@ -329,17 +330,95 @@ vtkNew<vtkPolyData> Render::create_object_mesh_(PhaseWork phase) {
       // Set object attributes
       q_arr->SetTuple1(point_index, objectWork.getLoad());
       b_arr->SetTuple1(point_index, sentinel);
+
+      auto objSent = objectWork.getSent();
+      for (auto [k, v] : objSent) {
+        sent_volumes.push_back(std::make_tuple(point_index, k, v));
+      }
+
       i++;
+      objectid_to_index.insert(std::make_pair(objectWork.getID(), point_index));
       point_index++;
     }
+  }
 
+  vtkNew<vtkDoubleArray> lineValuesArray;
+  lineValuesArray->SetName("bytes");
+  vtkNew<vtkCellArray> lines;
+  uint64_t n_e = 0;
+  std::map<std::tuple<ElementIDType, ElementIDType>, std::tuple<uint64_t, double>> edge_values;
+
+  fmt::print("Creating inter-object communication edges:\n");
+  for(auto& [pt_index, k, v] : sent_volumes) {
+    // sort the point index and the object id in the "ij" tuple
+    std::tuple<ElementIDType, ElementIDType> ij;
+    if (pt_index <= objectid_to_index.at(k)) {
+      ij = {pt_index, objectid_to_index.at(k)};
+    }
+    else {
+      ij = {objectid_to_index.at(k), pt_index};
+    }
+
+    std::tuple<uint64_t, double> edge_value;
+    if (auto e_ij = edge_values.find(ij); e_ij != edge_values.end()) {
+      // If the line already exist we just update the volume
+      auto current_edge = std::get<0>(edge_values.at(ij));
+      auto current_v = std::get<1>(edge_values.at(ij));
+      edge_values.at(ij) = {current_edge, current_v + v};
+      lineValuesArray->SetTuple1(std::get<0>(edge_values.at(ij)), std::get<1>(edge_values.at(ij)));
+      fmt::print("\tupdating edge {} ({}--{}): {}\n", current_edge, std::get<0>(ij), std::get<1>(ij), current_v+v);
+    }
+    else {
+      // If it doesn't, we create it
+      fmt::print("\tcreating edge {} ({}--{}): {}\n", n_e, std::get<0>(ij), std::get<1>(ij), v);
+      edge_value = {n_e, v};
+      edge_values.insert({ij, edge_value});
+      n_e += 1;
+      lineValuesArray->InsertNextTuple1(v);
+      vtkNew<vtkLine> line;
+      line->GetPointIds()->SetId(0, std::get<0>(ij));
+      line->GetPointIds()->SetId(1, std::get<1>(ij));
+      lines->InsertNextCell(line);
+    }
   }
 
   vtkNew<vtkPolyData> pd_mesh;
   pd_mesh->SetPoints(points);
+  pd_mesh->SetLines(lines);
   pd_mesh->GetPointData()->SetScalars(q_arr);
   pd_mesh->GetPointData()->AddArray(b_arr);
+  pd_mesh->GetCellData()->SetScalars(lineValuesArray);
+
   fmt::print("-----finished creating object mesh-----\n");
+
+  // Setup the visualization pipeline
+  vtkNew<vtkNamedColors> namedColors;
+  vtkNew<vtkPolyData> linesPolyData;
+  linesPolyData->SetPoints(points);
+  linesPolyData->SetLines(lines);
+  linesPolyData->GetCellData()->SetScalars(lineValuesArray);
+  vtkNew<vtkPolyDataMapper> mapper;
+  mapper->SetInputData(linesPolyData);
+
+  vtkNew<vtkActor> actor;
+  actor->SetMapper(mapper);
+  actor->GetProperty()->SetLineWidth(4);
+
+  vtkNew<vtkRenderer> renderer;
+  renderer->AddActor(actor);
+  renderer->SetBackground(namedColors->GetColor3d("SlateGray").GetData());
+
+  vtkNew<vtkRenderWindow> window;
+  window->SetWindowName("Colored Lines");
+  window->AddRenderer(renderer);
+
+  vtkNew<vtkRenderWindowInteractor> interactor;
+  interactor->SetRenderWindow(window);
+
+  // Visualize
+  window->Render();
+  interactor->Start();
+
   return pd_mesh;
 }
 
@@ -594,7 +673,7 @@ vtkNew<vtkPolyData> Render::create_object_mesh_(PhaseWork phase) {
   writer->Write();
 }
 
-/*static*/ void Render::createObjectPipeline(
+/*static*/ void Render::createPipeline2(
   vtkPolyData* object_mesh,
   vtkPolyData* rank_mesh
 ) {
@@ -602,6 +681,7 @@ vtkNew<vtkPolyData> Render::create_object_mesh_(PhaseWork phase) {
   renderer->SetBackground(1.0, 1.0, 1.0);
   renderer->GetActiveCamera()->ParallelProjectionOn();
 
+  // Rank glyphs
   vtkNew<vtkGlyphSource2D> rank_glyph;
   rank_glyph->SetGlyphTypeToSquare();
   rank_glyph->SetScale(.95);
@@ -621,24 +701,49 @@ vtkNew<vtkPolyData> Render::create_object_mesh_(PhaseWork phase) {
 
   vtkNew<vtkPolyDataMapper> rank_mapper;
   rank_mapper->SetInputConnection(trans->GetOutputPort());
-  // rank_mapper->SetLookupTable(createColorTransferFunction({0,0.01}));
-  // rank_mapper->SetScalarRange({0,0.01});
 
   vtkNew<vtkActor> rank_actor;
   rank_actor->SetMapper(rank_mapper);
-  auto qoi_actor = createScalarBarActor(rank_mapper, "Rank XXX", 0.5, 0.9);
-  qoi_actor->DrawBelowRangeSwatchOn();
-  qoi_actor->SetBelowRangeAnnotation("<");
-  qoi_actor->DrawAboveRangeSwatchOn();
-  qoi_actor->SetAboveRangeAnnotation(">");
+
+  // Object glyphs
+  vtkNew<vtkGlyphSource2D> object_glyph;
+  object_glyph->SetGlyphTypeToCircle();
+  object_glyph->SetScale(0.2);
+  object_glyph->FilledOn();
+  object_glyph->CrossOff();
+  vtkNew<vtkGlyph2D> object_glypher;
+  object_glypher->SetSourceConnection(object_glyph->GetOutputPort());
+  object_glypher->SetInputData(object_mesh);
+  object_glypher->SetScaleModeToDataScalingOff();
+
+  vtkNew<vtkPolyDataMapper> object_mapper;
+  object_mapper->SetInputConnection(object_glypher->GetOutputPort());
+
+  vtkNew<vtkActor> object_actor;
+  object_actor->SetMapper(object_mapper);
+
+  // Edges
+  vtkNew<vtkPolyDataMapper> edge_mapper;
+  edge_mapper->SetInputData(object_mesh);
+  edge_mapper->SetScalarModeToUseCellData();
+  edge_mapper->SetScalarRange(0.0, 40);
+
+  vtkNew<vtkActor> edge_actor;
+  edge_actor->SetMapper(edge_mapper);
+  edge_actor->GetProperty()->SetLineWidth(10);
+
+  // Create renderer
   renderer->AddActor(rank_actor);
-  renderer->AddActor2D(qoi_actor);
+  renderer->AddActor(object_actor);
+  renderer->AddActor(edge_actor);
+  vtkNew<vtkNamedColors> colors;
+  renderer->SetBackground(colors->GetColor3d("steelblue").GetData());
 
   renderer->ResetCamera();
   vtkNew<vtkRenderWindow> render_window;
   render_window->AddRenderer(renderer);
   render_window->SetWindowName("LBAF");
-  render_window->SetSize(100, 100);
+  render_window->SetSize(500, 500);
   render_window->Render();
 
   vtkNew<vtkWindowToImageFilter> w2i;
@@ -655,13 +760,18 @@ vtkNew<vtkPolyData> Render::create_object_mesh_(PhaseWork phase) {
 void Render::generate() {
   // Create vector of number of objects per phase
   std::vector<uint64_t> n_objects_list;
-  for (auto const& [phase, phase_work] : this->phase_info_) {
+  std::pair<TimeType, TimeType> load_range = this->compute_object_load_range();
+  double load_min = std::get<0>(load_range);
+  double load_max = std::get<1>(load_range);
+  double range[2] = {load_min, load_max};
+  for(auto const& [phase, phase_work] : this->phase_info_) {
     // vtkPolyData* testPolyData = this->create_object_mesh_(phase_work);
     vtkNew<vtkPolyData> object_mesh = this->create_object_mesh_(phase_work);
     vtkNew<vtkPolyData> rank_mesh = this->create_rank_mesh_(phase_work.getPhase());
 
-    this->createObjectPipeline(
-      object_mesh.Get(), rank_mesh.Get()
+    this->createPipeline2(
+      object_mesh.GetPointer(),
+      rank_mesh.GetPointer()
     );
 
     vtkNew<vtkXMLPolyDataWriter> writer;

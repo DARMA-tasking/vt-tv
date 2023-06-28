@@ -85,6 +85,13 @@ struct PhaseWork {
    */
   auto const& getObjectWork() const { return objects_; }
 
+  /**
+   * \brief set communications for an object in this phase
+   *
+   * \return void
+   */
+  void setCommunications(ElementIDType o_id, ObjectCommunicator& c) { objects_.at(o_id).setCommunications(c); };
+
 private:
   /// Phase identifier
   PhaseType phase_ = 0;
