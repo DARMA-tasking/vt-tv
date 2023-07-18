@@ -194,11 +194,19 @@ vtkNew<vtkPolyData> Render::create_rank_mesh_(PhaseType iteration) {
     // Insert point based on cartesian coordinates
     rank_points_->SetPoint(rank_id, offsets[0], offsets[1], offsets[2]);
 
-    // rank_arr->SetTuple1(rank_id, /* qoi */);
+    auto objects = this->info_.getRankObjects(rank_id, iteration);
+
+    double rank_load = 0;
+    for (auto [id, object] : objects) {
+      rank_load += object.getLoad();
+    }
+
+    rank_arr->SetTuple1(rank_id, rank_load);
   }
 
   vtkNew<vtkPolyData> pd_mesh;
   pd_mesh->SetPoints(rank_points_);
+  pd_mesh->GetPointData()->SetScalars(rank_arr);
   fmt::print("-----created rank mesh for phase {} -----\n", iteration);
   return pd_mesh;
 }
