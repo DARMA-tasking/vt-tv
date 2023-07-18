@@ -9,6 +9,7 @@ find_package(
   CommonCore
   CommonDataModel
   FiltersSources
+  FiltersGeneral
   InteractionStyle
   RenderingFreeType
   RenderingOpenGL2
