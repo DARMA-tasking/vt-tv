@@ -203,6 +203,17 @@ vtkNew<vtkPolyData> Render::create_rank_mesh_(PhaseType iteration) {
   return pd_mesh;
 }
 
+bool compareObjects(const std::pair<ObjectWork, uint64_t>& p1, const std::pair<ObjectWork, uint64_t>& p2) {
+  ElementIDType lhsID = p1.first.getID();
+  ElementIDType rhsID = p2.first.getID();
+  uint64_t migratableLhs = p1.second;
+  uint64_t migratableRhs = p2.second;
+  if (migratableLhs != migratableRhs) {
+    return migratableLhs < migratableRhs; // non-migratable comes first
+  }
+  return lhsID < rhsID; // then sort by ID
+}
+
 vtkNew<vtkPolyData> Render::create_object_mesh_(PhaseWork phase) {
   fmt::print("\n\n");
   fmt::print("----- Creating object mesh for phase {} -----\n", phase.getPhase());
@@ -282,33 +293,19 @@ vtkNew<vtkPolyData> Render::create_object_mesh_(PhaseWork phase) {
 
     auto& rank = this->info_.getRank(rankID);
 
-    //@TODO: clean this stuff up
-
-    auto cmpByMigratableThenID = [this](const std::pair<ObjectWork, uint64_t>& a,
-                                    const std::pair<ObjectWork, uint64_t>& b) {
-      ElementIDType lhsID = std::get<0>(a).getID();
-      ElementIDType rhsID = std::get<0>(b).getID();
-      bool migratableLhs = this->info_.getObjectInfo().at(lhsID).isMigratable();
-      bool migratableRhs = this->info_.getObjectInfo().at(rhsID).isMigratable();
-      if(migratableLhs != migratableRhs) {
-          return migratableLhs < migratableRhs; // non-migratable comes first
-      }
-      return lhsID < rhsID; // Then sort by ID
-    };
-
     std::vector<std::pair<ObjectWork, uint64_t>> ordered_objects;
 
-    for (auto& [objectID, objectWork] : objects) {
+    for (auto const& [objectID, objectWork] : objects) {
       bool migratable = this->info_.getObjectInfo().at(objectID).isMigratable();
       ordered_objects.push_back(std::make_pair(objectWork, migratable));
     }
 
     // Sort objects
-    std::sort(ordered_objects.begin(), ordered_objects.end(), cmpByMigratableThenID);
+    std::sort(ordered_objects.begin(), ordered_objects.end(), compareObjects);
 
     // Add rank objects to point set
     int i = 0;
-    for (auto& [objectWork, sentinel] : ordered_objects) {
+    for (auto const& [objectWork, sentinel] : ordered_objects) {
       // fmt::print("Object ID: {}, sentinel: {}\n", objectWork.getID(), sentinel);
 
       // Insert point using offset and rank coordinates
