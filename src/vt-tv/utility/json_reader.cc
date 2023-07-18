@@ -185,7 +185,7 @@ std::unique_ptr<Info> JSONReader::parseFile() {
                 }
               }
             }
-            fmt::print(" Add object {}\n", (ElementIDType)object);
+            // fmt::print(" Add object {}\n", (ElementIDType)object);
             objects.try_emplace(
               object,
               ObjectWork{
@@ -214,7 +214,7 @@ std::unique_ptr<Info> JSONReader::parseFile() {
             assert(from_id.is_number());
             assert(to_id.is_number());
 
-            fmt::print(" From: {}, to: {}\n", from_id, to_id);
+            // fmt::print(" From: {}, to: {}\n", from_id, to_id);
 
             // Object on this rank sent data
             if (objects.find(from_id) != objects.end()) {
