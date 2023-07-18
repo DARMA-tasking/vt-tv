@@ -78,7 +78,7 @@ int main() {
   using namespace tv;
   // Read JSON file and input data
 
-  std::filesystem::path p = std::filesystem::path(SRC_DIR) / "tests/unit/lb_test_data";
+  std::filesystem::path p = std::filesystem::path(SRC_DIR) / "tests/unit/lb_test_data/";
   std::string path = std::filesystem::absolute(p).string();
 
   uint64_t n_ranks = 4;
