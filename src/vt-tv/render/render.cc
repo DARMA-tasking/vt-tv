@@ -159,23 +159,16 @@ std::vector<NodeType> Render::getRanks(PhaseType phase_in) const {
 
 std::map<NodeType, std::unordered_map<ElementIDType, ObjectWork>> Render::create_object_mapping_(PhaseType phase) {
   std::map<NodeType, std::unordered_map<ElementIDType, ObjectWork>> object_mapping;
-
-  fmt::print("  -creating object mapping-\n");
-  fmt::print("   phase: {}\n", phase);
-  fmt::print("   n_ranks: {}\n", this->n_ranks_);
-
   // Add each rank and its corresponding objects at the given phase to the object mapping
   for (uint64_t rank_id = 0; rank_id < this->n_ranks_; rank_id++) {
     object_mapping.insert(std::make_pair(rank_id, this->info_.getRankObjects(rank_id, phase)));
   }
-
-  fmt::print("  -finished creating object mapping-\n");
   return object_mapping;
 }
 
 vtkNew<vtkPolyData> Render::create_rank_mesh_(PhaseType iteration) {
   fmt::print("\n\n");
-  fmt::print("-----creating rank mesh for phase {} -----\n", iteration);
+  fmt::print("----- Creating rank mesh for phase {} -----\n", iteration);
   vtkNew<vtkPoints> rank_points_;
   rank_points_->SetNumberOfPoints(this->n_ranks_);
 
@@ -183,7 +176,6 @@ vtkNew<vtkPolyData> Render::create_rank_mesh_(PhaseType iteration) {
   rank_arr->SetName("rank qoi");
   rank_arr->SetNumberOfTuples(this->n_ranks_);
 
-  fmt::print("  Number of ranks in phase: {}\n", this->n_ranks_);
   for (uint64_t rank_id = 0; rank_id < this->n_ranks_; rank_id++) {
     std::array<uint64_t, 3> cartesian = this->global_id_to_cartesian(rank_id, this->grid_size_);
     std::array<double, 3> offsets = {
@@ -207,16 +199,16 @@ vtkNew<vtkPolyData> Render::create_rank_mesh_(PhaseType iteration) {
   vtkNew<vtkPolyData> pd_mesh;
   pd_mesh->SetPoints(rank_points_);
   pd_mesh->GetPointData()->SetScalars(rank_arr);
-  fmt::print("-----created rank mesh for phase {} -----\n", iteration);
+  fmt::print("----- Finished creating rank mesh for phase {} -----\n", iteration);
   return pd_mesh;
 }
 
 vtkNew<vtkPolyData> Render::create_object_mesh_(PhaseWork phase) {
   fmt::print("\n\n");
-  fmt::print("-----creating object mesh for phase {} -----\n", phase.getPhase());
+  fmt::print("----- Creating object mesh for phase {} -----\n", phase.getPhase());
   // Retrieve number of mesh points and bail out early if empty set
   uint64_t n_o = this->info_.getPhaseObjects(phase.getPhase(), this->n_ranks_).size();
-  fmt::print("Number of objects in phase: {} -----\n", n_o);
+  fmt::print("  Number of objects in phase: {} -----\n", n_o);
 
   // Create point array for object quantity of interest
   vtkNew<vtkDoubleArray> q_arr;
@@ -356,7 +348,7 @@ vtkNew<vtkPolyData> Render::create_object_mesh_(PhaseWork phase) {
   uint64_t n_e = 0;
   std::map<std::tuple<ElementIDType, ElementIDType>, std::tuple<uint64_t, double>> edge_values;
 
-  fmt::print("Creating inter-object communication edges:\n");
+  fmt::print("  Creating inter-object communication edges\n");
   for(auto& [pt_index, k, v] : sent_volumes) {
     // sort the point index and the object id in the "ij" tuple
     std::tuple<ElementIDType, ElementIDType> ij;
@@ -374,11 +366,11 @@ vtkNew<vtkPolyData> Render::create_object_mesh_(PhaseWork phase) {
       auto current_v = std::get<1>(edge_values.at(ij));
       edge_values.at(ij) = {current_edge, current_v + v};
       lineValuesArray->SetTuple1(std::get<0>(edge_values.at(ij)), std::get<1>(edge_values.at(ij)));
-      fmt::print("\tupdating edge {} ({}--{}): {}\n", current_edge, std::get<0>(ij), std::get<1>(ij), current_v+v);
+      // fmt::print("\tupdating edge {} ({}--{}): {}\n", current_edge, std::get<0>(ij), std::get<1>(ij), current_v+v);
     }
     else {
       // If it doesn't, we create it
-      fmt::print("\tcreating edge {} ({}--{}): {}\n", n_e, std::get<0>(ij), std::get<1>(ij), v);
+      // fmt::print("\tcreating edge {} ({}--{}): {}\n", n_e, std::get<0>(ij), std::get<1>(ij), v);
       edge_value = {n_e, v};
       edge_values.insert({ij, edge_value});
       n_e += 1;
@@ -397,35 +389,7 @@ vtkNew<vtkPolyData> Render::create_object_mesh_(PhaseWork phase) {
   pd_mesh->GetPointData()->AddArray(b_arr);
   pd_mesh->GetCellData()->SetScalars(lineValuesArray);
 
-  fmt::print("-----finished creating object mesh-----\n");
-
-  // Setup the visualization pipeline
-  vtkNew<vtkNamedColors> namedColors;
-  vtkNew<vtkPolyData> linesPolyData;
-  linesPolyData->SetPoints(points);
-  linesPolyData->SetLines(lines);
-  linesPolyData->GetCellData()->SetScalars(lineValuesArray);
-  vtkNew<vtkPolyDataMapper> mapper;
-  mapper->SetInputData(linesPolyData);
-
-  vtkNew<vtkActor> actor;
-  actor->SetMapper(mapper);
-  actor->GetProperty()->SetLineWidth(4);
-
-  vtkNew<vtkRenderer> renderer;
-  renderer->AddActor(actor);
-  renderer->SetBackground(namedColors->GetColor3d("SlateGray").GetData());
-
-  vtkNew<vtkRenderWindow> window;
-  window->SetWindowName("Colored Lines");
-  window->AddRenderer(renderer);
-
-  vtkNew<vtkRenderWindowInteractor> interactor;
-  interactor->SetRenderWindow(window);
-
-  // Visualize
-  window->Render();
-  interactor->Start();
+  fmt::print("----- Finished creating object mesh-----\n");
 
   return pd_mesh;
 }
@@ -767,93 +731,28 @@ vtkNew<vtkPolyData> Render::create_object_mesh_(PhaseWork phase) {
 
 void Render::generate() {
   // Create vector of number of objects per phase
-  std::vector<uint64_t> n_objects_list;
   std::pair<TimeType, TimeType> load_range = this->compute_object_load_range();
   double load_min = std::get<0>(load_range);
   double load_max = std::get<1>(load_range);
   double range[2] = {load_min, load_max};
   for(auto const& [phase, phase_work] : this->phase_info_) {
-    // vtkPolyData* testPolyData = this->create_object_mesh_(phase_work);
     vtkNew<vtkPolyData> object_mesh = this->create_object_mesh_(phase_work);
     vtkNew<vtkPolyData> rank_mesh = this->create_rank_mesh_(phase_work.getPhase());
 
-    this->createPipeline2(
-      object_mesh.GetPointer(),
-      rank_mesh.GetPointer()
-    );
-
+    fmt::print("Writing object mesh for phase {}\n", phase);
     vtkNew<vtkXMLPolyDataWriter> writer;
     std::string object_mesh_filename = "object_mesh_" + std::to_string(phase) + ".vtp";
     writer->SetFileName(object_mesh_filename.c_str());
     writer->SetInputData(object_mesh);
     writer->Write();
 
+    fmt::print("Writing rank mesh for phase {}\n", phase);
     vtkNew<vtkXMLPolyDataWriter> writer2;
     std::string rank_mesh_filneame = "rank_mesh_" + std::to_string(phase) + ".vtp";
     writer2->SetFileName(rank_mesh_filneame.c_str());
     writer2->SetInputData(rank_mesh);
     writer2->Write();
-
-    n_objects_list.push_back(phase_work.getObjectWork().size());
   }
-
-  // Create vector of vectors of object loads per phase
-  std::vector<std::vector<TimeType>> phases_object_loads;
-  for (auto const& [phase, phase_work] : this->phase_info_) {
-    std::vector<TimeType> object_loads;
-    for (auto const& [elm_id, work] : phase_work.getObjectWork()) {
-      object_loads.push_back(work.getLoad());
-    }
-    phases_object_loads.push_back(object_loads);
-  }
-
-  // Find min max values of loads for phase 0 for visualization scaling
-  auto max_load = *max_element(std::begin(phases_object_loads[0]), std::end(phases_object_loads[0]));
-  auto min_load = *min_element(std::begin(phases_object_loads[0]), std::end(phases_object_loads[0]));
-
-  // Assign number of objects as number of actors in the visualization
-  uint64_t n_actors = n_objects_list[0];
-
-  // Add objects in visualization as spheres and scale them appropriately
-  vtkNew<vtkNamedColors> colors;
-  vtkNew<vtkRenderer> renderer;
-  std::vector<std::string> color_vector = {"Red", "Green", "Cornsilk"};
-  for (uint64_t actor_i = 0; actor_i < n_actors; actor_i++)
-  {
-    // Create a sphere
-    vtkNew<vtkSphereSource> sphereSource;
-    sphereSource->SetRadius(pow(phases_object_loads[0][actor_i] / (max_load-min_load), 2) * 0.5);
-    std::array<uint64_t, 3> test_dims = {5, 5, 1};
-    auto test_coordinates = this->global_id_to_cartesian(actor_i, test_dims);
-    sphereSource->SetCenter(test_coordinates[0], test_coordinates[1], test_coordinates[2]);
-
-    // Make the surface smooth.
-    sphereSource->SetPhiResolution(100);
-    sphereSource->SetThetaResolution(100);
-
-    // Add sphere to mapper
-    vtkNew<vtkPolyDataMapper> mapper;
-    mapper->SetInputConnection(sphereSource->GetOutputPort());
-
-    // Add actor to render
-    vtkNew<vtkActor> actor;
-    actor->SetMapper(mapper);
-    actor->GetProperty()->SetColor(colors->GetColor3d(color_vector[2]).GetData());
-    renderer->AddActor(actor);
-  }
-
-  // Set background color
-  renderer->SetBackground(colors->GetColor3d("steelblue").GetData());
-
-  vtkNew<vtkRenderWindow> renderWindow;
-  renderWindow->AddRenderer(renderer);
-
-  vtkNew<vtkRenderWindowInteractor> renderWindowInteractor;
-  renderWindowInteractor->SetRenderWindow(renderWindow);
-
-  renderWindow->SetWindowName("Render");
-  renderWindow->Render();
-  renderWindowInteractor->Start();
 }
 
 }} /* end namesapce vt::tv */
