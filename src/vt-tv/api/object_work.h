@@ -50,6 +50,7 @@
 #include <vector>
 #include <variant>
 #include <string>
+#include <cassert>
 
 namespace vt::tv {
 

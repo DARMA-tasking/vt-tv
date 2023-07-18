@@ -46,6 +46,8 @@
 
 #include "vt-tv/utility/compressor.h"
 
+#include <cassert>
+
 namespace vt::tv::utility {
 
 template <typename StreamLike>

@@ -46,6 +46,8 @@
 
 #include "vt-tv/utility/decompressor.h"
 
+#include <cassert>
+
 #include <fmt-vt/format.h>
 
 namespace vt::tv::utility {
