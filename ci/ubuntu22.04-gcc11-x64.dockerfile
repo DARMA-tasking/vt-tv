@@ -1,29 +1,25 @@
 FROM ubuntu:22.04 AS build_dependencies-stage
 
-RUN echo 'Hello World!'
-
-# RUN apt-get update \
-#   && DEBIAN_FRONTEND="noninteractive" apt-get install -y \
-#       git \
-#       python3 \
-#       python3-pip \
-#       python3-distutils \
-#       xz-utils \
-#       bzip2 \
-#       zip \
-#       gpg \
-#       wget \
-#       gpgconf \
-#       software-properties-common \
-#       libsigsegv2 \
-#       libsigsegv-dev \
-#       pkg-config \
-#       zlib1g \
-#       zlib1g-dev \
-#       m4 \
-#   && rm -rf /var/lib/apt/lists/*
-
-# RUN python3 -c 'print("Hello World!")'
+RUN apt-get update \
+  && DEBIAN_FRONTEND="noninteractive" apt-get install -y \
+      git \
+      python3 \
+      python3-pip \
+      python3-distutils \
+      xz-utils \
+      bzip2 \
+      zip \
+      gpg \
+      wget \
+      gpgconf \
+      software-properties-common \
+      libsigsegv2 \
+      libsigsegv-dev \
+      pkg-config \
+      zlib1g \
+      zlib1g-dev \
+      m4 \
+  && rm -rf /var/lib/apt/lists/*
 
 # # Cmake ppa
 # RUN wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc 2>/dev/null | gpg --dearmor - | tee /usr/share/keyrings/kitware-archive-keyring.gpg >/dev/null
@@ -32,18 +28,23 @@ RUN echo 'Hello World!'
 # # gcc ppa
 # RUN add-apt-repository ppa:ubuntu-toolchain-r/test
 
-# RUN apt-get update \
-#   && apt-get install -y \
-#      gcc-11 \
-#      g++-11 \
-#      gfortran-11 \
-#      cmake-data=3.21.3-0kitware1ubuntu20.04.1 \
-#      cmake=3.21.3-0kitware1ubuntu20.04.1 \
-#      pkg-config \
-#      libncurses5-dev \
-#      m4 \
-#      perl \
-#   && rm -rf /var/lib/apt/lists/*
+RUN apt-get update \
+  && apt-get install -y \
+     gcc-11 \
+     g++-11 \
+     gfortran-11 \
+     cmake-data \
+     cmake \
+     pkg-config \
+     libncurses5-dev \
+     m4 \
+     perl \
+  && rm -rf /var/lib/apt/lists/*
+
+RUN pip install nanobind
+
+RUN echo "Success"
+
 # RUN pip install clingo
 # # Now we install spack and find compilers/externals
 # RUN mkdir -p /opt/ && cd /opt/ && git clone --depth 1 --branch "v0.20.1" https://github.com/spack/spack.git
