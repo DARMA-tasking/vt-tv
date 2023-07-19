@@ -1,9 +1,15 @@
 FROM pierrpebay/vt-tv:latest AS build
 
+COPY . /opt/src/vt-tv
+RUN mkdir -p /opt/build/vt-tv
+
 # build
+RUN bash /opt/src/vt-tv/ci/build.sh
 
 FROM build AS test
 
-RUN python3 -c 'print("Hello World! (From build and test)")'
-
 # test
+RUN bash /opt/src/vt-tv/ci/test.sh
+
+FROM scratch AS export-stage
+COPY --from=test /tmp/artifacts /tmp/artifacts

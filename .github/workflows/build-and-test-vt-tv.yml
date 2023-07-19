@@ -15,7 +15,7 @@ jobs:
       fail-fast: false
     env:
       OUTPUT_DIR: '/tmp/out'
-    name: vt-tv
+    name: vt-tv build and test
     steps:
       - uses: actions/checkout@v3
 
@@ -46,15 +46,17 @@ jobs:
           context: .
           file: ./ci/build-and-test.dockerfile
           outputs: type=local,dest=${{ env.OUTPUT_DIR }}
-      # - name: Upload Test Log Files
-      #   uses: actions/upload-artifact@v3
-      #   if: always()
-      #   with:
-      #     name: vt-tv-LastTestLogs
-      #     path: ${{ env.OUTPUT_DIR }}
-      # - name: Determine Job Failure or Success
-      #   run: |
-      #     echo "Success Flag with 0 pass and 1 fail:"
-      #     cat ${{ env.OUTPUT_DIR }}/tmp/artifacts/success_flag.txt
-      #     if [[  $(cat ${{ env.OUTPUT_DIR }}/tmp/artifacts/success_flag.txt) -eq 0 ]]; then exit 0; else exit 1; fi
-      #   shell: bash
+
+      - name: Upload Test Log Files
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: vt-tv-LastTestLogs
+          path: ${{ env.OUTPUT_DIR }}
+
+      - name: Determine Job Failure or Success
+        run: |
+          echo "Success Flag with 0 pass and 1 fail:"
+          cat ${{ env.OUTPUT_DIR }}/tmp/artifacts/success_flag.txt
+          if [[  $(cat ${{ env.OUTPUT_DIR }}/tmp/artifacts/success_flag.txt) -eq 0 ]]; then exit 0; else exit 1; fi
+        shell: bash
