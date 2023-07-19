@@ -31,6 +31,7 @@ foreach(EXAMPLE_FULL ${PROJECT_EXAMPLES})
   )
 
   target_include_directories(${EXAMPLE} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/../src)
+  target_include_directories(${EXAMPLE} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/../lib/CLI)
 
   add_test_for_example_vt_tv(
     vt-tv:${EXAMPLE}

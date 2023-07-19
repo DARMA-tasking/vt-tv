@@ -28,17 +28,20 @@ include(cmake/load_packages.cmake)
 
 add_custom_target(vt_tv_examples)
 add_custom_target(vt_tv_tests)
+add_custom_target(vt_tv_apps)
 
 set(PROJECT_BIN_DIR     ${CMAKE_CURRENT_BINARY_DIR})
 set(PROJECT_BASE_DIR    ${CMAKE_CURRENT_SOURCE_DIR})
 set(PROJECT_LIB_DIR     ${CMAKE_CURRENT_SOURCE_DIR}/lib)
 set(PROJECT_EXAMPLE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/examples)
+set(PROJECT_APP_DIR ${CMAKE_CURRENT_SOURCE_DIR}/apps)
 
 include(CTest)
 
 add_subdirectory(src)
 add_subdirectory(examples)
 add_subdirectory(tests)
+add_subdirectory(apps)
 
 configure_file(
   cmake/vtTVConfig.cmake.in
