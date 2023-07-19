@@ -37,7 +37,7 @@ jobs:
           push: true
           context: .
           file: ./ci/ubuntu22.04-gcc11-x64.dockerfile
-          tags: docker push pierrpebay/vt-tv:latest
+          tags: pierrpebay/vt-tv:latest
           # outputs: type=local,dest=${{ env.OUTPUT_DIR }}
       # - name: Upload Test Log Files
       #   uses: actions/upload-artifact@v3
