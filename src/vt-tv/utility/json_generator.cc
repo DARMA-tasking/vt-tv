@@ -52,7 +52,7 @@ std::unique_ptr<nlohmann::json> JSONGenerator::generateJSON() const {
 
   auto const& rank_info = info_.getRank(rank_);
   auto const& phases = rank_info.getPhaseWork();
-  assert(phase_work.find(phase_) != phase_work.end() and "Must have phase");
+  assert(phases.find(phase_) != phases.end() and "Must have phase");
   auto const& phase_work = phases.at(phase_);
   auto const& object_work = phase_work.getObjectWork();
 

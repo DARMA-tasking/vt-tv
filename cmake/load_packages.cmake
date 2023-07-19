@@ -17,6 +17,8 @@ set(BROTLI_BUILD_PORTABLE ON)
 set(BROTLI_LIBRARY brotlicommon-static brotlienc-static brotlidec-static)
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/lib/brotli)
 
+set(YAML_LIBRARY yaml-cpp)
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/lib/yaml-cpp)
 
 include(cmake/load_vtk_package.cmake)
 include(cmake/load_nanobind_package.cmake)

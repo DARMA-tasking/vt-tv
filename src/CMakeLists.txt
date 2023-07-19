@@ -92,6 +92,10 @@ target_link_libraries(
   ${VT_TV_LIBRARY} PUBLIC ${BROTLI_LIBRARY}
 )
 
+target_link_libraries(
+  ${VT_TV_LIBRARY} PUBLIC ${YAML_LIBRARY}
+)
+
 target_include_directories(
   ${VT_TV_LIBRARY} PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
@@ -124,12 +128,14 @@ install(
 install(TARGETS ${FMT_LIBRARY} EXPORT ${VT_TV_LIBRARY})
 install(TARGETS ${JSON_LIBRARY} EXPORT ${VT_TV_LIBRARY})
 install(TARGETS ${BROTLI_LIBRARY} EXPORT ${VT_TV_LIBRARY})
+install(TARGETS ${YAML_LIBRARY} EXPORT ${VT_TV_LIBRARY})
 
 export(
   TARGETS                   ${VT_TV_LIBRARY}
                             ${FMT_LIBRARY}
                             ${JSON_LIBRARY}
                             ${BROTLI_LIBRARY}
+                            ${YAML_LIBRARY}
   FILE                      "vtTVTargets.cmake"
   NAMESPACE                 vt::lib::
 )

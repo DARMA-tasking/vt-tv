@@ -51,6 +51,7 @@
 #include <fmt-vt/format.h>
 
 #include <unordered_map>
+#include <cassert>
 
 namespace vt::tv {
 
