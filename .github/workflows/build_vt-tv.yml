@@ -24,14 +24,20 @@ jobs:
       - name: Inspect Builder
         run: |
           echo "Name:      ${{ steps.buildx.outputs.name }}"
-      - name: Build the Docker Image and Code
+      - name: Login to DockerHub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Build and push Docker image
         id: docker_build
         continue-on-error: true
         uses: docker/build-push-action@v3
         with:
-          push: false
+          push: true
           context: .
           file: ./ci/ubuntu22.04-gcc11-x64.dockerfile
+          tags: docker push pierrpebay/vt-tv:latest
           outputs: type=local,dest=${{ env.OUTPUT_DIR }}
       # - name: Upload Test Log Files
       #   uses: actions/upload-artifact@v3
