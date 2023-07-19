@@ -67,7 +67,6 @@ int main(int argc, char** argv) {
     for (auto&& elm : node) {
       printRecur(elm, 1);
     }
-    
   }
   return 0;
 }
