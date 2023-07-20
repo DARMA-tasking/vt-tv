@@ -3,9 +3,6 @@ FROM ubuntu:22.04 AS base
 RUN apt-get update \
   && DEBIAN_FRONTEND="noninteractive" apt-get install -y \
       git \
-      python3 \
-      python3-pip \
-      python3-distutils \
       xz-utils \
       bzip2 \
       zip \
@@ -35,9 +32,29 @@ RUN apt-get update \
      libglu1-mesa-dev \
      mesa-common-dev \
      perl \
+     curl \
   && rm -rf /var/lib/apt/lists/*
 
-RUN pip install nanobind
+# Setup python 3.8 with conda
+
+# Download and install Miniconda
+RUN curl -LO https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh && \
+    bash Miniconda3-latest-Linux-x86_64.sh -b -p /opt/conda && \
+    rm Miniconda3-latest-Linux-x86_64.sh
+
+# Update PATH so that conda and the installed packages are usable
+ENV PATH="/opt/conda/bin:${PATH}"
+
+# Create a new environment and install necessary packages
+RUN conda create -y -n deves python=3.8 && \
+    echo "source activate deves" > ~/.bashrc && \
+    /bin/bash -c ". /opt/conda/etc/profile.d/conda.sh && conda activate deves && pip install nanobind"
+
+# Set the environment to deves on container run
+ENV CONDA_DEFAULT_ENV=deves
+ENV CONDA_PREFIX=/opt/conda/envs/$CONDA_DEFAULT_ENV
+ENV PATH=$PATH:$CONDA_PREFIX/bin
+ENV CONDA_AUTO_UPDATE_CONDA=false
 
 # Clone VTK source
 RUN mkdir -p /opt/src/vtk
@@ -47,6 +64,8 @@ RUN git clone --recursive --branch v9.2.2 https://gitlab.kitware.com/vtk/vtk.git
 RUN mkdir -p /opt/build/vtk-build
 WORKDIR /opt/build/vtk-build
 RUN cmake \
+  -DCMAKE_C_COMPILER=gcc-11 \
+  -DCMAKE_CXX_COMPILER=g++-11 \
   -DCMAKE_BUILD_TYPE:STRING=Release \
   -DBUILD_TESTING:BOOL=OFF \
   -DVTK_Group_Rendering:BOOL=OFF \
