@@ -146,7 +146,7 @@ std::pair<TimeType, TimeType> Render::compute_object_load_range() {
   this->object_load_max_ = oq_max;
 
   // return range
-  return std::make_tuple(oq_min, oq_max);
+  return std::make_pair(oq_min, oq_max);
 }
 
 std::vector<NodeType> Render::getRanks(PhaseType phase_in) const {
