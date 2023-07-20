@@ -73,6 +73,8 @@
 
 #include <vt-tv/render/render.h>
 
+#include <filesystem>
+
 int main() {
   using namespace vt;
   using namespace tv;
