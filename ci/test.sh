@@ -9,7 +9,6 @@ ctest --output-on-failure || success_flag=1
 echo "this is the Success flag: ${success_flag}"
 mkdir -p /tmp/artifacts/
 cp /opt/build/vt-tv/Testing/Temporary/LastTest.log /tmp/artifacts/
-cp /opt/build/vt-tv/tests/unit/*.log /tmp/artifacts/
 echo ${success_flag} > /tmp/artifacts/success_flag.txt
 ls /tmp/artifacts
 # Simply output the LastTest.log to screen
