@@ -1,4 +1,4 @@
-FROM pierrpebay/vt-tv:latest AS build
+FROM pierrpebay/vt-tv:master AS build
 
 COPY . /opt/src/vt-tv
 RUN mkdir -p /opt/build/vt-tv
