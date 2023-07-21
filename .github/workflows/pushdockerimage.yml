@@ -1,4 +1,4 @@
-name: Docker Image CI
+name: Build and push Docker Image to dockerhub
 
 on: workflow_dispatch
 
@@ -19,6 +19,6 @@ jobs:
           registry: docker.io
           auto_tag: true
           # Docker registry username
-          username: ${{ secrets.DOCKER_USERNAME }}
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
           # Docker registry password
-          password: ${{ secrets.DOCKER_PASSWORD }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
