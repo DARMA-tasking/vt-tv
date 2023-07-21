@@ -20,8 +20,7 @@ jobs:
           # Target Docker registry
           registry: docker.io
           # dockerfile to publish
-          dockerfile:
-            ci/make-base-ubuntu22.04-gcc11-x64.dockerfile
+          file: ci/make-base-ubuntu22.04-gcc11-x64.dockerfile
           auto_tag: true
           # Docker registry username
           username: ${{ secrets.DOCKERHUB_USERNAME }}
