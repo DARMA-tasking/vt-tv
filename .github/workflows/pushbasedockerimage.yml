@@ -1,8 +1,6 @@
-name: Build and push Docker Image to dockerhub
+name: Build dependencies and push base Docker Image to dockerhub
 
-on:
-  pull_request:
-    types: [opened, reopened, synchronize, converted_to_draft, ready_for_review]
+on: workflow_dispatch
 
 jobs:
   push_to_registry:
