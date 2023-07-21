@@ -1,10 +1,19 @@
 [![Build and Test Ubuntu 22.04 gcc 11 x64](https://github.com/DARMA-tasking/vt-tv/actions/workflows/build-and-test-vt-tv.yml/badge.svg)](https://github.com/DARMA-tasking/vt-tv/actions/workflows/build-and-test-vt-tv.yml)
 
-# VT-TV -- Task Visualizer
+# tv => task visualizer
 
-Included workflows:
-* [*check-pr-fixes-issue*](https://github.com/DARMA-tasking/check-pr-fixes-issue) - checking if PR description contains phrase "Fixes #issue", and if PR title, description and branch mention the same issue number
-* [*find-unsigned-commits*](https://github.com/DARMA-tasking/find-unsigned-commits) - checking if there are any unsigned commits in PR
-* [*find-trailing-whitespace*](https://github.com/DARMA-tasking/find-trailing-whitespace) - checking if there are any trailing whitespaces in files
-* [*check-commit-format*](https://github.com/DARMA-tasking/check-commit-format) - checking if commit message is properly formatted - either starts with "*Merge ...*" or fullfils template: "*#issue_number: short commit description*"
-* [*action-git-diff-check*](https://github.com/joel-coffman/action-git-diff-check) - checking if changes introduce conflict markers or whitespace errors
+The task visualizer takes as input JSON files that describe work as a
+series of phases and subphases that contain tasks for each rank,
+communications, and other user-defined fields (such as memory
+usage). Documentation on the JSON format can be found [in vt's
+documentation](https://darma-tasking.github.io/docs/html/node-lb-data.html)
+and the JSON schema validator is located [in the
+repository](https://github.com/DARMA-tasking/vt/blob/develop/scripts/JSON_data_files_validator.py).
+
+The task visualizer, using this input, produces Exodus meshes to
+describe the ranks and objects over time, which can be visualized
+using Paraview. Additionally, the task visualizer can produce PNGs
+directly using a VTK workflow to render a visualization of ranks and
+tasks over phases.
+
+![Example Output PNG](./docs/example-output-image.png)
