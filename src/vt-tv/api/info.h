@@ -254,7 +254,7 @@ struct Info {
    *
    * \return the objects
    */
-  std::unordered_map<ElementIDType, ObjectWork> createPhaseObjectsMapping_(PhaseType phase) {
+  std::unordered_map<ElementIDType, ObjectWork> createPhaseObjectsMapping(PhaseType phase) {
     // fmt::print("Phase: {}\n", phase);
 
     // Map of objects at given phase
@@ -331,8 +331,8 @@ struct Info {
    * \return void
    */
   void normalizeEdges(PhaseType phase) {
-    fmt::print("---- Normalizing Edges for phase {} ----\n", phase);
-    auto phaseObjects = createPhaseObjectsMapping_(phase);
+    fmt::print("\n---- Normalizing Edges for phase {} ----\n", phase);
+    auto phaseObjects = createPhaseObjectsMapping(phase);
     for (auto& [id1, objectWork1] : phaseObjects) {
       auto const& sent1 = objectWork1.getSent();
       auto const& received1 = objectWork1.getReceived();

@@ -135,7 +135,7 @@ Render::Render(
   }
 };
 
-std::pair<double, double> Render::compute_object_qoi_range() {
+std::pair<double, double> Render::computeObjectQoiRange_() {
   // Initialize object QOI range attributes
   double oq_max = -1 * std::numeric_limits<double>::infinity();
   double oq_min = std::numeric_limits<double>::infinity();
@@ -161,7 +161,7 @@ std::pair<double, double> Render::compute_object_qoi_range() {
   return std::make_pair(oq_min, oq_max);
 }
 
-std::pair<double, double> Render::compute_rank_qoi_range() {
+std::pair<double, double> Render::computeRankQoiRange_() {
   // Initialize rank QOI range attributes
   double rq_max = -1 * std::numeric_limits<double>::infinity();
   double rq_min = std::numeric_limits<double>::infinity();
@@ -197,7 +197,7 @@ std::pair<double, double> Render::compute_rank_qoi_range() {
   return std::make_pair(rq_min, rq_max);
 }
 
-std::map<NodeType, std::unordered_map<ElementIDType, ObjectWork>> Render::create_object_mapping_(PhaseType phase) {
+std::map<NodeType, std::unordered_map<ElementIDType, ObjectWork>> Render::createObjectMapping_(PhaseType phase) {
   std::map<NodeType, std::unordered_map<ElementIDType, ObjectWork>> object_mapping;
   // Add each rank and its corresponding objects at the given phase to the object mapping
   for (uint64_t rank_id = 0; rank_id < this->n_ranks_; rank_id++) {
@@ -206,7 +206,7 @@ std::map<NodeType, std::unordered_map<ElementIDType, ObjectWork>> Render::create
   return object_mapping;
 }
 
-vtkNew<vtkPolyData> Render::create_rank_mesh_(PhaseType iteration) {
+vtkNew<vtkPolyData> Render::createRankMesh_(PhaseType iteration) {
   fmt::print("\n\n");
   fmt::print("----- Creating rank mesh for phase {} -----\n", iteration);
   vtkNew<vtkPoints> rank_points_;
@@ -217,7 +217,7 @@ vtkNew<vtkPolyData> Render::create_rank_mesh_(PhaseType iteration) {
   rank_arr->SetNumberOfTuples(this->n_ranks_);
 
   for (uint64_t rank_id = 0; rank_id < this->n_ranks_; rank_id++) {
-    std::array<uint64_t, 3> cartesian = this->global_id_to_cartesian(rank_id, this->grid_size_);
+    std::array<uint64_t, 3> cartesian = this->globalIDToCartesian_(rank_id, this->grid_size_);
     std::array<double, 3> offsets = {
       cartesian[0] * this->grid_resolution_,
       cartesian[1] * this->grid_resolution_,
@@ -254,7 +254,7 @@ bool compareObjects(const std::pair<ObjectWork, uint64_t>& p1, const std::pair<O
   return lhsID < rhsID; // then sort by ID
 }
 
-vtkNew<vtkPolyData> Render::create_object_mesh_(PhaseType phase) {
+vtkNew<vtkPolyData> Render::createObjectMesh_(PhaseType phase) {
   fmt::print("\n\n");
   fmt::print("----- Creating object mesh for phase {} -----\n", phase);
   // Retrieve number of mesh points and bail out early if empty set
@@ -292,11 +292,11 @@ vtkNew<vtkPolyData> Render::create_object_mesh_(PhaseType phase) {
   // sent_volumes is a vector to store the communications ("from" object id, "sent to" object id, and volume)
   std::vector<std::tuple<ElementIDType, ElementIDType, double>> sent_volumes;
 
-  auto object_mapping = this->create_object_mapping_(phase);
+  auto object_mapping = this->createObjectMapping_(phase);
 
   // Iterate through object mapping
   for (auto const& [rankID, objects] : object_mapping) {
-    std::array<uint64_t, 3> ijk = this->global_id_to_cartesian(rankID, this->grid_size_);
+    std::array<uint64_t, 3> ijk = this->globalIDToCartesian_(rankID, this->grid_size_);
 
     std::array<double, 3> offsets = {
       ijk[0] * this->grid_resolution_,
@@ -348,7 +348,7 @@ vtkNew<vtkPolyData> Render::create_object_mesh_(PhaseType phase) {
       // Insert point using offset and rank coordinates
       std::array<double, 3> currentPointPosition = {0, 0, 0};
       int d = 0;
-      for (auto c : this->global_id_to_cartesian(i, rank_size)) {
+      for (auto c : this->globalIDToCartesian_(i, rank_size)) {
         currentPointPosition[d] = offsets[d] - centering[d] + (
           jitter_dims_.at(objectWork.getID())[d] + c) * o_resolution;
         d++;
@@ -478,7 +478,7 @@ vtkNew<vtkPolyData> Render::create_object_mesh_(PhaseType phase) {
   return ctf;
 }
 
-/*static*/ vtkNew<vtkScalarBarActor> Render::createScalarBarActor(
+/*static*/ vtkNew<vtkScalarBarActor> Render::createScalarBarActor_(
   vtkPolyDataMapper* mapper, std::string title, double x, double y
 ) {
   vtkNew<vtkScalarBarActor> scalar_bar_actor;
@@ -514,7 +514,7 @@ vtkNew<vtkPolyData> Render::create_object_mesh_(PhaseType phase) {
   return scalar_bar_actor;
 }
 
-/* static */ std::array<uint64_t, 3> Render::global_id_to_cartesian(
+/* static */ std::array<uint64_t, 3> Render::globalIDToCartesian_(
     uint64_t flat_id, std::array<uint64_t, 3> grid_sizes
 ) {
   std::array<uint64_t, 3> cartesian = {0, 0, 0};
@@ -581,7 +581,7 @@ vtkNew<vtkPolyData> Render::create_object_mesh_(PhaseType phase) {
 
   vtkNew<vtkActor> rank_actor;
   rank_actor->SetMapper(rank_mapper);
-  auto qoi_actor = createScalarBarActor(rank_mapper, "Rank XXX", 0.5, 0.9);
+  auto qoi_actor = createScalarBarActor_(rank_mapper, "Rank XXX", 0.5, 0.9);
   qoi_actor->DrawBelowRangeSwatchOn();
   qoi_actor->SetBelowRangeAnnotation("<");
   qoi_actor->DrawAboveRangeSwatchOn();
@@ -657,7 +657,7 @@ vtkNew<vtkPolyData> Render::create_object_mesh_(PhaseType phase) {
   }
 
   if (glyph_mapper_out) {
-    auto load_actor = createScalarBarActor(glyph_mapper_out, "Object Load", 0.55, 0.55);
+    auto load_actor = createScalarBarActor_(glyph_mapper_out, "Object Load", 0.55, 0.55);
     renderer->AddActor2D(load_actor);
   }
 
@@ -764,11 +764,11 @@ vtkNew<vtkPolyData> Render::create_object_mesh_(PhaseType phase) {
 }
 
 void Render::generate() {
-  std::pair<double, double> rank_qoi_range = this->compute_rank_qoi_range();
+  std::pair<double, double> rank_qoi_range = this->computeRankQoiRange_();
   double rank_qoi_min = std::get<0>(rank_qoi_range);
   double rank_qoi_max = std::get<1>(rank_qoi_range);
 
-  std::pair<double, double> object_qoi_range = this->compute_object_qoi_range();
+  std::pair<double, double> object_qoi_range = this->computeObjectQoiRange_();
   double object_qoi_min = std::get<0>(object_qoi_range);
   double object_qoi_max = std::get<1>(object_qoi_range);
 
@@ -778,8 +778,8 @@ void Render::generate() {
   for(PhaseType phase = 0; phase < this->n_phases_; phase++) {
     this->info_.normalizeEdges(phase);
 
-    vtkNew<vtkPolyData> object_mesh = this->create_object_mesh_(phase);
-    vtkNew<vtkPolyData> rank_mesh = this->create_rank_mesh_(phase);
+    vtkNew<vtkPolyData> object_mesh = this->createObjectMesh_(phase);
+    vtkNew<vtkPolyData> rank_mesh = this->createRankMesh_(phase);
 
     fmt::print("Writing object mesh for phase {}\n", phase);
     vtkNew<vtkXMLPolyDataWriter> writer;

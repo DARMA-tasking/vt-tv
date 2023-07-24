@@ -146,21 +146,14 @@ private:
    *
    * \return object qoi range
    */
-  std::pair<double, double> compute_object_qoi_range();
+  std::pair<double, double> computeObjectQoiRange_();
 
   /**
    * \brief Compute range of rank qoi.
    *
    * \return rank qoi range
    */
-  std::pair<double, double> compute_rank_qoi_range();
-
-  /**
-   * \brief get ranks belonging to phase
-   *
-   * \return set of ranks
-   */
-  std::vector<NodeType> getRanks(PhaseType phase_in) const;
+  std::pair<double, double> computeRankQoiRange_();
 
   /**
    * \brief Create mapping of objects in ranks
@@ -169,7 +162,7 @@ private:
    *
    * \return mapping
    */
-  std::map<NodeType, std::unordered_map<ElementIDType, ObjectWork>> create_object_mapping_(PhaseType phase);
+  std::map<NodeType, std::unordered_map<ElementIDType, ObjectWork>> createObjectMapping_(PhaseType phase);
 
   /**
    * \brief Map ranks to polygonal mesh.
@@ -178,7 +171,7 @@ private:
    *
    * \return rank mesh
    */
-  vtkNew<vtkPolyData> create_rank_mesh_(PhaseType iteration);
+  vtkNew<vtkPolyData> createRankMesh_(PhaseType iteration);
 
   /**
    * \brief Map objects to polygonal mesh.
@@ -187,13 +180,13 @@ private:
    *
    * \return object mesh
    */
-  vtkNew<vtkPolyData> create_object_mesh_(PhaseType phase);
+  vtkNew<vtkPolyData> createObjectMesh_(PhaseType phase);
 
   static vtkNew<vtkColorTransferFunction> createColorTransferFunction(
     double range[2], double avg_load = 0, ColorType ct = ColorType::Default
   );
 
-  static vtkNew<vtkScalarBarActor> createScalarBarActor(
+  static vtkNew<vtkScalarBarActor> createScalarBarActor_(
     vtkPolyDataMapper* mapper, std::string title, double x, double y
   );
 
@@ -205,7 +198,7 @@ private:
    *
    * \return i,j,k Cartesian coordinates
    */
-  static std::array<uint64_t, 3> global_id_to_cartesian(
+  static std::array<uint64_t, 3> globalIDToCartesian_(
     uint64_t flat_id, std::array<uint64_t, 3> grid_sizes
   );
 
