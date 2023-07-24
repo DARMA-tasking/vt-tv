@@ -94,12 +94,12 @@ int main() {
     info->addInfo(tmpInfo->getObjectInfo(), tmpInfo->getRank(rank));
   }
 
-  info->getPhaseObjects(0,4);
+  info->getPhaseObjects(0);
   fmt::print("===================\n");
-  info->getAllObjects(4);
+  info->getAllObjects();
 
   fmt::print("===================\n");
-  info->normalizeEdges(0,4);
+  info->normalizeEdges(0);
 
   auto const& obj_info = info->getObjectInfo();
 

@@ -86,6 +86,19 @@ struct PhaseWork {
   auto const& getObjectWork() const { return objects_; }
 
   /**
+   * \brief Get the phase load (corresponds to rank load as a PhaseWork belongs to a Rank)
+   *
+   * \return the phase load
+   */
+  double getLoad() const {
+    double load = 0.;
+    for (auto const& [id, obj_work] : objects_) {
+      load += obj_work.getLoad();
+    }
+    return load;
+  }
+
+  /**
    * \brief set communications for an object in this phase
    *
    * \return void

@@ -82,6 +82,20 @@ struct Rank {
    */
   auto const& getPhaseWork() const { return phase_info_; }
 
+  /**
+   * \brief Get number of phases on this rank
+   *
+   * \return the number of phases
+   */
+  uint64_t getNumPhases() const { return phase_info_.size(); }
+
+  /**
+   * \brief Get total load of objects at given phase
+   *
+   * \return the load
+   */
+  double getLoad(PhaseType phase) const { return phase_info_.at(phase).getLoad(); }
+
 private:
   /// The rank ID
   NodeType rank_ = 0;

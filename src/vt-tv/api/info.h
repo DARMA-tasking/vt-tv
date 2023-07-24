@@ -96,16 +96,62 @@ struct Info {
    *
    * \return map of object info
    */
-  auto& getObjectInfo() const { return object_info_; }
+  auto const& getObjectInfo() const { return object_info_; }
 
   /**
-   * \brief Get work for a given rank
+   * \brief Get all ranks
+   *
+   * \return map of Ranks
+   */
+  auto const& getRanks() const { return ranks_; }
+
+  /**
+   * \brief Get rank
+   *
+   * \return Rank
+   */
+  auto const& getRank(NodeType rank_id) const { return ranks_.at(rank_id); }
+
+  /**
+   * \brief Get load of a given rank
    *
    * \param[in] rank the rank
    *
-   * \return all the rank work
+   * \return the rank load
    */
-  Rank const& getRank(NodeType rank) const { return ranks_.at(rank); }
+  double getRankLoad(NodeType rank, PhaseType phase) const { return ranks_.at(rank).getLoad(phase); }
+
+  /**
+   * \brief Get loads of all ranks at given phase
+   *
+   * \return a map of loads per rank
+   */
+  std::unordered_map<NodeType, double> getAllRankLoadsAtPhase(PhaseType phase) const {
+    std::unordered_map<NodeType, double> rank_loads;
+
+    for (auto const& [rank_id, rank] : this->ranks_) {
+      rank_loads.insert(std::make_pair(rank_id, rank.getLoad(phase)));
+    }
+
+    return rank_loads;
+  }
+
+  /**
+   * \brief Get loads of a given rank across all phases
+   *
+   * \return a map of loads per rank
+   */
+  std::unordered_map<PhaseType, double> getAllLoadsAtRank(NodeType rank_id) const {
+    std::unordered_map<PhaseType, double> rank_loads;
+
+    auto const& rank = this->ranks_.at(rank_id);
+    uint64_t n_phases = rank.getNumPhases();
+    for (uint64_t phase = 0; phase < n_phases; phase++) {
+      rank_loads.insert(std::make_pair(phase, rank.getLoad(phase)));
+    }
+
+    return rank_loads;
+  }
 
   /**
    * \brief Get all objects for a given rank and phase
@@ -119,7 +165,7 @@ struct Info {
     std::unordered_map<ElementIDType, ObjectWork> objects;
 
     // Get Rank info for specified rank
-    auto const& rank_info = this->getRank(rank_id);
+    auto const& rank_info = ranks_.at(rank_id);
 
     // Get history of phases for this rank
     auto const& phase_history_at_rank = rank_info.getPhaseWork();
@@ -141,21 +187,20 @@ struct Info {
    * \brief Get all objects in all ranks for a given phase
    *
    * \param[in] phase the phase
-   * \param[in] n_ranks the total number of ranks
    *
    * \return the objects
    */
-  std::unordered_map<ElementIDType, ObjectWork> getPhaseObjects(PhaseType phase, uint64_t n_ranks) const {
+  std::unordered_map<ElementIDType, ObjectWork> getPhaseObjects(PhaseType phase) const {
     // fmt::print("Phase: {}\n", phase);
 
     // Map of objects at given phase
     std::unordered_map<ElementIDType, ObjectWork> objects_at_phase;
 
     // Go through all ranks and get all objects at given phase
-    for (uint64_t rank = 0; rank < n_ranks; rank++) {
+    for (uint64_t rank = 0; rank < this->ranks_.size(); rank++) {
       // fmt::print("  Rank: {}\n",rank);
       // Get Rank info for specified rank
-      auto const& rank_info = this->getRank(rank);
+      auto const& rank_info = ranks_.at(rank);
 
       // Get history of phases for this rank
       auto const& phase_history = rank_info.getPhaseWork();
@@ -178,18 +223,17 @@ struct Info {
    * \brief Create mapping of all objects in all ranks for a given phase (made for allowing changes to these objects)
    *
    * \param[in] phase the phase
-   * \param[in] n_ranks the total number of ranks
    *
    * \return the objects
    */
-  std::unordered_map<ElementIDType, ObjectWork> createPhaseObjectsMapping_(PhaseType phase, uint64_t n_ranks) {
+  std::unordered_map<ElementIDType, ObjectWork> createPhaseObjectsMapping_(PhaseType phase) {
     // fmt::print("Phase: {}\n", phase);
 
     // Map of objects at given phase
     std::unordered_map<ElementIDType, ObjectWork> objects_at_phase;
 
     // Go through all ranks and get all objects at given phase
-    for (uint64_t rank = 0; rank < n_ranks; rank++) {
+    for (uint64_t rank = 0; rank < this->ranks_.size(); rank++) {
       // fmt::print("  Rank: {}\n",rank);
       // Get Rank info for specified rank
       auto& rank_info = ranks_.at(rank);
@@ -203,7 +247,7 @@ struct Info {
       // Get all objects at specified phase
       auto& object_work_at_phase = phase_work->second.getObjectWork();
 
-      for (auto& [elm_id, obj_work] : object_work_at_phase) {
+      for (auto const& [elm_id, obj_work] : object_work_at_phase) {
         // fmt::print("    Object Id: {}\n", elm_id);
         objects_at_phase.insert(std::make_pair(elm_id, obj_work));
       }
@@ -214,20 +258,18 @@ struct Info {
   /**
    * \brief Get all objects for all ranks and phases
    *
-   * \param[in] n_ranks the total number of ranks
-   *
    * \return the objects
    */
-  std::unordered_map<ElementIDType, ObjectWork> getAllObjects(uint64_t n_ranks) const {
+  std::unordered_map<ElementIDType, ObjectWork> getAllObjects() const {
 
     // Map of objects at given phase
     std::unordered_map<ElementIDType, ObjectWork> objects;
 
     // Go through all ranks and get all objects at given phase
-    for (uint64_t rank = 0; rank < n_ranks; rank++) {
+    for (uint64_t rank = 0; rank < this->ranks_.size(); rank++) {
       // fmt::print("Rank: {}\n",rank);
       // Get Rank info for specified rank
-      auto const& rank_info = this->getRank(rank);
+      auto const& rank_info = this->ranks_.at(rank);
 
       // Get history of phases for this rank
       auto const& phase_history = rank_info.getPhaseWork();
@@ -260,9 +302,9 @@ struct Info {
    *
    * \return void
    */
-  void normalizeEdges(PhaseType phase, uint64_t n_ranks) {
+  void normalizeEdges(PhaseType phase) {
     fmt::print("---- Normalizing Edges for phase {} ----\n", phase);
-    auto phaseObjects = createPhaseObjectsMapping_(phase, n_ranks);
+    auto phaseObjects = createPhaseObjectsMapping_(phase);
     for (auto& [id1, objectWork1] : phaseObjects) {
       auto const& sent1 = objectWork1.getSent();
       auto const& received1 = objectWork1.getReceived();

@@ -122,14 +122,14 @@ private:
   uint64_t max_o_per_dim_ = 0;
 
   // numeric parameters
-  std::pair<TimeType, TimeType> object_load_range_;
+  std::pair<double, double> object_qoi_range_;
 
   // Maximum object atribute values
-  TimeType object_load_max_ = 0.0;
+  double object_qoi_max_ = 0.0;
   double object_volume_max_ = 0.0;
 
   // quantities of interest
-  std::string rank_qoi_;
+  std::string rank_qoi_ = "load";
   std::string object_qoi_ = "load";
   bool continuous_object_qoi_;
 
@@ -142,11 +142,18 @@ private:
   std::unordered_map<ElementIDType, std::array<double, 3>> jitter_dims_;
 
   /**
-   * \brief Decide object quantity storage type and compute it.
+   * \brief Compute range of object qoi.
    *
-   * \return load range
+   * \return object qoi range
    */
-  std::pair<TimeType, TimeType> compute_object_load_range();
+  std::pair<double, double> compute_object_qoi_range();
+
+  /**
+   * \brief Compute range of rank qoi.
+   *
+   * \return rank qoi range
+   */
+  std::pair<double, double> compute_rank_qoi_range();
 
   /**
    * \brief get ranks belonging to phase

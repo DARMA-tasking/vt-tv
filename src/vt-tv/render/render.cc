@@ -78,7 +78,7 @@ Render::Render(std::unordered_map<PhaseType, PhaseWork> in_phase_info, Info in_i
 
   // Initialize jitter
   std::srand(std::time(nullptr));
-  auto const& allObjects = info_.getAllObjects(n_ranks_);
+  auto const& allObjects = info_.getAllObjects();
   for (auto const& [objectID, objectWork] : allObjects) {
     std::array<double, 3> jitterDims;
     for (uint64_t d = 0; d < 3; d++) {
@@ -121,32 +121,80 @@ Render::Render(
   }
   max_o_per_dim_ = 0;
 
-  // Initialize load range
-  this->object_load_range_ = this->compute_object_load_range();
+  // Initialize jitter
+  std::srand(std::time(nullptr));
+  auto const& allObjects = info_.getAllObjects();
+  for (auto const& [objectID, objectWork] : allObjects) {
+    std::array<double, 3> jitterDims;
+    for (uint64_t d = 0; d < 3; d++) {
+      if (auto f = this->rank_dims_.find(d); f != this->rank_dims_.end()) {
+        jitterDims[d] = ((double)std::rand()/RAND_MAX - 0.5) * object_jitter_;
+      } else jitterDims[d] = 0;
+    }
+    jitter_dims_.insert(std::make_pair(objectID, jitterDims));
+  }
 };
 
-std::pair<TimeType, TimeType> Render::compute_object_load_range() {
-  // Initialize space-time object QOI range attributes
-  TimeType oq_max = -1 * std::numeric_limits<double>::infinity();
-  TimeType oq_min = std::numeric_limits<double>::infinity();
-  TimeType ol;
+std::pair<double, double> Render::compute_object_qoi_range() {
+  // Initialize object QOI range attributes
+  double oq_max = -1 * std::numeric_limits<double>::infinity();
+  double oq_min = std::numeric_limits<double>::infinity();
+  double oq;
 
-  // Iterate over all phases
-  for (auto const& [_, phase_work] : this->phase_info_) {
-    // Iterate over all objects in phase
-    for (auto const& [elm_id, work] : phase_work.getObjectWork()) {
-      // Update maximum object load
-      ol = work.getLoad();
-      if (ol > oq_max) oq_max = ol;
-      if (ol < oq_min) oq_min = ol;
+  // Iterate over all ranks
+  auto const& objects = this->info_.getAllObjects();
+  for (auto const& [obj_id, obj_work] : objects) {
+    // Update maximum object qoi
+    if (this->object_qoi_ == "load") {
+      oq = obj_work.getLoad();
+    } else {
+      throw std::runtime_error("Invalid QOI: " + this->object_qoi_);
     }
+    if (oq > oq_max) oq_max = oq;
+    if (oq < oq_min) oq_min = oq;
   }
 
   // Update extrema attribute
-  this->object_load_max_ = oq_max;
+  this->object_qoi_max_ = oq_max;
 
   // return range
   return std::make_pair(oq_min, oq_max);
+}
+
+std::pair<double, double> Render::compute_rank_qoi_range() {
+  // Initialize rank QOI range attributes
+  double rq_max = -1 * std::numeric_limits<double>::infinity();
+  double rq_min = std::numeric_limits<double>::infinity();
+  double rq;
+
+  // Iterate over all ranks
+  for (uint64_t rank_id = 0; rank_id < this->n_ranks_; rank_id++) {
+    // Update maximum rank qoi
+    if (this->rank_qoi_ == "load") {
+      // Get rank loads per phase
+      std::unordered_map<PhaseType, double> rank_loads_map = this->info_.getAllLoadsAtRank(rank_id);
+
+      // Get max load for this rank across all phases
+      auto pr = std::max_element
+      (
+          std::begin(rank_loads_map), std::end(rank_loads_map),
+          [] (const std::pair<PhaseType, double>& p1, const std::pair<PhaseType, double>& p2) {
+              return p1.second < p2.second;
+          }
+      );
+      rq = pr->second;
+    } else {
+      throw std::runtime_error("Invalid QOI: " + this->object_qoi_);
+    }
+    if (rq > rq_max) rq_max = rq;
+    if (rq < rq_min) rq_min = rq;
+  }
+
+  // Update extrema attribute
+  this->object_qoi_max_ = rq_max;
+
+  // return range
+  return std::make_pair(rq_min, rq_max);
 }
 
 std::vector<NodeType> Render::getRanks(PhaseType phase_in) const {
@@ -218,7 +266,7 @@ vtkNew<vtkPolyData> Render::create_object_mesh_(PhaseWork phase) {
   fmt::print("\n\n");
   fmt::print("----- Creating object mesh for phase {} -----\n", phase.getPhase());
   // Retrieve number of mesh points and bail out early if empty set
-  uint64_t n_o = this->info_.getPhaseObjects(phase.getPhase(), this->n_ranks_).size();
+  uint64_t n_o = this->info_.getPhaseObjects(phase.getPhase()).size();
   fmt::print("  Number of objects in phase: {} -----\n", n_o);
 
   // Create point array for object quantity of interest
@@ -290,8 +338,6 @@ vtkNew<vtkPolyData> Render::create_object_mesh_(PhaseWork phase) {
         centering[d] = 0.0;
       }
     }
-
-    auto& rank = this->info_.getRank(rankID);
 
     std::vector<std::pair<ObjectWork, uint64_t>> ordered_objects;
 
@@ -727,11 +773,17 @@ vtkNew<vtkPolyData> Render::create_object_mesh_(PhaseWork phase) {
 }
 
 void Render::generate() {
-  // Create vector of number of objects per phase
-  std::pair<TimeType, TimeType> load_range = this->compute_object_load_range();
-  double load_min = std::get<0>(load_range);
-  double load_max = std::get<1>(load_range);
-  double range[2] = {load_min, load_max};
+  std::pair<double, double> rank_qoi_range = this->compute_rank_qoi_range();
+  double rank_qoi_min = std::get<0>(rank_qoi_range);
+  double rank_qoi_max = std::get<1>(rank_qoi_range);
+
+  std::pair<double, double> object_qoi_range = this->compute_object_qoi_range();
+  double object_qoi_min = std::get<0>(object_qoi_range);
+  double object_qoi_max = std::get<1>(object_qoi_range);
+
+  fmt::print("Rank {} range: {}, {}\n", rank_qoi_, rank_qoi_min, rank_qoi_max);
+  fmt::print("Object {} range: {}, {}\n", object_qoi_, object_qoi_min, object_qoi_max);
+
   for(auto const& [phase, phase_work] : this->phase_info_) {
     vtkNew<vtkPolyData> object_mesh = this->create_object_mesh_(phase_work);
     vtkNew<vtkPolyData> rank_mesh = this->create_rank_mesh_(phase_work.getPhase());
