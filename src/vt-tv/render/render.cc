@@ -51,10 +51,10 @@
 
 namespace vt { namespace tv {
 
-Render::Render(std::unordered_map<PhaseType, PhaseWork> in_phase_info, Info in_info)
-: phase_info_(std::move(in_phase_info))
-, info_(in_info)
+Render::Render(Info in_info)
+: info_(in_info) // std:move ?
 , n_ranks_(in_info.getNumRanks())
+, n_phases_(in_info.getNumPhases())
 {
   // Generically set rank grid dimensions according to the total number of ranks
 
@@ -93,7 +93,6 @@ Render::Render(std::unordered_map<PhaseType, PhaseWork> in_phase_info, Info in_i
 Render::Render(
   std::array<std::string, 3> in_qoi_request,
   bool in_continuous_object_qoi,
-  std::unordered_map<PhaseType, PhaseWork> in_phase_info,
   Info in_info,
   std::array<uint64_t, 3> in_grid_size,
   double in_object_jitter,
@@ -104,8 +103,9 @@ Render::Render(
 : rank_qoi_(in_qoi_request[0])
 , object_qoi_(in_qoi_request[2])
 , continuous_object_qoi_(in_continuous_object_qoi)
-, phase_info_(in_phase_info)
 , info_(in_info)
+, n_ranks_(in_info.getNumRanks())
+, n_phases_(in_info.getNumPhases())
 , grid_size_(in_grid_size)
 , object_jitter_(in_object_jitter)
 , output_dir_(in_output_dir)
@@ -197,14 +197,6 @@ std::pair<double, double> Render::compute_rank_qoi_range() {
   return std::make_pair(rq_min, rq_max);
 }
 
-std::vector<NodeType> Render::getRanks(PhaseType phase_in) const {
-  std::vector<NodeType> rankSet;
-  for (auto const& [_, objInfo] : this->info_.getObjectInfo()) {
-    rankSet.push_back(objInfo.getHome());
-  }
-  return rankSet;
-}
-
 std::map<NodeType, std::unordered_map<ElementIDType, ObjectWork>> Render::create_object_mapping_(PhaseType phase) {
   std::map<NodeType, std::unordered_map<ElementIDType, ObjectWork>> object_mapping;
   // Add each rank and its corresponding objects at the given phase to the object mapping
@@ -262,12 +254,12 @@ bool compareObjects(const std::pair<ObjectWork, uint64_t>& p1, const std::pair<O
   return lhsID < rhsID; // then sort by ID
 }
 
-vtkNew<vtkPolyData> Render::create_object_mesh_(PhaseWork phase) {
+vtkNew<vtkPolyData> Render::create_object_mesh_(PhaseType phase) {
   fmt::print("\n\n");
-  fmt::print("----- Creating object mesh for phase {} -----\n", phase.getPhase());
+  fmt::print("----- Creating object mesh for phase {} -----\n", phase);
   // Retrieve number of mesh points and bail out early if empty set
-  uint64_t n_o = this->info_.getPhaseObjects(phase.getPhase()).size();
-  fmt::print("  Number of objects in phase: {} -----\n", n_o);
+  uint64_t n_o = this->info_.getPhaseObjects(phase).size();
+  fmt::print("  Number of objects in phase: {}\n", n_o);
 
   // Create point array for object quantity of interest
   vtkNew<vtkDoubleArray> q_arr;
@@ -291,8 +283,7 @@ vtkNew<vtkPolyData> Render::create_object_mesh_(PhaseWork phase) {
   points->SetNumberOfPoints(n_o);
 
   // Retrieve elements constant across all ranks
-  PhaseType p_id = phase.getPhase();
-  std::vector<NodeType> ranks = this->getRanks(p_id);
+  std::vector<NodeType> ranks = this->info_.getRankIDs();
   std::string object_qoi = this->object_qoi_;
 
   // Iterate over ranks and objects to create mesh points
@@ -301,7 +292,7 @@ vtkNew<vtkPolyData> Render::create_object_mesh_(PhaseWork phase) {
   // sent_volumes is a vector to store the communications ("from" object id, "sent to" object id, and volume)
   std::vector<std::tuple<ElementIDType, ElementIDType, double>> sent_volumes;
 
-  auto object_mapping = this->create_object_mapping_(p_id);
+  auto object_mapping = this->create_object_mapping_(phase);
 
   // Iterate through object mapping
   for (auto const& [rankID, objects] : object_mapping) {
@@ -432,7 +423,7 @@ vtkNew<vtkPolyData> Render::create_object_mesh_(PhaseWork phase) {
   pd_mesh->GetPointData()->AddArray(b_arr);
   pd_mesh->GetCellData()->SetScalars(lineValuesArray);
 
-  fmt::print("----- Finished creating object mesh-----\n");
+  fmt::print("----- Finished creating object mesh -----\n");
 
   return pd_mesh;
 }
@@ -784,9 +775,11 @@ void Render::generate() {
   fmt::print("Rank {} range: {}, {}\n", rank_qoi_, rank_qoi_min, rank_qoi_max);
   fmt::print("Object {} range: {}, {}\n", object_qoi_, object_qoi_min, object_qoi_max);
 
-  for(auto const& [phase, phase_work] : this->phase_info_) {
-    vtkNew<vtkPolyData> object_mesh = this->create_object_mesh_(phase_work);
-    vtkNew<vtkPolyData> rank_mesh = this->create_rank_mesh_(phase_work.getPhase());
+  for(PhaseType phase = 0; phase < this->n_phases_; phase++) {
+    this->info_.normalizeEdges(phase);
+
+    vtkNew<vtkPolyData> object_mesh = this->create_object_mesh_(phase);
+    vtkNew<vtkPolyData> rank_mesh = this->create_rank_mesh_(phase);
 
     fmt::print("Writing object mesh for phase {}\n", phase);
     vtkNew<vtkXMLPolyDataWriter> writer;

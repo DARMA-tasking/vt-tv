@@ -110,10 +110,10 @@ private:
     WhiteToBlack
   };
 
-  // General phase info
-  std::unordered_map<PhaseType, PhaseWork> phase_info_;
+  // General data info
   Info info_;
   uint64_t n_ranks_;
+  uint64_t n_phases_;
 
   // Geometric parameters
   std::array<uint64_t, 3> grid_size_ = {1, 1, 1};
@@ -187,7 +187,7 @@ private:
    *
    * \return object mesh
    */
-  vtkNew<vtkPolyData> create_object_mesh_(PhaseWork phase);
+  vtkNew<vtkPolyData> create_object_mesh_(PhaseType phase);
 
   static vtkNew<vtkColorTransferFunction> createColorTransferFunction(
     double range[2], double avg_load = 0, ColorType ct = ColorType::Default
@@ -213,17 +213,15 @@ public:
   /**
    * \brief Construct render
    *
-   * \param[in] in_phase_info the phases
    * \param[in] in_info info about the ranks and phases
    */
-  Render(std::unordered_map<PhaseType, PhaseWork> in_phase_info, Info in_info);
+  Render(Info in_info);
 
   /**
    * \brief Construct render
    *
   * \param[in] in_qoi_request description of rank and object quantities of interest
   * \param[in] in_continuous_object_qoi always treat object QOI as continuous or not
-  * \param[in] in_phase_info phase info
   * \param[in] in_info general info
   * \param[in] in_grid_size triplet containing grid sizes in each dimension
   * \param[in] in_object_jitter coefficient of random jitter with magnitude < 1
@@ -234,7 +232,6 @@ public:
   Render(
     std::array<std::string, 3> in_qoi_request,
     bool in_continuous_object_qoi,
-    std::unordered_map<PhaseType, PhaseWork> in_phase_info,
     Info in_info,
     std::array<uint64_t, 3> in_grid_size,
     double in_object_jitter,

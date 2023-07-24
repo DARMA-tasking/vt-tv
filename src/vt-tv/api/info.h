@@ -106,11 +106,39 @@ struct Info {
   auto const& getRanks() const { return ranks_; }
 
   /**
+   * \brief Get all rank ids
+   *
+   * \return Vector of rank ids
+   */
+  std::vector<NodeType> getRankIDs() const {
+    std::vector<NodeType> ids;
+    for (auto [rankid, _] : ranks_) {
+      ids.push_back(rankid);
+    }
+    return ids;
+  }
+
+  /**
    * \brief Get rank
    *
    * \return Rank
    */
   auto const& getRank(NodeType rank_id) const { return ranks_.at(rank_id); }
+
+  /**
+   * \brief Get number of phases, which should be the same across ranks
+   *
+   * \return The number of phases
+   */
+  uint64_t getNumPhases() const {
+    uint64_t n_phases = this->ranks_.at(0).getNumPhases();
+    for (NodeType rank_id = 1; rank_id < this->ranks_.size(); rank_id++) {
+      if (ranks_.at(rank_id).getNumPhases() != n_phases) {
+        throw std::runtime_error("Number of phases must be consistent across ranks");
+      }
+    }
+    return n_phases;
+  }
 
   /**
    * \brief Get load of a given rank
@@ -311,32 +339,32 @@ struct Info {
       for (auto& [id2, objectWork2] : phaseObjects) {
         // No communications to oneself
         if (id1 != id2) {
-          fmt::print("--Communication between object {} and object {}\n\n", id1, id2);
+          // fmt::print("--Communication between object {} and object {}\n\n", id1, id2);
           auto const& sent2 = objectWork2.getSent();
           auto const& received2 = objectWork2.getReceived();
           // Communications existing on object 2, to be added on object 1
-          fmt::print("  Communications existing on object {}, to be added on object {}:\n", id2, id1);
+          // fmt::print("  Communications existing on object {}, to be added on object {}:\n", id2, id1);
           if (sent2.find(id1) != sent2.end()) {
-            fmt::print("    adding sent from object {} to received by object {}\n", id2, id1);
+            // fmt::print("    adding sent from object {} to received by object {}\n", id2, id1);
             objectWork1.addReceivedCommunications(id2, sent2.at(id1));
           } else if (received2.find(id1) != received2.end()) {
-            fmt::print("    adding received from object {} to sent by object {}\n", id2, id1);
+            // fmt::print("    adding received from object {} to sent by object {}\n", id2, id1);
             objectWork1.addSentCommunications(id2, received2.at(id1));
           } else {
-            fmt::print("    None\n");
+            // fmt::print("    None\n");
           }
           // Communications existing on object 1, to be added on object 2
-          fmt::print("  Communications existing on object {}, to be added on object {}:\n", id1, id2);
+          // fmt::print("  Communications existing on object {}, to be added on object {}:\n", id1, id2);
           if (sent1.find(id2) != sent1.end()) {
-            fmt::print("    adding sent from object {} to received by object {}\n", id1, id2);
+            // fmt::print("    adding sent from object {} to received by object {}\n", id1, id2);
             objectWork2.addReceivedCommunications(id1, sent1.at(id2));
           } else if (received2.find(id1) != received2.end()) {
-            fmt::print("    adding received from object {} to sent by object {}\n", id1, id2);
+            // fmt::print("    adding received from object {} to sent by object {}\n", id1, id2);
             objectWork2.addSentCommunications(id1, received1.at(id2));
           } else {
-            fmt::print("    None\n");
+            // fmt::print("    None\n");
           }
-          fmt::print("\n");
+          // fmt::print("\n");
         }
       }
     }
