@@ -213,7 +213,8 @@ vtkNew<vtkPolyData> Render::createRankMesh_(PhaseType iteration) {
   rank_points_->SetNumberOfPoints(this->n_ranks_);
 
   vtkNew<vtkDoubleArray> rank_arr;
-  rank_arr->SetName("rank qoi");
+  std::string rank_array_name = "Rank " + this->rank_qoi_;
+  rank_arr->SetName(rank_array_name.c_str());
   rank_arr->SetNumberOfTuples(this->n_ranks_);
 
   for (uint64_t rank_id = 0; rank_id < this->n_ranks_; rank_id++) {
@@ -263,13 +264,14 @@ vtkNew<vtkPolyData> Render::createObjectMesh_(PhaseType phase) {
 
   // Create point array for object quantity of interest
   vtkNew<vtkDoubleArray> q_arr;
-  q_arr->SetName(this->object_qoi_.c_str());
+  std::string object_array_name = "Object " + this->object_qoi_;
+  q_arr->SetName(object_array_name.c_str());
   q_arr->SetNumberOfTuples(n_o);
 
   // Load array must be added when it is not the object QOI
   vtkNew<vtkDoubleArray> l_arr;
   if (object_qoi_ != "load") {
-    l_arr->SetName("load");
+    l_arr->SetName("Object load");
     l_arr->SetNumberOfTuples(n_o);
   }
 
