@@ -136,6 +136,7 @@ private:
   // output parameters
   std::string output_dir_;
   std::string output_file_stem_;
+  bool save_meshes_;
 
   // Jitter per object
   double object_jitter_ = 0.5;
@@ -230,7 +231,8 @@ public:
     double in_object_jitter,
     std::string in_output_dir,
     std::string in_output_file_stem,
-    double in_resolution
+    double in_resolution,
+    bool in_save_meshes
   );
 
   static void createPipeline(

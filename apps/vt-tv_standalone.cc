@@ -94,6 +94,8 @@ int main(int argc, char** argv) {
 
     std::array<std::string, 3> qoi_request = { config["viz"]["rank_qoi"].as<std::string>(), "", config["viz"]["object_qoi"].as<std::string>()};
 
+    bool save_meshes = config["viz"]["save_meshes"].as<bool>();
+
     bool continuous_object_qoi = config["viz"]["force_continuous_object_qoi"].as<bool>();
 
     std::array<uint64_t, 3> grid_size = { config["viz"]["x_ranks"].as<uint64_t>(), config["viz"]["y_ranks"].as<uint64_t>(), config["viz"]["z_ranks"].as<uint64_t>() };
@@ -129,7 +131,7 @@ int main(int argc, char** argv) {
     fmt::print("Num ranks={}\n", info->getNumRanks());
 
     // Instantiate render
-    auto r = Render(qoi_request, continuous_object_qoi, *info, grid_size, object_jitter, output_dir, output_file_stem, 1.0);
+    auto r = Render(qoi_request, continuous_object_qoi, *info, grid_size, object_jitter, output_dir, output_file_stem, 1.0, save_meshes);
     r.generate();
 
   } catch (const std::exception& e) {
