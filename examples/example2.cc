@@ -41,29 +41,6 @@
 //@HEADER
 */
 
-#include <vtkActor.h>
-#include <vtkRenderWindow.h>
-#include <vtkRenderWindowInteractor.h>
-#include <vtkRenderer.h>
-#include <vtkNamedColors.h>
-#include <vtkNew.h>
-#include <vtkProperty.h>
-#include <vtkCamera.h>
-#include <vtkPolyData.h>
-#include <vtkPolyDataMapper.h>
-#include <vtkDoubleArray.h>
-#include <vtkPointData.h>
-#include <vtkGlyphSource2D.h>
-#include <vtkGlyph2D.h>
-#include <vtkTransform.h>
-#include <vtkTransformPolyDataFilter.h>
-#include <vtkColorTransferFunction.h>
-#include <vtkTextProperty.h>
-#include <vtkArrayCalculator.h>
-#include <vtkThresholdPoints.h>
-#include <vtkWindowToImageFilter.h>
-#include <vtkPNGWriter.h>
-
 #include <vt-tv/api/info.h>
 #include <vt-tv/utility/json_reader.h>
 

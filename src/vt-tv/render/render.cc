@@ -785,14 +785,14 @@ void Render::generate() {
 
     fmt::print("Writing object mesh for phase {}\n", phase);
     vtkNew<vtkXMLPolyDataWriter> writer;
-    std::string object_mesh_filename = "object_mesh_" + std::to_string(phase) + ".vtp";
+    std::string object_mesh_filename = output_dir_ + output_file_stem_ + "_object_mesh_" + std::to_string(phase) + ".vtp";
     writer->SetFileName(object_mesh_filename.c_str());
     writer->SetInputData(object_mesh);
     writer->Write();
 
     fmt::print("Writing rank mesh for phase {}\n", phase);
     vtkNew<vtkXMLPolyDataWriter> writer2;
-    std::string rank_mesh_filneame = "rank_mesh_" + std::to_string(phase) + ".vtp";
+    std::string rank_mesh_filneame = output_dir_ + output_file_stem_ + "_rank_mesh_" + std::to_string(phase) + ".vtp";
     writer2->SetFileName(rank_mesh_filneame.c_str());
     writer2->SetInputData(rank_mesh);
     writer2->Write();

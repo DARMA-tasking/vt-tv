@@ -1,0 +1,17 @@
+input:
+  directory: tests/unit/lb_test_data
+  n_ranks: 4
+
+viz:
+  x_ranks: 2
+  y_ranks: 2
+  z_ranks: 1
+  object_jitter: 0.5
+  rank_qoi: load
+  object_qoi: load
+  save_meshes: True
+  force_continuous_object_qoi: True
+
+output:
+  directory: /Users/pierrepebay/Develop/vt-tv/output
+  file_stem: pierresfirstconfig
