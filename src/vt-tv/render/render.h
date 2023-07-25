@@ -110,10 +110,10 @@ private:
     WhiteToBlack
   };
 
-  // General phase info
-  std::unordered_map<PhaseType, PhaseWork> phase_info_;
+  // General data info
   Info info_;
   uint64_t n_ranks_;
+  uint64_t n_phases_;
 
   // Geometric parameters
   std::array<uint64_t, 3> grid_size_ = {1, 1, 1};
@@ -122,14 +122,14 @@ private:
   uint64_t max_o_per_dim_ = 0;
 
   // numeric parameters
-  std::pair<TimeType, TimeType> object_load_range_;
+  std::pair<double, double> object_qoi_range_;
 
   // Maximum object atribute values
-  TimeType object_load_max_ = 0.0;
+  double object_qoi_max_ = 0.0;
   double object_volume_max_ = 0.0;
 
   // quantities of interest
-  std::string rank_qoi_;
+  std::string rank_qoi_ = "load";
   std::string object_qoi_ = "load";
   bool continuous_object_qoi_;
 
@@ -142,18 +142,18 @@ private:
   std::unordered_map<ElementIDType, std::array<double, 3>> jitter_dims_;
 
   /**
-   * \brief Decide object quantity storage type and compute it.
+   * \brief Compute range of object qoi.
    *
-   * \return load range
+   * \return object qoi range
    */
-  std::pair<TimeType, TimeType> compute_object_load_range();
+  std::pair<double, double> computeObjectQoiRange_();
 
   /**
-   * \brief get ranks belonging to phase
+   * \brief Compute range of rank qoi.
    *
-   * \return set of ranks
+   * \return rank qoi range
    */
-  std::vector<NodeType> getRanks(PhaseType phase_in) const;
+  std::pair<double, double> computeRankQoiRange_();
 
   /**
    * \brief Create mapping of objects in ranks
@@ -162,7 +162,7 @@ private:
    *
    * \return mapping
    */
-  std::map<NodeType, std::unordered_map<ElementIDType, ObjectWork>> create_object_mapping_(PhaseType phase);
+  std::map<NodeType, std::unordered_map<ElementIDType, ObjectWork>> createObjectMapping_(PhaseType phase);
 
   /**
    * \brief Map ranks to polygonal mesh.
@@ -171,7 +171,7 @@ private:
    *
    * \return rank mesh
    */
-  vtkNew<vtkPolyData> create_rank_mesh_(PhaseType iteration);
+  vtkNew<vtkPolyData> createRankMesh_(PhaseType iteration);
 
   /**
    * \brief Map objects to polygonal mesh.
@@ -180,13 +180,13 @@ private:
    *
    * \return object mesh
    */
-  vtkNew<vtkPolyData> create_object_mesh_(PhaseWork phase);
+  vtkNew<vtkPolyData> createObjectMesh_(PhaseType phase);
 
   static vtkNew<vtkColorTransferFunction> createColorTransferFunction(
     double range[2], double avg_load = 0, ColorType ct = ColorType::Default
   );
 
-  static vtkNew<vtkScalarBarActor> createScalarBarActor(
+  static vtkNew<vtkScalarBarActor> createScalarBarActor_(
     vtkPolyDataMapper* mapper, std::string title, double x, double y
   );
 
@@ -198,7 +198,7 @@ private:
    *
    * \return i,j,k Cartesian coordinates
    */
-  static std::array<uint64_t, 3> global_id_to_cartesian(
+  static std::array<uint64_t, 3> globalIDToCartesian_(
     uint64_t flat_id, std::array<uint64_t, 3> grid_sizes
   );
 
@@ -206,17 +206,15 @@ public:
   /**
    * \brief Construct render
    *
-   * \param[in] in_phase_info the phases
    * \param[in] in_info info about the ranks and phases
    */
-  Render(std::unordered_map<PhaseType, PhaseWork> in_phase_info, Info in_info);
+  Render(Info in_info);
 
   /**
    * \brief Construct render
    *
   * \param[in] in_qoi_request description of rank and object quantities of interest
   * \param[in] in_continuous_object_qoi always treat object QOI as continuous or not
-  * \param[in] in_phase_info phase info
   * \param[in] in_info general info
   * \param[in] in_grid_size triplet containing grid sizes in each dimension
   * \param[in] in_object_jitter coefficient of random jitter with magnitude < 1
@@ -227,7 +225,6 @@ public:
   Render(
     std::array<std::string, 3> in_qoi_request,
     bool in_continuous_object_qoi,
-    std::unordered_map<PhaseType, PhaseWork> in_phase_info,
     Info in_info,
     std::array<uint64_t, 3> in_grid_size,
     double in_object_jitter,

@@ -96,16 +96,90 @@ struct Info {
    *
    * \return map of object info
    */
-  auto& getObjectInfo() const { return object_info_; }
+  auto const& getObjectInfo() const { return object_info_; }
 
   /**
-   * \brief Get work for a given rank
+   * \brief Get all ranks
+   *
+   * \return map of Ranks
+   */
+  auto const& getRanks() const { return ranks_; }
+
+  /**
+   * \brief Get all rank ids
+   *
+   * \return Vector of rank ids
+   */
+  std::vector<NodeType> getRankIDs() const {
+    std::vector<NodeType> ids;
+    for (auto [rankid, _] : ranks_) {
+      ids.push_back(rankid);
+    }
+    return ids;
+  }
+
+  /**
+   * \brief Get rank
+   *
+   * \return Rank
+   */
+  auto const& getRank(NodeType rank_id) const { return ranks_.at(rank_id); }
+
+  /**
+   * \brief Get number of phases, which should be the same across ranks
+   *
+   * \return The number of phases
+   */
+  uint64_t getNumPhases() const {
+    uint64_t n_phases = this->ranks_.at(0).getNumPhases();
+    for (NodeType rank_id = 1; rank_id < this->ranks_.size(); rank_id++) {
+      if (ranks_.at(rank_id).getNumPhases() != n_phases) {
+        throw std::runtime_error("Number of phases must be consistent across ranks");
+      }
+    }
+    return n_phases;
+  }
+
+  /**
+   * \brief Get load of a given rank
    *
    * \param[in] rank the rank
    *
-   * \return all the rank work
+   * \return the rank load
    */
-  Rank const& getRank(NodeType rank) const { return ranks_.at(rank); }
+  double getRankLoad(NodeType rank, PhaseType phase) const { return ranks_.at(rank).getLoad(phase); }
+
+  /**
+   * \brief Get loads of all ranks at given phase
+   *
+   * \return a map of loads per rank
+   */
+  std::unordered_map<NodeType, double> getAllRankLoadsAtPhase(PhaseType phase) const {
+    std::unordered_map<NodeType, double> rank_loads;
+
+    for (auto const& [rank_id, rank] : this->ranks_) {
+      rank_loads.insert(std::make_pair(rank_id, rank.getLoad(phase)));
+    }
+
+    return rank_loads;
+  }
+
+  /**
+   * \brief Get loads of a given rank across all phases
+   *
+   * \return a map of loads per rank
+   */
+  std::unordered_map<PhaseType, double> getAllLoadsAtRank(NodeType rank_id) const {
+    std::unordered_map<PhaseType, double> rank_loads;
+
+    auto const& rank = this->ranks_.at(rank_id);
+    uint64_t n_phases = rank.getNumPhases();
+    for (uint64_t phase = 0; phase < n_phases; phase++) {
+      rank_loads.insert(std::make_pair(phase, rank.getLoad(phase)));
+    }
+
+    return rank_loads;
+  }
 
   /**
    * \brief Get all objects for a given rank and phase
@@ -119,7 +193,7 @@ struct Info {
     std::unordered_map<ElementIDType, ObjectWork> objects;
 
     // Get Rank info for specified rank
-    auto const& rank_info = this->getRank(rank_id);
+    auto const& rank_info = ranks_.at(rank_id);
 
     // Get history of phases for this rank
     auto const& phase_history_at_rank = rank_info.getPhaseWork();
@@ -141,21 +215,20 @@ struct Info {
    * \brief Get all objects in all ranks for a given phase
    *
    * \param[in] phase the phase
-   * \param[in] n_ranks the total number of ranks
    *
    * \return the objects
    */
-  std::unordered_map<ElementIDType, ObjectWork> getPhaseObjects(PhaseType phase, uint64_t n_ranks) const {
+  std::unordered_map<ElementIDType, ObjectWork> getPhaseObjects(PhaseType phase) const {
     // fmt::print("Phase: {}\n", phase);
 
     // Map of objects at given phase
     std::unordered_map<ElementIDType, ObjectWork> objects_at_phase;
 
     // Go through all ranks and get all objects at given phase
-    for (uint64_t rank = 0; rank < n_ranks; rank++) {
+    for (uint64_t rank = 0; rank < this->ranks_.size(); rank++) {
       // fmt::print("  Rank: {}\n",rank);
       // Get Rank info for specified rank
-      auto const& rank_info = this->getRank(rank);
+      auto const& rank_info = ranks_.at(rank);
 
       // Get history of phases for this rank
       auto const& phase_history = rank_info.getPhaseWork();
@@ -178,18 +251,17 @@ struct Info {
    * \brief Create mapping of all objects in all ranks for a given phase (made for allowing changes to these objects)
    *
    * \param[in] phase the phase
-   * \param[in] n_ranks the total number of ranks
    *
    * \return the objects
    */
-  std::unordered_map<ElementIDType, ObjectWork> createPhaseObjectsMapping_(PhaseType phase, uint64_t n_ranks) {
+  std::unordered_map<ElementIDType, ObjectWork> createPhaseObjectsMapping(PhaseType phase) {
     // fmt::print("Phase: {}\n", phase);
 
     // Map of objects at given phase
     std::unordered_map<ElementIDType, ObjectWork> objects_at_phase;
 
     // Go through all ranks and get all objects at given phase
-    for (uint64_t rank = 0; rank < n_ranks; rank++) {
+    for (uint64_t rank = 0; rank < this->ranks_.size(); rank++) {
       // fmt::print("  Rank: {}\n",rank);
       // Get Rank info for specified rank
       auto& rank_info = ranks_.at(rank);
@@ -203,7 +275,7 @@ struct Info {
       // Get all objects at specified phase
       auto& object_work_at_phase = phase_work->second.getObjectWork();
 
-      for (auto& [elm_id, obj_work] : object_work_at_phase) {
+      for (auto const& [elm_id, obj_work] : object_work_at_phase) {
         // fmt::print("    Object Id: {}\n", elm_id);
         objects_at_phase.insert(std::make_pair(elm_id, obj_work));
       }
@@ -214,20 +286,18 @@ struct Info {
   /**
    * \brief Get all objects for all ranks and phases
    *
-   * \param[in] n_ranks the total number of ranks
-   *
    * \return the objects
    */
-  std::unordered_map<ElementIDType, ObjectWork> getAllObjects(uint64_t n_ranks) const {
+  std::unordered_map<ElementIDType, ObjectWork> getAllObjects() const {
 
     // Map of objects at given phase
     std::unordered_map<ElementIDType, ObjectWork> objects;
 
     // Go through all ranks and get all objects at given phase
-    for (uint64_t rank = 0; rank < n_ranks; rank++) {
+    for (uint64_t rank = 0; rank < this->ranks_.size(); rank++) {
       // fmt::print("Rank: {}\n",rank);
       // Get Rank info for specified rank
-      auto const& rank_info = this->getRank(rank);
+      auto const& rank_info = this->ranks_.at(rank);
 
       // Get history of phases for this rank
       auto const& phase_history = rank_info.getPhaseWork();
@@ -260,41 +330,41 @@ struct Info {
    *
    * \return void
    */
-  void normalizeEdges(PhaseType phase, uint64_t n_ranks) {
-    fmt::print("---- Normalizing Edges for phase {} ----\n", phase);
-    auto phaseObjects = createPhaseObjectsMapping_(phase, n_ranks);
+  void normalizeEdges(PhaseType phase) {
+    fmt::print("\n---- Normalizing Edges for phase {} ----\n", phase);
+    auto phaseObjects = createPhaseObjectsMapping(phase);
     for (auto& [id1, objectWork1] : phaseObjects) {
       auto const& sent1 = objectWork1.getSent();
       auto const& received1 = objectWork1.getReceived();
       for (auto& [id2, objectWork2] : phaseObjects) {
         // No communications to oneself
         if (id1 != id2) {
-          fmt::print("--Communication between object {} and object {}\n\n", id1, id2);
+          // fmt::print("--Communication between object {} and object {}\n\n", id1, id2);
           auto const& sent2 = objectWork2.getSent();
           auto const& received2 = objectWork2.getReceived();
           // Communications existing on object 2, to be added on object 1
-          fmt::print("  Communications existing on object {}, to be added on object {}:\n", id2, id1);
+          // fmt::print("  Communications existing on object {}, to be added on object {}:\n", id2, id1);
           if (sent2.find(id1) != sent2.end()) {
-            fmt::print("    adding sent from object {} to received by object {}\n", id2, id1);
+            // fmt::print("    adding sent from object {} to received by object {}\n", id2, id1);
             objectWork1.addReceivedCommunications(id2, sent2.at(id1));
           } else if (received2.find(id1) != received2.end()) {
-            fmt::print("    adding received from object {} to sent by object {}\n", id2, id1);
+            // fmt::print("    adding received from object {} to sent by object {}\n", id2, id1);
             objectWork1.addSentCommunications(id2, received2.at(id1));
           } else {
-            fmt::print("    None\n");
+            // fmt::print("    None\n");
           }
           // Communications existing on object 1, to be added on object 2
-          fmt::print("  Communications existing on object {}, to be added on object {}:\n", id1, id2);
+          // fmt::print("  Communications existing on object {}, to be added on object {}:\n", id1, id2);
           if (sent1.find(id2) != sent1.end()) {
-            fmt::print("    adding sent from object {} to received by object {}\n", id1, id2);
+            // fmt::print("    adding sent from object {} to received by object {}\n", id1, id2);
             objectWork2.addReceivedCommunications(id1, sent1.at(id2));
           } else if (received2.find(id1) != received2.end()) {
-            fmt::print("    adding received from object {} to sent by object {}\n", id1, id2);
+            // fmt::print("    adding received from object {} to sent by object {}\n", id1, id2);
             objectWork2.addSentCommunications(id1, received1.at(id2));
           } else {
-            fmt::print("    None\n");
+            // fmt::print("    None\n");
           }
-          fmt::print("\n");
+          // fmt::print("\n");
         }
       }
     }

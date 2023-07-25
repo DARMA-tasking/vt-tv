@@ -94,38 +94,10 @@ int main() {
     info->addInfo(tmpInfo->getObjectInfo(), tmpInfo->getRank(rank));
   }
 
-  info->getPhaseObjects(0,4);
-  fmt::print("===================\n");
-  info->getAllObjects(4);
-
-  fmt::print("===================\n");
-  info->normalizeEdges(0,4);
-
-  auto const& obj_info = info->getObjectInfo();
-
-  fmt::print("Object info size={}\n", obj_info.size());
   fmt::print("Num ranks={}\n", info->getNumRanks());
 
-  // for (auto const& [elm_id, oi] : obj_info) {
-  //   fmt::print(
-  //     "elm_id={:x}, home={}, migratable={}, index_array size={}\n",
-  //     elm_id, oi.getHome(), oi.isMigratable(), oi.getIndexArray().size()
-  //   );
-  // }
-
-  auto& rank_info = info->getRank(0);
-
-  auto& phases = rank_info.getPhaseWork();
-
-  for (auto const& [phase, phase_work] : phases) {
-    // fmt::print("phase={}\n", phase);
-    for (auto const& [elm_id, work] : phase_work.getObjectWork()) {
-      // fmt::print("\t elm_id={:x}: load={}\n", elm_id, work.getLoad());
-    }
-  }
-
   // Instantiate render
-  auto r = Render(phases, *info);
+  auto r = Render(*info);
   r.generate();
   return 0;
 }
