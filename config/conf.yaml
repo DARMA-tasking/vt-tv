@@ -13,5 +13,5 @@ viz:
   force_continuous_object_qoi: True
 
 output:
-  directory: /Users/pierrepebay/Develop/vt-tv/output
+  directory: output
   file_stem: pierresfirstconfig

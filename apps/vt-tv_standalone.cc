@@ -65,6 +65,14 @@ int main(int argc, char** argv) {
   CLI11_PARSE(app, argc, argv);
 
   std::string yaml_file = app.get_option("-c")->as<std::string>();
+
+  std::filesystem::path config_file_path(yaml_file);
+  // If it's a relative path, prepend the SRC_DIR
+  if(config_file_path.is_relative()) {
+      config_file_path = std::filesystem::path(SRC_DIR) / config_file_path;
+  }
+  yaml_file = config_file_path.string();
+
   fmt::print("Input configuration file={}\n", yaml_file);
 
   try {

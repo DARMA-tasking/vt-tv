@@ -1,8 +1,16 @@
 
 macro(add_test_for_app_vt_tv test_name test_exec)
-  add_test(
-    ${test_name} ${test_exec} ${ARGN}
-  )
+  if(${test_name} STREQUAL "vt-tv:vt-tv_standalone")
+    add_test(
+      NAME ${test_name}
+      COMMAND ${test_exec} -c config/conf.yaml
+    )
+  else()
+    add_test(
+      NAME ${test_name}
+      COMMAND ${test_exec}
+    )
+  endif()
 
   set_tests_properties(
     ${test_name}
