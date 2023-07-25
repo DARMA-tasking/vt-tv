@@ -14,4 +14,4 @@ viz:
 
 output:
   directory: output
-  file_stem: pierresfirstconfig
+  file_stem: test
