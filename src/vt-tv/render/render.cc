@@ -142,6 +142,7 @@ std::pair<double, double> Render::computeObjectQoiRange_() {
   double oq_max = -1 * std::numeric_limits<double>::infinity();
   double oq_min = std::numeric_limits<double>::infinity();
   double oq;
+  std::set<double> oq_all;
 
   // Iterate over all ranks
   auto const& objects = this->info_.getAllObjects();
@@ -149,6 +150,14 @@ std::pair<double, double> Render::computeObjectQoiRange_() {
     // Update maximum object qoi
     if (this->object_qoi_ == "load") {
       oq = obj_work.getLoad();
+
+      if (!continuous_object_qoi_) {
+        oq_all.insert(oq);
+        if(oq_all.size() > 20) {
+          oq_all.clear();
+          continuous_object_qoi_ = true;
+        }
+      }
     } else {
       throw std::runtime_error("Invalid QOI: " + this->object_qoi_);
     }
