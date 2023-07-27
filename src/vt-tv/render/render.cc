@@ -88,6 +88,8 @@ Render::Render(Info in_info)
     }
     jitter_dims_.insert(std::make_pair(objectID, jitterDims));
   }
+
+  object_qoi_range_ = this->computeObjectQoiRange_();
 };
 
 Render::Render(
@@ -135,9 +137,11 @@ Render::Render(
     }
     jitter_dims_.insert(std::make_pair(objectID, jitterDims));
   }
+
+  object_qoi_range_ = this->computeObjectQoiRange_();
 };
 
-std::pair<double, double> Render::computeObjectQoiRange_() {
+std::variant<std::pair<double, double>, std::set<double>> Render::computeObjectQoiRange_() {
   // Initialize object QOI range attributes
   double oq_max = -1 * std::numeric_limits<double>::infinity();
   double oq_min = std::numeric_limits<double>::infinity();
@@ -168,8 +172,12 @@ std::pair<double, double> Render::computeObjectQoiRange_() {
   // Update extrema attribute
   this->object_qoi_max_ = oq_max;
 
-  // return range
-  return std::make_pair(oq_min, oq_max);
+  if (continuous_object_qoi_) {
+    // return range
+    return std::make_pair(oq_min, oq_max);
+  } else {
+    return oq_all;
+  }
 }
 
 std::pair<double, double> Render::computeRankQoiRange_() {
@@ -781,12 +789,13 @@ void Render::generate() {
   double rank_qoi_min = std::get<0>(rank_qoi_range);
   double rank_qoi_max = std::get<1>(rank_qoi_range);
 
-  std::pair<double, double> object_qoi_range = this->computeObjectQoiRange_();
-  double object_qoi_min = std::get<0>(object_qoi_range);
-  double object_qoi_max = std::get<1>(object_qoi_range);
-
-  fmt::print("Rank {} range: {}, {}\n", rank_qoi_, rank_qoi_min, rank_qoi_max);
-  fmt::print("Object {} range: {}, {}\n", object_qoi_, object_qoi_min, object_qoi_max);
+  if (std::holds_alternative<std::pair<double, double>>(object_qoi_range_)) {
+    auto range_pair = std::get<std::pair<double, double>>(object_qoi_range_);
+    double object_qoi_min = std::get<0>(range_pair);
+    double object_qoi_max = std::get<1>(range_pair);
+    fmt::print("Rank {} range: {}, {}\n", rank_qoi_, rank_qoi_min, rank_qoi_max);
+    fmt::print("Object {} range: {}, {}\n", object_qoi_, object_qoi_min, object_qoi_max);
+  }
 
   for(PhaseType phase = 0; phase < this->n_phases_; phase++) {
     this->info_.normalizeEdges(phase);
