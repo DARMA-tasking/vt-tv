@@ -88,6 +88,8 @@ Render::Render(Info in_info)
     }
     jitter_dims_.insert(std::make_pair(objectID, jitterDims));
   }
+
+  object_qoi_range_ = this->computeObjectQoiRange_();
 };
 
 Render::Render(
@@ -98,7 +100,8 @@ Render::Render(
   double in_object_jitter,
   std::string in_output_dir,
   std::string in_output_file_stem,
-  double in_resolution
+  double in_resolution,
+  bool in_save_meshes
 )
 : rank_qoi_(in_qoi_request[0])
 , object_qoi_(in_qoi_request[2])
@@ -111,6 +114,7 @@ Render::Render(
 , output_dir_(in_output_dir)
 , output_file_stem_(in_output_file_stem)
 , grid_resolution_(in_resolution)
+, save_meshes_(in_save_meshes)
 {
   // initialize number of ranks
   n_ranks_ = info_.getNumRanks();
@@ -133,13 +137,16 @@ Render::Render(
     }
     jitter_dims_.insert(std::make_pair(objectID, jitterDims));
   }
+
+  object_qoi_range_ = this->computeObjectQoiRange_();
 };
 
-std::pair<double, double> Render::computeObjectQoiRange_() {
+std::variant<std::pair<double, double>, std::set<double>> Render::computeObjectQoiRange_() {
   // Initialize object QOI range attributes
   double oq_max = -1 * std::numeric_limits<double>::infinity();
   double oq_min = std::numeric_limits<double>::infinity();
   double oq;
+  std::set<double> oq_all;
 
   // Iterate over all ranks
   auto const& objects = this->info_.getAllObjects();
@@ -147,6 +154,14 @@ std::pair<double, double> Render::computeObjectQoiRange_() {
     // Update maximum object qoi
     if (this->object_qoi_ == "load") {
       oq = obj_work.getLoad();
+
+      if (!continuous_object_qoi_) {
+        oq_all.insert(oq);
+        if(oq_all.size() > 20) {
+          oq_all.clear();
+          continuous_object_qoi_ = true;
+        }
+      }
     } else {
       throw std::runtime_error("Invalid QOI: " + this->object_qoi_);
     }
@@ -157,8 +172,12 @@ std::pair<double, double> Render::computeObjectQoiRange_() {
   // Update extrema attribute
   this->object_qoi_max_ = oq_max;
 
-  // return range
-  return std::make_pair(oq_min, oq_max);
+  if (continuous_object_qoi_) {
+    // return range
+    return std::make_pair(oq_min, oq_max);
+  } else {
+    return oq_all;
+  }
 }
 
 std::pair<double, double> Render::computeRankQoiRange_() {
@@ -770,12 +789,13 @@ void Render::generate() {
   double rank_qoi_min = std::get<0>(rank_qoi_range);
   double rank_qoi_max = std::get<1>(rank_qoi_range);
 
-  std::pair<double, double> object_qoi_range = this->computeObjectQoiRange_();
-  double object_qoi_min = std::get<0>(object_qoi_range);
-  double object_qoi_max = std::get<1>(object_qoi_range);
-
-  fmt::print("Rank {} range: {}, {}\n", rank_qoi_, rank_qoi_min, rank_qoi_max);
-  fmt::print("Object {} range: {}, {}\n", object_qoi_, object_qoi_min, object_qoi_max);
+  if (std::holds_alternative<std::pair<double, double>>(object_qoi_range_)) {
+    auto range_pair = std::get<std::pair<double, double>>(object_qoi_range_);
+    double object_qoi_min = std::get<0>(range_pair);
+    double object_qoi_max = std::get<1>(range_pair);
+    fmt::print("Rank {} range: {}, {}\n", rank_qoi_, rank_qoi_min, rank_qoi_max);
+    fmt::print("Object {} range: {}, {}\n", object_qoi_, object_qoi_min, object_qoi_max);
+  }
 
   for(PhaseType phase = 0; phase < this->n_phases_; phase++) {
     this->info_.normalizeEdges(phase);
@@ -783,19 +803,21 @@ void Render::generate() {
     vtkNew<vtkPolyData> object_mesh = this->createObjectMesh_(phase);
     vtkNew<vtkPolyData> rank_mesh = this->createRankMesh_(phase);
 
-    fmt::print("Writing object mesh for phase {}\n", phase);
-    vtkNew<vtkXMLPolyDataWriter> writer;
-    std::string object_mesh_filename = "object_mesh_" + std::to_string(phase) + ".vtp";
-    writer->SetFileName(object_mesh_filename.c_str());
-    writer->SetInputData(object_mesh);
-    writer->Write();
+    if (save_meshes_){
+      fmt::print("Writing object mesh for phase {}\n", phase);
+      vtkNew<vtkXMLPolyDataWriter> writer;
+      std::string object_mesh_filename = output_dir_ + output_file_stem_ + "_object_mesh_" + std::to_string(phase) + ".vtp";
+      writer->SetFileName(object_mesh_filename.c_str());
+      writer->SetInputData(object_mesh);
+      writer->Write();
 
-    fmt::print("Writing rank mesh for phase {}\n", phase);
-    vtkNew<vtkXMLPolyDataWriter> writer2;
-    std::string rank_mesh_filneame = "rank_mesh_" + std::to_string(phase) + ".vtp";
-    writer2->SetFileName(rank_mesh_filneame.c_str());
-    writer2->SetInputData(rank_mesh);
-    writer2->Write();
+      fmt::print("Writing rank mesh for phase {}\n", phase);
+      vtkNew<vtkXMLPolyDataWriter> writer2;
+      std::string rank_mesh_filneame = output_dir_ + output_file_stem_ + "_rank_mesh_" + std::to_string(phase) + ".vtp";
+      writer2->SetFileName(rank_mesh_filneame.c_str());
+      writer2->SetInputData(rank_mesh);
+      writer2->Write();
+    }
   }
 }
 

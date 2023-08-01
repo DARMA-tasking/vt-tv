@@ -93,6 +93,7 @@
 #include <unordered_set>
 #include <set>
 #include <array>
+#include <variant>
 
 namespace vt { namespace tv {
 
@@ -122,7 +123,7 @@ private:
   uint64_t max_o_per_dim_ = 0;
 
   // numeric parameters
-  std::pair<double, double> object_qoi_range_;
+  std::variant<std::pair<double, double>, std::set<double>> object_qoi_range_;
 
   // Maximum object atribute values
   double object_qoi_max_ = 0.0;
@@ -136,6 +137,7 @@ private:
   // output parameters
   std::string output_dir_;
   std::string output_file_stem_;
+  bool save_meshes_;
 
   // Jitter per object
   double object_jitter_ = 0.5;
@@ -146,7 +148,7 @@ private:
    *
    * \return object qoi range
    */
-  std::pair<double, double> computeObjectQoiRange_();
+  std::variant<std::pair<double, double>, std::set<double>> computeObjectQoiRange_();
 
   /**
    * \brief Compute range of rank qoi.
@@ -230,7 +232,8 @@ public:
     double in_object_jitter,
     std::string in_output_dir,
     std::string in_output_file_stem,
-    double in_resolution
+    double in_resolution,
+    bool in_save_meshes
   );
 
   static void createPipeline(
