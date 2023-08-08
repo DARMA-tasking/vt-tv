@@ -1,7 +1,9 @@
 set(BUILD_GMOCK OFF CACHE BOOL "Builds the googlemock subproject" FORCE)
 set(INSTALL_GTEST OFF CACHE BOOL "Enable installation of googletest. (Projects embedding googletest may want to turn this OFF.)" FORCE)
 
-add_subdirectory(extern/googletest)
+if (NOT TARGET gtest)
+  add_subdirectory(extern/googletest)
+endif()
 set(GOOGLETEST_LIBRARY gtest)
 
 # Hide various options from UI-based property editors
