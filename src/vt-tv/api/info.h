@@ -132,7 +132,7 @@ struct Info {
    */
   uint64_t getNumPhases() const {
     uint64_t n_phases = this->ranks_.at(0).getNumPhases();
-    for (NodeType rank_id = 1; rank_id < this->ranks_.size(); rank_id++) {
+    for (NodeType rank_id = 1; rank_id < static_cast<NodeType>(this->ranks_.size()); rank_id++) {
       if (ranks_.at(rank_id).getNumPhases() != n_phases) {
         throw std::runtime_error("Number of phases must be consistent across ranks");
       }
