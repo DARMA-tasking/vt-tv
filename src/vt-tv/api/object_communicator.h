@@ -154,6 +154,18 @@ struct ObjectCommunicator {
     }
   }
 
+  /**
+   * \brief Serializer for data
+   *
+   * \param[in] s the serializer
+   */
+  template <typename SerializerT>
+  void serialize(SerializerT& s) {
+    s | object_id_;
+    s | received_;
+    s | sent_;
+  }
+
 private:
   ElementIDType object_id_;                  /**< The object id */
   std::map<ElementIDType, double> received_; /**< The received edges */

@@ -96,6 +96,17 @@ struct Rank {
    */
   double getLoad(PhaseType phase) const { return phase_info_.at(phase).getLoad(); }
 
+  /**
+   * \brief Serializer for data
+   *
+   * \param[in] s the serializer
+   */
+  template <typename SerializerT>
+  void serialize(SerializerT& s) {
+    s | rank_;
+    s | phase_info_;
+  }
+
 private:
   /// The rank ID
   NodeType rank_ = 0;

@@ -153,6 +153,22 @@ struct ObjectInfo {
    */
   CollectionObjGroupIDType getMetaID() const { return meta_id_; }
 
+  /**
+   * \brief Serializer for data
+   *
+   * \param[in] s the serializer
+   */
+  template <typename SerializerT>
+  void serialize(SerializerT& s) {
+    s | id_;
+    s | home_;
+    s | migratable_;
+    s | index_;
+    s | meta_id_;
+    s | is_objgroup_;
+    s | is_collection_;
+  }
+
 private:
   /// Unique identifier across all ranks for the object
   ElementIDType id_ = 0;

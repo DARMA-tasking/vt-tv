@@ -153,6 +153,20 @@ struct ObjectWork {
     return communicator_.getSent();
   }
 
+  /**
+   * \brief Serializer for data
+   *
+   * \param[in] s the serializer
+   */
+  template <typename SerializerT>
+  void serialize(SerializerT& s) {
+    s | id_;
+    s | whole_phase_load_;
+    s | subphase_loads_;
+    s | user_defined_;
+    s | communicator_;
+  }
+
 private:
   /// Element ID
   ElementIDType id_ = 0;

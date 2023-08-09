@@ -370,6 +370,17 @@ struct Info {
     }
   }
 
+  /**
+   * \brief Serializer for data
+   *
+   * \param[in] s the serializer
+   */
+  template <typename SerializerT>
+  void serialize(SerializerT& s) {
+    s | object_info_;
+    s | ranks_;
+  }
+
 private:
   /// All the object info that doesn't change across phases
   std::unordered_map<ElementIDType, ObjectInfo> object_info_;
