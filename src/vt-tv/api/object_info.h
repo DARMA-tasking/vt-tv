@@ -58,6 +58,8 @@ namespace vt::tv {
  */
 struct ObjectInfo {
 
+  ObjectInfo() = default;
+
   /**
    * \brief Construct information about an object
    *

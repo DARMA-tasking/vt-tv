@@ -23,6 +23,8 @@ struct Object;
  */
 struct ObjectCommunicator {
 
+  ObjectCommunicator() = default;
+
   /**
    * \brief Construct an \c ObjectCommunicator without any edges
    *

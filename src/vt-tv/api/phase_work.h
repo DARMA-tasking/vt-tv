@@ -58,6 +58,8 @@ namespace vt::tv {
  */
 struct PhaseWork {
 
+  PhaseWork() = default;
+
   /**
    * \brief Construct phase work
    *

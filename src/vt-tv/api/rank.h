@@ -55,6 +55,8 @@ namespace vt::tv {
  */
 struct Rank {
 
+  Rank() = default;
+
   /**
    * \brief Construct a rank data
    *

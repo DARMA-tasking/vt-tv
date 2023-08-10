@@ -72,7 +72,7 @@ struct Info {
       ranks_(std::move(in_ranks))
   { }
 
-  Info() { };
+  Info() = default;
 
   /**
    * \brief Add more information about a new rank

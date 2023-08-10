@@ -63,6 +63,8 @@ struct ObjectWork {
   /// Possible user-defined types for a task
   using VariantType = std::variant<int, double, std::string>;
 
+  ObjectWork() = default;
+
   /**
    * \brief Construct \c ObjectWork for a given phase
    *
