@@ -173,8 +173,8 @@ struct Info {
     std::unordered_map<PhaseType, double> rank_loads;
 
     auto const& rank = this->ranks_.at(rank_id);
-    uint64_t n_phases = rank.getNumPhases();
-    for (uint64_t phase = 0; phase < n_phases; phase++) {
+    auto const& phase_work = rank.getPhaseWork();
+    for (auto const& [phase, _] : phase_work) {
       rank_loads.insert(std::make_pair(phase, rank.getLoad(phase)));
     }
 

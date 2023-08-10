@@ -127,7 +127,7 @@ void ParseRender::parseAndRender(PhaseType phase_id, std::unique_ptr<Info> info)
     // Instantiate render
     Render r(
       qoi_request, continuous_object_qoi, *info, grid_size, object_jitter,
-      output_dir, output_file_stem, 1.0, save_meshes
+      output_dir, output_file_stem, 1.0, save_meshes, phase_id
     );
     r.generate();
 
