@@ -49,6 +49,7 @@
 #include <yaml-cpp/yaml.h>
 
 #include <limits>
+#include <memory>
 
 namespace vt::tv::utility {
 
@@ -69,14 +70,16 @@ struct ParseRender {
   { }
 
   /**
-   * \brief Parse yaml file and render 
+   * \brief Parse yaml file and render
    *
    * \param[in] phase_id the phase ID
+   * \param[in] info the data to render
    *
    * \note If \c phase_id is max then all phases will be rendered
    */
   void parseAndRender(
-    PhaseType phase_id = std::numeric_limits<PhaseType>::max()
+    PhaseType phase_id = std::numeric_limits<PhaseType>::max(),
+    std::unique_ptr<Info> info = nullptr
   );
 
 private:

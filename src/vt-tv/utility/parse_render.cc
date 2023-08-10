@@ -44,6 +44,7 @@
 #include "vt-tv/utility/parse_render.h"
 #include "vt-tv/utility/json_reader.h"
 #include "vt-tv/render/render.h"
+#include "vt-tv/api/info.h"
 
 #include "../tests/unit/cmake_config.h"
 
@@ -51,26 +52,41 @@
 
 namespace vt::tv::utility {
 
-void ParseRender::parseAndRender(PhaseType phase_id) {
+void ParseRender::parseAndRender(PhaseType phase_id, std::unique_ptr<Info> info) {
   try {
     // Load the yaml file
     YAML::Node config = YAML::LoadFile(filename_);
 
-    std::string input_dir = config["input"]["directory"].as<std::string>();
-    std::filesystem::path input_path(input_dir);
+    if (info == nullptr) {
+      std::string input_dir = config["input"]["directory"].as<std::string>();
+      std::filesystem::path input_path(input_dir);
 
-    // If it's a relative path, prepend the SRC_DIR
-    if(input_path.is_relative()) {
-      input_path = std::filesystem::path(SRC_DIR) / input_path;
+      // If it's a relative path, prepend the SRC_DIR
+      if (input_path.is_relative()) {
+        input_path = std::filesystem::path(SRC_DIR) / input_path;
+      }
+      input_dir = input_path.string();
+
+      // append / to avoid problems with file stems
+      if (!input_dir.empty() && input_dir.back() != '/') {
+        input_dir += '/';
+      }
+
+      uint64_t n_ranks = config["input"]["n_ranks"].as<uint64_t>();
+
+      // Read JSON file and input data
+      std::filesystem::path p = input_dir;
+      std::string path = std::filesystem::absolute(p).string();
+
+      info = std::make_unique<Info>();
+
+      for (NodeType rank = 0; rank < n_ranks; rank++) {
+        utility::JSONReader reader{rank, input_dir + "data." + std::to_string(rank) + ".json"};
+        reader.readFile();
+        auto tmpInfo = reader.parseFile();
+        info->addInfo(tmpInfo->getObjectInfo(), tmpInfo->getRank(rank));
+      }
     }
-    input_dir = input_path.string();
-
-    // append / to avoid problems with file stems
-    if (!input_dir.empty() && input_dir.back() != '/') {
-      input_dir += '/';
-    }
-
-    uint64_t n_ranks = config["input"]["n_ranks"].as<uint64_t>();
 
     std::array<std::string, 3> qoi_request = {
       config["viz"]["rank_qoi"].as<std::string>(),
@@ -105,18 +121,6 @@ void ParseRender::parseAndRender(PhaseType phase_id) {
 
     std::string output_file_stem = config["output"]["file_stem"].as<std::string>();
 
-    // Read JSON file and input data
-    std::filesystem::path p = input_dir;
-    std::string path = std::filesystem::absolute(p).string();
-
-    std::unique_ptr<Info> info = std::make_unique<Info>();
-
-    for (NodeType rank = 0; rank < n_ranks; rank++) {
-      utility::JSONReader reader{rank, input_dir + "data." + std::to_string(rank) + ".json"};
-      reader.readFile();
-      auto tmpInfo = reader.parseFile();
-      info->addInfo(tmpInfo->getObjectInfo(), tmpInfo->getRank(rank));
-    }
 
     fmt::print("Num ranks={}\n", info->getNumRanks());
 
