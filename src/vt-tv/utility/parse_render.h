@@ -2,7 +2,7 @@
 //@HEADER
 // *****************************************************************************
 //
-//                                example2.cc
+//                               parse_render.h
 //             DARMA/vt-tv => Virtual Transport -- Task Visualizer
 //
 // Copyright 2019 National Technology & Engineering Solutions of Sandia, LLC
@@ -41,40 +41,48 @@
 //@HEADER
 */
 
-#include <vt-tv/api/info.h>
-#include <vt-tv/utility/json_reader.h>
-#include <vt-tv/render/render.h>
-#include <vt-tv/utility/parse_render.h>
-#include "../tests/unit/cmake_config.h"
+#if !defined INCLUDED_VT_TV_UTILITY_PARSE_RENDER_H
+#define INCLUDED_VT_TV_UTILITY_PARSE_RENDER_H
 
-#include <fmt-vt/format.h>
-#include <CLI/CLI11.hpp>
+#include "vt-tv/api/info.h"
 
-int main(int argc, char** argv) {
-  using namespace vt;
-  using namespace tv;
+#include <yaml-cpp/yaml.h>
 
-  CLI::App app{"TV: Task Visualizer"};
+#include <limits>
 
-  std::string default_config_file = "config/conf.yaml";
-  app.add_option("-c,--conf", default_config_file, "Input configuration file")->required();
+namespace vt::tv::utility {
 
-  CLI11_PARSE(app, argc, argv);
+/**
+ * \struct ParseRender
+ *
+ * \brief Parse YAML file and render based on configuration
+ */
+struct ParseRender {
 
-  std::string yaml_file = app.get_option("-c")->as<std::string>();
-  std::filesystem::path config_file_path(yaml_file);
+  /**
+   * \brief Construct the class
+   *
+   * \param[in] in_filename the yaml file name to read
+   */
+  ParseRender(std::string const& in_filename)
+    : filename_(in_filename)
+  { }
 
-  // If it's a relative path, prepend the SRC_DIR
-  if (config_file_path.is_relative()) {
-    config_file_path = std::filesystem::path(SRC_DIR) / config_file_path;
-  }
-  yaml_file = config_file_path.string();
+  /**
+   * \brief Parse yaml file and render 
+   *
+   * \param[in] phase_id the phase ID
+   *
+   * \note If \c phase_id is max then all phases will be rendered
+   */
+  void parseAndRender(
+    PhaseType phase_id = std::numeric_limits<PhaseType>::max()
+  );
 
-  fmt::print("Input configuration file={}\n", yaml_file);
+private:
+  std::string filename_;
+};
 
-  utility::ParseRender pr{yaml_file};
-  pr.parseAndRender();
+} /* end namesapce vt::tv::utility */
 
-
-  return 0;
-}
+#endif /*INCLUDED_VT_TV_UTILITY_PARSE_RENDER_H*/
