@@ -143,6 +143,8 @@ private:
   double object_jitter_ = 0.5;
   std::unordered_map<ElementIDType, std::array<double, 3>> jitter_dims_;
 
+  PhaseType selected_phase_;
+
   /**
    * \brief Compute range of object qoi.
    *
@@ -215,14 +217,15 @@ public:
   /**
    * \brief Construct render
    *
-  * \param[in] in_qoi_request description of rank and object quantities of interest
-  * \param[in] in_continuous_object_qoi always treat object QOI as continuous or not
-  * \param[in] in_info general info
-  * \param[in] in_grid_size triplet containing grid sizes in each dimension
-  * \param[in] in_object_jitter coefficient of random jitter with magnitude < 1
-  * \param[in] in_output_dir output directory
-  * \param[in] in_output_file_stem file name stem
-  * \param[in] in_resolution grid_resolution value
+   * \param[in] in_qoi_request description of rank and object quantities of interest
+   * \param[in] in_continuous_object_qoi always treat object QOI as continuous or not
+   * \param[in] in_info general info
+   * \param[in] in_grid_size triplet containing grid sizes in each dimension
+   * \param[in] in_object_jitter coefficient of random jitter with magnitude < 1
+   * \param[in] in_output_dir output directory
+   * \param[in] in_output_file_stem file name stem
+   * \param[in] in_resolution grid_resolution value
+   * \param[in] in_selected_phase the phase selected (if max then render all)
    */
   Render(
     std::array<std::string, 3> in_qoi_request,
@@ -233,7 +236,8 @@ public:
     std::string in_output_dir,
     std::string in_output_file_stem,
     double in_resolution,
-    bool in_save_meshes
+    bool in_save_meshes,
+    PhaseType in_selected_phase = std::numeric_limits<PhaseType>::max()
   );
 
   static void createPipeline(

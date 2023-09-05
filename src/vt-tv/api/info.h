@@ -72,7 +72,7 @@ struct Info {
       ranks_(std::move(in_ranks))
   { }
 
-  Info() { };
+  Info() = default;
 
   /**
    * \brief Add more information about a new rank
@@ -132,7 +132,7 @@ struct Info {
    */
   uint64_t getNumPhases() const {
     uint64_t n_phases = this->ranks_.at(0).getNumPhases();
-    for (NodeType rank_id = 1; rank_id < this->ranks_.size(); rank_id++) {
+    for (NodeType rank_id = 1; rank_id < static_cast<NodeType>(this->ranks_.size()); rank_id++) {
       if (ranks_.at(rank_id).getNumPhases() != n_phases) {
         throw std::runtime_error("Number of phases must be consistent across ranks");
       }
@@ -173,8 +173,8 @@ struct Info {
     std::unordered_map<PhaseType, double> rank_loads;
 
     auto const& rank = this->ranks_.at(rank_id);
-    uint64_t n_phases = rank.getNumPhases();
-    for (uint64_t phase = 0; phase < n_phases; phase++) {
+    auto const& phase_work = rank.getPhaseWork();
+    for (auto const& [phase, _] : phase_work) {
       rank_loads.insert(std::make_pair(phase, rank.getLoad(phase)));
     }
 
@@ -368,6 +368,17 @@ struct Info {
         }
       }
     }
+  }
+
+  /**
+   * \brief Serializer for data
+   *
+   * \param[in] s the serializer
+   */
+  template <typename SerializerT>
+  void serialize(SerializerT& s) {
+    s | object_info_;
+    s | ranks_;
   }
 
 private:

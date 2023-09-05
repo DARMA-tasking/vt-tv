@@ -101,7 +101,8 @@ Render::Render(
   std::string in_output_dir,
   std::string in_output_file_stem,
   double in_resolution,
-  bool in_save_meshes
+  bool in_save_meshes,
+  PhaseType in_selected_phase
 )
 : rank_qoi_(in_qoi_request[0])
 , object_qoi_(in_qoi_request[2])
@@ -115,7 +116,12 @@ Render::Render(
 , output_file_stem_(in_output_file_stem)
 , grid_resolution_(in_resolution)
 , save_meshes_(in_save_meshes)
+, selected_phase_(in_selected_phase)
 {
+  if (selected_phase_ != std::numeric_limits<PhaseType>::max()) {
+    n_phases_ = std::max(selected_phase_ + 1, n_phases_);
+  }
+
   // initialize number of ranks
   n_ranks_ = info_.getNumRanks();
 
@@ -797,26 +803,34 @@ void Render::generate() {
     fmt::print("Object {} range: {}, {}\n", object_qoi_, object_qoi_min, object_qoi_max);
   }
 
+  fmt::print("selected phase={}\n", selected_phase_);
+
   for(PhaseType phase = 0; phase < this->n_phases_; phase++) {
-    this->info_.normalizeEdges(phase);
+    if (
+      selected_phase_ == std::numeric_limits<PhaseType>::max() or
+      selected_phase_ == phase
+    ) {
 
-    vtkNew<vtkPolyData> object_mesh = this->createObjectMesh_(phase);
-    vtkNew<vtkPolyData> rank_mesh = this->createRankMesh_(phase);
+      this->info_.normalizeEdges(phase);
 
-    if (save_meshes_){
-      fmt::print("Writing object mesh for phase {}\n", phase);
-      vtkNew<vtkXMLPolyDataWriter> writer;
-      std::string object_mesh_filename = output_dir_ + output_file_stem_ + "_object_mesh_" + std::to_string(phase) + ".vtp";
-      writer->SetFileName(object_mesh_filename.c_str());
-      writer->SetInputData(object_mesh);
-      writer->Write();
+      vtkNew<vtkPolyData> object_mesh = this->createObjectMesh_(phase);
+      vtkNew<vtkPolyData> rank_mesh = this->createRankMesh_(phase);
 
-      fmt::print("Writing rank mesh for phase {}\n", phase);
-      vtkNew<vtkXMLPolyDataWriter> writer2;
-      std::string rank_mesh_filneame = output_dir_ + output_file_stem_ + "_rank_mesh_" + std::to_string(phase) + ".vtp";
-      writer2->SetFileName(rank_mesh_filneame.c_str());
-      writer2->SetInputData(rank_mesh);
-      writer2->Write();
+      if (save_meshes_){
+        fmt::print("Writing object mesh for phase {}\n", phase);
+        vtkNew<vtkXMLPolyDataWriter> writer;
+        std::string object_mesh_filename = output_dir_ + output_file_stem_ + "_object_mesh_" + std::to_string(phase) + ".vtp";
+        writer->SetFileName(object_mesh_filename.c_str());
+        writer->SetInputData(object_mesh);
+        writer->Write();
+
+        fmt::print("Writing rank mesh for phase {}\n", phase);
+        vtkNew<vtkXMLPolyDataWriter> writer2;
+        std::string rank_mesh_filneame = output_dir_ + output_file_stem_ + "_rank_mesh_" + std::to_string(phase) + ".vtp";
+        writer2->SetFileName(rank_mesh_filneame.c_str());
+        writer2->SetInputData(rank_mesh);
+        writer2->Write();
+      }
     }
   }
 }

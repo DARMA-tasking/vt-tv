@@ -2,7 +2,7 @@
 //@HEADER
 // *****************************************************************************
 //
-//                                 rank.h
+//                               parse_render.h
 //             DARMA/vt-tv => Virtual Transport -- Task Visualizer
 //
 // Copyright 2019 National Technology & Engineering Solutions of Sandia, LLC
@@ -41,81 +41,51 @@
 //@HEADER
 */
 
-#if !defined INCLUDED_VT_TV_API_RANK_H
-#define INCLUDED_VT_TV_API_RANK_H
+#if !defined INCLUDED_VT_TV_UTILITY_PARSE_RENDER_H
+#define INCLUDED_VT_TV_UTILITY_PARSE_RENDER_H
 
-#include "vt-tv/api/phase_work.h"
+#include "vt-tv/api/info.h"
 
-namespace vt::tv {
+#include <yaml-cpp/yaml.h>
+
+#include <limits>
+#include <memory>
+
+namespace vt::tv::utility {
 
 /**
- * \struct Rank
+ * \struct ParseRender
  *
- * \brief All the data for a given \c Rank
+ * \brief Parse YAML file and render based on configuration
  */
-struct Rank {
-
-  Rank() = default;
+struct ParseRender {
 
   /**
-   * \brief Construct a rank data
+   * \brief Construct the class
    *
-   * \param[in] in_rank the rank
-   * \param[in] in_phase_info all the phase info
+   * \param[in] in_filename the yaml file name to read
    */
-  Rank(
-    NodeType in_rank,
-    std::unordered_map<PhaseType, PhaseWork> in_phase_info
-  ) : rank_(in_rank),
-      phase_info_(std::move(in_phase_info))
+  ParseRender(std::string const& in_filename)
+    : filename_(in_filename)
   { }
 
   /**
-   * \brief Get the rank ID
+   * \brief Parse yaml file and render
    *
-   * \return rank ID
-   */
-  NodeType getRankID() const { return rank_; }
-
-  /**
-   * \brief Get all the phase work
+   * \param[in] phase_id the phase ID
+   * \param[in] info the data to render
    *
-   * \return the phase work
+   * \note If \c phase_id is max then all phases will be rendered
    */
-  auto const& getPhaseWork() const { return phase_info_; }
-
-  /**
-   * \brief Get number of phases on this rank
-   *
-   * \return the number of phases
-   */
-  uint64_t getNumPhases() const { return phase_info_.size(); }
-
-  /**
-   * \brief Get total load of objects at given phase
-   *
-   * \return the load
-   */
-  double getLoad(PhaseType phase) const { return phase_info_.at(phase).getLoad(); }
-
-  /**
-   * \brief Serializer for data
-   *
-   * \param[in] s the serializer
-   */
-  template <typename SerializerT>
-  void serialize(SerializerT& s) {
-    s | rank_;
-    s | phase_info_;
-  }
+  void parseAndRender(
+    PhaseType phase_id = std::numeric_limits<PhaseType>::max(),
+    std::unique_ptr<Info> info = nullptr
+  );
 
 private:
-  /// The rank ID
-  NodeType rank_ = 0;
-  /// Work for each phase
-  std::unordered_map<PhaseType, PhaseWork> phase_info_;
+  std::string filename_;
 };
 
-} /* end namesapce vt::tv */
+} /* end namesapce vt::tv::utility */
 
-#endif /*INCLUDED_VT_TV_API_RANK_H*/
+#endif /*INCLUDED_VT_TV_UTILITY_PARSE_RENDER_H*/

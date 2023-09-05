@@ -63,6 +63,8 @@ struct ObjectWork {
   /// Possible user-defined types for a task
   using VariantType = std::variant<int, double, std::string>;
 
+  ObjectWork() = default;
+
   /**
    * \brief Construct \c ObjectWork for a given phase
    *
@@ -151,6 +153,20 @@ struct ObjectWork {
    */
   std::map<ElementIDType, double> getSent() const {
     return communicator_.getSent();
+  }
+
+  /**
+   * \brief Serializer for data
+   *
+   * \param[in] s the serializer
+   */
+  template <typename SerializerT>
+  void serialize(SerializerT& s) {
+    s | id_;
+    s | whole_phase_load_;
+    s | subphase_loads_;
+    s | user_defined_;
+    s | communicator_;
   }
 
 private:

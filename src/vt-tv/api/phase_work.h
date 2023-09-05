@@ -58,6 +58,8 @@ namespace vt::tv {
  */
 struct PhaseWork {
 
+  PhaseWork() = default;
+
   /**
    * \brief Construct phase work
    *
@@ -104,6 +106,17 @@ struct PhaseWork {
    * \return void
    */
   void setCommunications(ElementIDType o_id, ObjectCommunicator& c) { objects_.at(o_id).setCommunications(c); };
+
+  /**
+   * \brief Serializer for data
+   *
+   * \param[in] s the serializer
+   */
+  template <typename SerializerT>
+  void serialize(SerializerT& s) {
+    s | phase_;
+    s | objects_;
+  }
 
 private:
   /// Phase identifier
