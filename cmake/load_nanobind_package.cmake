@@ -1,6 +1,6 @@
 find_package(Python COMPONENTS Interpreter Development.Module REQUIRED)
 
-if(NOT (${Python_VERSION_MAJOR} EQUAL 3 AND 
+if(NOT (${Python_VERSION_MAJOR} EQUAL 3 AND
        (${Python_VERSION_MINOR} EQUAL 8 OR ${Python_VERSION_MINOR} EQUAL 9)))
     message(FATAL_ERROR "Python version must be 3.8 or 3.9")
 endif()
