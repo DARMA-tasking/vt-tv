@@ -9,7 +9,7 @@ endif()
 # Detect the installed nanobind package and import it into CMake
 message(STATUS "Python executable: ${Python_EXECUTABLE}")
 execute_process(
-  COMMAND python3.8 -m nanobind --cmake_dir
-  OUTPUT_STRIP_TRAILING_WHITESPACE OUTPUT_VARIABLE NB_DIR)
-list(APPEND CMAKE_PREFIX_PATH "${NB_DIR}")
+  COMMAND ${Python_EXECUTABLE} -m nanobind --cmake_dir
+  OUTPUT_STRIP_TRAILING_WHITESPACE OUTPUT_VARIABLE NANOBIND_DIR)
+list(APPEND CMAKE_PREFIX_PATH "${NANOBIND_DIR}")
 find_package(nanobind CONFIG REQUIRED)
