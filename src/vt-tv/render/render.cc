@@ -90,6 +90,7 @@ Render::Render(Info in_info)
   }
 
   object_qoi_range_ = this->computeObjectQoiRange_();
+  this->computeMaxObjectVolume_();
 };
 
 Render::Render(
@@ -102,6 +103,7 @@ Render::Render(
   std::string in_output_file_stem,
   double in_resolution,
   bool in_save_meshes,
+  bool in_save_pngs,
   PhaseType in_selected_phase
 )
 : rank_qoi_(in_qoi_request[0])
@@ -116,6 +118,7 @@ Render::Render(
 , output_file_stem_(in_output_file_stem)
 , grid_resolution_(in_resolution)
 , save_meshes_(in_save_meshes)
+, save_pngs_(in_save_pngs)
 , selected_phase_(in_selected_phase)
 {
   if (selected_phase_ != std::numeric_limits<PhaseType>::max()) {
@@ -146,6 +149,36 @@ Render::Render(
 
   object_qoi_range_ = this->computeObjectQoiRange_();
 };
+
+double Render::computeMaxObjectVolume_() {
+  // Initialize object QOI range attributes
+  double ov_max = -1 * std::numeric_limits<double>::infinity();
+  double ov;
+  double max_received_ov;
+  double max_sent_ov;
+
+  // Iterate over all ranks
+  auto const& objects = this->info_.getAllObjects();
+  for (auto const& [obj_id, obj_work] : objects) {
+    // Update maximum object qoi
+    auto ov_received = obj_work.getReceived();
+    max_received_ov = std::max_element(
+      std::begin(ov_received), std::end(ov_received),
+      [] (const std::pair<double, double> & p1, const std::pair<double, double> & p2) {
+        return p1.second < p2.second;
+      }
+    )->first;
+    auto ov_sent = obj_work.getSent();
+    max_sent_ov = std::max_element(
+      std::begin(ov_sent), std::end(ov_sent),
+      [] (const std::pair<double, double> & p1, const std::pair<double, double> & p2) {
+        return p1.second < p2.second;
+      }
+    )->first;
+    if (ov > ov_max) ov_max = ov;
+  }
+  return ov;
+}
 
 std::variant<std::pair<double, double>, std::set<double>> Render::computeObjectQoiRange_() {
   // Initialize object QOI range attributes
@@ -563,23 +596,17 @@ vtkNew<vtkPolyData> Render::createObjectMesh_(PhaseType phase) {
 }
 
 /*static*/ void Render::createPipeline(
-  vtkPoints* rank_points,
-  vtkCellArray* rank_lines,
-  vtkDoubleArray* qois,
-  double qoi_range[2],
+  PhaseType phase,
+  vtkPolyData* rank_mesh,
   vtkPolyData* object_mesh,
-  double glyph_factor,
+  double qoi_range[2],
   double load_range[2],
-  int phase,
-  int iteration,
-  double imbalance,
-  int win_size
+  double max_volume,
+  double glyph_factor,
+  int win_size,
+  std::string output_dir,
+  std::string output_file_stem
 ) {
-  vtkNew<vtkPolyData> rank_mesh;
-  rank_mesh->SetPoints(rank_points);
-  rank_mesh->SetLines(rank_lines);
-  rank_mesh->GetPointData()->SetScalars(qois);
-
   vtkNew<vtkRenderer> renderer;
   renderer->SetBackground(1.0, 1.0, 1.0);
   renderer->GetActiveCamera()->ParallelProjectionOn();
@@ -616,13 +643,14 @@ vtkNew<vtkPolyData> Render::createObjectMesh_(PhaseType phase) {
   renderer->AddActor(rank_actor);
   renderer->AddActor2D(qoi_actor);
 
-  // vtkNew<vtkLookupTable> bw_lut;
-  // bw_lut->SetTableRange((0.0, self.__max_object_volume));
-  // bw_lut->SetSaturationRange(0, 0);
-  // bw_lut->SetHueRange(0, 0);
-  // bw_lut->SetValueRange(1, 0);
-  // bw_lut->SetNanColor(1.0, 1.0, 1.0, 0.0);
-  // bw_lut->Build();
+  vtkNew<vtkLookupTable> bw_lut;
+  double lut_range[2] = {0.0, max_volume};
+  bw_lut->SetTableRange(lut_range);
+  bw_lut->SetSaturationRange(0, 0);
+  bw_lut->SetHueRange(0, 0);
+  bw_lut->SetValueRange(1, 0);
+  bw_lut->SetNanColor(1.0, 1.0, 1.0, 0.0);
+  bw_lut->Build();
 
   vtkNew<vtkArrayCalculator> sqrtT;
   sqrtT->SetInputData(object_mesh);
@@ -701,7 +729,8 @@ vtkNew<vtkPolyData> Render::createObjectMesh_(PhaseType phase) {
 
   vtkNew<vtkPNGWriter> writer;
   writer->SetInputConnection(w2i->GetOutputPort());
-  writer->SetFileName("test.png");
+  std::string png_filename = output_dir + output_file_stem + std::to_string(phase) + ".png";
+  writer->SetFileName(png_filename.c_str());
   writer->SetCompressionLevel(2);
   writer->Write();
 }
@@ -830,6 +859,35 @@ void Render::generate() {
         writer2->SetFileName(rank_mesh_filneame.c_str());
         writer2->SetInputData(rank_mesh);
         writer2->Write();
+      }
+
+      if (save_pngs_){
+        fmt::print("Rendering visualization PNG for phase {}\n", phase);
+
+        std::pair<double, double> obj_qoi_range;
+        try {
+          obj_qoi_range = std::get<std::pair<double, double>>(this->object_qoi_range_);
+        }
+        catch(const std::exception& e) {
+          std::cerr << e.what() << '\n';
+          obj_qoi_range = {0, 1};
+        }
+        auto load_range = this->computeRankQoiRange_();
+
+        double obj_qoi_range_in[2] = {obj_qoi_range.first, obj_qoi_range.second};
+        double load_range_in[2] = {load_range.first, load_range.second};
+        createPipeline(
+          phase,
+          rank_mesh,
+          object_mesh,
+          obj_qoi_range_in,
+          load_range_in,
+          object_volume_max_,
+          1,
+          1080,
+          output_dir_,
+          output_file_stem_
+        );
       }
     }
   }

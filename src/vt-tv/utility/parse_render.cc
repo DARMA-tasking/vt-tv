@@ -95,6 +95,7 @@ void ParseRender::parseAndRender(PhaseType phase_id, std::unique_ptr<Info> info)
     };
 
     bool save_meshes = config["viz"]["save_meshes"].as<bool>();
+    bool save_pngs = config["viz"]["save_pngs"].as<bool>();
     bool continuous_object_qoi = config["viz"]["force_continuous_object_qoi"].as<bool>();
 
     std::array<uint64_t, 3> grid_size = {
@@ -127,7 +128,7 @@ void ParseRender::parseAndRender(PhaseType phase_id, std::unique_ptr<Info> info)
     // Instantiate render
     Render r(
       qoi_request, continuous_object_qoi, *info, grid_size, object_jitter,
-      output_dir, output_file_stem, 1.0, save_meshes, phase_id
+      output_dir, output_file_stem, 1.0, save_meshes, save_pngs, phase_id
     );
     r.generate();
 
