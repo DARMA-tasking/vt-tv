@@ -138,12 +138,20 @@ private:
   std::string output_dir_;
   std::string output_file_stem_;
   bool save_meshes_;
+  bool save_pngs_;
 
   // Jitter per object
   double object_jitter_ = 0.5;
   std::unordered_map<ElementIDType, std::array<double, 3>> jitter_dims_;
 
   PhaseType selected_phase_;
+
+  /**
+   * \brief Compute maximum value of object volumes.
+   *
+   * \return max object volume
+   */
+  double computeMaxObjectVolume_();
 
   /**
    * \brief Compute range of object qoi.
@@ -237,21 +245,21 @@ public:
     std::string in_output_file_stem,
     double in_resolution,
     bool in_save_meshes,
+    bool in_save_pngs,
     PhaseType in_selected_phase = std::numeric_limits<PhaseType>::max()
   );
 
   static void createPipeline(
-    vtkPoints* rank_points,
-    vtkCellArray* rank_lines,
-    vtkDoubleArray* qois,
-    double qoi_range[2],
+    PhaseType phase,
+    vtkPolyData* rank_mesh,
     vtkPolyData* object_mesh,
-    double glyph_factor,
+    double qoi_range[2],
     double load_range[2],
-    int phase,
-    int iteration,
-    double imbalance,
-    int win_size
+    double max_volume,
+    double glyph_factor,
+    int win_size,
+    std::string output_dir,
+    std::string output_file_stem
   );
 
   void createPipeline2(
