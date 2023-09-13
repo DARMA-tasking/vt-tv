@@ -609,36 +609,55 @@ void Render::get_rgb_from_colormap(int index, double& r, double& g, double& b) {
   }
 }
 
-/*static*/ vtkNew<vtkScalarBarActor> Render::createScalarBarActor_(
-  vtkPolyDataMapper* mapper, std::string title, double x, double y
+/*static*/ vtkSmartPointer<vtkScalarBarActor> Render::createScalarBarActor_(
+  vtkSmartPointer<vtkMapper> mapper,
+  const std::string& title,
+  double x, double y,
+  const std::vector<double>& values
 ) {
-  vtkNew<vtkScalarBarActor> scalar_bar_actor;
+  vtkSmartPointer<vtkScalarBarActor> scalar_bar_actor = vtkSmartPointer<vtkScalarBarActor>::New();
   scalar_bar_actor->SetLookupTable(mapper->GetLookupTable());
 
+  // Set default parameters
   scalar_bar_actor->SetOrientationToHorizontal();
   scalar_bar_actor->UnconstrainedFontSizeOn();
-  scalar_bar_actor->SetNumberOfLabels(2);
   scalar_bar_actor->SetHeight(0.08);
-  scalar_bar_actor->SetWidth(0.4);
-  scalar_bar_actor->SetLabelFormat("%.2G");
+  scalar_bar_actor->SetWidth(0.42);
   scalar_bar_actor->SetBarRatio(0.3);
   scalar_bar_actor->DrawTickLabelsOn();
+  scalar_bar_actor->SetLabelFormat("%.2G");
 
-  std::vector<vtkTextProperty*> props;
-  props.push_back(scalar_bar_actor->GetTitleTextProperty());
-  props.push_back(scalar_bar_actor->GetLabelTextProperty());
-  props.push_back(scalar_bar_actor->GetAnnotationTextProperty());
+  if (!values.empty()) {
+    scalar_bar_actor->SetNumberOfLabels(values.size());
+    scalar_bar_actor->SetAnnotationLeaderPadding(8);
 
-  for (auto&& p : props) {
-    p->SetColor(0.0, 0.0, 0.0);
-    p->ItalicOff();
-    p->BoldOff();
-    p->SetFontFamilyToArial();
-    p->SetFontSize(72);
+    std::string formatted_title = title;
+    std::replace(formatted_title.begin(), formatted_title.end(), '_', ' ');
+    std::string title_with_newline = formatted_title + '\n';
+    scalar_bar_actor->SetTitle(title_with_newline.c_str());
+  } else {
+    scalar_bar_actor->SetNumberOfLabels(2);
+    std::string formatted_title = title;
+    std::replace(formatted_title.begin(), formatted_title.end(), '_', ' ');
+    scalar_bar_actor->SetTitle(formatted_title.c_str());
   }
 
-  scalar_bar_actor->SetTitle(title.c_str());
-  auto position = scalar_bar_actor->GetPositionCoordinate();
+  // Modify properties for all text in scalar bar actor
+  std::vector<vtkTextProperty*> properties;
+  properties.push_back(scalar_bar_actor->GetTitleTextProperty());
+  properties.push_back(scalar_bar_actor->GetLabelTextProperty());
+  properties.push_back(scalar_bar_actor->GetAnnotationTextProperty());
+
+  for (vtkTextProperty* prop : properties){
+    prop->SetColor(0.0, 0.0, 0.0);
+    prop->ItalicOff();
+    prop->BoldOff();
+    prop->SetFontFamilyToArial();
+    prop->SetFontSize(60);
+  }
+
+  // Set custom parameters
+  vtkCoordinate* position = scalar_bar_actor->GetPositionCoordinate();
   position->SetCoordinateSystemToNormalizedViewport();
   position->SetValue(x, y, 0.0);
 
@@ -666,146 +685,6 @@ void Render::get_rgb_from_colormap(int index, double& r, double& g, double& b) {
   return cartesian;
 }
 
-/*static*/ void Render::createPipeline2(
-  PhaseType phase,
-  vtkPolyData* rank_mesh,
-  vtkPolyData* object_mesh,
-  double qoi_range[2],
-  double load_range[2],
-  double max_volume,
-  double glyph_factor,
-  int win_size,
-  std::string output_dir,
-  std::string output_file_stem
-) {
-  vtkNew<vtkRenderer> renderer;
-  renderer->SetBackground(1.0, 1.0, 1.0);
-  renderer->GetActiveCamera()->ParallelProjectionOn();
-
-//   vtkNew<vtkGlyphSource2D> rank_glyph;
-//   rank_glyph->SetGlyphTypeToSquare();
-//   rank_glyph->SetScale(.95);
-//   rank_glyph->FilledOn();
-//   rank_glyph->CrossOff();
-//   vtkNew<vtkGlyph2D> rank_glypher;
-//   rank_glypher->SetSourceConnection(rank_glyph->GetOutputPort());
-//   rank_glypher->SetInputData(rank_mesh);
-//   rank_glypher->SetScaleModeToDataScalingOff();
-
-//   //Lower glyphs slightly for visibility
-//   vtkNew<vtkTransform> z_lower;
-//   z_lower->Translate(0.0, 0.0, -0.01);
-//   vtkNew<vtkTransformPolyDataFilter> trans;
-//   trans->SetTransform(z_lower);
-//   trans->SetInputConnection(rank_glypher->GetOutputPort());
-
-//   vtkNew<vtkPolyDataMapper> rank_mapper;
-//   rank_mapper->SetInputConnection(trans->GetOutputPort());
-//   rank_mapper->SetLookupTable(createColorTransferFunction(qoi_range));
-//   rank_mapper->SetScalarRange(qoi_range);
-
-//   vtkNew<vtkActor> rank_actor;
-//   rank_actor->SetMapper(rank_mapper);
-//   auto qoi_actor = createScalarBarActor_(rank_mapper, "Rank XXX", 0.5, 0.9);
-//   qoi_actor->DrawBelowRangeSwatchOn();
-//   qoi_actor->SetBelowRangeAnnotation("<");
-//   qoi_actor->DrawAboveRangeSwatchOn();
-//   qoi_actor->SetAboveRangeAnnotation(">");
-//   renderer->AddActor(rank_actor);
-//   renderer->AddActor2D(qoi_actor);
-
-//   vtkNew<vtkLookupTable> bw_lut;
-//   double lut_range[2] = {0.0, max_volume};
-//   bw_lut->SetTableRange(lut_range);
-//   bw_lut->SetSaturationRange(0, 0);
-//   bw_lut->SetHueRange(0, 0);
-//   bw_lut->SetValueRange(1, 0);
-//   bw_lut->SetNanColor(1.0, 1.0, 1.0, 0.0);
-//   bw_lut->Build();
-
-//   vtkNew<vtkArrayCalculator> sqrtT;
-//   sqrtT->SetInputData(object_mesh);
-//   sqrtT->AddScalarArrayName("Load");
-//   char const* sqrtT_str = "sqrt(Load)";
-//   sqrtT->SetFunction(sqrtT_str);
-//   sqrtT->SetResultArrayName(sqrtT_str);
-//   sqrtT->Update();
-//   auto sqrtT_out = sqrtT->GetDataSetOutput();
-//   sqrtT_out->GetPointData()->SetActiveScalars("Migratable");
-
-//   std::vector<std::tuple<double, std::string>> items{{0.0, "Square"}, {1.0, "Circle"}};
-//   vtkPolyDataMapper* glyph_mapper_out = nullptr;
-//   for (auto&& [k,v] : items) {
-//     vtkNew<vtkThresholdPoints> thresh;
-//     thresh->SetInputData(sqrtT_out);
-//     thresh->ThresholdBetween(k, k);
-//     thresh->Update();
-//     auto thresh_out = thresh->GetOutput();
-//     if (not thresh_out->GetNumberOfPoints())
-//       continue;
-//     thresh_out->GetPointData()->SetActiveScalars(sqrtT_str);
-
-//     // Glyph by square root of object loads
-//     vtkNew<vtkGlyphSource2D> glyph;
-//     if (v == "Square") {
-//       glyph->SetGlyphTypeToSquare();
-//     } else {
-//       glyph->SetGlyphTypeToCircle();
-//     }
-//     glyph->SetResolution(32);
-//     glyph->SetScale(1.0);
-//     glyph->FilledOn();
-//     glyph->CrossOff();
-//     vtkNew<vtkGlyph3D> glypher;
-//     glypher->SetSourceConnection(glyph->GetOutputPort());
-//     glypher->SetInputData(thresh_out);
-//     glypher->SetScaleModeToScaleByScalar();
-//     glypher->SetScaleFactor(glyph_factor);
-//     glypher->Update();
-//     glypher->GetOutput()->GetPointData()->SetActiveScalars("Load");
-
-//     // Raise glyphs slightly for visibility
-//     vtkNew<vtkTransform> z_raise;
-//     z_raise->Translate(0.0, 0.0, 0.01);
-//     vtkNew<vtkTransformPolyDataFilter> trans;
-//     trans->SetTransform(z_raise);
-//     trans->SetInputData(glypher->GetOutput());
-
-//     // Create mapper and actor for glyphs
-//     vtkNew<vtkPolyDataMapper> glyph_mapper;
-//     glyph_mapper_out = glyph_mapper;
-//     glyph_mapper->SetInputConnection(trans->GetOutputPort());
-//     glyph_mapper->SetLookupTable(createColorTransferFunction(load_range, 0, BlueToRed));
-//     glyph_mapper->SetScalarRange(load_range);
-//     vtkNew<vtkActor> glyph_actor;
-//     glyph_actor->SetMapper(glyph_mapper);
-//     renderer->AddActor(glyph_actor);
-//   }
-
-//   if (glyph_mapper_out) {
-//     auto load_actor = createScalarBarActor_(glyph_mapper_out, "Object Load", 0.55, 0.55);
-//     renderer->AddActor2D(load_actor);
-//   }
-
-//   renderer->ResetCamera();
-//   vtkNew<vtkRenderWindow> render_window;
-//   render_window->AddRenderer(renderer);
-//   render_window->SetWindowName("LBAF");
-//   render_window->SetSize(win_size, win_size);
-//   render_window->Render();
-
-//   vtkNew<vtkWindowToImageFilter> w2i;
-//   w2i->SetInput(render_window);
-//   w2i->SetScale(3);
-
-//   vtkNew<vtkPNGWriter> writer;
-//   writer->SetInputConnection(w2i->GetOutputPort());
-//   std::string png_filename = output_dir + output_file_stem + std::to_string(phase) + ".png";
-//   writer->SetFileName(png_filename.c_str());
-//   writer->SetCompressionLevel(2);
-//   writer->Write();
-}
-
 /* static */ vtkSmartPointer<vtkRenderer> Render::setupRenderer() {
   vtkSmartPointer<vtkRenderer> renderer = vtkSmartPointer<vtkRenderer>::New();
   renderer->SetBackground(1.0, 1.0, 1.0);  // Set background to white
@@ -813,7 +692,7 @@ void Render::get_rgb_from_colormap(int index, double& r, double& g, double& b) {
   return renderer;
 }
 
-/* static */ vtkSmartPointer<vtkActor> Render::createRanksActor(
+/* static */ vtkSmartPointer<vtkMapper> Render::createRanksMapper(
   PhaseType phase,
   vtkPolyData* rank_mesh,
   std::variant<std::pair<double, double>, std::set<double>> rank_qoi_range
@@ -856,15 +735,12 @@ void Render::get_rgb_from_colormap(int index, double& r, double& g, double& b) {
     throw std::runtime_error("Unexpected type in rank qoi range variant.");
   }
 
-  vtkSmartPointer<vtkActor> rank_actor = vtkSmartPointer<vtkActor>::New();
-  rank_actor->SetMapper(rank_mapper);
-
-  return rank_actor;
+  return rank_mapper;
 }
 
 
 
-void Render::createPipeline(
+void Render::renderPNG(
   PhaseType phase,
   vtkPolyData* rank_mesh,
   vtkPolyData* object_mesh,
@@ -875,15 +751,32 @@ void Render::createPipeline(
   std::string output_dir,
   std::string output_file_stem
 ) {
+  // Setup rendering space
   vtkSmartPointer<vtkRenderer> renderer = this->setupRenderer();
 
+  // Create rank mapper for later use and create corresponding rank actor
   std::variant<std::pair<double, double>, std::set<double>> rank_qoi_variant(rank_qoi_range_);
-  vtkSmartPointer<vtkActor> rank_actor = this->createRanksActor(
+  vtkSmartPointer<vtkMapper> rank_mapper = this->createRanksMapper(
     phase,
     rank_mesh,
     rank_qoi_variant
   );
-  renderer->AddActor(rank_actor);
+  vtkSmartPointer<vtkActor> rank_actor = vtkSmartPointer<vtkActor>::New();
+  rank_actor->SetMapper(rank_mapper);
+
+  // Create qoi scale legend for ranks
+  std::string rank_qoi_scale_title = "rank " + this->rank_qoi_;
+  vtkSmartPointer<vtkScalarBarActor> rank_qoi_scale_actor = createScalarBarActor_(
+    rank_mapper,
+    rank_qoi_scale_title,
+    0.5,
+    0.9
+  );
+  rank_qoi_scale_actor->DrawBelowRangeSwatchOn();
+  rank_qoi_scale_actor->SetBelowRangeAnnotation("<");
+  rank_qoi_scale_actor->DrawAboveRangeSwatchOn();
+  rank_qoi_scale_actor->SetAboveRangeAnnotation(">");
+
 
   // // Scalar bar for rank
   // vtkSmartPointer<vtkActor2D> qoi_actor = this->createScalarBar(rank_mapper, "rank", 0.5, 0.9);
@@ -910,6 +803,11 @@ void Render::createPipeline(
 
   // return setupRenderWindow(renderer, win_size);
 
+  // Add all actors to renderer
+  renderer->AddActor(rank_actor);
+  renderer->AddActor(rank_qoi_scale_actor);
+
+  // Setup rendering window
   renderer->ResetCamera();
   vtkNew<vtkRenderWindow> render_window;
   render_window->AddRenderer(renderer);
@@ -917,10 +815,12 @@ void Render::createPipeline(
   render_window->SetSize(win_size, win_size);
   render_window->Render();
 
+  // Setup image from window
   vtkNew<vtkWindowToImageFilter> w2i;
   w2i->SetInput(render_window);
   w2i->SetScale(3);
 
+  // Export the PNG image
   vtkNew<vtkPNGWriter> writer;
   writer->SetInputConnection(w2i->GetOutputPort());
   std::string png_filename = output_dir + output_file_stem + std::to_string(phase) + ".png";
@@ -986,14 +886,14 @@ void Render::generate() {
 
         double obj_qoi_range_in[2] = {obj_qoi_range.first, obj_qoi_range.second};
         double load_range_in[2] = {load_range.first, load_range.second};
-        createPipeline(
+        renderPNG(
           phase,
           rank_mesh,
           object_mesh,
           10,
           100,
           1,
-          1080,
+          800,
           output_dir_,
           output_file_stem_
         );

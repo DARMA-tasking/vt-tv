@@ -211,8 +211,19 @@ private:
     std::variant<std::pair<double, double>, std::set<double>> attribute_range, double attribute_avg = 0, ColorType ct = ColorType::Default
   );
 
-  static vtkNew<vtkScalarBarActor> createScalarBarActor_(
-    vtkPolyDataMapper* mapper, std::string title, double x, double y
+  static vtkSmartPointer<vtkScalarBarActor> createScalarBarActor_(
+    vtkSmartPointer<vtkMapper> mapper,
+    const std::string& title,
+    double x, double y,
+    const std::vector<double>& values = {}
+  );
+
+  static vtkSmartPointer<vtkRenderer> setupRenderer();
+
+  static vtkSmartPointer<vtkMapper> createRanksMapper(
+    PhaseType phase,
+    vtkPolyData* rank_mesh,
+    std::variant<std::pair<double, double>, std::set<double>> rank_qoi_range
   );
 
   /**
@@ -262,28 +273,8 @@ public:
     PhaseType in_selected_phase = std::numeric_limits<PhaseType>::max()
   );
 
-  static void createPipeline2(
-    PhaseType phase,
-    vtkPolyData* rank_mesh,
-    vtkPolyData* object_mesh,
-    double qoi_range[2],
-    double load_range[2],
-    double max_volume,
-    double glyph_factor,
-    int win_size,
-    std::string output_dir,
-    std::string output_file_stem
-  );
-
-  static vtkSmartPointer<vtkRenderer> setupRenderer();
-  static vtkSmartPointer<vtkActor> createRanksActor(
-    PhaseType phase,
-    vtkPolyData* rank_mesh,
-    std::variant<std::pair<double, double>, std::set<double>> rank_qoi_range
-  );
-
   /**
-   * @brief Creates the main PNG rendering pipeline.
+   * @brief Export a visualization PNG from meshes.
    *
    * @param phase Phase to render.
    * @param rank_mesh Mesh data for the ranks.
@@ -296,7 +287,7 @@ public:
    * @param output_file_stem Stem for the artifact naming
    * @return A smart pointer to the resulting render window.
    */
-  void createPipeline(
+  void renderPNG(
     PhaseType phase,
     vtkPolyData* rank_mesh,
     vtkPolyData* object_mesh,
