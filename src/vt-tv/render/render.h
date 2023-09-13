@@ -73,6 +73,7 @@
 #include <vtkLine.h>
 #include <vtkCellData.h>
 #include <vtkLookupTable.h>
+#include <vtkDiscretizableColorTransferFunction.h>
 
 #include <vtkPolyDataWriter.h>
 #include <vtkExodusIIWriter.h>
@@ -100,7 +101,7 @@ namespace vt { namespace tv {
 /**
  * \struct Render
  *
- * \brief Handler for visualisation
+ * \brief Handler for visualization
  */
 struct Render {
 private:
@@ -124,8 +125,9 @@ private:
 
   // numeric parameters
   std::variant<std::pair<double, double>, std::set<double>> object_qoi_range_;
+  std::pair<double, double> rank_qoi_range_;
 
-  // Maximum object atribute values
+  // Maximum object attribute values
   double object_qoi_max_ = 0.0;
   double object_volume_max_ = 0.0;
 
@@ -168,6 +170,15 @@ private:
   std::pair<double, double> computeRankQoiRange_();
 
   /**
+   * \brief Compute average of rank qoi.
+   *
+   * @param qoi quantity of interest on which to compute average
+   *
+   * \return rank qoi range
+   */
+  double computeRankQoiAverage_(PhaseType phase, std::string qoi);
+
+  /**
    * \brief Create mapping of objects in ranks
    *
    * \param[in] phase phase index
@@ -194,8 +205,10 @@ private:
    */
   vtkNew<vtkPolyData> createObjectMesh_(PhaseType phase);
 
-  static vtkNew<vtkColorTransferFunction> createColorTransferFunction(
-    double range[2], double avg_load = 0, ColorType ct = ColorType::Default
+  static void get_rgb_from_colormap(int index, double& r, double& g, double& b);
+
+  static vtkSmartPointer<vtkDiscretizableColorTransferFunction> createColorTransferFunction(
+    std::variant<std::pair<double, double>, std::set<double>> attribute_range, double attribute_avg = 0, ColorType ct = ColorType::Default
   );
 
   static vtkNew<vtkScalarBarActor> createScalarBarActor_(
@@ -249,7 +262,7 @@ public:
     PhaseType in_selected_phase = std::numeric_limits<PhaseType>::max()
   );
 
-  static void createPipeline(
+  static void createPipeline2(
     PhaseType phase,
     vtkPolyData* rank_mesh,
     vtkPolyData* object_mesh,
@@ -262,9 +275,37 @@ public:
     std::string output_file_stem
   );
 
-  void createPipeline2(
+  static vtkSmartPointer<vtkRenderer> setupRenderer();
+  static vtkSmartPointer<vtkActor> createRanksActor(
+    PhaseType phase,
+    vtkPolyData* rank_mesh,
+    std::variant<std::pair<double, double>, std::set<double>> rank_qoi_range
+  );
+
+  /**
+   * @brief Creates the main PNG rendering pipeline.
+   *
+   * @param phase Phase to render.
+   * @param rank_mesh Mesh data for the ranks.
+   * @param object_mesh Mesh data for the objects.
+   * @param edge_width Width of the edges in the visualization.
+   * @param max_volume Maximum volume of communications
+   * @param glyph_factor Factor to control the size of glyphs.
+   * @param win_size Size of the render window.
+   * @param output_dir Directory in which to output artifacts
+   * @param output_file_stem Stem for the artifact naming
+   * @return A smart pointer to the resulting render window.
+   */
+  void createPipeline(
+    PhaseType phase,
+    vtkPolyData* rank_mesh,
     vtkPolyData* object_mesh,
-    vtkPolyData* rank_mesh
+    uint64_t edge_width,
+    double max_volume,
+    double glyph_factor,
+    int win_size,
+    std::string output_dir,
+    std::string output_file_stem
   );
 
   void generate(/*bool save_meshes, bool gen_vizqoi*/);
