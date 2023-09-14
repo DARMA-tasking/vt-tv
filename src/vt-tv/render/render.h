@@ -205,10 +205,10 @@ private:
    */
   vtkNew<vtkPolyData> createObjectMesh_(PhaseType phase);
 
-  static void get_rgb_from_colormap(int index, double& r, double& g, double& b);
+  static void get_rgb_from_tab20colormap(int index, double& r, double& g, double& b);
 
   static vtkSmartPointer<vtkDiscretizableColorTransferFunction> createColorTransferFunction(
-    std::variant<std::pair<double, double>, std::set<double>> attribute_range, double attribute_avg = 0, ColorType ct = ColorType::Default
+    std::variant<std::pair<double, double>, std::set<double>> attribute_range, ColorType ct = ColorType::Default
   );
 
   static vtkSmartPointer<vtkScalarBarActor> createScalarBarActor_(
@@ -292,9 +292,8 @@ public:
     vtkPolyData* rank_mesh,
     vtkPolyData* object_mesh,
     uint64_t edge_width,
-    double max_volume,
     double glyph_factor,
-    int win_size,
+    uint64_t win_size,
     std::string output_dir,
     std::string output_file_stem
   );

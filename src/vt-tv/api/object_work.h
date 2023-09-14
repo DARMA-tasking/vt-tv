@@ -144,15 +144,22 @@ struct ObjectWork {
   /**
    * \brief get received communications for this object
    */
-  std::map<ElementIDType, double> getReceived() const {
+  std::multimap<ElementIDType, double> getReceived() const {
     return communicator_.getReceived();
   }
 
   /**
    * \brief get sent communications for this object
    */
-  std::map<ElementIDType, double> getSent() const {
+  std::multimap<ElementIDType, double> getSent() const {
     return communicator_.getSent();
+  }
+
+  /**
+   * \brief Get maximum bytes received or sent at this object
+   */
+  double getMaxVolume() const {
+    return communicator_.getMaxVolume();
   }
 
   /**

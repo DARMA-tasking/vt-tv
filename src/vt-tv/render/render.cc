@@ -90,7 +90,8 @@ Render::Render(Info in_info)
   }
 
   object_qoi_range_ = this->computeObjectQoiRange_();
-  this->computeMaxObjectVolume_();
+  rank_qoi_range_ = this->computeRankQoiRange_();
+  object_volume_max_ = this->computeMaxObjectVolume_();
 };
 
 Render::Render(
@@ -149,36 +150,13 @@ Render::Render(
 
   object_qoi_range_ = this->computeObjectQoiRange_();
   rank_qoi_range_ = this->computeRankQoiRange_();
+  object_volume_max_ = this->computeMaxObjectVolume_();
 };
 
 double Render::computeMaxObjectVolume_() {
-  // Initialize object volume limits
-  double ov_max = -1 * std::numeric_limits<double>::infinity();
-  double ov;
-  double max_received_ov;
-  double max_sent_ov;
-
-  // Iterate over all ranks
-  auto const& objects = this->info_.getAllObjects();
-  for (auto const& [obj_id, obj_work] : objects) {
-    // Update maximum object qoi
-    auto ov_received = obj_work.getReceived();
-    max_received_ov = std::max_element(
-      std::begin(ov_received), std::end(ov_received),
-      [] (const std::pair<double, double> & p1, const std::pair<double, double> & p2) {
-        return p1.second < p2.second;
-      }
-    )->first;
-    auto ov_sent = obj_work.getSent();
-    max_sent_ov = std::max_element(
-      std::begin(ov_sent), std::end(ov_sent),
-      [] (const std::pair<double, double> & p1, const std::pair<double, double> & p2) {
-        return p1.second < p2.second;
-      }
-    )->first;
-    if (ov > ov_max) ov_max = ov;
-  }
-  return ov;
+  double ov_max = this->info_.getMaxVolume();
+  this->object_volume_max_ = ov_max;
+  return ov_max;
 }
 
 std::variant<std::pair<double, double>, std::set<double>> Render::computeObjectQoiRange_() {
@@ -225,7 +203,8 @@ std::pair<double, double> Render::computeRankQoiRange_() {
   // Initialize rank QOI range attributes
   double rq_max = -1 * std::numeric_limits<double>::infinity();
   double rq_min = std::numeric_limits<double>::infinity();
-  double rq;
+  double rqmax_for_phase;
+  double rqmin_for_phase;
 
   // Iterate over all ranks
   for (uint64_t rank_id = 0; rank_id < this->n_ranks_; rank_id++) {
@@ -235,19 +214,29 @@ std::pair<double, double> Render::computeRankQoiRange_() {
       std::unordered_map<PhaseType, double> rank_loads_map = this->info_.getAllLoadsAtRank(rank_id);
 
       // Get max load for this rank across all phases
-      auto pr = std::max_element
+      auto prmax = std::max_element
       (
         std::begin(rank_loads_map), std::end(rank_loads_map),
         [] (const std::pair<PhaseType, double>& p1, const std::pair<PhaseType, double>& p2) {
           return p1.second < p2.second;
         }
       );
-      rq = pr->second;
+      rqmax_for_phase = prmax->second;
+
+      // Get min load for this rank across all phases
+      auto prmin = std::max_element
+      (
+        std::begin(rank_loads_map), std::end(rank_loads_map),
+        [] (const std::pair<PhaseType, double>& p1, const std::pair<PhaseType, double>& p2) {
+          return p1.second > p2.second;
+        }
+      );
+      rqmin_for_phase = prmin->second;
     } else {
       throw std::runtime_error("Invalid QOI: " + this->object_qoi_);
     }
-    if (rq > rq_max) rq_max = rq;
-    if (rq < rq_min) rq_min = rq;
+    if (rqmax_for_phase > rq_max) rq_max = rqmax_for_phase;
+    if (rqmin_for_phase < rq_min) rq_min = rqmin_for_phase;
   }
 
   // Update extrema attribute
@@ -340,14 +329,13 @@ vtkNew<vtkPolyData> Render::createObjectMesh_(PhaseType phase) {
 
   // Create point array for object quantity of interest
   vtkNew<vtkDoubleArray> q_arr;
-  std::string object_array_name = "Object " + this->object_qoi_;
-  q_arr->SetName(object_array_name.c_str());
+  q_arr->SetName(this->object_qoi_.c_str());
   q_arr->SetNumberOfTuples(n_o);
 
   // Load array must be added when it is not the object QOI
   vtkNew<vtkDoubleArray> l_arr;
   if (object_qoi_ != "load") {
-    l_arr->SetName("Object load");
+    l_arr->SetName("load");
     l_arr->SetNumberOfTuples(n_o);
   }
 
@@ -506,7 +494,7 @@ vtkNew<vtkPolyData> Render::createObjectMesh_(PhaseType phase) {
   return pd_mesh;
 }
 
-void Render::get_rgb_from_colormap(int index, double& r, double& g, double& b) {
+void Render::get_rgb_from_tab20colormap(int index, double& r, double& g, double& b) {
   const std::vector<std::tuple<double, double, double>> tab20_cmap = {
     {0.12156862745098039, 0.4666666666666667, 0.7058823529411765},
     {0.6823529411764706, 0.7803921568627451, 0.9098039215686274},
@@ -536,7 +524,7 @@ void Render::get_rgb_from_colormap(int index, double& r, double& g, double& b) {
 }
 
 /*static*/ vtkSmartPointer<vtkDiscretizableColorTransferFunction> Render::createColorTransferFunction(
-  std::variant<std::pair<double, double>, std::set<double>> attribute_range, double attribute_avg, ColorType ct
+  std::variant<std::pair<double, double>, std::set<double>> attribute_range, ColorType ct
 ) {
   vtkSmartPointer<vtkDiscretizableColorTransferFunction> ctf = vtkSmartPointer<vtkDiscretizableColorTransferFunction>::New();
   ctf->SetNanColorRGBA(1., 1., 1., 0.);
@@ -556,7 +544,7 @@ void Render::get_rgb_from_colormap(int index, double& r, double& g, double& b) {
       ctf->SetAnnotation(v, std::to_string(v));
       // Use discrete color map
       double r, g, b;
-      get_rgb_from_colormap(i, r, g, b);
+      get_rgb_from_tab20colormap(i, r, g, b);
       const double rgb[3] = {r, g, b};
       ctf->SetIndexedColorRGB(i, rgb);
       i++;
@@ -578,12 +566,16 @@ void Render::get_rgb_from_colormap(int index, double& r, double& g, double& b) {
     }
     case HotSpot: {
       ctf->SetColorSpaceToDiverging();
-      double const mid_point = attribute_avg;
-      ctf->AddRGBPoint(range.first, .231, .298, .753);
-      ctf->AddRGBPoint(mid_point, .865, .865, .865);
-      ctf->AddRGBPoint(range.second, .906, .016, .109);
-      ctf->SetBelowRangeColor(0.0, 1.0, 1.0);
-      ctf->SetAboveRangeColor(1.0, 1.0, 0.0);
+      double const mid_point1 = (range.second - range.first) * 0.25;
+      double const mid_point2 = (range.second - range.first) * 0.75;
+
+      ctf->AddRGBPoint(range.first, 0.0, 0.0, 1.0);   // Blue
+      ctf->AddRGBPoint(mid_point1, 0.0, 1.0, 0.0);   // Green
+      ctf->AddRGBPoint(mid_point2, 1.0, 0.8, 0.0);   // Orange
+      ctf->AddRGBPoint(range.second, 1.0, 0.0, 0.0);   // Red
+
+      ctf->SetBelowRangeColor(0.0, 1.0, 1.0);        // Cyan
+      ctf->SetAboveRangeColor(1.0, 1.0, 0.0);        // Yellow
       break;
     }
     case WhiteToBlack: {
@@ -653,7 +645,7 @@ void Render::get_rgb_from_colormap(int index, double& r, double& g, double& b) {
     prop->ItalicOff();
     prop->BoldOff();
     prop->SetFontFamilyToArial();
-    prop->SetFontSize(60);
+    prop->SetFontSize(20);
   }
 
   // Set custom parameters
@@ -738,25 +730,22 @@ void Render::get_rgb_from_colormap(int index, double& r, double& g, double& b) {
   return rank_mapper;
 }
 
-
-
 void Render::renderPNG(
   PhaseType phase,
   vtkPolyData* rank_mesh,
   vtkPolyData* object_mesh,
   uint64_t edge_width,
-  double max_volume,
   double glyph_factor,
-  int win_size,
+  uint64_t win_size,
   std::string output_dir,
   std::string output_file_stem
 ) {
   // Setup rendering space
-  vtkSmartPointer<vtkRenderer> renderer = this->setupRenderer();
+  vtkSmartPointer<vtkRenderer> renderer = setupRenderer();
 
   // Create rank mapper for later use and create corresponding rank actor
   std::variant<std::pair<double, double>, std::set<double>> rank_qoi_variant(rank_qoi_range_);
-  vtkSmartPointer<vtkMapper> rank_mapper = this->createRanksMapper(
+  vtkSmartPointer<vtkMapper> rank_mapper = createRanksMapper(
     phase,
     rank_mesh,
     rank_qoi_variant
@@ -777,35 +766,54 @@ void Render::renderPNG(
   rank_qoi_scale_actor->DrawAboveRangeSwatchOn();
   rank_qoi_scale_actor->SetAboveRangeAnnotation(">");
 
+  // Create white to black lookup table
+  vtkSmartPointer<vtkLookupTable> bw_lut = vtkSmartPointer<vtkLookupTable>::New();
+  bw_lut->SetTableRange(0.0, this->object_volume_max_);
+  bw_lut->SetSaturationRange(0, 0);
+  bw_lut->SetHueRange(0, 0);
+  bw_lut->SetValueRange(1, 0);
+  bw_lut->SetNanColor(1.0, 1.0, 1.0, 0.0);
+  bw_lut->Build();
 
-  // // Scalar bar for rank
-  // vtkSmartPointer<vtkActor2D> qoi_actor = this->createScalarBar(rank_mapper, "rank", 0.5, 0.9);
-  // renderer->AddActor2D(qoi_actor);
+  // Create mapper for inter-object edges
+  vtkSmartPointer<vtkPolyDataMapper> edge_mapper = vtkSmartPointer<vtkPolyDataMapper>::New();
+  edge_mapper->SetInputData(object_mesh);
+  edge_mapper->SetScalarModeToUseCellData();
+  edge_mapper->SetScalarRange(0.0, this->object_volume_max_);
+  edge_mapper->SetLookupTable(bw_lut);
 
-  // // Object glyphs and associated components (only created if object_mesh is provided)
-  // if (object_mesh) {
-  //   vtkSmartPointer<vtkActor> edge_actor = this->createObjectEdgeActor(object_mesh, edge_width);
-  //   renderer->AddActor(edge_actor);
+  // Create communication volume and its scalar bar actors
+  vtkSmartPointer<vtkActor> edge_actor = vtkSmartPointer<vtkActor>::New();
+  edge_actor->SetMapper(edge_mapper);
+  edge_actor->GetProperty()->SetLineWidth(edge_width);
+  vtkSmartPointer<vtkScalarBarActor> volume_actor = createScalarBarActor_(edge_mapper, "Inter-Object Volume", 0.04, 0.04);
 
-  //   vtkSmartPointer<vtkGlyph3D> object_glypher = this->createObjectGlyphs(object_mesh, glyph_factor);
-  //   vtkSmartPointer<vtkPolyDataMapper> glyph_mapper = this->setupObjectGlyphMapper(object_glypher);
-  //   vtkSmartPointer<vtkActor> glyph_actor = this->createObjectGlyphActor(glyph_mapper);
-  //   renderer->AddActor(glyph_actor);
+  // Compute square root of object loads
+  vtkSmartPointer<vtkArrayCalculator> sqrtL = vtkSmartPointer<vtkArrayCalculator>::New();
+  sqrtL->SetInputData(object_mesh);
+  sqrtL->AddScalarArrayName("load");
+  std::string sqrtL_str = "sqrt(load)";
+  sqrtL->SetFunction(sqrtL_str.c_str());
+  sqrtL->SetResultArrayName(sqrtL_str.c_str());
+  sqrtL->Update();
+  vtkDataSet* sqrtL_out = sqrtL->GetDataSetOutput();
+  sqrtL_out->GetPointData()->SetActiveScalars("migratable");
 
-  //   // Scalar bar for objects
-  //   vtkSmartPointer<vtkActor2D> load_actor = this->createObjectScalarBar(glyph_mapper, "object");
-  //   renderer->AddActor2D(load_actor);
-  // }
+  // Glyph sentinel and migratable objects separately
+  vtkPolyDataMapper* glyph_mapper = nullptr;
 
-  // // Text actor
-  // vtkSmartPointer<vtkTextActor> text_actor = this->createTextActor(iteration, p_id);
-  // renderer->AddActor(text_actor);
+  std::map<double, std::string> glyph_types = {{0.0, "Square"}, {1.0, "Circle"}};
+  for (const auto& [k, v] : glyph_types) {
+      // ... Remaining code ...
 
-  // return setupRenderWindow(renderer, win_size);
+  }
 
   // Add all actors to renderer
   renderer->AddActor(rank_actor);
-  renderer->AddActor(rank_qoi_scale_actor);
+  renderer->AddActor2D(rank_qoi_scale_actor);
+
+  renderer->AddActor(edge_actor);
+  renderer->AddActor2D(volume_actor);
 
   // Setup rendering window
   renderer->ResetCamera();
@@ -884,16 +892,18 @@ void Render::generate() {
         }
         auto load_range = this->computeRankQoiRange_();
 
-        double obj_qoi_range_in[2] = {obj_qoi_range.first, obj_qoi_range.second};
-        double load_range_in[2] = {load_range.first, load_range.second};
-        renderPNG(
+        uint64_t window_size = 800;
+        uint64_t edge_width = 0.1 * window_size / *std::max_element(this->grid_size_.begin(), this->grid_size_.end());
+        double glyph_factor = 0.8 * this->grid_resolution_ / (
+                        (this->max_o_per_dim_ + 1)
+                        * std::sqrt(this->object_qoi_max_));
+        this->renderPNG(
           phase,
           rank_mesh,
           object_mesh,
-          10,
-          100,
-          1,
-          800,
+          edge_width,
+          glyph_factor,
+          window_size,
           output_dir_,
           output_file_stem_
         );

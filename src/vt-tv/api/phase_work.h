@@ -108,6 +108,19 @@ struct PhaseWork {
   void setCommunications(ElementIDType o_id, ObjectCommunicator& c) { objects_.at(o_id).setCommunications(c); };
 
   /**
+   * \brief Get maximum bytes received or sent between objects at this phase
+   */
+  double getMaxVolume() const {
+    double ov_max = 0.;
+
+    for (auto const& [obj_id, obj_work] : this->objects_) {
+      auto obj_max_v = obj_work.getMaxVolume();
+      if (obj_max_v > ov_max) ov_max = obj_max_v;
+    }
+    return ov_max;
+  }
+
+  /**
    * \brief Serializer for data
    *
    * \param[in] s the serializer

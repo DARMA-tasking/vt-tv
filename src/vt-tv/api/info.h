@@ -248,6 +248,31 @@ struct Info {
   }
 
   /**
+   * \brief Get maximum inter-object communication volume across all ranks and phases
+   *
+   * \return the maximum volume
+   */
+  double getMaxVolume() const {
+    double ov_max = 0.;
+
+    /* Iterate over all phases: each object is re-initialized when
+    going the next phase (JSON-reader), thus different memory spaces
+    for an object of the same id but of a different phase.
+    This means the object communications are not phase persistent.
+    */
+    auto n_phases = this->getNumPhases();
+    for (PhaseType phase = 0; phase < n_phases; phase++) {
+      auto const& objects = this->getPhaseObjects(phase);
+      for (auto const& [obj_id, obj_work] : objects) {
+        auto obj_max_v = obj_work.getMaxVolume();
+        if (obj_max_v > ov_max) ov_max = obj_max_v;
+      }
+    }
+
+    return ov_max;
+  }
+
+  /**
    * \brief Create mapping of all objects in all ranks for a given phase (made for allowing changes to these objects)
    *
    * \param[in] phase the phase
@@ -331,43 +356,40 @@ struct Info {
    * \return void
    */
   void normalizeEdges(PhaseType phase) {
-    fmt::print("\n---- Normalizing Edges for phase {} ----\n", phase);
-    auto phaseObjects = createPhaseObjectsMapping(phase);
-    for (auto& [id1, objectWork1] : phaseObjects) {
-      auto const& sent1 = objectWork1.getSent();
-      auto const& received1 = objectWork1.getReceived();
-      for (auto& [id2, objectWork2] : phaseObjects) {
-        // No communications to oneself
-        if (id1 != id2) {
-          // fmt::print("--Communication between object {} and object {}\n\n", id1, id2);
-          auto const& sent2 = objectWork2.getSent();
-          auto const& received2 = objectWork2.getReceived();
-          // Communications existing on object 2, to be added on object 1
-          // fmt::print("  Communications existing on object {}, to be added on object {}:\n", id2, id1);
-          if (sent2.find(id1) != sent2.end()) {
-            // fmt::print("    adding sent from object {} to received by object {}\n", id2, id1);
-            objectWork1.addReceivedCommunications(id2, sent2.at(id1));
-          } else if (received2.find(id1) != received2.end()) {
-            // fmt::print("    adding received from object {} to sent by object {}\n", id2, id1);
-            objectWork1.addSentCommunications(id2, received2.at(id1));
-          } else {
-            // fmt::print("    None\n");
+      fmt::print("\n---- Normalizing Edges for phase {} ----\n", phase);
+      auto phaseObjects = createPhaseObjectsMapping(phase);
+      for (auto& [id1, objectWork1] : phaseObjects) {
+        auto sent1 = objectWork1.getSent();
+        auto received1 = objectWork1.getReceived();
+        for (auto& [id2, objectWork2] : phaseObjects) {
+          if (id1 != id2) {
+            auto sent2 = objectWork2.getSent();
+            auto received2 = objectWork2.getReceived();
+
+            // Handle communications from object 2 to object 1
+            auto its2 = sent2.equal_range(id1);
+            for (auto it = its2.first; it != its2.second; ++it) {
+              objectWork1.addReceivedCommunications(id2, it->second);
+            }
+
+            auto itr2 = received2.equal_range(id1);
+            for (auto it = itr2.first; it != itr2.second; ++it) {
+              objectWork1.addSentCommunications(id2, it->second);
+            }
+
+            // Handle communications from object 1 to object 2
+            auto its1 = sent1.equal_range(id2);
+            for (auto it = its1.first; it != its1.second; ++it) {
+              objectWork2.addReceivedCommunications(id1, it->second);
+            }
+
+            auto itr1 = received1.equal_range(id2);
+            for (auto it = itr1.first; it != itr1.second; ++it) {
+              objectWork2.addSentCommunications(id1, it->second);
+            }
           }
-          // Communications existing on object 1, to be added on object 2
-          // fmt::print("  Communications existing on object {}, to be added on object {}:\n", id1, id2);
-          if (sent1.find(id2) != sent1.end()) {
-            // fmt::print("    adding sent from object {} to received by object {}\n", id1, id2);
-            objectWork2.addReceivedCommunications(id1, sent1.at(id2));
-          } else if (received2.find(id1) != received2.end()) {
-            // fmt::print("    adding received from object {} to sent by object {}\n", id1, id2);
-            objectWork2.addSentCommunications(id1, received1.at(id2));
-          } else {
-            // fmt::print("    None\n");
-          }
-          // fmt::print("\n");
         }
       }
-    }
   }
 
   /**
