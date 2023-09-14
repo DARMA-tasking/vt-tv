@@ -256,9 +256,10 @@ struct Info {
     double ov_max = 0.;
 
     /* Iterate over all phases: each object is re-initialized when
-    going the next phase (JSON-reader), thus different memory spaces
-    for an object of the same id but of a different phase.
-    This means the object communications are not phase persistent.
+    advancing to the next phase (in the JSON-reader), thus different memory spaces
+    are used for an object of the same id but of a different phase.
+    This means the object communications are not phase persistent, so one can't obtain
+    the maximum volume by iterated through object ids.
     */
     auto n_phases = this->getNumPhases();
     for (PhaseType phase = 0; phase < n_phases; phase++) {
