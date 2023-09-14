@@ -78,8 +78,8 @@ Render::Render(Info in_info)
 
   // Initialize jitter
   std::srand(std::time(nullptr));
-  auto const& allObjects = info_.getAllObjects();
-  for (auto const& [objectID, objectWork] : allObjects) {
+  auto const& allObjects = info_.getAllObjectIDs();
+  for (auto const& objectID : allObjects) {
     std::array<double, 3> jitterDims;
     for (uint64_t d = 0; d < 3; d++) {
       if (auto f = this->rank_dims_.find(d); f != this->rank_dims_.end()) {
@@ -137,8 +137,8 @@ Render::Render(
 
   // Initialize jitter
   std::srand(std::time(nullptr));
-  auto const& allObjects = info_.getAllObjects();
-  for (auto const& [objectID, objectWork] : allObjects) {
+  auto const& allObjects = info_.getAllObjectIDs();
+  for (auto const& objectID : allObjects) {
     std::array<double, 3> jitterDims;
     for (uint64_t d = 0; d < 3; d++) {
       if (auto f = this->rank_dims_.find(d); f != this->rank_dims_.end()) {
@@ -167,24 +167,26 @@ std::variant<std::pair<double, double>, std::set<double>> Render::computeObjectQ
   std::set<double> oq_all;
 
   // Iterate over all ranks
-  auto const& objects = this->info_.getAllObjects();
-  for (auto const& [obj_id, obj_work] : objects) {
-    // Update maximum object qoi
-    if (this->object_qoi_ == "load") {
-      oq = obj_work.getLoad();
+  for (PhaseType phase = 0; phase < this->n_phases_; phase++) {
+    auto const& objects = this->info_.getPhaseObjects(phase);
+    for (auto const& [obj_id, obj_work] : objects) {
+      // Update maximum object qoi
+      if (this->object_qoi_ == "load") {
+        oq = obj_work.getLoad();
 
-      if (!continuous_object_qoi_) {
-        oq_all.insert(oq);
-        if(oq_all.size() > 20) {
-          oq_all.clear();
-          continuous_object_qoi_ = true;
+        if (!continuous_object_qoi_) {
+          oq_all.insert(oq);
+          if(oq_all.size() > 20) {
+            oq_all.clear();
+            continuous_object_qoi_ = true;
+          }
         }
+      } else {
+        throw std::runtime_error("Invalid QOI: " + this->object_qoi_);
       }
-    } else {
-      throw std::runtime_error("Invalid QOI: " + this->object_qoi_);
+      if (oq > oq_max) oq_max = oq;
+      if (oq < oq_min) oq_min = oq;
     }
-    if (oq > oq_max) oq_max = oq;
-    if (oq < oq_min) oq_min = oq;
   }
 
   // Update extrema attribute
@@ -238,9 +240,6 @@ std::pair<double, double> Render::computeRankQoiRange_() {
     if (rqmax_for_phase > rq_max) rq_max = rqmax_for_phase;
     if (rqmin_for_phase < rq_min) rq_min = rqmin_for_phase;
   }
-
-  // Update extrema attribute
-  this->object_qoi_max_ = rq_max;
 
   // return range
   return std::make_pair(rq_min, rq_max);
@@ -605,7 +604,7 @@ void Render::get_rgb_from_tab20colormap(int index, double& r, double& g, double&
   vtkSmartPointer<vtkMapper> mapper,
   const std::string& title,
   double x, double y,
-  const std::vector<double>& values
+  std::set<double> values
 ) {
   vtkSmartPointer<vtkScalarBarActor> scalar_bar_actor = vtkSmartPointer<vtkScalarBarActor>::New();
   scalar_bar_actor->SetLookupTable(mapper->GetLookupTable());
@@ -766,54 +765,146 @@ void Render::renderPNG(
   rank_qoi_scale_actor->DrawAboveRangeSwatchOn();
   rank_qoi_scale_actor->SetAboveRangeAnnotation(">");
 
-  // Create white to black lookup table
-  vtkSmartPointer<vtkLookupTable> bw_lut = vtkSmartPointer<vtkLookupTable>::New();
-  bw_lut->SetTableRange(0.0, this->object_volume_max_);
-  bw_lut->SetSaturationRange(0, 0);
-  bw_lut->SetHueRange(0, 0);
-  bw_lut->SetValueRange(1, 0);
-  bw_lut->SetNanColor(1.0, 1.0, 1.0, 0.0);
-  bw_lut->Build();
-
-  // Create mapper for inter-object edges
-  vtkSmartPointer<vtkPolyDataMapper> edge_mapper = vtkSmartPointer<vtkPolyDataMapper>::New();
-  edge_mapper->SetInputData(object_mesh);
-  edge_mapper->SetScalarModeToUseCellData();
-  edge_mapper->SetScalarRange(0.0, this->object_volume_max_);
-  edge_mapper->SetLookupTable(bw_lut);
-
-  // Create communication volume and its scalar bar actors
-  vtkSmartPointer<vtkActor> edge_actor = vtkSmartPointer<vtkActor>::New();
-  edge_actor->SetMapper(edge_mapper);
-  edge_actor->GetProperty()->SetLineWidth(edge_width);
-  vtkSmartPointer<vtkScalarBarActor> volume_actor = createScalarBarActor_(edge_mapper, "Inter-Object Volume", 0.04, 0.04);
-
-  // Compute square root of object loads
-  vtkSmartPointer<vtkArrayCalculator> sqrtL = vtkSmartPointer<vtkArrayCalculator>::New();
-  sqrtL->SetInputData(object_mesh);
-  sqrtL->AddScalarArrayName("load");
-  std::string sqrtL_str = "sqrt(load)";
-  sqrtL->SetFunction(sqrtL_str.c_str());
-  sqrtL->SetResultArrayName(sqrtL_str.c_str());
-  sqrtL->Update();
-  vtkDataSet* sqrtL_out = sqrtL->GetDataSetOutput();
-  sqrtL_out->GetPointData()->SetActiveScalars("migratable");
-
-  // Glyph sentinel and migratable objects separately
-  vtkPolyDataMapper* glyph_mapper = nullptr;
-
-  std::map<double, std::string> glyph_types = {{0.0, "Square"}, {1.0, "Circle"}};
-  for (const auto& [k, v] : glyph_types) {
-      // ... Remaining code ...
-
-  }
-
-  // Add all actors to renderer
+  // Add rank visualization to renderer
   renderer->AddActor(rank_actor);
   renderer->AddActor2D(rank_qoi_scale_actor);
 
-  renderer->AddActor(edge_actor);
-  renderer->AddActor2D(volume_actor);
+  if(this->object_qoi_ != "") {
+    // Create white to black lookup table
+    vtkSmartPointer<vtkLookupTable> bw_lut = vtkSmartPointer<vtkLookupTable>::New();
+    bw_lut->SetTableRange(0.0, this->object_volume_max_);
+    bw_lut->SetSaturationRange(0, 0);
+    bw_lut->SetHueRange(0, 0);
+    bw_lut->SetValueRange(1, 0);
+    bw_lut->SetNanColor(1.0, 1.0, 1.0, 0.0);
+    bw_lut->Build();
+
+    // Create mapper for inter-object edges
+    vtkSmartPointer<vtkPolyDataMapper> edge_mapper = vtkSmartPointer<vtkPolyDataMapper>::New();
+    edge_mapper->SetInputData(object_mesh);
+    edge_mapper->SetScalarModeToUseCellData();
+    edge_mapper->SetScalarRange(0.0, this->object_volume_max_);
+    edge_mapper->SetLookupTable(bw_lut);
+
+    // Create communication volume and its scalar bar actors
+    vtkSmartPointer<vtkActor> edge_actor = vtkSmartPointer<vtkActor>::New();
+    edge_actor->SetMapper(edge_mapper);
+    edge_actor->GetProperty()->SetLineWidth(edge_width);
+    vtkSmartPointer<vtkScalarBarActor> volume_actor = createScalarBarActor_(edge_mapper, "Inter-Object Volume", 0.04, 0.04);
+
+    // Add communications visualization to renderer
+    renderer->AddActor(edge_actor);
+    renderer->AddActor2D(volume_actor);
+
+    // Compute square root of object loads
+    vtkSmartPointer<vtkArrayCalculator> sqrtL = vtkSmartPointer<vtkArrayCalculator>::New();
+    sqrtL->SetInputData(object_mesh);
+    sqrtL->AddScalarArrayName("load");
+    std::string sqrtL_str = "sqrt(load)";
+    sqrtL->SetFunction(sqrtL_str.c_str());
+    sqrtL->SetResultArrayName(sqrtL_str.c_str());
+    sqrtL->Update();
+    vtkDataSet* sqrtL_out = sqrtL->GetDataSetOutput();
+    sqrtL_out->GetPointData()->SetActiveScalars("migratable");
+
+    // Glyph sentinel and migratable objects separately
+    vtkSmartPointer<vtkPolyDataMapper> glyph_mapper = vtkSmartPointer<vtkPolyDataMapper>::New();
+    std::map<double, std::string> glyph_types = {{0.0, "Square"}, {1.0, "Circle"}};
+    for (const auto& [k, v] : glyph_types) {
+      vtkSmartPointer<vtkThresholdPoints> thresh = vtkSmartPointer<vtkThresholdPoints>::New();
+      thresh->SetInputData(sqrtL_out);
+      thresh->ThresholdBetween(k, k);
+      thresh->Update();
+
+      if (thresh->GetOutput()->GetNumberOfPoints() == 0) {
+        continue;
+      }
+      thresh->GetOutput()->GetPointData()->SetActiveScalars(sqrtL_str.c_str());
+
+      vtkSmartPointer<vtkGlyphSource2D> glyph = vtkSmartPointer<vtkGlyphSource2D>::New();
+      if(v == "Square") {
+        glyph->SetGlyphTypeToSquare();
+      } else if (v == "Circle") {
+        glyph->SetGlyphTypeToCircle();
+      }
+      glyph->SetResolution(32);
+      glyph->SetScale(1.0);
+      glyph->FilledOn();
+      glyph->CrossOff();
+
+      vtkSmartPointer<vtkGlyph3D> glypher = vtkSmartPointer<vtkGlyph3D>::New();
+      glypher->SetSourceConnection(glyph->GetOutputPort());
+      glypher->SetInputData(thresh->GetOutput());
+      glypher->SetScaleModeToScaleByScalar();
+      glypher->SetScaleFactor(glyph_factor);
+      glypher->Update();
+      glypher->GetOutput()->GetPointData()->SetActiveScalars(this->object_qoi_.c_str());
+
+      vtkSmartPointer<vtkTransform> zRaise = vtkSmartPointer<vtkTransform>::New();
+      zRaise->Translate(0.0, 0.0, 0.01);
+
+      vtkSmartPointer<vtkTransformPolyDataFilter> trans = vtkSmartPointer<vtkTransformPolyDataFilter>::New();
+      trans->SetTransform(zRaise);
+      trans->SetInputData(glypher->GetOutput());
+
+      glyph_mapper->SetInputConnection(trans->GetOutputPort());
+      glyph_mapper->SetLookupTable(createColorTransferFunction(this->object_qoi_range_));
+
+      if (std::holds_alternative<std::pair<double, double>>(this->object_qoi_range_)) {
+        auto range = std::get<std::pair<double, double>>(this->object_qoi_range_);
+        glyph_mapper->SetScalarRange(range.first, range.second);
+      }
+
+      vtkSmartPointer<vtkActor> object_glyph_actor = vtkSmartPointer<vtkActor>::New();
+      object_glyph_actor->SetMapper(glyph_mapper);
+
+
+      // Add objects visualization to renderer
+      renderer->AddActor(object_glyph_actor);
+    }
+
+    if (glyph_mapper) {
+      std::string object_qoi_name = "Object " + this->object_qoi_;
+      std::set<double> values = {};
+      // Check continuity of object qoi
+      if (std::holds_alternative<std::pair<double, double>>(this->object_qoi_range_)) {
+        values = {};
+      } else if (std::holds_alternative<std::set<double>>(this->object_qoi_range_)) {
+        values = std::get<std::set<double>>(this->object_qoi_range_);
+      } else {
+        throw std::runtime_error("Unexpected type in object_qoi_range variant.");
+      }
+      vtkSmartPointer<vtkActor2D> object_qoi_scalar_bar_actor = createScalarBarActor_(
+        glyph_mapper,
+        object_qoi_name.c_str(),
+        0.52,
+        0.04,
+        values
+      );
+      renderer->AddActor2D(object_qoi_scalar_bar_actor);
+    }
+  }
+
+  std::stringstream ss;
+  ss << "Phase: " << phase << "/" << (this->n_phases_ - 1) << "\n"
+    << "Load Imbalance: " << std::fixed << std::setprecision(4) << this->info_.getImbalance(phase);
+
+  vtkSmartPointer<vtkTextActor> text_actor = vtkSmartPointer<vtkTextActor>::New();
+  text_actor->SetInput(ss.str().c_str());
+
+  vtkTextProperty* textProp = text_actor->GetTextProperty();
+  textProp->SetColor(0.0, 0.0, 0.0);
+  textProp->ItalicOff();
+  textProp->BoldOff();
+  textProp->SetFontFamilyToArial();
+  textProp->SetFontSize(20);
+  textProp->SetLineSpacing(1.5);
+
+  vtkCoordinate* position = text_actor->GetPositionCoordinate();
+  position->SetCoordinateSystemToNormalizedViewport();
+  position->SetValue(0.04, 0.91, 0.0);
+
+  renderer->AddActor(text_actor);
 
   // Setup rendering window
   renderer->ResetCamera();

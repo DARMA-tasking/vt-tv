@@ -52,6 +52,7 @@
 
 #include <unordered_map>
 #include <cassert>
+#include <set>
 
 namespace vt::tv {
 
@@ -310,14 +311,14 @@ struct Info {
   }
 
   /**
-   * \brief Get all objects for all ranks and phases
+   * \brief Get all object IDs across all ranks and phases
    *
    * \return the objects
    */
-  std::unordered_map<ElementIDType, ObjectWork> getAllObjects() const {
+  std::set<ElementIDType> getAllObjectIDs() const {
 
     // Map of objects at given phase
-    std::unordered_map<ElementIDType, ObjectWork> objects;
+    std::set<ElementIDType> objects;
 
     // Go through all ranks and get all objects at given phase
     for (uint64_t rank = 0; rank < this->ranks_.size(); rank++) {
@@ -336,7 +337,7 @@ struct Info {
 
         for (auto const& [elm_id, obj_work] : object_work_at_phase) {
           // fmt::print("|    |-> Object Id: {}\n", elm_id);
-          objects.insert(std::make_pair(elm_id, obj_work));
+          objects.insert(elm_id);
         }
       }
     }
@@ -391,6 +392,30 @@ struct Info {
           }
         }
       }
+  }
+
+  /**
+   * \brief Compute imbalance across ranks at phase
+   *
+   * \param[in] phase the phase
+   *
+   * \return the imbalance
+   */
+  double getImbalance(PhaseType phase) const {
+    double load_sum = 0.;
+    double max_load = 0.;
+
+    for (uint64_t rank = 0; rank < this->ranks_.size(); rank++) {
+      auto rank_max_load = this->getRank(rank).getLoad(phase);
+      if (rank_max_load > max_load) max_load = rank_max_load;
+      load_sum += this->getRank(rank).getLoad(phase);
+    }
+    double load_avg = load_sum / this->ranks_.size();
+    double imbalance = std::numeric_limits<double>::quiet_NaN();
+    if (load_avg != 0) {
+      imbalance = (max_load / load_avg) - 1.;
+    }
+    return imbalance;
   }
 
   /**

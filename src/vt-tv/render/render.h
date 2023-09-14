@@ -62,6 +62,7 @@
 #include <vtkTransformPolyDataFilter.h>
 #include <vtkColorTransferFunction.h>
 #include <vtkScalarBarActor.h>
+#include <vtkTextActor.h>
 #include <vtkTextProperty.h>
 #include <vtkArrayCalculator.h>
 #include <vtkThresholdPoints.h>
@@ -215,7 +216,7 @@ private:
     vtkSmartPointer<vtkMapper> mapper,
     const std::string& title,
     double x, double y,
-    const std::vector<double>& values = {}
+    std::set<double> values = {}
   );
 
   static vtkSmartPointer<vtkRenderer> setupRenderer();
