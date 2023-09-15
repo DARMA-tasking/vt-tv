@@ -125,12 +125,18 @@ void ParseRender::parseAndRender(PhaseType phase_id, std::unique_ptr<Info> info)
 
     fmt::print("Num ranks={}\n", info->getNumRanks());
 
+    uint64_t win_size = 1600;
+    if (config["output"]["window_size"]) {
+      win_size = config["output"]["window_size"].as<uint64_t>();
+    }
+
     // Instantiate render
     Render r(
       qoi_request, continuous_object_qoi, *info, grid_size, object_jitter,
       output_dir, output_file_stem, 1.0, save_meshes, save_pngs, phase_id
     );
-    r.generate();
+    fmt::print("Window size: {}\n", win_size);
+    r.generate(win_size);
 
   } catch (std::exception const& e) {
     std::cout << "Error reading the configuration file: " << e.what() << std::endl;

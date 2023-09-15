@@ -407,8 +407,8 @@ vtkNew<vtkPolyData> Render::createObjectMesh_(PhaseType phase) {
 
     // Add rank objects to point set
     int i = 0;
-    for (auto const& [objectWork, sentinel] : ordered_objects) {
-      // fmt::print("Object ID: {}, sentinel: {}\n", objectWork.getID(), sentinel);
+    for (auto const& [objectWork, migratable] : ordered_objects) {
+      // fmt::print("Object ID: {}, migratable: {}\n", objectWork.getID(), migratable);
 
       // Insert point using offset and rank coordinates
       std::array<double, 3> currentPointPosition = {0, 0, 0};
@@ -428,7 +428,7 @@ vtkNew<vtkPolyData> Render::createObjectMesh_(PhaseType phase) {
 
       // Set object attributes
       q_arr->SetTuple1(point_index, objectWork.getLoad());
-      b_arr->SetTuple1(point_index, sentinel);
+      b_arr->SetTuple1(point_index, migratable);
 
       auto objSent = objectWork.getSent();
       for (auto [k, v] : objSent) {
@@ -644,7 +644,7 @@ void Render::get_rgb_from_tab20colormap(int index, double& r, double& g, double&
     prop->ItalicOff();
     prop->BoldOff();
     prop->SetFontFamilyToArial();
-    prop->SetFontSize(20);
+    prop->SetFontSize(40);
   }
 
   // Set custom parameters
@@ -791,7 +791,6 @@ void Render::renderPNG(
     edge_actor->SetMapper(edge_mapper);
     edge_actor->GetProperty()->SetLineWidth(edge_width);
     vtkSmartPointer<vtkScalarBarActor> volume_actor = createScalarBarActor_(edge_mapper, "Inter-Object Volume", 0.04, 0.04);
-
     // Add communications visualization to renderer
     renderer->AddActor(edge_actor);
     renderer->AddActor2D(volume_actor);
@@ -807,34 +806,39 @@ void Render::renderPNG(
     vtkDataSet* sqrtL_out = sqrtL->GetDataSetOutput();
     sqrtL_out->GetPointData()->SetActiveScalars("migratable");
 
-    // Glyph sentinel and migratable objects separately
-    vtkSmartPointer<vtkPolyDataMapper> glyph_mapper = vtkSmartPointer<vtkPolyDataMapper>::New();
+    // Glyph sentinel and migratable objects separately: 0 is for non-migratable objects, 1 for migratable
+    std::map<double, vtkSmartPointer<vtkPolyDataMapper>> glyph_mappers = {
+      {0.0, vtkSmartPointer<vtkPolyDataMapper>::New()},
+      {1.0, vtkSmartPointer<vtkPolyDataMapper>::New()}
+    };
     std::map<double, std::string> glyph_types = {{0.0, "Square"}, {1.0, "Circle"}};
     for (const auto& [k, v] : glyph_types) {
       vtkSmartPointer<vtkThresholdPoints> thresh = vtkSmartPointer<vtkThresholdPoints>::New();
       thresh->SetInputData(sqrtL_out);
       thresh->ThresholdBetween(k, k);
       thresh->Update();
+      vtkPolyData* thresh_out = thresh->GetOutput();
 
-      if (thresh->GetOutput()->GetNumberOfPoints() == 0) {
+      if (thresh_out->GetNumberOfPoints() == 0) {
         continue;
       }
-      thresh->GetOutput()->GetPointData()->SetActiveScalars(sqrtL_str.c_str());
+      thresh_out->GetPointData()->SetActiveScalars(sqrtL_str.c_str());
 
+      // Glyph by square root of object quantity of interest
       vtkSmartPointer<vtkGlyphSource2D> glyph = vtkSmartPointer<vtkGlyphSource2D>::New();
       if(v == "Square") {
         glyph->SetGlyphTypeToSquare();
       } else if (v == "Circle") {
         glyph->SetGlyphTypeToCircle();
       }
-      glyph->SetResolution(32);
+      glyph->SetResolution(64);
       glyph->SetScale(1.0);
       glyph->FilledOn();
       glyph->CrossOff();
 
       vtkSmartPointer<vtkGlyph3D> glypher = vtkSmartPointer<vtkGlyph3D>::New();
       glypher->SetSourceConnection(glyph->GetOutputPort());
-      glypher->SetInputData(thresh->GetOutput());
+      glypher->SetInputData(thresh_out);
       glypher->SetScaleModeToScaleByScalar();
       glypher->SetScaleFactor(glyph_factor);
       glypher->Update();
@@ -847,23 +851,23 @@ void Render::renderPNG(
       trans->SetTransform(zRaise);
       trans->SetInputData(glypher->GetOutput());
 
-      glyph_mapper->SetInputConnection(trans->GetOutputPort());
-      glyph_mapper->SetLookupTable(createColorTransferFunction(this->object_qoi_range_));
+      glyph_mappers.at(k)->SetInputConnection(trans->GetOutputPort());
+      glyph_mappers.at(k)->SetLookupTable(createColorTransferFunction(this->object_qoi_range_));
 
       if (std::holds_alternative<std::pair<double, double>>(this->object_qoi_range_)) {
         auto range = std::get<std::pair<double, double>>(this->object_qoi_range_);
-        glyph_mapper->SetScalarRange(range.first, range.second);
+        // Manually set scalar range so either mapper (migratable vs non-migratable) can be used for the scalar bar range
+        glyph_mappers.at(k)->SetScalarRange(range.first, range.second);
       }
 
       vtkSmartPointer<vtkActor> object_glyph_actor = vtkSmartPointer<vtkActor>::New();
-      object_glyph_actor->SetMapper(glyph_mapper);
-
+      object_glyph_actor->SetMapper(glyph_mappers.at(k));
 
       // Add objects visualization to renderer
       renderer->AddActor(object_glyph_actor);
     }
 
-    if (glyph_mapper) {
+    if (glyph_mappers.at(1.0)) {
       std::string object_qoi_name = "Object " + this->object_qoi_;
       std::set<double> values = {};
       // Check continuity of object qoi
@@ -875,7 +879,7 @@ void Render::renderPNG(
         throw std::runtime_error("Unexpected type in object_qoi_range variant.");
       }
       vtkSmartPointer<vtkActor2D> object_qoi_scalar_bar_actor = createScalarBarActor_(
-        glyph_mapper,
+        glyph_mappers.at(1.0),
         object_qoi_name.c_str(),
         0.52,
         0.04,
@@ -885,25 +889,26 @@ void Render::renderPNG(
     }
   }
 
+  // Add field data text information to render
+  // Create text
   std::stringstream ss;
   ss << "Phase: " << phase << "/" << (this->n_phases_ - 1) << "\n"
-    << "Load Imbalance: " << std::fixed << std::setprecision(4) << this->info_.getImbalance(phase);
-
+    << "Load Imbalance: " << std::fixed << std::setprecision(2) << this->info_.getImbalance(phase);
+  // Setup text actor
   vtkSmartPointer<vtkTextActor> text_actor = vtkSmartPointer<vtkTextActor>::New();
   text_actor->SetInput(ss.str().c_str());
-
   vtkTextProperty* textProp = text_actor->GetTextProperty();
   textProp->SetColor(0.0, 0.0, 0.0);
   textProp->ItalicOff();
   textProp->BoldOff();
   textProp->SetFontFamilyToArial();
-  textProp->SetFontSize(20);
+  textProp->SetFontSize(40);
   textProp->SetLineSpacing(1.5);
-
+  // Place text
   vtkCoordinate* position = text_actor->GetPositionCoordinate();
   position->SetCoordinateSystemToNormalizedViewport();
   position->SetValue(0.04, 0.91, 0.0);
-
+  // Add text to render
   renderer->AddActor(text_actor);
 
   // Setup rendering window
@@ -917,7 +922,7 @@ void Render::renderPNG(
   // Setup image from window
   vtkNew<vtkWindowToImageFilter> w2i;
   w2i->SetInput(render_window);
-  w2i->SetScale(3);
+  w2i->SetScale(1);
 
   // Export the PNG image
   vtkNew<vtkPNGWriter> writer;
@@ -928,7 +933,7 @@ void Render::renderPNG(
   writer->Write();
 }
 
-void Render::generate() {
+void Render::generate(uint64_t win_size) {
   std::pair<double, double> rank_qoi_range = this->computeRankQoiRange_();
   double rank_qoi_min = std::get<0>(rank_qoi_range);
   double rank_qoi_max = std::get<1>(rank_qoi_range);
@@ -983,8 +988,8 @@ void Render::generate() {
         }
         auto load_range = this->computeRankQoiRange_();
 
-        uint64_t window_size = 800;
-        uint64_t edge_width = 0.1 * window_size / *std::max_element(this->grid_size_.begin(), this->grid_size_.end());
+        uint64_t window_size = win_size;
+        uint64_t edge_width = 0.03 * window_size / *std::max_element(this->grid_size_.begin(), this->grid_size_.end());
         double glyph_factor = 0.8 * this->grid_resolution_ / (
                         (this->max_o_per_dim_ + 1)
                         * std::sqrt(this->object_qoi_max_));

@@ -299,7 +299,7 @@ public:
     std::string output_file_stem
   );
 
-  void generate(/*bool save_meshes, bool gen_vizqoi*/);
+  void generate(uint64_t win_size = 1600);
 };
 
 }} /* end namesapce vt::tv */
