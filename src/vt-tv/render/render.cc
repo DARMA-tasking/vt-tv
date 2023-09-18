@@ -493,7 +493,7 @@ vtkNew<vtkPolyData> Render::createObjectMesh_(PhaseType phase) {
   return pd_mesh;
 }
 
-void Render::get_rgb_from_tab20colormap(int index, double& r, double& g, double& b) {
+void Render::getRgbFromTab20Colormap_(int index, double& r, double& g, double& b) {
   const std::vector<std::tuple<double, double, double>> tab20_cmap = {
     {0.12156862745098039, 0.4666666666666667, 0.7058823529411765},
     {0.6823529411764706, 0.7803921568627451, 0.9098039215686274},
@@ -522,7 +522,7 @@ void Render::get_rgb_from_tab20colormap(int index, double& r, double& g, double&
   std::tie(r, g, b) = tab20_cmap[index];
 }
 
-/*static*/ vtkSmartPointer<vtkDiscretizableColorTransferFunction> Render::createColorTransferFunction(
+/*static*/ vtkSmartPointer<vtkDiscretizableColorTransferFunction> Render::createColorTransferFunction_(
   std::variant<std::pair<double, double>, std::set<double>> attribute_range, ColorType ct
 ) {
   vtkSmartPointer<vtkDiscretizableColorTransferFunction> ctf = vtkSmartPointer<vtkDiscretizableColorTransferFunction>::New();
@@ -543,7 +543,7 @@ void Render::get_rgb_from_tab20colormap(int index, double& r, double& g, double&
       ctf->SetAnnotation(v, std::to_string(v));
       // Use discrete color map
       double r, g, b;
-      get_rgb_from_tab20colormap(i, r, g, b);
+      getRgbFromTab20Colormap_(i, r, g, b);
       const double rgb[3] = {r, g, b};
       ctf->SetIndexedColorRGB(i, rgb);
       i++;
@@ -604,6 +604,7 @@ void Render::get_rgb_from_tab20colormap(int index, double& r, double& g, double&
   vtkSmartPointer<vtkMapper> mapper,
   const std::string& title,
   double x, double y,
+  uint64_t font_size,
   std::set<double> values
 ) {
   vtkSmartPointer<vtkScalarBarActor> scalar_bar_actor = vtkSmartPointer<vtkScalarBarActor>::New();
@@ -644,7 +645,7 @@ void Render::get_rgb_from_tab20colormap(int index, double& r, double& g, double&
     prop->ItalicOff();
     prop->BoldOff();
     prop->SetFontFamilyToArial();
-    prop->SetFontSize(40);
+    prop->SetFontSize(font_size);
   }
 
   // Set custom parameters
@@ -676,14 +677,14 @@ void Render::get_rgb_from_tab20colormap(int index, double& r, double& g, double&
   return cartesian;
 }
 
-/* static */ vtkSmartPointer<vtkRenderer> Render::setupRenderer() {
+/* static */ vtkSmartPointer<vtkRenderer> Render::setupRenderer_() {
   vtkSmartPointer<vtkRenderer> renderer = vtkSmartPointer<vtkRenderer>::New();
   renderer->SetBackground(1.0, 1.0, 1.0);  // Set background to white
   renderer->GetActiveCamera()->ParallelProjectionOn();
   return renderer;
 }
 
-/* static */ vtkSmartPointer<vtkMapper> Render::createRanksMapper(
+/* static */ vtkSmartPointer<vtkMapper> Render::createRanksMapper_(
   PhaseType phase,
   vtkPolyData* rank_mesh,
   std::variant<std::pair<double, double>, std::set<double>> rank_qoi_range
@@ -709,7 +710,7 @@ void Render::get_rgb_from_tab20colormap(int index, double& r, double& g, double&
   // Create mapper for rank glyphs
   vtkSmartPointer<vtkPolyDataMapper> rank_mapper = vtkSmartPointer<vtkPolyDataMapper>::New();
   rank_mapper->SetInputConnection(trans->GetOutputPort());
-  rank_mapper->SetLookupTable(createColorTransferFunction(rank_qoi_range, BlueToRed));
+  rank_mapper->SetLookupTable(createColorTransferFunction_(rank_qoi_range, BlueToRed));
   // Check the type held by the variant qoi range and set the scalar range appropriately
   if (std::holds_alternative<std::pair<double, double>>(rank_qoi_range)) {
     auto range_pair = std::get<std::pair<double, double>>(rank_qoi_range);
@@ -736,15 +737,16 @@ void Render::renderPNG(
   uint64_t edge_width,
   double glyph_factor,
   uint64_t win_size,
+  uint64_t font_size,
   std::string output_dir,
   std::string output_file_stem
 ) {
   // Setup rendering space
-  vtkSmartPointer<vtkRenderer> renderer = setupRenderer();
+  vtkSmartPointer<vtkRenderer> renderer = setupRenderer_();
 
   // Create rank mapper for later use and create corresponding rank actor
   std::variant<std::pair<double, double>, std::set<double>> rank_qoi_variant(rank_qoi_range_);
-  vtkSmartPointer<vtkMapper> rank_mapper = createRanksMapper(
+  vtkSmartPointer<vtkMapper> rank_mapper = createRanksMapper_(
     phase,
     rank_mesh,
     rank_qoi_variant
@@ -753,12 +755,13 @@ void Render::renderPNG(
   rank_actor->SetMapper(rank_mapper);
 
   // Create qoi scale legend for ranks
-  std::string rank_qoi_scale_title = "rank " + this->rank_qoi_;
+  std::string rank_qoi_scale_title = "Rank " + this->rank_qoi_;
   vtkSmartPointer<vtkScalarBarActor> rank_qoi_scale_actor = createScalarBarActor_(
     rank_mapper,
     rank_qoi_scale_title,
     0.5,
-    0.9
+    0.9,
+    font_size
   );
   rank_qoi_scale_actor->DrawBelowRangeSwatchOn();
   rank_qoi_scale_actor->SetBelowRangeAnnotation("<");
@@ -790,7 +793,7 @@ void Render::renderPNG(
     vtkSmartPointer<vtkActor> edge_actor = vtkSmartPointer<vtkActor>::New();
     edge_actor->SetMapper(edge_mapper);
     edge_actor->GetProperty()->SetLineWidth(edge_width);
-    vtkSmartPointer<vtkScalarBarActor> volume_actor = createScalarBarActor_(edge_mapper, "Inter-Object Volume", 0.04, 0.04);
+    vtkSmartPointer<vtkScalarBarActor> volume_actor = createScalarBarActor_(edge_mapper, "Inter-Object Volume", 0.04, 0.04, font_size);
     // Add communications visualization to renderer
     renderer->AddActor(edge_actor);
     renderer->AddActor2D(volume_actor);
@@ -852,7 +855,7 @@ void Render::renderPNG(
       trans->SetInputData(glypher->GetOutput());
 
       glyph_mappers.at(k)->SetInputConnection(trans->GetOutputPort());
-      glyph_mappers.at(k)->SetLookupTable(createColorTransferFunction(this->object_qoi_range_));
+      glyph_mappers.at(k)->SetLookupTable(createColorTransferFunction_(this->object_qoi_range_));
 
       if (std::holds_alternative<std::pair<double, double>>(this->object_qoi_range_)) {
         auto range = std::get<std::pair<double, double>>(this->object_qoi_range_);
@@ -883,6 +886,7 @@ void Render::renderPNG(
         object_qoi_name.c_str(),
         0.52,
         0.04,
+        font_size,
         values
       );
       renderer->AddActor2D(object_qoi_scalar_bar_actor);
@@ -902,7 +906,7 @@ void Render::renderPNG(
   textProp->ItalicOff();
   textProp->BoldOff();
   textProp->SetFontFamilyToArial();
-  textProp->SetFontSize(40);
+  textProp->SetFontSize(font_size);
   textProp->SetLineSpacing(1.5);
   // Place text
   vtkCoordinate* position = text_actor->GetPositionCoordinate();
@@ -933,7 +937,7 @@ void Render::renderPNG(
   writer->Write();
 }
 
-void Render::generate(uint64_t win_size) {
+void Render::generate(uint64_t font_size, uint64_t win_size) {
   std::pair<double, double> rank_qoi_range = this->computeRankQoiRange_();
   double rank_qoi_min = std::get<0>(rank_qoi_range);
   double rank_qoi_max = std::get<1>(rank_qoi_range);
@@ -960,14 +964,14 @@ void Render::generate(uint64_t win_size) {
       vtkNew<vtkPolyData> rank_mesh = this->createRankMesh_(phase);
 
       if (save_meshes_){
-        fmt::print("Writing object mesh for phase {}\n", phase);
+        fmt::print("== Writing object mesh for phase {}\n", phase);
         vtkNew<vtkXMLPolyDataWriter> writer;
         std::string object_mesh_filename = output_dir_ + output_file_stem_ + "_object_mesh_" + std::to_string(phase) + ".vtp";
         writer->SetFileName(object_mesh_filename.c_str());
         writer->SetInputData(object_mesh);
         writer->Write();
 
-        fmt::print("Writing rank mesh for phase {}\n", phase);
+        fmt::print("== Writing rank mesh for phase {}\n", phase);
         vtkNew<vtkXMLPolyDataWriter> writer2;
         std::string rank_mesh_filneame = output_dir_ + output_file_stem_ + "_rank_mesh_" + std::to_string(phase) + ".vtp";
         writer2->SetFileName(rank_mesh_filneame.c_str());
@@ -976,7 +980,7 @@ void Render::generate(uint64_t win_size) {
       }
 
       if (save_pngs_){
-        fmt::print("Rendering visualization PNG for phase {}\n", phase);
+        fmt::print("== Rendering visualization PNG for phase {}\n", phase);
 
         std::pair<double, double> obj_qoi_range;
         try {
@@ -993,6 +997,8 @@ void Render::generate(uint64_t win_size) {
         double glyph_factor = 0.8 * this->grid_resolution_ / (
                         (this->max_o_per_dim_ + 1)
                         * std::sqrt(this->object_qoi_max_));
+        fmt::print("  Image size: {}x{}px\n", win_size, win_size);
+        fmt::print("  Font size: {}pt\n", font_size);
         this->renderPNG(
           phase,
           rank_mesh,
@@ -1000,6 +1006,7 @@ void Render::generate(uint64_t win_size) {
           edge_width,
           glyph_factor,
           window_size,
+          font_size,
           output_dir_,
           output_file_stem_
         );

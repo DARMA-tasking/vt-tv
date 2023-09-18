@@ -125,9 +125,16 @@ void ParseRender::parseAndRender(PhaseType phase_id, std::unique_ptr<Info> info)
 
     fmt::print("Num ranks={}\n", info->getNumRanks());
 
-    uint64_t win_size = 1600;
+    uint64_t win_size = 2000;
     if (config["output"]["window_size"]) {
       win_size = config["output"]["window_size"].as<uint64_t>();
+    }
+
+    // Use automatic font size if not defined by user
+    // 0.025 is the factor of the window size determined to be ideal for the font size
+    uint64_t font_size = 0.025 * win_size;
+    if (config["output"]["font_size"]) {
+      font_size = config["output"]["font_size"].as<uint64_t>();
     }
 
     // Instantiate render
@@ -135,8 +142,7 @@ void ParseRender::parseAndRender(PhaseType phase_id, std::unique_ptr<Info> info)
       qoi_request, continuous_object_qoi, *info, grid_size, object_jitter,
       output_dir, output_file_stem, 1.0, save_meshes, save_pngs, phase_id
     );
-    fmt::print("Window size: {}\n", win_size);
-    r.generate(win_size);
+    r.generate(font_size, win_size);
 
   } catch (std::exception const& e) {
     std::cout << "Error reading the configuration file: " << e.what() << std::endl;

@@ -206,9 +206,9 @@ private:
    */
   vtkNew<vtkPolyData> createObjectMesh_(PhaseType phase);
 
-  static void get_rgb_from_tab20colormap(int index, double& r, double& g, double& b);
+  static void getRgbFromTab20Colormap_(int index, double& r, double& g, double& b);
 
-  static vtkSmartPointer<vtkDiscretizableColorTransferFunction> createColorTransferFunction(
+  static vtkSmartPointer<vtkDiscretizableColorTransferFunction> createColorTransferFunction_(
     std::variant<std::pair<double, double>, std::set<double>> attribute_range, ColorType ct = ColorType::Default
   );
 
@@ -216,12 +216,13 @@ private:
     vtkSmartPointer<vtkMapper> mapper,
     const std::string& title,
     double x, double y,
+    uint64_t font_size = 50,
     std::set<double> values = {}
   );
 
-  static vtkSmartPointer<vtkRenderer> setupRenderer();
+  static vtkSmartPointer<vtkRenderer> setupRenderer_();
 
-  static vtkSmartPointer<vtkMapper> createRanksMapper(
+  static vtkSmartPointer<vtkMapper> createRanksMapper_(
     PhaseType phase,
     vtkPolyData* rank_mesh,
     std::variant<std::pair<double, double>, std::set<double>> rank_qoi_range
@@ -295,11 +296,12 @@ public:
     uint64_t edge_width,
     double glyph_factor,
     uint64_t win_size,
+    uint64_t font_size,
     std::string output_dir,
     std::string output_file_stem
   );
 
-  void generate(uint64_t win_size = 1600);
+  void generate(uint64_t font_size = 50, uint64_t win_size = 2000);
 };
 
 }} /* end namesapce vt::tv */
