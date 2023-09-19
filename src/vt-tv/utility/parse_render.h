@@ -50,6 +50,8 @@
 
 #include <limits>
 #include <memory>
+#include <thread>
+#include <mutex>
 
 namespace vt::tv::utility {
 
@@ -84,8 +86,9 @@ struct ParseRender {
 
 private:
   std::string filename_;
+  std::mutex mtx_;
 };
 
-} /* end namesapce vt::tv::utility */
+} /* end namespace vt::tv::utility */
 
 #endif /*INCLUDED_VT_TV_UTILITY_PARSE_RENDER_H*/

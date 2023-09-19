@@ -80,11 +80,29 @@ void ParseRender::parseAndRender(PhaseType phase_id, std::unique_ptr<Info> info)
 
       info = std::make_unique<Info>();
 
+      std::vector<std::thread> threads; // To hold all threads
+
       for (NodeType rank = 0; rank < n_ranks; rank++) {
-        utility::JSONReader reader{rank, input_dir + "data." + std::to_string(rank) + ".json"};
-        reader.readFile();
-        auto tmpInfo = reader.parseFile();
-        info->addInfo(tmpInfo->getObjectInfo(), tmpInfo->getRank(rank));
+        // Lambda function to encapsulate the JSON reading logic
+        auto readJSONFunc = [rank, &input_dir, &info, this]() {
+          fmt::print("Reading file for rank {}\n", rank);
+          utility::JSONReader reader{rank, input_dir + "data." + std::to_string(rank) + ".json"};
+          reader.readFile();
+          auto tmpInfo = reader.parseFile();
+          // Lock the mutex while updating shared data
+          std::lock_guard<std::mutex> lock(mtx_);
+          info->addInfo(tmpInfo->getObjectInfo(), tmpInfo->getRank(rank));
+        };
+
+        // Start the thread and store it
+        threads.emplace_back(readJSONFunc);
+      }
+
+      // Wait for all threads to finish
+      for (auto& th : threads) {
+        if (th.joinable()) {
+          th.join();
+        }
       }
     }
 
