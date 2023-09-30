@@ -25,8 +25,18 @@ endif()
 message(STATUS "CMAKE_CXX_STANDARD: ${CMAKE_CXX_STANDARD}")
 
 option(vt_tv_python_bindings_enabled "Build vt-tv with Python bindings" ON)
+option(vt_tv_openmp_enabled "Build vt-tv with openMP support" ON)
 
 include(cmake/load_packages.cmake)
+
+if(APPLE)
+  add_compile_options(-ffat-lto-objects)
+endif()
+
+if(openmp_enabled)
+  set(VT_TV_NUM_THREADS "2" CACHE STRING "Number of threads to use")
+  add_definitions(-DVT_TV_NUM_THREADS=${VT_TV_NUM_THREADS})
+endif()
 
 add_custom_target(vt_tv_examples)
 add_custom_target(vt_tv_tests)
