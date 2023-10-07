@@ -56,6 +56,6 @@ using UniqueIndexBitType = uint64_t;
 using TimeType = double;
 using CollectionObjGroupIDType = uint64_t;
 
-} /* end namesapce vt::tv */
+} /* end namespace vt::tv */
 
 #endif /*INCLUDED_VT_TV_API_TYPES_H*/

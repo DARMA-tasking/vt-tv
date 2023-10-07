@@ -93,6 +93,6 @@ private:
   PhaseType phase_ = 0;
 };
 
-} /* end namesapce vt::tv::utility */
+} /* end namespace vt::tv::utility */
 
 #endif /*INCLUDED_VT_TV_UTILITY_JSON_GENERATOR_H*/

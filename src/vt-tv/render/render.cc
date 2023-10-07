@@ -97,7 +97,7 @@ Render::Render(Info in_info)
 Render::Render(
   std::array<std::string, 3> in_qoi_request,
   bool in_continuous_object_qoi,
-  Info in_info,
+  Info& in_info,
   std::array<uint64_t, 3> in_grid_size,
   double in_object_jitter,
   std::string in_output_dir,
@@ -348,7 +348,6 @@ vtkNew<vtkPolyData> Render::createObjectMesh_(PhaseType phase) {
   points->SetNumberOfPoints(n_o);
 
   // Retrieve elements constant across all ranks
-  std::vector<NodeType> ranks = this->info_.getRankIDs();
   std::string object_qoi = this->object_qoi_;
 
   // Iterate over ranks and objects to create mesh points
@@ -938,14 +937,13 @@ void Render::renderPNG(
 }
 
 void Render::generate(uint64_t font_size, uint64_t win_size) {
-  std::pair<double, double> rank_qoi_range = this->computeRankQoiRange_();
-  double rank_qoi_min = std::get<0>(rank_qoi_range);
-  double rank_qoi_max = std::get<1>(rank_qoi_range);
+  double rank_qoi_min = rank_qoi_range_.first;
+  double rank_qoi_max = rank_qoi_range_.second;
 
   if (std::holds_alternative<std::pair<double, double>>(object_qoi_range_)) {
     auto range_pair = std::get<std::pair<double, double>>(object_qoi_range_);
-    double object_qoi_min = std::get<0>(range_pair);
-    double object_qoi_max = std::get<1>(range_pair);
+    double object_qoi_min = range_pair.first;
+    double object_qoi_max = range_pair.second;
     fmt::print("Rank {} range: {}, {}\n", rank_qoi_, rank_qoi_min, rank_qoi_max);
     fmt::print("Object {} range: {}, {}\n", object_qoi_, object_qoi_min, object_qoi_max);
   }
@@ -990,7 +988,6 @@ void Render::generate(uint64_t font_size, uint64_t win_size) {
           std::cerr << e.what() << '\n';
           obj_qoi_range = {0, 1};
         }
-        auto load_range = this->computeRankQoiRange_();
 
         uint64_t window_size = win_size;
         uint64_t edge_width = 0.03 * window_size / *std::max_element(this->grid_size_.begin(), this->grid_size_.end());

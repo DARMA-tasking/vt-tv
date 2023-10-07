@@ -150,7 +150,7 @@ void ParseRender::parseAndRender(PhaseType phase_id, std::unique_ptr<Info> info)
 
     // Instantiate render
     Render r(
-      qoi_request, continuous_object_qoi, *info, grid_size, object_jitter,
+      qoi_request, continuous_object_qoi, *std::move(info), grid_size, object_jitter,
       output_dir, output_file_stem, 1.0, save_meshes, save_pngs, phase_id
     );
     r.generate(font_size, win_size);
@@ -160,4 +160,4 @@ void ParseRender::parseAndRender(PhaseType phase_id, std::unique_ptr<Info> info)
   }
 }
 
-} /* end namesapce vt::tv::utility */
+} /* end namespace vt::tv::utility */

@@ -86,8 +86,6 @@ struct JSONReader {
   /**
    * \brief Parse the json into vt-tv's data structure Info, with a single rank
    * filled out
-   *
-   * \return vt-tv Info
    */
   std::unique_ptr<Info> parseFile();
 
@@ -97,6 +95,6 @@ private:
   std::unique_ptr<nlohmann::json> json_ = nullptr;
 };
 
-} /* end namesapce vt::tv::utility */
+} /* end namespace vt::tv::utility */
 
 #endif /*INCLUDED_VT_TV_UTILITY_JSON_READER_H*/

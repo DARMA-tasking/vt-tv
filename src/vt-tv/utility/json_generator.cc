@@ -118,4 +118,4 @@ void JSONGenerator::outputObjectMetaData(nlohmann::json& j, ElementIDType id) co
   }
 }
 
-} /* end namesapce vt::tv::utility */
+} /* end namespace vt::tv::utility */

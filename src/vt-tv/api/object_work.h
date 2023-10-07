@@ -190,6 +190,6 @@ private:
   ObjectCommunicator communicator_;
 };
 
-} /* end namesapce vt::tv */
+} /* end namespace vt::tv */
 
 #endif /*INCLUDED_VT_TV_API_OBJECT_WORK_H*/
