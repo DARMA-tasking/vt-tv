@@ -43,8 +43,8 @@ struct ObjectCommunicator {
    */
   ObjectCommunicator(
     ElementIDType id_in,
-    std::map<ElementIDType, double> recv_in,
-    std::map<ElementIDType, double> sent_in
+    std::multimap<ElementIDType, double> recv_in,
+    std::multimap<ElementIDType, double> sent_in
   ) : object_id_(id_in),
       received_(recv_in),
       sent_(sent_in)
@@ -60,7 +60,7 @@ struct ObjectCommunicator {
     std::vector<double> volumes;
 
     // Iterate over one-way communications
-    std::map<ElementIDType, double> communications;
+    std::multimap<ElementIDType, double> communications;
     if(direction == "to") {
       communications = this->sent_;
     } else {
@@ -90,27 +90,41 @@ struct ObjectCommunicator {
   /**
    * \brief Return all from_object=volume pairs received by object.
    */
-  std::map<ElementIDType, double> getReceived() const {
+  std::multimap<ElementIDType, double> getReceived() const {
     return this->received_;
   };
 
   /**
-   * \brief Return the volume of a message received from an object if any.
+   * \brief Return all volumes of messages received from an object if any.
    */
-  double getReceivedFromObject(ElementIDType id) const {
-    return this->received_.at(id);
+  std::vector<double> getReceivedFromObject(ElementIDType id) const {
+    auto range = this->received_.equal_range(id);
+
+    std::vector<double> results;
+    for (auto it = range.first; it != range.second; ++it) {
+        results.push_back(it->second);
+    }
+
+    return results;
   }
 
   /**
    * \brief Return all to_object=volume pairs sent from object.
    */
-  std::map<ElementIDType, double> getSent() const { return this->sent_; };
+  std::multimap<ElementIDType, double> getSent() const { return this->sent_; };
 
   /**
-   * \brief Return the volume of a message sent to an object if any.
+   * \brief Return all volumes of messages sent to an object if any.
    */
-  double getSentToObject(ElementIDType id) const {
-    return this->sent_.at(id);
+  std::vector<double> getSentToObject(ElementIDType id) const {
+    auto range = this->sent_.equal_range(id);
+
+    std::vector<double> results;
+    for (auto it = range.first; it != range.second; ++it) {
+        results.push_back(it->second);
+    }
+
+    return results;
   }
 
   /**
@@ -157,6 +171,31 @@ struct ObjectCommunicator {
   }
 
   /**
+   * \brief maximum bytes received or sent at this communicator
+   */
+  double getMaxVolume() const {
+    // Search for the maximum value in received
+    auto max_recv_it = std::max_element(
+      this->received_.begin(),
+      this->received_.end(),
+      [](const std::multimap<ElementIDType, double>::value_type& a, const std::multimap<ElementIDType, double>::value_type& b) {
+          return a.second < b.second;
+      }
+    );
+
+    // Search for the maximum value in sent
+    auto max_sent_it = std::max_element(
+      this->sent_.begin(),
+      this->sent_.end(),
+      [](const std::multimap<ElementIDType, double>::value_type& a, const std::multimap<ElementIDType, double>::value_type& b) {
+          return a.second < b.second;
+      }
+    );
+
+    return std::max(max_recv_it->second, max_sent_it->second);
+  }
+
+  /**
    * \brief Serializer for data
    *
    * \param[in] s the serializer
@@ -170,8 +209,8 @@ struct ObjectCommunicator {
 
 private:
   ElementIDType object_id_;                  /**< The object id */
-  std::map<ElementIDType, double> received_; /**< The received edges */
-  std::map<ElementIDType, double> sent_;     /**< The sent edges */
+  std::multimap<ElementIDType, double> received_; /**< The received edges */
+  std::multimap<ElementIDType, double> sent_;     /**< The sent edges */
 };
 
 } /* end namesapce vt::tv */

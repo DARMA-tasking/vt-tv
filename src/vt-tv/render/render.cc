@@ -78,8 +78,8 @@ Render::Render(Info in_info)
 
   // Initialize jitter
   std::srand(std::time(nullptr));
-  auto const& allObjects = info_.getAllObjects();
-  for (auto const& [objectID, objectWork] : allObjects) {
+  auto const& allObjects = info_.getAllObjectIDs();
+  for (auto const& objectID : allObjects) {
     std::array<double, 3> jitterDims;
     for (uint64_t d = 0; d < 3; d++) {
       if (auto f = this->rank_dims_.find(d); f != this->rank_dims_.end()) {
@@ -90,7 +90,8 @@ Render::Render(Info in_info)
   }
 
   object_qoi_range_ = this->computeObjectQoiRange_();
-  this->computeMaxObjectVolume_();
+  rank_qoi_range_ = this->computeRankQoiRange_();
+  object_volume_max_ = this->computeMaxObjectVolume_();
 };
 
 Render::Render(
@@ -136,8 +137,8 @@ Render::Render(
 
   // Initialize jitter
   std::srand(std::time(nullptr));
-  auto const& allObjects = info_.getAllObjects();
-  for (auto const& [objectID, objectWork] : allObjects) {
+  auto const& allObjects = info_.getAllObjectIDs();
+  for (auto const& objectID : allObjects) {
     std::array<double, 3> jitterDims;
     for (uint64_t d = 0; d < 3; d++) {
       if (auto f = this->rank_dims_.find(d); f != this->rank_dims_.end()) {
@@ -148,36 +149,14 @@ Render::Render(
   }
 
   object_qoi_range_ = this->computeObjectQoiRange_();
+  rank_qoi_range_ = this->computeRankQoiRange_();
+  object_volume_max_ = this->computeMaxObjectVolume_();
 };
 
 double Render::computeMaxObjectVolume_() {
-  // Initialize object QOI range attributes
-  double ov_max = -1 * std::numeric_limits<double>::infinity();
-  double ov;
-  double max_received_ov;
-  double max_sent_ov;
-
-  // Iterate over all ranks
-  auto const& objects = this->info_.getAllObjects();
-  for (auto const& [obj_id, obj_work] : objects) {
-    // Update maximum object qoi
-    auto ov_received = obj_work.getReceived();
-    max_received_ov = std::max_element(
-      std::begin(ov_received), std::end(ov_received),
-      [] (const std::pair<double, double> & p1, const std::pair<double, double> & p2) {
-        return p1.second < p2.second;
-      }
-    )->first;
-    auto ov_sent = obj_work.getSent();
-    max_sent_ov = std::max_element(
-      std::begin(ov_sent), std::end(ov_sent),
-      [] (const std::pair<double, double> & p1, const std::pair<double, double> & p2) {
-        return p1.second < p2.second;
-      }
-    )->first;
-    if (ov > ov_max) ov_max = ov;
-  }
-  return ov;
+  double ov_max = this->info_.getMaxVolume();
+  this->object_volume_max_ = ov_max;
+  return ov_max;
 }
 
 std::variant<std::pair<double, double>, std::set<double>> Render::computeObjectQoiRange_() {
@@ -188,24 +167,26 @@ std::variant<std::pair<double, double>, std::set<double>> Render::computeObjectQ
   std::set<double> oq_all;
 
   // Iterate over all ranks
-  auto const& objects = this->info_.getAllObjects();
-  for (auto const& [obj_id, obj_work] : objects) {
-    // Update maximum object qoi
-    if (this->object_qoi_ == "load") {
-      oq = obj_work.getLoad();
+  for (PhaseType phase = 0; phase < this->n_phases_; phase++) {
+    auto const& objects = this->info_.getPhaseObjects(phase);
+    for (auto const& [obj_id, obj_work] : objects) {
+      // Update maximum object qoi
+      if (this->object_qoi_ == "load") {
+        oq = obj_work.getLoad();
 
-      if (!continuous_object_qoi_) {
-        oq_all.insert(oq);
-        if(oq_all.size() > 20) {
-          oq_all.clear();
-          continuous_object_qoi_ = true;
+        if (!continuous_object_qoi_) {
+          oq_all.insert(oq);
+          if(oq_all.size() > 20) {
+            oq_all.clear();
+            continuous_object_qoi_ = true;
+          }
         }
+      } else {
+        throw std::runtime_error("Invalid QOI: " + this->object_qoi_);
       }
-    } else {
-      throw std::runtime_error("Invalid QOI: " + this->object_qoi_);
+      if (oq > oq_max) oq_max = oq;
+      if (oq < oq_min) oq_min = oq;
     }
-    if (oq > oq_max) oq_max = oq;
-    if (oq < oq_min) oq_min = oq;
   }
 
   // Update extrema attribute
@@ -215,6 +196,7 @@ std::variant<std::pair<double, double>, std::set<double>> Render::computeObjectQ
     // return range
     return std::make_pair(oq_min, oq_max);
   } else {
+    // return support
     return oq_all;
   }
 }
@@ -223,7 +205,8 @@ std::pair<double, double> Render::computeRankQoiRange_() {
   // Initialize rank QOI range attributes
   double rq_max = -1 * std::numeric_limits<double>::infinity();
   double rq_min = std::numeric_limits<double>::infinity();
-  double rq;
+  double rqmax_for_phase;
+  double rqmin_for_phase;
 
   // Iterate over all ranks
   for (uint64_t rank_id = 0; rank_id < this->n_ranks_; rank_id++) {
@@ -233,26 +216,49 @@ std::pair<double, double> Render::computeRankQoiRange_() {
       std::unordered_map<PhaseType, double> rank_loads_map = this->info_.getAllLoadsAtRank(rank_id);
 
       // Get max load for this rank across all phases
-      auto pr = std::max_element
+      auto prmax = std::max_element
       (
-          std::begin(rank_loads_map), std::end(rank_loads_map),
-          [] (const std::pair<PhaseType, double>& p1, const std::pair<PhaseType, double>& p2) {
-              return p1.second < p2.second;
-          }
+        std::begin(rank_loads_map), std::end(rank_loads_map),
+        [] (const std::pair<PhaseType, double>& p1, const std::pair<PhaseType, double>& p2) {
+          return p1.second < p2.second;
+        }
       );
-      rq = pr->second;
+      rqmax_for_phase = prmax->second;
+
+      // Get min load for this rank across all phases
+      auto prmin = std::max_element
+      (
+        std::begin(rank_loads_map), std::end(rank_loads_map),
+        [] (const std::pair<PhaseType, double>& p1, const std::pair<PhaseType, double>& p2) {
+          return p1.second > p2.second;
+        }
+      );
+      rqmin_for_phase = prmin->second;
     } else {
       throw std::runtime_error("Invalid QOI: " + this->object_qoi_);
     }
-    if (rq > rq_max) rq_max = rq;
-    if (rq < rq_min) rq_min = rq;
+    if (rqmax_for_phase > rq_max) rq_max = rqmax_for_phase;
+    if (rqmin_for_phase < rq_min) rq_min = rqmin_for_phase;
   }
-
-  // Update extrema attribute
-  this->object_qoi_max_ = rq_max;
 
   // return range
   return std::make_pair(rq_min, rq_max);
+}
+
+double Render::computeRankQoiAverage_(PhaseType phase, std::string qoi) {
+  // Initialize rank QOI range attributes
+  double rq_sum = 0.0;
+
+  if (qoi == "load"){
+    auto rank_loads_at_phase = this->info_.getAllRankLoadsAtPhase(phase);
+    for (auto [rank, rank_load] : rank_loads_at_phase){
+      rq_sum += rank_load;
+    }
+    return rq_sum / rank_loads_at_phase.size();
+  }
+  else{
+    throw std::runtime_error("Invalid QOI: " + qoi);
+  }
 }
 
 std::map<NodeType, std::unordered_map<ElementIDType, ObjectWork>> Render::createObjectMapping_(PhaseType phase) {
@@ -322,14 +328,13 @@ vtkNew<vtkPolyData> Render::createObjectMesh_(PhaseType phase) {
 
   // Create point array for object quantity of interest
   vtkNew<vtkDoubleArray> q_arr;
-  std::string object_array_name = "Object " + this->object_qoi_;
-  q_arr->SetName(object_array_name.c_str());
+  q_arr->SetName(this->object_qoi_.c_str());
   q_arr->SetNumberOfTuples(n_o);
 
   // Load array must be added when it is not the object QOI
   vtkNew<vtkDoubleArray> l_arr;
   if (object_qoi_ != "load") {
-    l_arr->SetName("Object load");
+    l_arr->SetName("load");
     l_arr->SetNumberOfTuples(n_o);
   }
 
@@ -402,8 +407,8 @@ vtkNew<vtkPolyData> Render::createObjectMesh_(PhaseType phase) {
 
     // Add rank objects to point set
     int i = 0;
-    for (auto const& [objectWork, sentinel] : ordered_objects) {
-      // fmt::print("Object ID: {}, sentinel: {}\n", objectWork.getID(), sentinel);
+    for (auto const& [objectWork, migratable] : ordered_objects) {
+      // fmt::print("Object ID: {}, migratable: {}\n", objectWork.getID(), migratable);
 
       // Insert point using offset and rank coordinates
       std::array<double, 3> currentPointPosition = {0, 0, 0};
@@ -423,7 +428,7 @@ vtkNew<vtkPolyData> Render::createObjectMesh_(PhaseType phase) {
 
       // Set object attributes
       q_arr->SetTuple1(point_index, objectWork.getLoad());
-      b_arr->SetTuple1(point_index, sentinel);
+      b_arr->SetTuple1(point_index, migratable);
 
       auto objSent = objectWork.getSent();
       for (auto [k, v] : objSent) {
@@ -488,86 +493,163 @@ vtkNew<vtkPolyData> Render::createObjectMesh_(PhaseType phase) {
   return pd_mesh;
 }
 
-/*static*/ vtkNew<vtkColorTransferFunction> Render::createColorTransferFunction(
-  double range[2], double avg_load, ColorType ct
+void Render::getRgbFromTab20Colormap_(int index, double& r, double& g, double& b) {
+  const std::vector<std::tuple<double, double, double>> tab20_cmap = {
+    {0.12156862745098039, 0.4666666666666667, 0.7058823529411765},
+    {0.6823529411764706, 0.7803921568627451, 0.9098039215686274},
+    {1.0, 0.4980392156862745, 0.054901960784313725},
+    {1.0, 0.7333333333333333, 0.47058823529411764},
+    {0.17254901960784313, 0.6274509803921569, 0.17254901960784313},
+    {0.596078431372549, 0.8745098039215686, 0.5411764705882353},
+    {0.8392156862745098, 0.15294117647058825, 0.1568627450980392},
+    {1.0, 0.596078431372549, 0.5882352941176471},
+    {0.5803921568627451, 0.403921568627451, 0.7411764705882353},
+    {0.7725490196078432, 0.6901960784313725, 0.8352941176470589},
+    {0.5490196078431373, 0.33725490196078434, 0.29411764705882354},
+    {0.7686274509803922, 0.611764705882353, 0.5803921568627451},
+    {0.8901960784313725, 0.4666666666666667, 0.7607843137254902},
+    {0.9686274509803922, 0.7137254901960784, 0.8235294117647058},
+    {0.4980392156862745, 0.4980392156862745, 0.4980392156862745},
+    {0.7803921568627451, 0.7803921568627451, 0.7803921568627451},
+    {0.7372549019607844, 0.7411764705882353, 0.13333333333333333},
+    {0.8588235294117647, 0.8588235294117647, 0.5529411764705883},
+    {0.09019607843137255, 0.7450980392156863, 0.8117647058823529},
+    {0.6196078431372549, 0.8549019607843137, 0.8980392156862745}
+  };
+  if (index < 0 || index >= tab20_cmap.size()) {
+    throw std::runtime_error("Index out of bounds for tab20 colormap.");
+  }
+  std::tie(r, g, b) = tab20_cmap[index];
+}
+
+/*static*/ vtkSmartPointer<vtkDiscretizableColorTransferFunction> Render::createColorTransferFunction_(
+  std::variant<std::pair<double, double>, std::set<double>> attribute_range, ColorType ct
 ) {
-  vtkNew<vtkColorTransferFunction> ctf;
+  vtkSmartPointer<vtkDiscretizableColorTransferFunction> ctf = vtkSmartPointer<vtkDiscretizableColorTransferFunction>::New();
   ctf->SetNanColorRGBA(1., 1., 1., 0.);
   ctf->UseBelowRangeColorOn();
   ctf->UseAboveRangeColorOn();
 
-  switch (ct) {
-  case BlueToRed: {
-    ctf->SetColorSpaceToDiverging();
-    double const mid_point = (range[0] + range[1]) * .5;
-    ctf->AddRGBPoint(range[0], .231, .298, .753);
-    ctf->AddRGBPoint(mid_point, .865, .865, .865);
-    ctf->AddRGBPoint(range[1], .906, .016, .109);
-    ctf->SetBelowRangeColor(0.0, 1.0, 0.0);
-    ctf->SetAboveRangeColor(1.0, 0.0, 1.0);
-    break;
-  }
-  case HotSpot: {
-    ctf->SetColorSpaceToDiverging();
-    double const mid_point = avg_load;
-    ctf->AddRGBPoint(range[0], .231, .298, .753);
-    ctf->AddRGBPoint(mid_point, .865, .865, .865);
-    ctf->AddRGBPoint(range[1], .906, .016, .109);
-    ctf->SetBelowRangeColor(0.0, 1.0, 1.0);
-    ctf->SetAboveRangeColor(1.0, 1.0, 0.0);
-    break;
-  }
-  case WhiteToBlack: {
-    ctf->AddRGBPoint(range[0], 1.0, 1.0, 1.0);
-    ctf->AddRGBPoint(range[1], 0.0, 0.0, 0.0);
-    ctf->SetBelowRangeColor(0.0, 0.0, 1.0);
-    ctf->SetAboveRangeColor(1.0, 0.0, 0.0);
-    break;
-  }
-  case Default: {
-    double const mid_point = (range[0] + range[1]) * .5;
-    ctf->AddRGBPoint(range[0], .431, .761, .161);
-    ctf->AddRGBPoint(mid_point, .98, .992, .059);
-    ctf->AddRGBPoint(range[1], 1.0, .647, 0.0);
-    ctf->SetBelowRangeColor(0.8, 0.8, .8);
-    ctf->SetAboveRangeColor(1.0, 0.0, 1.0);
-    break;
-  }
-  }
+  // Make discrete when requested
+  if(std::holds_alternative<std::set<double>>(attribute_range)) {
+    const std::set<double>& values = std::get<std::set<double>>(attribute_range);
+    // Handle the set type
+    ctf->DiscretizeOn();
+    int n_colors = values.size();
+    ctf->IndexedLookupOn();
+    ctf->SetNumberOfIndexedColors(n_colors);
+    int i = 0;
+    for (double v : values) {
+      ctf->SetAnnotation(v, std::to_string(v));
+      // Use discrete color map
+      double r, g, b;
+      getRgbFromTab20Colormap_(i, r, g, b);
+      const double rgb[3] = {r, g, b};
+      ctf->SetIndexedColorRGB(i, rgb);
+      i++;
+    }
+    ctf->Build();
+    return ctf;
+  } else if (std::holds_alternative<std::pair<double, double>>(attribute_range)) {
+    const std::pair<double, double>& range = std::get<std::pair<double, double>>(attribute_range);
+    switch (ct) {
+    case BlueToRed: {
+      ctf->SetColorSpaceToDiverging();
+      double const mid_point = (range.first + range.second) * .5;
+      ctf->AddRGBPoint(range.first, .231, .298, .753);
+      ctf->AddRGBPoint(mid_point, .865, .865, .865);
+      ctf->AddRGBPoint(range.second, .906, .016, .109);
+      ctf->SetBelowRangeColor(0.0, 1.0, 0.0);
+      ctf->SetAboveRangeColor(1.0, 0.0, 1.0);
+      break;
+    }
+    case HotSpot: {
+      ctf->SetColorSpaceToDiverging();
+      double const mid_point1 = (range.second - range.first) * 0.25;
+      double const mid_point2 = (range.second - range.first) * 0.75;
 
-  return ctf;
+      ctf->AddRGBPoint(range.first, 0.0, 0.0, 1.0);   // Blue
+      ctf->AddRGBPoint(mid_point1, 0.0, 1.0, 0.0);   // Green
+      ctf->AddRGBPoint(mid_point2, 1.0, 0.8, 0.0);   // Orange
+      ctf->AddRGBPoint(range.second, 1.0, 0.0, 0.0);   // Red
+
+      ctf->SetBelowRangeColor(0.0, 1.0, 1.0);        // Cyan
+      ctf->SetAboveRangeColor(1.0, 1.0, 0.0);        // Yellow
+      break;
+    }
+    case WhiteToBlack: {
+      ctf->AddRGBPoint(range.first, 1.0, 1.0, 1.0);
+      ctf->AddRGBPoint(range.second, 0.0, 0.0, 0.0);
+      ctf->SetBelowRangeColor(0.0, 0.0, 1.0);
+      ctf->SetAboveRangeColor(1.0, 0.0, 0.0);
+      break;
+    }
+    case Default: {
+      double const mid_point = (range.first + range.second) * .5;
+      ctf->AddRGBPoint(range.first, .431, .761, .161);
+      ctf->AddRGBPoint(mid_point, .98, .992, .059);
+      ctf->AddRGBPoint(range.second, 1.0, .647, 0.0);
+      ctf->SetBelowRangeColor(0.8, 0.8, .8);
+      ctf->SetAboveRangeColor(1.0, 0.0, 1.0);
+      break;
+    }
+    }
+    return ctf;
+  } else {
+    throw std::runtime_error("Unexpected type in attribute_range variant.");
+  }
 }
 
-/*static*/ vtkNew<vtkScalarBarActor> Render::createScalarBarActor_(
-  vtkPolyDataMapper* mapper, std::string title, double x, double y
+/*static*/ vtkSmartPointer<vtkScalarBarActor> Render::createScalarBarActor_(
+  vtkSmartPointer<vtkMapper> mapper,
+  const std::string& title,
+  double x, double y,
+  uint64_t font_size,
+  std::set<double> values
 ) {
-  vtkNew<vtkScalarBarActor> scalar_bar_actor;
+  vtkSmartPointer<vtkScalarBarActor> scalar_bar_actor = vtkSmartPointer<vtkScalarBarActor>::New();
   scalar_bar_actor->SetLookupTable(mapper->GetLookupTable());
 
+  // Set default parameters
   scalar_bar_actor->SetOrientationToHorizontal();
   scalar_bar_actor->UnconstrainedFontSizeOn();
-  scalar_bar_actor->SetNumberOfLabels(2);
   scalar_bar_actor->SetHeight(0.08);
-  scalar_bar_actor->SetWidth(0.4);
-  scalar_bar_actor->SetLabelFormat("%.2G");
+  scalar_bar_actor->SetWidth(0.42);
   scalar_bar_actor->SetBarRatio(0.3);
   scalar_bar_actor->DrawTickLabelsOn();
+  scalar_bar_actor->SetLabelFormat("%.2G");
 
-  std::vector<vtkTextProperty*> props;
-  props.push_back(scalar_bar_actor->GetTitleTextProperty());
-  props.push_back(scalar_bar_actor->GetLabelTextProperty());
-  props.push_back(scalar_bar_actor->GetAnnotationTextProperty());
+  if (!values.empty()) {
+    scalar_bar_actor->SetNumberOfLabels(values.size());
+    scalar_bar_actor->SetAnnotationLeaderPadding(8);
 
-  for (auto&& p : props) {
-    p->SetColor(0.0, 0.0, 0.0);
-    p->ItalicOff();
-    p->BoldOff();
-    p->SetFontFamilyToArial();
-    p->SetFontSize(72);
+    std::string formatted_title = title;
+    std::replace(formatted_title.begin(), formatted_title.end(), '_', ' ');
+    std::string title_with_newline = formatted_title + '\n';
+    scalar_bar_actor->SetTitle(title_with_newline.c_str());
+  } else {
+    scalar_bar_actor->SetNumberOfLabels(2);
+    std::string formatted_title = title;
+    std::replace(formatted_title.begin(), formatted_title.end(), '_', ' ');
+    scalar_bar_actor->SetTitle(formatted_title.c_str());
   }
 
-  scalar_bar_actor->SetTitle(title.c_str());
-  auto position = scalar_bar_actor->GetPositionCoordinate();
+  // Modify properties for all text in scalar bar actor
+  std::vector<vtkTextProperty*> properties;
+  properties.push_back(scalar_bar_actor->GetTitleTextProperty());
+  properties.push_back(scalar_bar_actor->GetLabelTextProperty());
+  properties.push_back(scalar_bar_actor->GetAnnotationTextProperty());
+
+  for (vtkTextProperty* prop : properties){
+    prop->SetColor(0.0, 0.0, 0.0);
+    prop->ItalicOff();
+    prop->BoldOff();
+    prop->SetFontFamilyToArial();
+    prop->SetFontSize(font_size);
+  }
+
+  // Set custom parameters
+  vtkCoordinate* position = scalar_bar_actor->GetPositionCoordinate();
   position->SetCoordinateSystemToNormalizedViewport();
   position->SetValue(x, y, 0.0);
 
@@ -595,138 +677,258 @@ vtkNew<vtkPolyData> Render::createObjectMesh_(PhaseType phase) {
   return cartesian;
 }
 
-/*static*/ void Render::createPipeline(
+/* static */ vtkSmartPointer<vtkRenderer> Render::setupRenderer_() {
+  vtkSmartPointer<vtkRenderer> renderer = vtkSmartPointer<vtkRenderer>::New();
+  renderer->SetBackground(1.0, 1.0, 1.0);  // Set background to white
+  renderer->GetActiveCamera()->ParallelProjectionOn();
+  return renderer;
+}
+
+/* static */ vtkSmartPointer<vtkMapper> Render::createRanksMapper_(
   PhaseType phase,
   vtkPolyData* rank_mesh,
-  vtkPolyData* object_mesh,
-  double qoi_range[2],
-  double load_range[2],
-  double max_volume,
-  double glyph_factor,
-  int win_size,
-  std::string output_dir,
-  std::string output_file_stem
+  std::variant<std::pair<double, double>, std::set<double>> rank_qoi_range
 ) {
-  vtkNew<vtkRenderer> renderer;
-  renderer->SetBackground(1.0, 1.0, 1.0);
-  renderer->GetActiveCamera()->ParallelProjectionOn();
-
-  vtkNew<vtkGlyphSource2D> rank_glyph;
+  // Create square glyphs at ranks
+  vtkSmartPointer<vtkGlyphSource2D> rank_glyph = vtkSmartPointer<vtkGlyphSource2D>::New();
   rank_glyph->SetGlyphTypeToSquare();
-  rank_glyph->SetScale(.95);
+  rank_glyph->SetScale(0.95);
   rank_glyph->FilledOn();
   rank_glyph->CrossOff();
-  vtkNew<vtkGlyph2D> rank_glypher;
+  vtkSmartPointer<vtkGlyph2D> rank_glypher = vtkSmartPointer<vtkGlyph2D>::New();
   rank_glypher->SetSourceConnection(rank_glyph->GetOutputPort());
   rank_glypher->SetInputData(rank_mesh);
   rank_glypher->SetScaleModeToDataScalingOff();
 
-  //Lower glyphs slightly for visibility
-  vtkNew<vtkTransform> z_lower;
+  // Lower glyphs slightly for visibility
+  vtkSmartPointer<vtkTransform> z_lower = vtkSmartPointer<vtkTransform>::New();
   z_lower->Translate(0.0, 0.0, -0.01);
-  vtkNew<vtkTransformPolyDataFilter> trans;
+  vtkSmartPointer<vtkTransformPolyDataFilter> trans = vtkSmartPointer<vtkTransformPolyDataFilter>::New();
   trans->SetTransform(z_lower);
   trans->SetInputConnection(rank_glypher->GetOutputPort());
 
-  vtkNew<vtkPolyDataMapper> rank_mapper;
+  // Create mapper for rank glyphs
+  vtkSmartPointer<vtkPolyDataMapper> rank_mapper = vtkSmartPointer<vtkPolyDataMapper>::New();
   rank_mapper->SetInputConnection(trans->GetOutputPort());
-  rank_mapper->SetLookupTable(createColorTransferFunction(qoi_range));
-  rank_mapper->SetScalarRange(qoi_range);
-
-  vtkNew<vtkActor> rank_actor;
-  rank_actor->SetMapper(rank_mapper);
-  auto qoi_actor = createScalarBarActor_(rank_mapper, "Rank XXX", 0.5, 0.9);
-  qoi_actor->DrawBelowRangeSwatchOn();
-  qoi_actor->SetBelowRangeAnnotation("<");
-  qoi_actor->DrawAboveRangeSwatchOn();
-  qoi_actor->SetAboveRangeAnnotation(">");
-  renderer->AddActor(rank_actor);
-  renderer->AddActor2D(qoi_actor);
-
-  vtkNew<vtkLookupTable> bw_lut;
-  double lut_range[2] = {0.0, max_volume};
-  bw_lut->SetTableRange(lut_range);
-  bw_lut->SetSaturationRange(0, 0);
-  bw_lut->SetHueRange(0, 0);
-  bw_lut->SetValueRange(1, 0);
-  bw_lut->SetNanColor(1.0, 1.0, 1.0, 0.0);
-  bw_lut->Build();
-
-  vtkNew<vtkArrayCalculator> sqrtT;
-  sqrtT->SetInputData(object_mesh);
-  sqrtT->AddScalarArrayName("Load");
-  char const* sqrtT_str = "sqrt(Load)";
-  sqrtT->SetFunction(sqrtT_str);
-  sqrtT->SetResultArrayName(sqrtT_str);
-  sqrtT->Update();
-  auto sqrtT_out = sqrtT->GetDataSetOutput();
-  sqrtT_out->GetPointData()->SetActiveScalars("Migratable");
-
-  std::vector<std::tuple<double, std::string>> items{{0.0, "Square"}, {1.0, "Circle"}};
-  vtkPolyDataMapper* glyph_mapper_out = nullptr;
-  for (auto&& [k,v] : items) {
-    vtkNew<vtkThresholdPoints> thresh;
-    thresh->SetInputData(sqrtT_out);
-    thresh->ThresholdBetween(k, k);
-    thresh->Update();
-    auto thresh_out = thresh->GetOutput();
-    if (not thresh_out->GetNumberOfPoints())
-      continue;
-    thresh_out->GetPointData()->SetActiveScalars(sqrtT_str);
-
-    // Glyph by square root of object loads
-    vtkNew<vtkGlyphSource2D> glyph;
-    if (v == "Square") {
-      glyph->SetGlyphTypeToSquare();
+  rank_mapper->SetLookupTable(createColorTransferFunction_(rank_qoi_range, BlueToRed));
+  // Check the type held by the variant qoi range and set the scalar range appropriately
+  if (std::holds_alternative<std::pair<double, double>>(rank_qoi_range)) {
+    auto range_pair = std::get<std::pair<double, double>>(rank_qoi_range);
+    rank_mapper->SetScalarRange(range_pair.first, range_pair.second);
+  } else if (std::holds_alternative<std::set<double>>(rank_qoi_range)) {
+    const auto& range_set = std::get<std::set<double>>(rank_qoi_range);
+    if (!range_set.empty()) {
+      rank_mapper->SetScalarRange(*range_set.begin(), *range_set.rbegin());
     } else {
-      glyph->SetGlyphTypeToCircle();
+      rank_mapper->SetScalarRange(0., 0.);
     }
-    glyph->SetResolution(32);
-    glyph->SetScale(1.0);
-    glyph->FilledOn();
-    glyph->CrossOff();
-    vtkNew<vtkGlyph3D> glypher;
-    glypher->SetSourceConnection(glyph->GetOutputPort());
-    glypher->SetInputData(thresh_out);
-    glypher->SetScaleModeToScaleByScalar();
-    glypher->SetScaleFactor(glyph_factor);
-    glypher->Update();
-    glypher->GetOutput()->GetPointData()->SetActiveScalars("Load");
-
-    // Raise glyphs slightly for visibility
-    vtkNew<vtkTransform> z_raise;
-    z_raise->Translate(0.0, 0.0, 0.01);
-    vtkNew<vtkTransformPolyDataFilter> trans;
-    trans->SetTransform(z_raise);
-    trans->SetInputData(glypher->GetOutput());
-
-    // Create mapper and actor for glyphs
-    vtkNew<vtkPolyDataMapper> glyph_mapper;
-    glyph_mapper_out = glyph_mapper;
-    glyph_mapper->SetInputConnection(trans->GetOutputPort());
-    glyph_mapper->SetLookupTable(createColorTransferFunction(load_range, 0, BlueToRed));
-    glyph_mapper->SetScalarRange(load_range);
-    vtkNew<vtkActor> glyph_actor;
-    glyph_actor->SetMapper(glyph_mapper);
-    renderer->AddActor(glyph_actor);
+  } else {
+    // Handle unexpected type or set a default scalar range
+    throw std::runtime_error("Unexpected type in rank qoi range variant.");
   }
 
-  if (glyph_mapper_out) {
-    auto load_actor = createScalarBarActor_(glyph_mapper_out, "Object Load", 0.55, 0.55);
-    renderer->AddActor2D(load_actor);
+  return rank_mapper;
+}
+
+void Render::renderPNG(
+  PhaseType phase,
+  vtkPolyData* rank_mesh,
+  vtkPolyData* object_mesh,
+  uint64_t edge_width,
+  double glyph_factor,
+  uint64_t win_size,
+  uint64_t font_size,
+  std::string output_dir,
+  std::string output_file_stem
+) {
+  // Setup rendering space
+  vtkSmartPointer<vtkRenderer> renderer = setupRenderer_();
+
+  // Create rank mapper for later use and create corresponding rank actor
+  std::variant<std::pair<double, double>, std::set<double>> rank_qoi_variant(rank_qoi_range_);
+  vtkSmartPointer<vtkMapper> rank_mapper = createRanksMapper_(
+    phase,
+    rank_mesh,
+    rank_qoi_variant
+  );
+  vtkSmartPointer<vtkActor> rank_actor = vtkSmartPointer<vtkActor>::New();
+  rank_actor->SetMapper(rank_mapper);
+
+  // Create qoi scale legend for ranks
+  std::string rank_qoi_scale_title = "Rank " + this->rank_qoi_;
+  vtkSmartPointer<vtkScalarBarActor> rank_qoi_scale_actor = createScalarBarActor_(
+    rank_mapper,
+    rank_qoi_scale_title,
+    0.5,
+    0.9,
+    font_size
+  );
+  rank_qoi_scale_actor->DrawBelowRangeSwatchOn();
+  rank_qoi_scale_actor->SetBelowRangeAnnotation("<");
+  rank_qoi_scale_actor->DrawAboveRangeSwatchOn();
+  rank_qoi_scale_actor->SetAboveRangeAnnotation(">");
+
+  // Add rank visualization to renderer
+  renderer->AddActor(rank_actor);
+  renderer->AddActor2D(rank_qoi_scale_actor);
+
+  if(this->object_qoi_ != "") {
+    // Create white to black lookup table
+    vtkSmartPointer<vtkLookupTable> bw_lut = vtkSmartPointer<vtkLookupTable>::New();
+    bw_lut->SetTableRange(0.0, this->object_volume_max_);
+    bw_lut->SetSaturationRange(0, 0);
+    bw_lut->SetHueRange(0, 0);
+    bw_lut->SetValueRange(1, 0);
+    bw_lut->SetNanColor(1.0, 1.0, 1.0, 0.0);
+    bw_lut->Build();
+
+    // Create mapper for inter-object edges
+    vtkSmartPointer<vtkPolyDataMapper> edge_mapper = vtkSmartPointer<vtkPolyDataMapper>::New();
+    edge_mapper->SetInputData(object_mesh);
+    edge_mapper->SetScalarModeToUseCellData();
+    edge_mapper->SetScalarRange(0.0, this->object_volume_max_);
+    edge_mapper->SetLookupTable(bw_lut);
+
+    // Create communication volume and its scalar bar actors
+    vtkSmartPointer<vtkActor> edge_actor = vtkSmartPointer<vtkActor>::New();
+    edge_actor->SetMapper(edge_mapper);
+    edge_actor->GetProperty()->SetLineWidth(edge_width);
+    vtkSmartPointer<vtkScalarBarActor> volume_actor = createScalarBarActor_(edge_mapper, "Inter-Object Volume", 0.04, 0.04, font_size);
+    // Add communications visualization to renderer
+    renderer->AddActor(edge_actor);
+    renderer->AddActor2D(volume_actor);
+
+    // Compute square root of object loads
+    vtkSmartPointer<vtkArrayCalculator> sqrtL = vtkSmartPointer<vtkArrayCalculator>::New();
+    sqrtL->SetInputData(object_mesh);
+    sqrtL->AddScalarArrayName("load");
+    std::string sqrtL_str = "sqrt(load)";
+    sqrtL->SetFunction(sqrtL_str.c_str());
+    sqrtL->SetResultArrayName(sqrtL_str.c_str());
+    sqrtL->Update();
+    vtkDataSet* sqrtL_out = sqrtL->GetDataSetOutput();
+    sqrtL_out->GetPointData()->SetActiveScalars("migratable");
+
+    // Glyph sentinel and migratable objects separately: 0 is for non-migratable objects, 1 for migratable
+    std::map<double, vtkSmartPointer<vtkPolyDataMapper>> glyph_mappers = {
+      {0.0, vtkSmartPointer<vtkPolyDataMapper>::New()},
+      {1.0, vtkSmartPointer<vtkPolyDataMapper>::New()}
+    };
+    std::map<double, std::string> glyph_types = {{0.0, "Square"}, {1.0, "Circle"}};
+    for (const auto& [k, v] : glyph_types) {
+      vtkSmartPointer<vtkThresholdPoints> thresh = vtkSmartPointer<vtkThresholdPoints>::New();
+      thresh->SetInputData(sqrtL_out);
+      thresh->ThresholdBetween(k, k);
+      thresh->Update();
+      vtkPolyData* thresh_out = thresh->GetOutput();
+
+      if (thresh_out->GetNumberOfPoints() == 0) {
+        continue;
+      }
+      thresh_out->GetPointData()->SetActiveScalars(sqrtL_str.c_str());
+
+      // Glyph by square root of object quantity of interest
+      vtkSmartPointer<vtkGlyphSource2D> glyph = vtkSmartPointer<vtkGlyphSource2D>::New();
+      if(v == "Square") {
+        glyph->SetGlyphTypeToSquare();
+      } else if (v == "Circle") {
+        glyph->SetGlyphTypeToCircle();
+      }
+      glyph->SetResolution(64);
+      glyph->SetScale(1.0);
+      glyph->FilledOn();
+      glyph->CrossOff();
+
+      vtkSmartPointer<vtkGlyph3D> glypher = vtkSmartPointer<vtkGlyph3D>::New();
+      glypher->SetSourceConnection(glyph->GetOutputPort());
+      glypher->SetInputData(thresh_out);
+      glypher->SetScaleModeToScaleByScalar();
+      glypher->SetScaleFactor(glyph_factor);
+      glypher->Update();
+      glypher->GetOutput()->GetPointData()->SetActiveScalars(this->object_qoi_.c_str());
+
+      vtkSmartPointer<vtkTransform> zRaise = vtkSmartPointer<vtkTransform>::New();
+      zRaise->Translate(0.0, 0.0, 0.01);
+
+      vtkSmartPointer<vtkTransformPolyDataFilter> trans = vtkSmartPointer<vtkTransformPolyDataFilter>::New();
+      trans->SetTransform(zRaise);
+      trans->SetInputData(glypher->GetOutput());
+
+      glyph_mappers.at(k)->SetInputConnection(trans->GetOutputPort());
+      glyph_mappers.at(k)->SetLookupTable(createColorTransferFunction_(this->object_qoi_range_));
+
+      if (std::holds_alternative<std::pair<double, double>>(this->object_qoi_range_)) {
+        auto range = std::get<std::pair<double, double>>(this->object_qoi_range_);
+        // Manually set scalar range so either mapper (migratable vs non-migratable) can be used for the scalar bar range
+        glyph_mappers.at(k)->SetScalarRange(range.first, range.second);
+      }
+
+      vtkSmartPointer<vtkActor> object_glyph_actor = vtkSmartPointer<vtkActor>::New();
+      object_glyph_actor->SetMapper(glyph_mappers.at(k));
+
+      // Add objects visualization to renderer
+      renderer->AddActor(object_glyph_actor);
+    }
+
+    if (glyph_mappers.at(1.0)) {
+      std::string object_qoi_name = "Object " + this->object_qoi_;
+      std::set<double> values = {};
+      // Check continuity of object qoi
+      if (std::holds_alternative<std::pair<double, double>>(this->object_qoi_range_)) {
+        values = {};
+      } else if (std::holds_alternative<std::set<double>>(this->object_qoi_range_)) {
+        values = std::get<std::set<double>>(this->object_qoi_range_);
+      } else {
+        throw std::runtime_error("Unexpected type in object_qoi_range variant.");
+      }
+      vtkSmartPointer<vtkActor2D> object_qoi_scalar_bar_actor = createScalarBarActor_(
+        glyph_mappers.at(1.0),
+        object_qoi_name.c_str(),
+        0.52,
+        0.04,
+        font_size,
+        values
+      );
+      renderer->AddActor2D(object_qoi_scalar_bar_actor);
+    }
   }
 
+  // Add field data text information to render
+  // Create text
+  std::stringstream ss;
+  ss << "Phase: " << phase << "/" << (this->n_phases_ - 1) << "\n"
+    << "Load Imbalance: " << std::fixed << std::setprecision(2) << this->info_.getImbalance(phase);
+  // Setup text actor
+  vtkSmartPointer<vtkTextActor> text_actor = vtkSmartPointer<vtkTextActor>::New();
+  text_actor->SetInput(ss.str().c_str());
+  vtkTextProperty* textProp = text_actor->GetTextProperty();
+  textProp->SetColor(0.0, 0.0, 0.0);
+  textProp->ItalicOff();
+  textProp->BoldOff();
+  textProp->SetFontFamilyToArial();
+  textProp->SetFontSize(font_size);
+  textProp->SetLineSpacing(1.5);
+  // Place text
+  vtkCoordinate* position = text_actor->GetPositionCoordinate();
+  position->SetCoordinateSystemToNormalizedViewport();
+  position->SetValue(0.04, 0.91, 0.0);
+  // Add text to render
+  renderer->AddActor(text_actor);
+
+  // Setup rendering window
   renderer->ResetCamera();
   vtkNew<vtkRenderWindow> render_window;
   render_window->AddRenderer(renderer);
-  render_window->SetWindowName("LBAF");
+  render_window->SetWindowName("vt-tv");
   render_window->SetSize(win_size, win_size);
   render_window->Render();
 
+  // Setup image from window
   vtkNew<vtkWindowToImageFilter> w2i;
   w2i->SetInput(render_window);
-  w2i->SetScale(3);
+  w2i->SetScale(1);
 
+  // Export the PNG image
   vtkNew<vtkPNGWriter> writer;
   writer->SetInputConnection(w2i->GetOutputPort());
   std::string png_filename = output_dir + output_file_stem + std::to_string(phase) + ".png";
@@ -735,91 +937,7 @@ vtkNew<vtkPolyData> Render::createObjectMesh_(PhaseType phase) {
   writer->Write();
 }
 
-/*static*/ void Render::createPipeline2(
-  vtkPolyData* object_mesh,
-  vtkPolyData* rank_mesh
-) {
-  vtkNew<vtkRenderer> renderer;
-  renderer->SetBackground(1.0, 1.0, 1.0);
-  renderer->GetActiveCamera()->ParallelProjectionOn();
-
-  // Rank glyphs
-  vtkNew<vtkGlyphSource2D> rank_glyph;
-  rank_glyph->SetGlyphTypeToSquare();
-  rank_glyph->SetScale(.95);
-  rank_glyph->FilledOn();
-  rank_glyph->CrossOff();
-  vtkNew<vtkGlyph2D> rank_glypher;
-  rank_glypher->SetSourceConnection(rank_glyph->GetOutputPort());
-  rank_glypher->SetInputData(rank_mesh);
-  rank_glypher->SetScaleModeToDataScalingOff();
-
-  //Lower glyphs slightly for visibility
-  vtkNew<vtkTransform> z_lower;
-  z_lower->Translate(0.0, 0.0, -0.01);
-  vtkNew<vtkTransformPolyDataFilter> trans;
-  trans->SetTransform(z_lower);
-  trans->SetInputConnection(rank_glypher->GetOutputPort());
-
-  vtkNew<vtkPolyDataMapper> rank_mapper;
-  rank_mapper->SetInputConnection(trans->GetOutputPort());
-
-  vtkNew<vtkActor> rank_actor;
-  rank_actor->SetMapper(rank_mapper);
-
-  // Object glyphs
-  vtkNew<vtkGlyphSource2D> object_glyph;
-  object_glyph->SetGlyphTypeToCircle();
-  object_glyph->SetScale(0.2);
-  object_glyph->FilledOn();
-  object_glyph->CrossOff();
-  vtkNew<vtkGlyph2D> object_glypher;
-  object_glypher->SetSourceConnection(object_glyph->GetOutputPort());
-  object_glypher->SetInputData(object_mesh);
-  object_glypher->SetScaleModeToDataScalingOff();
-
-  vtkNew<vtkPolyDataMapper> object_mapper;
-  object_mapper->SetInputConnection(object_glypher->GetOutputPort());
-
-  vtkNew<vtkActor> object_actor;
-  object_actor->SetMapper(object_mapper);
-
-  // Edges
-  vtkNew<vtkPolyDataMapper> edge_mapper;
-  edge_mapper->SetInputData(object_mesh);
-  edge_mapper->SetScalarModeToUseCellData();
-  edge_mapper->SetScalarRange(0.0, 40);
-
-  vtkNew<vtkActor> edge_actor;
-  edge_actor->SetMapper(edge_mapper);
-  edge_actor->GetProperty()->SetLineWidth(10);
-
-  // Create renderer
-  renderer->AddActor(rank_actor);
-  renderer->AddActor(object_actor);
-  renderer->AddActor(edge_actor);
-  vtkNew<vtkNamedColors> colors;
-  renderer->SetBackground(colors->GetColor3d("steelblue").GetData());
-
-  renderer->ResetCamera();
-  vtkNew<vtkRenderWindow> render_window;
-  render_window->AddRenderer(renderer);
-  render_window->SetWindowName("LBAF");
-  render_window->SetSize(500, 500);
-  render_window->Render();
-
-  vtkNew<vtkWindowToImageFilter> w2i;
-  w2i->SetInput(render_window);
-  w2i->SetScale(3);
-
-  vtkNew<vtkPNGWriter> writer;
-  writer->SetInputConnection(w2i->GetOutputPort());
-  writer->SetFileName("test.png");
-  writer->SetCompressionLevel(2);
-  writer->Write();
-}
-
-void Render::generate() {
+void Render::generate(uint64_t font_size, uint64_t win_size) {
   std::pair<double, double> rank_qoi_range = this->computeRankQoiRange_();
   double rank_qoi_min = std::get<0>(rank_qoi_range);
   double rank_qoi_max = std::get<1>(rank_qoi_range);
@@ -846,14 +964,14 @@ void Render::generate() {
       vtkNew<vtkPolyData> rank_mesh = this->createRankMesh_(phase);
 
       if (save_meshes_){
-        fmt::print("Writing object mesh for phase {}\n", phase);
+        fmt::print("== Writing object mesh for phase {}\n", phase);
         vtkNew<vtkXMLPolyDataWriter> writer;
         std::string object_mesh_filename = output_dir_ + output_file_stem_ + "_object_mesh_" + std::to_string(phase) + ".vtp";
         writer->SetFileName(object_mesh_filename.c_str());
         writer->SetInputData(object_mesh);
         writer->Write();
 
-        fmt::print("Writing rank mesh for phase {}\n", phase);
+        fmt::print("== Writing rank mesh for phase {}\n", phase);
         vtkNew<vtkXMLPolyDataWriter> writer2;
         std::string rank_mesh_filneame = output_dir_ + output_file_stem_ + "_rank_mesh_" + std::to_string(phase) + ".vtp";
         writer2->SetFileName(rank_mesh_filneame.c_str());
@@ -862,7 +980,7 @@ void Render::generate() {
       }
 
       if (save_pngs_){
-        fmt::print("Rendering visualization PNG for phase {}\n", phase);
+        fmt::print("== Rendering visualization PNG for phase {}\n", phase);
 
         std::pair<double, double> obj_qoi_range;
         try {
@@ -874,17 +992,21 @@ void Render::generate() {
         }
         auto load_range = this->computeRankQoiRange_();
 
-        double obj_qoi_range_in[2] = {obj_qoi_range.first, obj_qoi_range.second};
-        double load_range_in[2] = {load_range.first, load_range.second};
-        createPipeline(
+        uint64_t window_size = win_size;
+        uint64_t edge_width = 0.03 * window_size / *std::max_element(this->grid_size_.begin(), this->grid_size_.end());
+        double glyph_factor = 0.8 * this->grid_resolution_ / (
+                        (this->max_o_per_dim_ + 1)
+                        * std::sqrt(this->object_qoi_max_));
+        fmt::print("  Image size: {}x{}px\n", win_size, win_size);
+        fmt::print("  Font size: {}pt\n", font_size);
+        this->renderPNG(
           phase,
           rank_mesh,
           object_mesh,
-          obj_qoi_range_in,
-          load_range_in,
-          object_volume_max_,
-          1,
-          1080,
+          edge_width,
+          glyph_factor,
+          window_size,
+          font_size,
           output_dir_,
           output_file_stem_
         );
