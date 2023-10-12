@@ -47,15 +47,21 @@
 #include <string>
 
 #include <fmt-vt/format.h>
+#include "vt-tv/render/render.h"
+#include "vt-tv/api/types.h"
+#include "vt-tv/api/info.h"
+#include "vt-tv/utility/decompression_input_container.h"
+#include "vt-tv/utility/input_iterator.h"
+
 #include <nlohmann/json.hpp>
 #include <nanobind/nanobind.h>
 
 #include <nanobind/stl/string.h>
 
-void process_json(std::string& input) {
-  auto j = nlohmann::json::parse(input);
-  // Print the contents of the JSON object
-  fmt::print("JSON object: {}\n", j.dump());
-}
+namespace vt::tv::bindings::python {
+
+void process_json(std::string&);
+
+} /* end namespace vt::tv::bindings::python */
 
 #endif /*INCLUDED_VT_TV_BINDINGS_PYTHON_JSON_INTERFACE_H*/
