@@ -120,7 +120,6 @@ void tv_from_json(const std::string& input_json_str, const std::string& input_ya
   //           assert(to.is_number());
 
   //           // fmt::print(" From: {}, to: {}\n", from_id, to_id);
-json_str
   //           // Object on this rank sent data
   //           if (objects.find(from_id) != objects.end()) {
   //             objects.at(from_id).addSentCommunications(to_id, bytes);
