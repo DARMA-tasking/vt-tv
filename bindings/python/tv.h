@@ -60,7 +60,7 @@
 
 namespace vt::tv::bindings::python {
 
-void process_json(std::string&);
+void tv_from_json(const std::string&, const std::string&);
 
 } /* end namespace vt::tv::bindings::python */
 
