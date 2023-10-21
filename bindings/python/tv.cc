@@ -2,8 +2,8 @@
 
 namespace vt::tv::bindings::python {
 
-void process_json(std::string& input) {
-  auto j = nlohmann::json::parse(input);
+void tv_from_json(const std::string& input_json_str, const std::string& input_yaml_params_str) {
+  auto j = nlohmann::json::parse(input_json_str, const std::string& input_yaml_params_str);
   fmt::print("JSON: {}\n", j.dump(2));
   // Read the json file
   // using json = nlohmann::json;
@@ -120,7 +120,7 @@ void process_json(std::string& input) {
   //           assert(to.is_number());
 
   //           // fmt::print(" From: {}, to: {}\n", from_id, to_id);
-
+json_str
   //           // Object on this rank sent data
   //           if (objects.find(from_id) != objects.end()) {
   //             objects.at(from_id).addSentCommunications(to_id, bytes);
@@ -148,8 +148,8 @@ void process_json(std::string& input) {
 namespace nb = nanobind;
 using namespace nb::literals;
 
-NB_MODULE(tv, m) {
-  m.def("process_json", &process_json);
+NB_MODULE(vttv, m) {
+  m.def("tv_from_json", &tv_from_json);
 }
 
 } /* end namespace vt::tv::bindings::python */
