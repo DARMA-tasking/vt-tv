@@ -264,7 +264,7 @@ public:
   Render(
     std::array<std::string, 3> in_qoi_request,
     bool in_continuous_object_qoi,
-    Info in_info,
+    Info& in_info,
     std::array<uint64_t, 3> in_grid_size,
     double in_object_jitter,
     std::string in_output_dir,
@@ -304,6 +304,6 @@ public:
   void generate(uint64_t font_size = 50, uint64_t win_size = 2000);
 };
 
-}} /* end namesapce vt::tv */
+}} /* end namespace vt::tv */
 
 #endif /*INCLUDED_VT_TV_RENDER_RENDER_H*/

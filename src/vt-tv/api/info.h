@@ -437,6 +437,6 @@ private:
   std::unordered_map<NodeType, Rank> ranks_;
 };
 
-} /* end namesapce vt::tv */
+} /* end namespace vt::tv */
 
 #endif /*INCLUDED_VT_TV_API_INFO_H*/

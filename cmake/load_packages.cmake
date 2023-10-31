@@ -31,3 +31,7 @@ include(cmake/load_vtk_package.cmake)
 if (vt_tv_python_bindings_enabled)
   include(cmake/load_nanobind_package.cmake)
 endif()
+
+if (vt_tv_openmp_enabled)
+  include(cmake/load_openmp.cmake)
+endif()

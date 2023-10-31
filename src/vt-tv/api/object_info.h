@@ -188,6 +188,6 @@ private:
   bool is_collection_ = false;
 };
 
-} /* end namesapce vt::tv */
+} /* end namespace vt::tv */
 
 #endif /*INCLUDED_VT_TV_API_OBJECT_INFO_H*/

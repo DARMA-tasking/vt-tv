@@ -217,10 +217,14 @@ std::unique_ptr<Info> JSONReader::parseFile() {
             // fmt::print(" From: {}, to: {}\n", from_id, to_id);
 
             // Object on this rank sent data
-            if (objects.find(from_id) != objects.end()) {
-              objects.at(from_id).addSentCommunications(to_id, bytes);
-            } else if (objects.find(to_id) != objects.end()) {
-              objects.at(to_id).addReceivedCommunications(from_id, bytes);
+            auto from_it = objects.find(from_id);
+            if (from_it != objects.end()) {
+              from_it->second.addSentCommunications(to_id, bytes);
+            } else {
+              auto to_it = objects.find(to_id);
+              if (to_it != objects.end()) {
+                to_it->second.addReceivedCommunications(from_id, bytes);
+              }
             }
           }
         }
@@ -237,4 +241,4 @@ std::unique_ptr<Info> JSONReader::parseFile() {
   return std::make_unique<Info>(std::move(object_info), std::move(rank_info));
 }
 
-} /* end namesapce vt::tv::utility */
+} /* end namespace vt::tv::utility */

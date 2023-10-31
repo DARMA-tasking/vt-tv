@@ -213,6 +213,6 @@ private:
   std::multimap<ElementIDType, double> sent_;     /**< The sent edges */
 };
 
-} /* end namesapce vt::tv */
+} /* end namespace vt::tv */
 
 #endif /*INCLUDED_VT_TV_API_OBJECT_COMMUNICATOR_H*/

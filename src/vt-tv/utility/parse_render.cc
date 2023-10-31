@@ -72,7 +72,7 @@ void ParseRender::parseAndRender(PhaseType phase_id, std::unique_ptr<Info> info)
         input_dir += '/';
       }
 
-      uint64_t n_ranks = config["input"]["n_ranks"].as<uint64_t>();
+      int64_t n_ranks = config["input"]["n_ranks"].as<int64_t>(); // signed for omp parallel for
 
       // Read JSON file and input data
       std::filesystem::path p = input_dir;
@@ -80,11 +80,22 @@ void ParseRender::parseAndRender(PhaseType phase_id, std::unique_ptr<Info> info)
 
       info = std::make_unique<Info>();
 
-      for (NodeType rank = 0; rank < n_ranks; rank++) {
-        utility::JSONReader reader{rank, input_dir + "data." + std::to_string(rank) + ".json"};
+      #ifdef VT_TV_NUM_THREADS
+        const int threads = VT_TV_NUM_THREADS;
+      #else
+        const int threads = 2;
+      #endif
+      omp_set_num_threads(threads);
+      # pragma omp parallel for
+      for (int64_t rank = 0; rank < n_ranks; rank++) {
+        fmt::print("Reading file for rank {}\n", rank);
+        utility::JSONReader reader{static_cast<NodeType>(rank), input_dir + "data." + std::to_string(rank) + ".json"};
         reader.readFile();
         auto tmpInfo = reader.parseFile();
+        #pragma omp critical
+        {
         info->addInfo(tmpInfo->getObjectInfo(), tmpInfo->getRank(rank));
+        }
       }
     }
 
@@ -139,7 +150,7 @@ void ParseRender::parseAndRender(PhaseType phase_id, std::unique_ptr<Info> info)
 
     // Instantiate render
     Render r(
-      qoi_request, continuous_object_qoi, *info, grid_size, object_jitter,
+      qoi_request, continuous_object_qoi, *std::move(info), grid_size, object_jitter,
       output_dir, output_file_stem, 1.0, save_meshes, save_pngs, phase_id
     );
     r.generate(font_size, win_size);
@@ -149,4 +160,4 @@ void ParseRender::parseAndRender(PhaseType phase_id, std::unique_ptr<Info> info)
   }
 }
 
-} /* end namesapce vt::tv::utility */
+} /* end namespace vt::tv::utility */

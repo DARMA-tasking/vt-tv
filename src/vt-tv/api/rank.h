@@ -116,6 +116,6 @@ private:
   std::unordered_map<PhaseType, PhaseWork> phase_info_;
 };
 
-} /* end namesapce vt::tv */
+} /* end namespace vt::tv */
 
 #endif /*INCLUDED_VT_TV_API_RANK_H*/

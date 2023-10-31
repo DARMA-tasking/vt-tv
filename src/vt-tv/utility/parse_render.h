@@ -51,6 +51,8 @@
 #include <limits>
 #include <memory>
 
+#include <omp.h>
+
 namespace vt::tv::utility {
 
 /**
@@ -86,6 +88,6 @@ private:
   std::string filename_;
 };
 
-} /* end namesapce vt::tv::utility */
+} /* end namespace vt::tv::utility */
 
 #endif /*INCLUDED_VT_TV_UTILITY_PARSE_RENDER_H*/

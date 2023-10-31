@@ -138,6 +138,6 @@ private:
   std::unordered_map<ElementIDType, ObjectWork> objects_;
 };
 
-} /* end namesapce vt::tv */
+} /* end namespace vt::tv */
 
 #endif /*INCLUDED_VT_TV_API_PHASE_WORK_H*/
