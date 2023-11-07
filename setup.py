@@ -17,7 +17,7 @@ class get_nanobind_include(object):
 ext_modules = [
   Extension(
     'vttv',
-    ['bindings/python/tv.cpp'],
+    ['bindings/python/tv.cc'],
     include_dirs=[
       # Path to nanobind headers
       get_nanobind_include(),
