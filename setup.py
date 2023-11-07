@@ -12,7 +12,7 @@ class get_nanobind_include(object):
 
   def __str__(self):
     import nanobind
-    return nanobind.get_include()
+    return nanobind.include_dir()
 
 ext_modules = [
   Extension(
