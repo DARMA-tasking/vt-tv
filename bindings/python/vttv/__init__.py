@@ -1,1 +1,1 @@
-from . import tv_from_json
+from .vttv import tv_from_json
