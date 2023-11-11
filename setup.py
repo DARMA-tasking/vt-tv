@@ -38,9 +38,6 @@ class CMakeBuild(build_ext):
     self.spawn(['cmake', ext.sourcedir] + cmake_args)
     if not self.dry_run:
       self.spawn(['cmake', '--build', '.', '--parallel', '-j8'] + build_args)
-    # # Returning to the previous directory
-    # print(self.distribution.get_fullname())
-    # os.chdir(self.distribution.get_fullname())
 
 
 setup(

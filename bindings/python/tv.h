@@ -54,8 +54,9 @@
 #include "vt-tv/utility/input_iterator.h"
 
 #include <nlohmann/json.hpp>
-#include <nanobind/nanobind.h>
+#include <yaml-cpp/yaml.h>
 
+#include <nanobind/nanobind.h>
 #include <nanobind/stl/string.h>
 
 namespace vt::tv::bindings::python {
