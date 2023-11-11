@@ -5,6 +5,7 @@ namespace vt::tv::bindings::python {
 void tv_from_json(const std::string& input_json_str, const std::string& input_yaml_params_str) {
   auto j = nlohmann::json::parse(input_json_str);
   fmt::print("JSON: {}\n", j.dump(2));
+  YAML::Node config = YAML::Load(input_yaml_params_str);
   // Read the json file
   // using json = nlohmann::json;
 
