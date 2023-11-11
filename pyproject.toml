@@ -3,7 +3,7 @@ requires = ["setuptools>=42", "wheel", "nanobind>=1.3.2", "cmake>=3.17.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "vt-tv"
+name = "vttv"
 version = "0.0.1"
 description = "vt-tv test"
 readme = "README.md"
