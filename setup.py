@@ -29,11 +29,11 @@ class CMakeBuild(build_ext):
     build_temp = os.path.join('python-build', 'build', 'temp')
     os.makedirs(build_temp, exist_ok=True)
 
-    vtk_dir = os.environ.get('VTK_DIR')
+    vtk_dir = os.environ.get('VTTV_VTK_DIR')
     if not vtk_dir:
-      raise RuntimeError("Environment variable VTK_DIR is required")
+      raise RuntimeError("Environment variable VTTV_VTK_DIR is required")
 
-    jobs = os.environ.get('JOBS', os.cpu_count())
+    jobs = os.environ.get('VTTV_JOBS', os.cpu_count())
 
     cmake_args = ['-DCMAKE_LIBRARY_OUTPUT_DIRECTORY=' + extdir,
                   '-DPYTHON_EXECUTABLE=' + sys.executable,
