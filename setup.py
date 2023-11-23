@@ -22,22 +22,29 @@ class CMakeBuild(build_ext):
 
   def build_extension(self, ext):
     extdir = os.path.abspath(os.path.dirname(self.get_ext_fullpath(ext.name)))
-    cmake_args = ['-DCMAKE_LIBRARY_OUTPUT_DIRECTORY=' + extdir,
-            '-DPYTHON_EXECUTABLE=' + sys.executable]
 
-    # Add the path to the VTK installation if necessary
-    cmake_args += ['-DVTK_DIR:PATH=~/Develop/vtk-build']
-    cmake_args += ['-DCMAKE_OSX_DEPLOYMENT_TARGET:STRING=13.5']
+    # Create a temporary build directory
+    build_temp = os.path.join('python-build', 'build', 'temp')
+    os.makedirs(build_temp, exist_ok=True)
+
+    cmake_args = ['-DCMAKE_LIBRARY_OUTPUT_DIRECTORY=' + extdir,
+                  '-DPYTHON_EXECUTABLE=' + sys.executable,
+                  '-DVTK_DIR:PATH=~/Develop/vtk-build',
+                  '-DCMAKE_OSX_DEPLOYMENT_TARGET:STRING=13.5']
 
     cfg = 'Debug' if self.debug else 'Release'
     build_args = ['--config', cfg]
 
-    # Assuming the CMakeLists.txt is in the root of the project directory
-    # get to running this command: cmake --build /path/to/vt-tv/source/ --parallel -j8 --target install
-    os.chdir(ext.sourcedir)
+    # Change to the build directory
+    os.chdir(build_temp)
+
+    # Run CMake and build commands
     self.spawn(['cmake', ext.sourcedir] + cmake_args)
     if not self.dry_run:
       self.spawn(['cmake', '--build', '.', '--parallel', '-j8'] + build_args)
+
+    # Change back to the original directory
+    os.chdir(ext.sourcedir)
 
 
 setup(
@@ -50,6 +57,7 @@ setup(
   long_description='',
   ext_modules=[CMakeExtension('vttv', sourcedir='.')],
   cmdclass=dict(build_ext=CMakeBuild),
-  packages=find_packages(),
+  package_dir={'': 'python-build'},
+  packages=find_packages('python-build'),
   zip_safe=False,
 )
