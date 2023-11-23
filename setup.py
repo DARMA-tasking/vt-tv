@@ -4,6 +4,10 @@ import subprocess
 import os
 import sys
 
+# Ensure python-build directory exists
+build_dir = 'python-build'
+os.makedirs(build_dir, exist_ok=True)
+
 class CMakeExtension(Extension):
   def __init__(self, name, sourcedir=''):
     Extension.__init__(self, name, sources=[])
@@ -14,38 +18,40 @@ class CMakeBuild(build_ext):
     try:
       out = subprocess.check_output(['cmake', '--version'])
     except OSError:
-      raise RuntimeError('CMake must be installed to build the following extensions: ' +
-                 ', '.join(e.name for e in self.extensions))
+      raise RuntimeError("CMake must be installed to build the following extensions: " +
+                         ", ".join(e.name for e in self.extensions))
 
     for ext in self.extensions:
       self.build_extension(ext)
 
   def build_extension(self, ext):
     extdir = os.path.abspath(os.path.dirname(self.get_ext_fullpath(ext.name)))
-
-    # Create a temporary build directory
     build_temp = os.path.join('python-build', 'build', 'temp')
     os.makedirs(build_temp, exist_ok=True)
 
+    vtk_dir = os.environ.get('VTK_DIR')
+    if not vtk_dir:
+      raise RuntimeError("Environment variable VTK_DIR is required")
+
+    jobs = os.environ.get('JOBS', os.cpu_count())
+
     cmake_args = ['-DCMAKE_LIBRARY_OUTPUT_DIRECTORY=' + extdir,
                   '-DPYTHON_EXECUTABLE=' + sys.executable,
-                  '-DVTK_DIR:PATH=~/Develop/vtk-build',
-                  '-DCMAKE_OSX_DEPLOYMENT_TARGET:STRING=13.5']
+                  '-DVTK_DIR:PATH=' + vtk_dir]
+
+    if sys.platform == "darwin":
+      import platform
+      macos_version = platform.mac_ver()[0]
+      cmake_args.append('-DCMAKE_OSX_DEPLOYMENT_TARGET:STRING=' + macos_version)
 
     cfg = 'Debug' if self.debug else 'Release'
     build_args = ['--config', cfg]
 
-    # Change to the build directory
     os.chdir(build_temp)
-
-    # Run CMake and build commands
     self.spawn(['cmake', ext.sourcedir] + cmake_args)
     if not self.dry_run:
-      self.spawn(['cmake', '--build', '.', '--parallel', '-j8'] + build_args)
-
-    # Change back to the original directory
+      self.spawn(['cmake', '--build', '.', '--parallel', '-j' + str(jobs)] + build_args)
     os.chdir(ext.sourcedir)
-
 
 setup(
   name='vttv',
@@ -57,7 +63,7 @@ setup(
   long_description='',
   ext_modules=[CMakeExtension('vttv', sourcedir='.')],
   cmdclass=dict(build_ext=CMakeBuild),
-  package_dir={'': 'python-build'},
-  packages=find_packages('python-build'),
+  package_dir={'': build_dir},
+  packages=find_packages(build_dir),
   zip_safe=False,
 )
