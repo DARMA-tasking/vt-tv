@@ -12,4 +12,4 @@ ENV CXX=g++-11
 RUN /bin/bash -c ". /opt/conda/etc/profile.d/conda.sh && conda activate deves && pip install /opt/src/vt-tv"
 
 # test bindings
-RUN conda activate deves && python /opt/src/vt-tv/tests/test_bindings.py
+RUN /bin/bash -c ". /opt/conda/etc/profile.d/conda.sh && conda activate deves && python /opt/src/vt-tv/tests/test_bindings.py"
