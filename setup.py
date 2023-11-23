@@ -37,7 +37,7 @@ class CMakeBuild(build_ext):
 
     cmake_args = ['-DCMAKE_LIBRARY_OUTPUT_DIRECTORY=' + extdir,
                   '-DPYTHON_EXECUTABLE=' + sys.executable,
-                  '-DVTK_DIR:PATH=' + vtk_dir]
+                  '-DVTK_DIR=' + vtk_dir]
 
     if sys.platform == "darwin":
       import platform
