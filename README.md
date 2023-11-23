@@ -20,7 +20,7 @@ tasks over phases.
 
 ## Building the Python bindings
 
-###Requirements
+### Requirements
 
 In order to build the python bindings, make sure you have a Python <ins>`3.8` or `3.9`</ins> environment, with the `nanobind` package installed. You can install `nanobind` with `pip`:
 
