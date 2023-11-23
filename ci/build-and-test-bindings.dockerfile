@@ -7,7 +7,7 @@ RUN mkdir -p /opt/build/vt-tv
 ENV VTTV_VTK_DIR=opt/build/vtk-build
 
 # build bindings
-RUN conda activate deves && pip install .
+RUN /bin/bash -c ". /opt/conda/etc/profile.d/conda.sh && conda activate deves && pip install ."
 
 # test bindings
 RUN conda activate deves && python /opt/src/vt-tv/tests/test_bindings.py

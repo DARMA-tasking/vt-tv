@@ -1,4 +1,4 @@
-name: Build and Test Ubuntu 22.04 gcc 11 x64
+name: Build and Test Bindings Ubuntu 22.04 gcc 11 x64
 
 # Trigger the workflow on push or pull request
 on:
@@ -38,7 +38,6 @@ jobs:
 
       - name: Build the Docker Image; build and test vt-tv bindings
         id: docker_build
-        continue-on-error: true
         uses: docker/build-push-action@v3
         with:
           push: false
