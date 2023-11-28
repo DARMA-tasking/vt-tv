@@ -58,10 +58,14 @@
 
 #include <nanobind/nanobind.h>
 #include <nanobind/stl/string.h>
+#include <nanobind/stl/vector.h>
+
+#include <filesystem>
+#include <map>
 
 namespace vt::tv::bindings::python {
 
-void tv_from_json(const std::string&, const std::string&);
+void tv_from_json(const std::vector<std::string>&, const std::string&, uint64_t);
 
 } /* end namespace vt::tv::bindings::python */
 
