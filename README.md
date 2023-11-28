@@ -44,7 +44,7 @@ export VTTV_VTK_DIR=/path/to/vtk/build
 Then, to install python-environment-wide the binded `vt-tv` python module, run:
 
 ```bash
-pip install .
+pip install <path/to/vt-tv/source>
 ```
 **Optional**
 
