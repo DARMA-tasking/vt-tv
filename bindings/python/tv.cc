@@ -59,20 +59,20 @@ void tv_from_json(const std::vector<std::string>& input_json_per_rank_list, cons
     }
 
     // print all saved configuration parameters
-    fmt::print("vt-tv parameters:\n");
-    fmt::print("  x_ranks: {}\n", grid_size[0]);
-    fmt::print("  y_ranks: {}\n", grid_size[1]);
-    fmt::print("  z_ranks: {}\n", grid_size[2]);
-    fmt::print("  object_jitter: {}\n", object_jitter);
-    fmt::print("  rank_qoi: {}\n", qoi_request[0]);
-    fmt::print("  object_qoi: {}\n", qoi_request[2]);
-    fmt::print("  save_meshes: {}\n", save_meshes);
-    fmt::print("  save_pngs: {}\n", save_pngs);
-    fmt::print("  force_continuous_object_qoi: {}\n", continuous_object_qoi);
-    fmt::print("  output_visualization_dir: {}\n", output_dir);
-    fmt::print("  output_visualization_file_stem: {}\n", output_file_stem);
-    fmt::print("  window_size: {}\n", win_size);
-    fmt::print("  font_size: {}\n", font_size);
+    fmt::print("vt-tv:\n Parameters:\n");
+    fmt::print("   x_ranks: {}\n", grid_size[0]);
+    fmt::print("   y_ranks: {}\n", grid_size[1]);
+    fmt::print("   z_ranks: {}\n", grid_size[2]);
+    fmt::print("   object_jitter: {}\n", object_jitter);
+    fmt::print("   rank_qoi: {}\n", qoi_request[0]);
+    fmt::print("   object_qoi: {}\n", qoi_request[2]);
+    fmt::print("   save_meshes: {}\n", save_meshes);
+    fmt::print("   save_pngs: {}\n", save_pngs);
+    fmt::print("   force_continuous_object_qoi: {}\n", continuous_object_qoi);
+    fmt::print("   output_visualization_dir: {}\n", output_dir);
+    fmt::print("   output_visualization_file_stem: {}\n", output_file_stem);
+    fmt::print("   window_size: {}\n", win_size);
+    fmt::print("   font_size: {}\n", font_size);
 
     // using json = nlohmann::json;
     // // Read the json for the rank
@@ -239,6 +239,8 @@ void tv_from_json(const std::vector<std::string>& input_json_per_rank_list, cons
   } catch (std::exception const& e) {
     std::cout << "vt-tv: Error reading the configuration file: " << e.what() << std::endl;
   }
+
+  fmt::print("vt-tv: Done.\n");
 }
 
 namespace nb = nanobind;
