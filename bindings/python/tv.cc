@@ -74,168 +74,172 @@ void tv_from_json(const std::vector<std::string>& input_json_per_rank_list, cons
     fmt::print("   window_size: {}\n", win_size);
     fmt::print("   font_size: {}\n", font_size);
 
-    // using json = nlohmann::json;
-    // // Read the json for the rank
-    // std::unique_ptr<Info> info = std::make_unique<Info>();
+    using json = nlohmann::json;
+    // Read the json for the rank
+    std::unique_ptr<Info> info = std::make_unique<Info>();
 
-    // for (NodeType rank_id = 0; rank_id < num_ranks; rank_id++) {
-    //   std::string rank_json_str = input_json_per_rank_list[rank_id];
-    //   try
-    //   {
-    //     auto j = json::parse(rank_json_str);
-    //     assert(j != nullptr && "Must have valid json");
+    assert(input_json_per_rank_list.size() == num_ranks && "Must have the same number of json files as ranks");
 
-    //     // write json to disk
-    //     std::string filename = fmt::format("/home/pierrelp/Develop/NGA/vt-tv/output_{}.json", rank_id);
-    //     std::ofstream o(filename);
-    //     o << std::setw(2) << j << std::endl;
-    //     o.close();
+    for (NodeType rank_id = 0; rank_id < num_ranks; rank_id++) {
+      std::string rank_json_str = input_json_per_rank_list[rank_id];
+    try {
+      std::cerr << "vt-tv: Parsing JSON for rank " << rank_id << "\n";
+      auto j = json::parse(rank_json_str);
+      assert(j != nullptr && "Must have valid json");
+
+      std::cerr << "vt-tv: Writing JSON to disk for rank " << rank_id << "\n";
+      std::string filename = fmt::format("/home/pierrelp/Develop/NGA/vt-tv/output_{}.json", rank_id);
+      std::ofstream o(filename);
+      o << std::setw(2) << j << std::endl;
+      o.close();
+
+      std::unordered_map<ElementIDType, ObjectInfo> object_info;
+      std::unordered_map<PhaseType, PhaseWork> phase_info;
+
+      std::cerr << "vt-tv: Reading rank " << rank_id << "\n";
+
+      auto phases = j["phases"];
+
+      if (phases.is_array()) {
+        for (auto const& phase : phases) {
+          auto id = phase["id"];
+          std::cerr << "vt-tv: Reading phase " << id << "\n";
+          auto tasks = phase["tasks"];
+
+          std::unordered_map<ElementIDType, ObjectWork> objects;
+
+          if (tasks.is_array()) {
+            for (auto const& task : tasks) {
+              auto node = task["node"];
+              auto time = task["time"];
+              auto etype = task["entity"]["type"];
+              assert(time.is_number());
+              assert(node.is_number());
+
+              if (etype == "object") {
+                auto object = task["entity"]["id"];
+                auto home = task["entity"]["home"];
+                bool migratable = task["entity"]["migratable"];
+                assert(object.is_number());
+                assert(home.is_number());
+
+                std::cerr << "vt-tv: Processing object " << object << " in phase " << id << "\n";
+                std::vector<UniqueIndexBitType> index_arr;
 
 
+                  if (
+                    task["entity"].find("collection_id") != task["entity"].end() and
+                    task["entity"].find("index") != task["entity"].end()
+                  ) {
+                    auto cid = task["entity"]["collection_id"];
+                    auto idx = task["entity"]["index"];
+                    if (cid.is_number() && idx.is_array()) {
+                      std::vector<UniqueIndexBitType> arr = idx;
+                      index_arr = std::move(arr);
+                    }
+                  }
 
-    //     std::unordered_map<ElementIDType, ObjectInfo> object_info;
-    //     std::unordered_map<PhaseType, PhaseWork> phase_info;
+                  ObjectInfo oi{object, home, migratable, std::move(index_arr)};
 
-    //     std::cerr << "vt-tv: Reading rank " << rank_id << "\n";
+                  if (task["entity"].find("collection_id") != task["entity"].end()) {
+                    oi.setIsCollection(true);
+                    oi.setMetaID(task["entity"]["collection_id"]);
+                  }
 
-    //     auto phases = j["phases"];
+                  if (task["entity"].find("objgroup_id") != task["entity"].end()) {
+                    oi.setIsObjGroup(true);
+                    oi.setMetaID(task["entity"]["objgroup_id"]);
+                  }
 
-    //     if (phases.is_array()) {
-    //       for (auto const& phase : phases) {
-    //         auto id = phase["id"];
-    //         std::cerr << "vt-tv: Reading phase " << id << "\n";
-    //         auto tasks = phase["tasks"];
+                  object_info.try_emplace(object, std::move(oi));
 
-    //         std::unordered_map<ElementIDType, ObjectWork> objects;
+                  std::unordered_map<SubphaseType, TimeType> subphase_loads;
 
-    //         if (tasks.is_array()) {
-    //           for (auto const& task : tasks) {
-    //             auto node = task["node"];
-    //             auto time = task["time"];
-    //             auto etype = task["entity"]["type"];
-    //             assert(time.is_number());
-    //             assert(node.is_number());
+                  if (task.find("subphases") != task.end()) {
+                    auto subphases = task["subphases"];
+                    if (subphases.is_array()) {
+                      for (auto const& s : subphases) {
+                        auto sid = s["id"];
+                        auto stime = s["time"];
 
-    //             if (etype == "object") {
-    //               auto object = task["entity"]["id"];
-    //               auto home = task["entity"]["home"];
-    //               bool migratable = task["entity"]["migratable"];
-    //               assert(object.is_number());
-    //               assert(home.is_number());
+                        assert(sid.is_number());
+                        assert(stime.is_number());
 
-    //               std::vector<UniqueIndexBitType> index_arr;
+                        subphase_loads[sid] = stime;
+                      }
+                    }
+                  }
 
-    //               if (
-    //                 task["entity"].find("collection_id") != task["entity"].end() and
-    //                 task["entity"].find("index") != task["entity"].end()
-    //               ) {
-    //                 auto cid = task["entity"]["collection_id"];
-    //                 auto idx = task["entity"]["index"];
-    //                 if (cid.is_number() && idx.is_array()) {
-    //                   std::vector<UniqueIndexBitType> arr = idx;
-    //                   index_arr = std::move(arr);
-    //                 }
-    //               }
+                  std::unordered_map<std::string, ObjectWork::VariantType> user_defined;
+                  if (task.find("user_defined") != task.end()) {
+                    auto user_defined = task["user_defined"];
+                    if (user_defined.is_object()) {
+                      for (auto& [key, value] : user_defined.items()) {
+                        user_defined[key] = value;
+                      }
+                    }
+                  }
+                  // fmt::print(" Add object {}\n", (ElementIDType)object);
+                  objects.try_emplace(
+                    object,
+                    ObjectWork{
+                      object, time, std::move(subphase_loads), std::move(user_defined)
+                    }
+                  );
+                }
+              }
+            }
 
-    //               ObjectInfo oi{object, home, migratable, std::move(index_arr)};
+            if (phase.find("communications") != phase.end()) {
+              auto communications = phase["communications"];
+              if (communications.is_array()) {
+                for (auto const& comm : communications) {
+                  auto type = comm["type"];
+                  if (type == "SendRecv") {
+                    auto bytes = comm["bytes"];
+                    auto messages = comm["messages"];
 
-    //               if (task["entity"].find("collection_id") != task["entity"].end()) {
-    //                 oi.setIsCollection(true);
-    //                 oi.setMetaID(task["entity"]["collection_id"]);
-    //               }
+                    auto from = comm["from"];
+                    auto to = comm["to"];
 
-    //               if (task["entity"].find("objgroup_id") != task["entity"].end()) {
-    //                 oi.setIsObjGroup(true);
-    //                 oi.setMetaID(task["entity"]["objgroup_id"]);
-    //               }
+                    ElementIDType from_id = from["id"];
+                    ElementIDType to_id = to["id"];
 
-    //               object_info.try_emplace(object, std::move(oi));
+                    assert(bytes.is_number());
+                    assert(from.is_number());
+                    assert(to.is_number());
 
-    //               std::unordered_map<SubphaseType, TimeType> subphase_loads;
+                    // fmt::print(" From: {}, to: {}\n", from_id, to_id);
+                    // Object on this rank sent data
+                    if (objects.find(from_id) != objects.end()) {
+                      objects.at(from_id).addSentCommunications(to_id, bytes);
+                    } else if (objects.find(to_id) != objects.end()) {
+                      objects.at(to_id).addReceivedCommunications(from_id, bytes);
+                    }
+                  }
+                }
+              }
+            }
+            phase_info.try_emplace(id, PhaseWork{id, std::move(objects)});
+          }
+        }
+        fmt::print(" vt-tv: Adding rank {}\n", rank_id);
+        Rank r{rank_id, std::move(phase_info)};
 
-    //               if (task.find("subphases") != task.end()) {
-    //                 auto subphases = task["subphases"];
-    //                 if (subphases.is_array()) {
-    //                   for (auto const& s : subphases) {
-    //                     auto sid = s["id"];
-    //                     auto stime = s["time"];
+        info->addInfo(std::move(object_info), std::move(r));
 
-    //                     assert(sid.is_number());
-    //                     assert(stime.is_number());
-
-    //                     subphase_loads[sid] = stime;
-    //                   }
-    //                 }
-    //               }
-
-    //               std::unordered_map<std::string, ObjectWork::VariantType> user_defined;
-    //               if (task.find("user_defined") != task.end()) {
-    //                 auto user_defined = task["user_defined"];
-    //                 if (user_defined.is_object()) {
-    //                   for (auto& [key, value] : user_defined.items()) {
-    //                     user_defined[key] = value;
-    //                   }
-    //                 }
-    //               }
-    //               // fmt::print(" Add object {}\n", (ElementIDType)object);
-    //               objects.try_emplace(
-    //                 object,
-    //                 ObjectWork{
-    //                   object, time, std::move(subphase_loads), std::move(user_defined)
-    //                 }
-    //               );
-    //             }
-    //           }
-    //         }
-
-    //         auto communications = phase["communications"];
-    //         if (communications.is_array()) {
-    //           for (auto const& comm : communications) {
-    //             auto type = comm["type"];
-    //             if (type == "SendRecv") {
-    //               auto bytes = comm["bytes"];
-    //               auto messages = comm["messages"];
-
-    //               auto from = comm["from"];
-    //               auto to = comm["to"];
-
-    //               ElementIDType from_id = from["id"];
-    //               ElementIDType to_id = to["id"];
-
-    //               assert(bytes.is_number());
-    //               assert(from.is_number());
-    //               assert(to.is_number());
-
-    //               // fmt::print(" From: {}, to: {}\n", from_id, to_id);
-    //               // Object on this rank sent data
-    //               if (objects.find(from_id) != objects.end()) {
-    //                 objects.at(from_id).addSentCommunications(to_id, bytes);
-    //               } else if (objects.find(to_id) != objects.end()) {
-    //                 objects.at(to_id).addReceivedCommunications(from_id, bytes);
-    //               }
-    //             }
-    //           }
-    //         }
-    //         phase_info.try_emplace(id, PhaseWork{id, std::move(objects)});
-    //       }
-    //     }
-    //     fmt::print(" vt-tv: Adding rank {}\n", rank_id);
-    //     Rank r{rank_id, std::move(phase_info)};
-
-    //     info->addInfo(std::move(object_info), std::move(r));
-
-    //   }
-    //   catch(const std::exception& e)
-    //   {
-    //     std::cerr << "vt-tv: Error reading data for rank " << rank_id << ": " << e.what() << '\n';
-    //   }
-    // }
-    // // Instantiate render
-    // Render render(
-    //   qoi_request, continuous_object_qoi, *info, grid_size, object_jitter,
-    //   output_dir, output_file_stem, 1.0, save_meshes, save_pngs, std::numeric_limits<PhaseType>::max()
-    // );
-    // render.generate(font_size, win_size);
+      }
+      catch(const std::exception& e)
+      {
+        std::cerr << "vt-tv: Error reading data for rank " << rank_id << ": " << e.what() << '\n';
+      }
+    }
+    // Instantiate render
+    Render render(
+      qoi_request, continuous_object_qoi, *info, grid_size, object_jitter,
+      output_dir, output_file_stem, 1.0, save_meshes, save_pngs, std::numeric_limits<PhaseType>::max()
+    );
+    render.generate(font_size, win_size);
   } catch (std::exception const& e) {
     std::cout << "vt-tv: Error reading the configuration file: " << e.what() << std::endl;
   }
