@@ -35,9 +35,17 @@ class CMakeBuild(build_ext):
 
     jobs = os.environ.get('VTTV_JOBS', os.cpu_count())
 
+    n_threads = os.environ.get('VTTV_N_THREADS', 1)
+    # check if n_threads is a valid integer
+    try:
+      n_threads = int(n_threads)
+    except ValueError:
+      raise RuntimeError("Environment variable VTTV_N_THREADS must be an integer")
+
     cmake_args = ['-DCMAKE_LIBRARY_OUTPUT_DIRECTORY=' + extdir,
                   '-DPYTHON_EXECUTABLE=' + sys.executable,
-                  '-DVTK_DIR=' + vtk_dir]
+                  '-DVTK_DIR=' + vtk_dir,
+                  '-DVT_TV_NUM_THREADS=' + str(n_threads)]
 
     if sys.platform == "darwin":
       import platform
