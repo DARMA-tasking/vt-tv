@@ -63,6 +63,8 @@
 #include <filesystem>
 #include <map>
 
+#include <omp.h>
+
 namespace vt::tv::bindings::python {
 
 void tv_from_json(const std::vector<std::string>&, const std::string&, uint64_t);
