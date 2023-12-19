@@ -12,4 +12,8 @@ ENV CXX=g++-11
 RUN /bin/bash -c ". /opt/conda/etc/profile.d/conda.sh && conda activate deves && pip install /opt/src/vt-tv"
 
 # test bindings
+
+# create output directory
+RUN mkdir -p /opt/build/vt-tv/test_output
+
 RUN /bin/bash -c ". /opt/conda/etc/profile.d/conda.sh && conda activate deves && pip install PyYAML && python /opt/src/vt-tv/tests/test_bindings.py"

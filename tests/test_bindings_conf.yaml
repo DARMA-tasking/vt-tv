@@ -7,5 +7,5 @@ visualization:
   object_qoi: load
   save_meshes: true
   force_continuous_object_qoi: true
-  output_visualization_dir: ../output
+  output_visualization_dir: /opt/build/vt-tv/test_output
   output_visualization_file_stem: output_file
