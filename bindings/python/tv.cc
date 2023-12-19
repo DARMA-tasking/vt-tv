@@ -94,15 +94,9 @@ void tv_from_json(const std::vector<std::string>& input_json_per_rank_list, cons
     for (int64_t rank_id = 0; rank_id < num_ranks; rank_id++) {
       std::string rank_json_str = input_json_per_rank_list[rank_id];
       try {
-        std::cerr << "vt-tv: Parsing JSON for rank " << rank_id << "\n";
+        // std::cerr << "vt-tv: Parsing JSON for rank " << rank_id << "\n";
         auto j = json::parse(rank_json_str);
         assert(j != nullptr && "Must have valid json");
-
-        // std::cerr << "vt-tv: Writing JSON to disk for rank " << rank_id << "\n";
-        std::string filename = fmt::format("/home/pierrelp/Develop/NGA/vt-tv/output_{}.json", rank_id);
-        std::ofstream o(filename);
-        o << std::setw(2) << j << std::endl;
-        o.close();
 
         std::unordered_map<ElementIDType, ObjectInfo> object_info;
         std::unordered_map<PhaseType, PhaseWork> phase_info;
@@ -234,8 +228,8 @@ void tv_from_json(const std::vector<std::string>& input_json_per_rank_list, cons
               phase_info.try_emplace(id, PhaseWork{id, std::move(objects)});
             }
           }
-          fmt::print(" vt-tv: Adding rank {}\n", rank_id);
-          Rank r{rank_id, std::move(phase_info)};
+          // fmt::print(" vt-tv: Adding rank {}\n", rank_id);
+          Rank r{static_cast<NodeType>(rank_id), std::move(phase_info)};
 
           # pragma omp critical
           {
