@@ -145,7 +145,17 @@ std::unique_ptr<Info> JSONReader::parseFile() {
               }
             }
 
-            ObjectInfo oi{object, home, migratable, std::move(index_arr)};
+            std::unordered_map<std::string, ObjectInfo::VariantType> attributes;
+            if (task["entity"].find("attributes") != task["entity"].end()) {
+              auto attributes = task["entity"]["attributes"];
+              if (attributes.is_object()) {
+                for (auto& [key, value] : attributes.items()) {
+                  attributes[key] = value;
+                }
+              }
+            }
+
+            ObjectInfo oi{object, home, migratable, std::move(index_arr), std::move(attributes)};
 
             if (task["entity"].find("collection_id") != task["entity"].end()) {
               oi.setIsCollection(true);
@@ -233,7 +243,20 @@ std::unique_ptr<Info> JSONReader::parseFile() {
     }
   }
 
-  Rank r{rank_, std::move(phase_info)};
+  std::unordered_map<std::string, Rank::VariantType> attributes;
+  if (j.find("metadata") != j.end()) {
+    auto metadata = j["metadata"];
+    if (metadata.find("attributes") != metadata.end()) {
+      auto attributes = metadata["attributes"];
+      if (attributes.is_object()) {
+        for (auto& [key, value] : attributes.items()) {
+          attributes[key] = value;
+        }
+      }
+    }
+  }
+
+  Rank r{rank_, std::move(phase_info), std::move(attributes)};
 
   std::unordered_map<NodeType, Rank> rank_info;
   rank_info.try_emplace(rank_, std::move(r));
