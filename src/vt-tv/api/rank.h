@@ -54,6 +54,8 @@ namespace vt::tv {
  * \brief All the data for a given \c Rank
  */
 struct Rank {
+  /// Possible QOIs types for a rank
+  using VariantType = std::variant<int, double, std::string>;
 
   Rank() = default;
 
@@ -65,9 +67,11 @@ struct Rank {
    */
   Rank(
     NodeType in_rank,
-    std::unordered_map<PhaseType, PhaseWork> in_phase_info
+    std::unordered_map<PhaseType, PhaseWork> in_phase_info,
+    std::unordered_map<std::string, VariantType> in_attributes = {}
   ) : rank_(in_rank),
-      phase_info_(std::move(in_phase_info))
+      phase_info_(std::move(in_phase_info)),
+      attributes_(std::move(in_attributes))
   { }
 
   /**
@@ -99,6 +103,13 @@ struct Rank {
   double getLoad(PhaseType phase) const { return phase_info_.at(phase).getLoad(); }
 
   /**
+   * \brief Get attribute fields
+   *
+   * \return attribute fields
+   */
+  auto const& getAttributes() const { return attributes_; }
+
+  /**
    * \brief Serializer for data
    *
    * \param[in] s the serializer
@@ -107,6 +118,7 @@ struct Rank {
   void serialize(SerializerT& s) {
     s | rank_;
     s | phase_info_;
+    s | attributes_;
   }
 
 private:
@@ -114,6 +126,8 @@ private:
   NodeType rank_ = 0;
   /// Work for each phase
   std::unordered_map<PhaseType, PhaseWork> phase_info_;
+  /// QOIs to be visualized
+  std::unordered_map<std::string, VariantType> attributes_;
 };
 
 } /* end namespace vt::tv */
