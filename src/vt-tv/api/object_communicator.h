@@ -196,6 +196,32 @@ struct ObjectCommunicator {
   }
 
   /**
+   * \brief Get the total received communication volume for this communicator
+   *
+   * \return total received communication volume
+   */
+  double getTotalReceivedVolume() const {
+    double total = 0.0;
+    for (const auto& [key, value] : this->received_) {
+      total += value;
+    }
+    return total;
+  }
+
+  /**
+   * \brief Get the total sent communication volume for this communicator
+   *
+   * \return total sent communication volume
+   */
+  double getTotalSentVolume() const {
+    double total = 0.0;
+    for (const auto& [key, value] : this->sent_) {
+      total += value;
+    }
+    return total;
+  }
+
+  /**
    * \brief Serializer for data
    *
    * \param[in] s the serializer

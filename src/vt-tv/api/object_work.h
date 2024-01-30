@@ -170,6 +170,24 @@ struct ObjectWork {
   }
 
   /**
+   * \brief Get the total received communication volume for this object
+   *
+   * \return total received communication volume
+   */
+  double getReceivedVolume() const {
+    return communicator_.getTotalReceivedVolume();
+  }
+
+  /**
+   * \brief Get the total sent communication volume for this object
+   *
+   * \return total sent communication volume
+   */
+  double getSentVolume() const {
+    return communicator_.getTotalSentVolume();
+  }
+
+  /**
    * \brief Serializer for data
    *
    * \param[in] s the serializer
