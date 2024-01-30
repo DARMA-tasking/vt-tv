@@ -54,7 +54,7 @@ namespace nlohmann
   template <>
   struct adl_serializer<::vt::tv::QOIVariantTypes> {
     using VariantTypes = ::vt::tv::QOIVariantTypes;
-    
+
     // Produce compilation error if variant types were modified
     static_assert(std::is_same_v<bool, std::variant_alternative_t<0, VariantTypes>>);
     static_assert(std::is_same_v<int, std::variant_alternative_t<1, VariantTypes>>);
