@@ -45,6 +45,7 @@
 #include "vt-tv/utility/json_reader.h"
 #include "vt-tv/utility/decompression_input_container.h"
 #include "vt-tv/utility/input_iterator.h"
+#include "vt-tv/utility/qoi_serializer.h"
 
 #include <nlohmann/json.hpp>
 #include <fmt-vt/core.h>
@@ -145,17 +146,17 @@ std::unique_ptr<Info> JSONReader::parseFile() {
               }
             }
 
-            std::unordered_map<std::string, ObjectInfo::VariantType> attributes;
+            std::unordered_map<std::string, QOIVariantTypes> readed_metadata;
             if (task["entity"].find("attributes") != task["entity"].end()) {
               auto attributes = task["entity"]["attributes"];
               if (attributes.is_object()) {
                 for (auto& [key, value] : attributes.items()) {
-                  attributes[key] = value;
+                  readed_metadata[key] = value;
                 }
               }
             }
 
-            ObjectInfo oi{object, home, migratable, std::move(index_arr), std::move(attributes)};
+            ObjectInfo oi{object, home, migratable, std::move(index_arr), std::move(readed_metadata)};
 
             if (task["entity"].find("collection_id") != task["entity"].end()) {
               oi.setIsCollection(true);
@@ -243,20 +244,20 @@ std::unique_ptr<Info> JSONReader::parseFile() {
     }
   }
 
-  std::unordered_map<std::string, Rank::VariantType> attributes;
+  std::unordered_map<std::string, QOIVariantTypes> readed_metadata;
   if (j.find("metadata") != j.end()) {
     auto metadata = j["metadata"];
     if (metadata.find("attributes") != metadata.end()) {
       auto attributes = metadata["attributes"];
       if (attributes.is_object()) {
         for (auto& [key, value] : attributes.items()) {
-          attributes[key] = value;
+          readed_metadata[key] = value;
         }
       }
     }
   }
 
-  Rank r{rank_, std::move(phase_info), std::move(attributes)};
+  Rank r{rank_, std::move(phase_info), std::move(readed_metadata)};
 
   std::unordered_map<NodeType, Rank> rank_info;
   rank_info.try_emplace(rank_, std::move(r));
