@@ -54,9 +54,6 @@ namespace vt::tv {
  * \brief All the data for a given \c Rank
  */
 struct Rank {
-  /// Possible QOIs types for a rank
-  using VariantType = std::variant<int, double, std::string>;
-
   Rank() = default;
 
   /**
@@ -68,7 +65,7 @@ struct Rank {
   Rank(
     NodeType in_rank,
     std::unordered_map<PhaseType, PhaseWork> in_phase_info,
-    std::unordered_map<std::string, VariantType> in_attributes = {}
+    std::unordered_map<std::string, QOIVariantTypes> in_attributes = {}
   ) : rank_(in_rank),
       phase_info_(std::move(in_phase_info)),
       attributes_(std::move(in_attributes))
@@ -127,7 +124,7 @@ private:
   /// Work for each phase
   std::unordered_map<PhaseType, PhaseWork> phase_info_;
   /// QOIs to be visualized
-  std::unordered_map<std::string, VariantType> attributes_;
+  std::unordered_map<std::string, QOIVariantTypes> attributes_;
 };
 
 } /* end namespace vt::tv */
