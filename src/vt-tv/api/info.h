@@ -418,6 +418,134 @@ struct Info {
     return imbalance;
   }
 
+  /* ------------------- Object QOI getters ------------------- */
+
+  /**
+   * \brief Get the received volume of an object at a given phase
+   *
+   * \param[in] obj_id the object id
+   * \param[in] phase the phase
+   *
+   * \return the received volume
+   */
+   double getObjectReceivedVolume(ElementIDType obj_id, PhaseType phase) const {
+     auto const& objects = this->getPhaseObjects(phase);
+     auto const& obj = objects.at(obj_id);
+     double received_volume = obj.getReceivedVolume();
+     return received_volume;
+   }
+
+   /**
+    * \brief Get the sent volume of an object at a given phase
+    *
+    * \param[in] obj_id the object id
+    * \param[in] phase the phase
+    *
+    * \return the sent volume
+    */
+    double getObjectSentVolume(ElementIDType obj_id, PhaseType phase) const {
+      auto const& objects = this->getPhaseObjects(phase);
+      auto const& obj = objects.at(obj_id);
+      double sent_volume = obj.getSentVolume();
+      return sent_volume;
+    }
+
+  /* ---------------------------------------------------------- */
+
+  /* -------------------- Rank QOI getters -------------------- */
+
+  /**
+   * \brief Get the received volume of a rank at a given phase
+   *
+   * \param[in] rank_id the rank id
+   * \param[in] phase the phase
+   *
+   * \return the received volume
+   */
+  double getRankReceivedVolume(NodeType rank_id, PhaseType phase) const {
+    auto const& rank = this->ranks_.at(rank_id);
+    double received_volume = 0.;
+    auto const& phase_objects = rank.getPhaseWork().at(phase).getObjectWork();
+    for (auto const& [obj_id, obj_work] : phase_objects) {
+      received_volume += obj_work.getReceivedVolume();
+    }
+    return received_volume;
+  }
+
+  /**
+   * \brief Get the sent volume of a rank at a given phase
+   *
+   * \param[in] rank_id the rank id
+   * \param[in] phase the phase
+   *
+   * \return the sent volume
+   */
+  double getRankSentVolume(NodeType rank_id, PhaseType phase) const {
+    auto const& rank = this->ranks_.at(rank_id);
+    double sent_volume = 0.;
+    auto const& phase_objects = rank.getPhaseWork().at(phase).getObjectWork();
+    for (auto const& [obj_id, obj_work] : phase_objects) {
+      sent_volume += obj_work.getSentVolume();
+    }
+    return sent_volume;
+  }
+
+  /**
+   * \brief Get the number of objects at a given phase for a given rank
+   *
+   * \param[in] rank_id the rank
+   * \param[in] phase the phase
+   *
+   * \return the number of objects
+   */
+  uint64_t getRankNumObjects(NodeType rank_id, PhaseType phase) const {
+    auto const& rank = this->ranks_.at(rank_id);
+    uint64_t num_objects = rank.getNumObjects(phase);
+    return num_objects;
+  }
+
+  /**
+   * \brief Get the number of migratable objects at a given phase for a given rank
+   *
+   * \param[in] rank_id the rank
+   * \param[in] phase the phase
+   *
+   * \return the number of migratable objects
+   */
+  uint64_t getRankNumMigratableObjects(NodeType rank_id, PhaseType phase) const {
+    auto const& rank = this->ranks_.at(rank_id);
+    uint64_t num_migratable_objects = 0;
+    auto const& phase_objects = rank.getPhaseWork().at(phase).getObjectWork();
+    for (auto const& [obj_id, _] : phase_objects) {
+      if (object_info_.at(obj_id).isMigratable()) {
+        num_migratable_objects++;
+      }
+    }
+    return num_migratable_objects;
+  }
+
+  /**
+   * \brief Get the total load of migratable objects at a given phase for a given rank
+   *
+   * \param[in] rank_id the rank
+   * \param[in] phase the phase
+   *
+   * \return the total load of migratable objects
+   */
+  double getRankMigratableLoad(NodeType rank_id, PhaseType phase) const {
+    auto const& rank = this->ranks_.at(rank_id);
+    double migratable_load = 0.;
+    auto const& phase_objects = rank.getPhaseWork().at(phase).getObjectWork();
+    for (auto const& [obj_id, obj_work] : phase_objects) {
+      if (object_info_.at(obj_id).isMigratable()) {
+        migratable_load += obj_work.getLoad();
+      }
+    }
+    return migratable_load;
+  }
+
+  /* ---------------------------------------------------------- */
+
   /**
    * \brief Serializer for data
    *

@@ -173,16 +173,19 @@ std::variant<std::pair<double, double>, std::set<double>> Render::computeObjectQ
       // Update maximum object qoi
       if (this->object_qoi_ == "load") {
         oq = obj_work.getLoad();
-
-        if (!continuous_object_qoi_) {
-          oq_all.insert(oq);
-          if(oq_all.size() > 20) {
-            oq_all.clear();
-            continuous_object_qoi_ = true;
-          }
-        }
+      } else if (this->object_qoi_ == "sent_volume") {
+          oq = info_.getObjectSentVolume(obj_id, phase);
+      } else if (this->object_qoi_ == "received_volume") {
+        oq = info_.getObjectReceivedVolume(obj_id, phase);
       } else {
         throw std::runtime_error("Invalid QOI: " + this->object_qoi_);
+      }
+      if (!continuous_object_qoi_) {
+        oq_all.insert(oq);
+        if(oq_all.size() > 20) {
+          oq_all.clear();
+          continuous_object_qoi_ = true;
+        }
       }
       if (oq > oq_max) oq_max = oq;
       if (oq < oq_min) oq_min = oq;
