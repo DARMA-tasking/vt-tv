@@ -54,6 +54,7 @@ namespace vt::tv {
  * \brief All the data for a given \c Rank
  */
 struct Rank {
+
   Rank() = default;
 
   /**

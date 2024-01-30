@@ -57,6 +57,7 @@ namespace vt::tv {
  * ranks or phases.
  */
 struct ObjectInfo {
+
   ObjectInfo() = default;
 
   /**
