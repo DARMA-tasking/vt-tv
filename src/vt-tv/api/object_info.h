@@ -57,9 +57,6 @@ namespace vt::tv {
  * ranks or phases.
  */
 struct ObjectInfo {
-  /// Possible QOIs types for a object info
-  using VariantType = std::variant<int, double, std::string>;
-
   ObjectInfo() = default;
 
   /**
@@ -75,7 +72,7 @@ struct ObjectInfo {
     NodeType in_home,
     bool in_migratable,
     std::vector<UniqueIndexBitType> const& in_index,
-    std::unordered_map<std::string, VariantType> in_attributes = {}
+    std::unordered_map<std::string, QOIVariantTypes> in_attributes = {}
   ) : id_(in_id),
       home_(in_home),
       migratable_(in_migratable),
@@ -199,7 +196,7 @@ private:
   /// Whether it's an collection
   bool is_collection_ = false;
   /// QOIs to be visualized
-  std::unordered_map<std::string, VariantType> attributes_;
+  std::unordered_map<std::string, QOIVariantTypes> attributes_;
 };
 
 } /* end namespace vt::tv */

@@ -45,6 +45,8 @@
 #define INCLUDED_VT_TV_API_TYPES_H
 
 #include <cstdint>
+#include <variant>
+#include <string>
 
 namespace vt::tv {
 
@@ -55,6 +57,9 @@ using SubphaseType = uint16_t;
 using UniqueIndexBitType = uint64_t;
 using TimeType = double;
 using CollectionObjGroupIDType = uint64_t;
+
+/// Possible QOIs types
+using QOIVariantTypes = std::variant<bool, int, double, std::string>;
 
 } /* end namespace vt::tv */
 
