@@ -1,0 +1,82 @@
+{
+    "metadata": {
+        "rank": 0,
+        "shared_node": {
+            "id": 0,
+            "num_nodes": 1,
+            "rank": 0,
+            "size": 4
+        },
+        "type": "LBDatafile",
+        "attributes": {
+            "boolSample": true,
+            "intSample": 1,
+            "doubleSample": 2.213,
+            "stringSample": "abc"
+        }
+    },
+    "phases": [
+        {
+            "communications": [
+                {
+                    "bytes": 112.0,
+                    "from": {
+                        "home": 0,
+                        "id": 0,
+                        "migratable": false,
+                        "type": "object"
+                    },
+                    "messages": 2,
+                    "to": {
+                        "home": 1,
+                        "id": 5,
+                        "migratable": false,
+                        "type": "object"
+                    },
+                    "type": "SendRecv"
+                }
+            ],
+            "id": 0,
+            "tasks": [
+                {
+                    "entity": {
+                        "collection_id": 7,
+                        "home": 0,
+                        "id": 3407875,
+                        "index": [
+                            12
+                        ],
+                        "migratable": true,
+                        "type": "object",
+                        "attributes": {
+                            "boolSample": false,
+                            "intSample": -100,
+                            "doubleSample": 0.0,
+                            "stringSample": ""
+                        }
+                    },
+                    "node": 0,
+                    "resource": "cpu",
+                    "subphases": [
+                        {
+                            "id": 0,
+                            "time": 1.1263000033068238e-05
+                        },
+                        {
+                            "id": 1,
+                            "time": 1.1333999964335817e-05
+                        },
+                        {
+                            "id": 2,
+                            "time": 1.1196000059499056e-05
+                        }
+                    ],
+                    "time": 3.379300005690311e-05,
+                    "user_defined": {
+                        "isSample": 1
+                    }
+                }
+            ]
+        }
+    ]
+}
