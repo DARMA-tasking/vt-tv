@@ -146,17 +146,7 @@ std::unique_ptr<Info> JSONReader::parseFile() {
               }
             }
 
-            std::unordered_map<std::string, QOIVariantTypes> readed_metadata;
-            if (task["entity"].find("attributes") != task["entity"].end()) {
-              auto attributes = task["entity"]["attributes"];
-              if (attributes.is_object()) {
-                for (auto& [key, value] : attributes.items()) {
-                  readed_metadata[key] = value;
-                }
-              }
-            }
-
-            ObjectInfo oi{object, home, migratable, std::move(index_arr), std::move(readed_metadata)};
+            ObjectInfo oi{object, home, migratable, std::move(index_arr)};
 
             if (task["entity"].find("collection_id") != task["entity"].end()) {
               oi.setIsCollection(true);
@@ -196,11 +186,22 @@ std::unique_ptr<Info> JSONReader::parseFile() {
                 }
               }
             }
+
+            std::unordered_map<std::string, QOIVariantTypes> readed_metadata;
+            if (task["entity"].find("attributes") != task["entity"].end()) {
+              auto attributes = task["entity"]["attributes"];
+              if (attributes.is_object()) {
+                for (auto& [key, value] : attributes.items()) {
+                  readed_metadata[key] = value;
+                }
+              }
+            }
+
             // fmt::print(" Add object {}\n", (ElementIDType)object);
             objects.try_emplace(
               object,
               ObjectWork{
-                object, time, std::move(subphase_loads), std::move(user_defined)
+                object, time, std::move(subphase_loads), std::move(user_defined), std::move(readed_metadata)
               }
             );
           }

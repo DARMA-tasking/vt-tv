@@ -77,12 +77,14 @@ struct ObjectWork {
     ElementIDType in_id,
     TimeType in_whole_phase_load,
     std::unordered_map<SubphaseType, TimeType> in_subphase_loads,
-    std::unordered_map<std::string, VariantType> in_user_defined = {}
+    std::unordered_map<std::string, VariantType> in_user_defined = {},
+    std::unordered_map<std::string, QOIVariantTypes> in_attributes = {}
   ) : id_(in_id),
       whole_phase_load_(in_whole_phase_load),
       subphase_loads_(std::move(in_subphase_loads)),
       user_defined_(std::move(in_user_defined)),
-      communicator_(id_)
+      communicator_(id_),
+      attributes_(std::move(in_attributes))
   { }
 
   /**
@@ -112,6 +114,13 @@ struct ObjectWork {
    * \return user-defined fields
    */
   auto const& getUserDefined() const { return user_defined_; }
+
+  /**
+   * \brief Get attribute fields
+   *
+   * \return attribute fields
+   */
+  auto const& getAttributes() const { return attributes_; }
 
   /**
    * \brief set communications for this object
@@ -174,6 +183,7 @@ struct ObjectWork {
     s | subphase_loads_;
     s | user_defined_;
     s | communicator_;
+    s | attributes_;
   }
 
 private:
@@ -185,6 +195,8 @@ private:
   std::unordered_map<SubphaseType, TimeType> subphase_loads_;
   // User-defined field---used to populate the memory block
   std::unordered_map<std::string, VariantType> user_defined_;
+  /// QOIs to be visualized
+  std::unordered_map<std::string, QOIVariantTypes> attributes_;
 
   /// @todo: add communications
   ObjectCommunicator communicator_;

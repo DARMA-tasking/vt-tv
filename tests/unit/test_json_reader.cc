@@ -155,10 +155,10 @@ TEST_F(TestJSONReader, test_json_reader_object_info_attributes) {
   auto& rank_info = info->getRank(rank);
   EXPECT_EQ(rank_info.getRankID(), rank);
 
-  auto const& objects = info->getObjectInfo();
-  auto const& object_info = objects.at(3407875);
+  auto const& objects = info->getRankObjects(0, 0);
+  auto const& object_work = objects.at(3407875);
 
-  auto& object_attributes = object_info.getAttributes();
+  auto& object_attributes = object_work.getAttributes();
   EXPECT_TRUE(object_attributes.find("boolSample") != object_attributes.end());
   EXPECT_EQ(false, std::get<bool>(object_attributes.at("boolSample")));
 

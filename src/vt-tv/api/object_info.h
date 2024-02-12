@@ -72,13 +72,11 @@ struct ObjectInfo {
     ElementIDType in_id,
     NodeType in_home,
     bool in_migratable,
-    std::vector<UniqueIndexBitType> const& in_index,
-    std::unordered_map<std::string, QOIVariantTypes> in_attributes = {}
+    std::vector<UniqueIndexBitType> const& in_index
   ) : id_(in_id),
       home_(in_home),
       migratable_(in_migratable),
-      index_(in_index),
-      attributes_(std::move(in_attributes))
+      index_(in_index)
   { }
 
   /**
@@ -158,13 +156,6 @@ struct ObjectInfo {
   CollectionObjGroupIDType getMetaID() const { return meta_id_; }
 
   /**
-   * \brief Get attribute fields
-   *
-   * \return attribute fields
-   */
-  auto const& getAttributes() const { return attributes_; }
-
-  /**
    * \brief Serializer for data
    *
    * \param[in] s the serializer
@@ -178,7 +169,6 @@ struct ObjectInfo {
     s | meta_id_;
     s | is_objgroup_;
     s | is_collection_;
-    s | attributes_;
   }
 
 private:
@@ -196,8 +186,6 @@ private:
   bool is_objgroup_ = false;
   /// Whether it's an collection
   bool is_collection_ = false;
-  /// QOIs to be visualized
-  std::unordered_map<std::string, QOIVariantTypes> attributes_;
 };
 
 } /* end namespace vt::tv */
