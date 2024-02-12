@@ -174,9 +174,15 @@ std::variant<std::pair<double, double>, std::set<double>> Render::computeObjectQ
       if (this->object_qoi_ == "load") {
         oq = obj_work.getLoad();
       } else if (this->object_qoi_ == "sent_volume") {
-          oq = info_.getObjectSentVolume(obj_id, phase);
+        oq = info_.getObjectSentVolume(obj_id, phase);
       } else if (this->object_qoi_ == "received_volume") {
         oq = info_.getObjectReceivedVolume(obj_id, phase);
+      } else if (this->object_qoi_ == "max_volume") {
+        oq = obj_work.getMaxVolume();
+      } else if (this->object_qoi_ == "total_sent_volume") {
+        oq = obj_work.getSentVolume();
+      } else if (this->object_qoi_ == "total_received_volume") {
+        oq = obj_work.getReceivedVolume();
       } else {
         throw std::runtime_error("Invalid QOI: " + this->object_qoi_);
       }
@@ -273,9 +279,9 @@ std::map<NodeType, std::unordered_map<ElementIDType, ObjectWork>> Render::create
   return object_mapping;
 }
 
-vtkNew<vtkPolyData> Render::createRankMesh_(PhaseType iteration) {
+vtkNew<vtkPolyData> Render::createRankMesh_(PhaseType phase) {
   fmt::print("\n\n");
-  fmt::print("----- Creating rank mesh for phase {} -----\n", iteration);
+  fmt::print("----- Creating rank mesh for phase {} -----\n", phase);
   vtkNew<vtkPoints> rank_points_;
   rank_points_->SetNumberOfPoints(this->n_ranks_);
 
@@ -294,20 +300,36 @@ vtkNew<vtkPolyData> Render::createRankMesh_(PhaseType iteration) {
     // Insert point based on cartesian coordinates
     rank_points_->SetPoint(rank_id, offsets[0], offsets[1], offsets[2]);
 
-    auto objects = this->info_.getRankObjects(rank_id, iteration);
+    auto objects = this->info_.getRankObjects(rank_id, phase);
 
-    double rank_load = 0;
-    for (auto [id, object] : objects) {
-      rank_load += object.getLoad();
+    double rank_qoi_val = 0;
+    for (auto [id, obj_work] : objects) {
+      double oq = 0;
+      if (this->rank_qoi_ == "load") {
+        oq = obj_work.getLoad();
+      } else if (this->rank_qoi_ == "sent_volume") {
+        oq = info_.getObjectSentVolume(obj_work.getID(), phase);
+      } else if (this->rank_qoi_ == "received_volume") {
+        oq = info_.getObjectReceivedVolume(obj_work.getID(), phase);
+      } else if (this->rank_qoi_ == "max_volume") {
+        oq = obj_work.getMaxVolume();
+      } else if (this->rank_qoi_ == "total_sent_volume") {
+        oq = obj_work.getSentVolume();
+      } else if (this->rank_qoi_ == "total_received_volume") {
+        oq = obj_work.getReceivedVolume();
+      } else {
+        throw std::runtime_error("Invalid QOI: " + this->rank_qoi_);
+      }
+      rank_qoi_val += oq;
     }
 
-    rank_arr->SetTuple1(rank_id, rank_load);
+    rank_arr->SetTuple1(rank_id, rank_qoi_val);
   }
 
   vtkNew<vtkPolyData> pd_mesh;
   pd_mesh->SetPoints(rank_points_);
   pd_mesh->GetPointData()->SetScalars(rank_arr);
-  fmt::print("----- Finished creating rank mesh for phase {} -----\n", iteration);
+  fmt::print("----- Finished creating rank mesh for phase {} -----\n", phase);
   return pd_mesh;
 }
 
@@ -429,7 +451,24 @@ vtkNew<vtkPolyData> Render::createObjectMesh_(PhaseType phase) {
       );
 
       // Set object attributes
-      q_arr->SetTuple1(point_index, objectWork.getLoad());
+      ElementIDType obj_id = objectWork.getID();
+      double oq;
+      if (this->object_qoi_ == "load") {
+        oq = objectWork.getLoad();
+      } else if (this->object_qoi_ == "sent_volume") {
+        oq = info_.getObjectSentVolume(obj_id, phase);
+      } else if (this->object_qoi_ == "received_volume") {
+        oq = info_.getObjectReceivedVolume(obj_id, phase);
+      } else if (this->object_qoi_ == "max_volume") {
+        oq = objectWork.getMaxVolume();
+      } else if (this->object_qoi_ == "total_sent_volume") {
+        oq = objectWork.getSentVolume();
+      } else if (this->object_qoi_ == "total_received_volume") {
+        oq = objectWork.getReceivedVolume();
+      } else {
+        throw std::runtime_error("Invalid QOI: " + this->object_qoi_);
+      }
+      q_arr->SetTuple1(point_index, oq);
       b_arr->SetTuple1(point_index, migratable);
 
       auto objSent = objectWork.getSent();
