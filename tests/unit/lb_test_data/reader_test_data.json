@@ -9,7 +9,6 @@
         },
         "type": "LBDatafile",
         "attributes": {
-            "boolSample": true,
             "intSample": 1,
             "doubleSample": 2.213,
             "stringSample": "abc"
@@ -47,13 +46,7 @@
                             12
                         ],
                         "migratable": true,
-                        "type": "object",
-                        "attributes": {
-                            "boolSample": false,
-                            "intSample": -100,
-                            "doubleSample": 0.0,
-                            "stringSample": ""
-                        }
+                        "type": "object"
                     },
                     "node": 0,
                     "resource": "cpu",
@@ -74,9 +67,17 @@
                     "time": 3.379300005690311e-05,
                     "user_defined": {
                         "isSample": 1
+                    },
+                    "attributes": {
+                        "intSample": -100,
+                        "doubleSample": 0.0,
+                        "stringSample": ""
                     }
                 }
-            ]
+            ],
+            "user_defined": {
+                "isSample": 1
+            }
         }
     ]
 }
