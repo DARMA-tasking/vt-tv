@@ -130,9 +130,6 @@ TEST_F(TestJSONReader, test_json_reader_metadata_attributes) {
   EXPECT_EQ(rank_info.getRankID(), rank);
 
   auto& rank_attributes = rank_info.getAttributes();
-  EXPECT_TRUE(rank_attributes.find("boolSample") != rank_attributes.end());
-  EXPECT_EQ(true, std::get<bool>(rank_attributes.at("boolSample")));
-
   EXPECT_TRUE(rank_attributes.find("intSample") != rank_attributes.end());
   EXPECT_EQ(1, std::get<int>(rank_attributes.at("intSample")));
 
@@ -159,9 +156,6 @@ TEST_F(TestJSONReader, test_json_reader_object_info_attributes) {
   auto const& object_work = objects.at(3407875);
 
   auto& object_attributes = object_work.getAttributes();
-  EXPECT_TRUE(object_attributes.find("boolSample") != object_attributes.end());
-  EXPECT_EQ(false, std::get<bool>(object_attributes.at("boolSample")));
-
   EXPECT_TRUE(object_attributes.find("intSample") != object_attributes.end());
   EXPECT_EQ(-100, std::get<int>(object_attributes.at("intSample")));
 
@@ -174,12 +168,6 @@ TEST_F(TestJSONReader, test_json_reader_object_info_attributes) {
 
 TEST_F(TestJSONReader, test_json_reader_qoi_serializer) {
   using json = nlohmann::json;
-
-  // bool in json
-  json bool_json = true;
-  QOIVariantTypes bool_variant = bool_json.get<QOIVariantTypes>();
-  EXPECT_TRUE(std::holds_alternative<bool>(bool_variant));
-  EXPECT_EQ(true, std::get<bool>(bool_variant));
 
   // int in json
   json int_json = 1;

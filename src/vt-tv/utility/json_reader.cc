@@ -188,8 +188,8 @@ std::unique_ptr<Info> JSONReader::parseFile() {
             }
 
             std::unordered_map<std::string, QOIVariantTypes> readed_metadata;
-            if (task["entity"].find("attributes") != task["entity"].end()) {
-              auto attributes = task["entity"]["attributes"];
+            if (task.find("attributes") != task.end()) {
+              auto attributes = task["attributes"];
               if (attributes.is_object()) {
                 for (auto& [key, value] : attributes.items()) {
                   readed_metadata[key] = value;

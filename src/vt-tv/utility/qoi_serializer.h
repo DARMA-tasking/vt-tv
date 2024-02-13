@@ -56,10 +56,9 @@ namespace nlohmann
     using VariantTypes = ::vt::tv::QOIVariantTypes;
 
     // Produce compilation error if variant types were modified
-    static_assert(std::is_same_v<bool, std::variant_alternative_t<0, VariantTypes>>);
-    static_assert(std::is_same_v<int, std::variant_alternative_t<1, VariantTypes>>);
-    static_assert(std::is_same_v<double, std::variant_alternative_t<2, VariantTypes>>);
-    static_assert(std::is_same_v<std::string, std::variant_alternative_t<3, VariantTypes>>);
+    static_assert(std::is_same_v<int, std::variant_alternative_t<0, VariantTypes>>);
+    static_assert(std::is_same_v<double, std::variant_alternative_t<1, VariantTypes>>);
+    static_assert(std::is_same_v<std::string, std::variant_alternative_t<2, VariantTypes>>);
 
     static void to_json(json &j, const VariantTypes &value) {
       std::visit([&](auto const &arg)
@@ -68,9 +67,7 @@ namespace nlohmann
     }
 
     static void from_json(const json &j, VariantTypes &value) {
-      if (j.is_boolean()) {
-        value = j.get<bool>();
-      } else if (j.is_number_integer()) {
+      if (j.is_number_integer()) {
         value = j.get<int>();
       } else if (j.is_number_float()) {
         value = j.get<double>();
