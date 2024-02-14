@@ -244,7 +244,7 @@ std::pair<double, double> Render::computeRankQoiRange_() {
       );
       rqmin_for_phase = prmin->second;
     } else {
-      throw std::runtime_error("Invalid QOI: " + this->object_qoi_);
+      throw std::runtime_error("Invalid QOI: " + this->rank_qoi_);
     }
     if (rqmax_for_phase > rq_max) rq_max = rqmax_for_phase;
     if (rqmin_for_phase < rq_min) rq_min = rqmin_for_phase;
