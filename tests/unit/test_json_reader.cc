@@ -188,4 +188,25 @@ TEST_F(TestJSONReader, test_json_reader_qoi_serializer) {
   EXPECT_EQ("some data", std::get<std::string>(string_variant));
 }
 
+TEST_F(TestJSONReader, test_json_reader_object_work_user_defined) {
+  std::filesystem::path p = std::filesystem::path(SRC_DIR) / "tests/unit/lb_test_data" ;
+  std::string path = std::filesystem::absolute(p).string();
+
+  NodeType rank = 0;
+  utility::JSONReader reader{rank, path + "/reader_test_data.json"};
+
+  reader.readFile();
+  auto info = reader.parseFile();
+  auto& rank_info = info->getRank(rank);
+  EXPECT_EQ(rank_info.getRankID(), rank);
+
+  auto const& objects = info->getRankObjects(0, 0);
+  auto const& object_info = objects.at(3407875);
+
+  auto& user_defined = object_info.getUserDefined();
+  EXPECT_FALSE(user_defined.empty());
+  EXPECT_TRUE(user_defined.find("isSample") != user_defined.end());
+  EXPECT_EQ(1, std::get<int>(user_defined.at("isSample")));
+}
+
 } // end namespace vt::tv::tests::unit
