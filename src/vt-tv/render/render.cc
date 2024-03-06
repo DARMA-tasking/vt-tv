@@ -155,7 +155,6 @@ Render::Render(
 
 double Render::computeMaxObjectVolume_() {
   double ov_max = this->info_.getMaxVolume();
-  this->object_volume_max_ = ov_max;
   return ov_max;
 }
 
@@ -470,6 +469,9 @@ vtkNew<vtkPolyData> Render::createObjectMesh_(PhaseType phase) {
       }
       q_arr->SetTuple1(point_index, oq);
       b_arr->SetTuple1(point_index, migratable);
+      if (this->object_qoi_ != "load") {
+        l_arr->SetTuple1(point_index, objectWork.getLoad());
+      }
 
       auto objSent = objectWork.getSent();
       for (auto [k, v] : objSent) {
@@ -527,6 +529,9 @@ vtkNew<vtkPolyData> Render::createObjectMesh_(PhaseType phase) {
   pd_mesh->SetLines(lines);
   pd_mesh->GetPointData()->SetScalars(q_arr);
   pd_mesh->GetPointData()->AddArray(b_arr);
+  if (this->object_qoi_ != "load") {
+    pd_mesh->GetPointData()->AddArray(l_arr);
+  }
   pd_mesh->GetCellData()->SetScalars(lineValuesArray);
 
   fmt::print("----- Finished creating object mesh -----\n");
