@@ -223,8 +223,8 @@ std::unique_ptr<Info> JSONReader::parseFile() {
             ElementIDType to_id = to["id"];
 
             assert(bytes.is_number());
-            assert(from.is_number());
-            assert(to.is_number());
+            // assert(from.is_number());
+            // assert(to.is_number());
 
             // fmt::print(" From: {}, to: {}\n", from_id, to_id);
 
