@@ -170,30 +170,32 @@ struct ObjectCommunicator {
     }
   }
 
-  /**
+   /**
    * \brief maximum bytes received or sent at this communicator
    */
   double getMaxVolume() const {
-    // Search for the maximum value in received
-    auto max_recv_it = std::max_element(
-      this->received_.begin(),
-      this->received_.end(),
-      [](const std::multimap<ElementIDType, double>::value_type& a, const std::multimap<ElementIDType, double>::value_type& b) {
-          return a.second < b.second;
-      }
-    );
+    // Search for the maximum value in received and sent (0. if sets are empty)
+    double max_recv = !this->received_.empty() ?
+                      std::max_element(
+                          this->received_.begin(),
+                          this->received_.end(),
+                          [](const auto& a, const auto& b) {
+                              return a.second < b.second;
+                          })->second :
+                      0.0;
 
-    // Search for the maximum value in sent
-    auto max_sent_it = std::max_element(
-      this->sent_.begin(),
-      this->sent_.end(),
-      [](const std::multimap<ElementIDType, double>::value_type& a, const std::multimap<ElementIDType, double>::value_type& b) {
-          return a.second < b.second;
-      }
-    );
+    double max_sent = !this->sent_.empty() ?
+                      std::max_element(
+                          this->sent_.begin(),
+                          this->sent_.end(),
+                          [](const auto& a, const auto& b) {
+                              return a.second < b.second;
+                      })->second :
+                      0.0;
 
-    return std::max(max_recv_it->second, max_sent_it->second);
-  }
+    // Return the max
+    return std::max(max_recv, max_sent);
+}
 
   /**
    * \brief Get the total received communication volume for this communicator

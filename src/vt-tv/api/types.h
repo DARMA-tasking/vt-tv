@@ -57,6 +57,7 @@ using SubphaseType = uint16_t;
 using UniqueIndexBitType = uint64_t;
 using TimeType = double;
 using CollectionObjGroupIDType = uint64_t;
+using QoiType = double; // temporary
 
 /// Possible QOIs types
 using QOIVariantTypes = std::variant<int, double, std::string>;
