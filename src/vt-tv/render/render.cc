@@ -170,21 +170,7 @@ std::variant<std::pair<double, double>, std::set<double>> Render::computeObjectQ
     auto const& objects = this->info_.getPhaseObjects(phase);
     for (auto const& [obj_id, obj_work] : objects) {
       // Update maximum object qoi
-      if (this->object_qoi_ == "load") {
-        oq = obj_work.getLoad();
-      } else if (this->object_qoi_ == "sent_volume") {
-        oq = info_.getObjectSentVolume(obj_id, phase);
-      } else if (this->object_qoi_ == "received_volume") {
-        oq = info_.getObjectReceivedVolume(obj_id, phase);
-      } else if (this->object_qoi_ == "max_volume") {
-        oq = obj_work.getMaxVolume();
-      } else if (this->object_qoi_ == "total_sent_volume") {
-        oq = obj_work.getSentVolume();
-      } else if (this->object_qoi_ == "total_received_volume") {
-        oq = obj_work.getReceivedVolume();
-      } else {
-        throw std::runtime_error("Invalid QOI: " + this->object_qoi_);
-      }
+      oq = info_.getObjectQoi(obj_id, phase, this->object_qoi_);
       if (!continuous_object_qoi_) {
         oq_all.insert(oq);
         if(oq_all.size() > 20) {
@@ -218,33 +204,29 @@ std::pair<double, double> Render::computeRankQoiRange_() {
 
   // Iterate over all ranks
   for (uint64_t rank_id = 0; rank_id < this->n_ranks_; rank_id++) {
-    // Update maximum rank qoi
-    if (this->rank_qoi_ == "load") {
-      // Get rank loads per phase
-      std::unordered_map<PhaseType, double> rank_loads_map = this->info_.getAllLoadsAtRank(rank_id);
+    std::unordered_map<PhaseType, double> rank_qoi_map;
+    rank_qoi_map = this->info_.getAllQOIAtRank(rank_id, this->rank_qoi_);
 
-      // Get max load for this rank across all phases
-      auto prmax = std::max_element
-      (
-        std::begin(rank_loads_map), std::end(rank_loads_map),
-        [] (const std::pair<PhaseType, double>& p1, const std::pair<PhaseType, double>& p2) {
-          return p1.second < p2.second;
-        }
-      );
-      rqmax_for_phase = prmax->second;
+    // Get max qoi for this rank across all phases
+    auto prmax = std::max_element
+    (
+      std::begin(rank_qoi_map), std::end(rank_qoi_map),
+      [] (const std::pair<PhaseType, double>& p1, const std::pair<PhaseType, double>& p2) {
+        return p1.second < p2.second;
+      }
+    );
+    rqmax_for_phase = prmax->second;
 
-      // Get min load for this rank across all phases
-      auto prmin = std::max_element
-      (
-        std::begin(rank_loads_map), std::end(rank_loads_map),
-        [] (const std::pair<PhaseType, double>& p1, const std::pair<PhaseType, double>& p2) {
-          return p1.second > p2.second;
-        }
-      );
-      rqmin_for_phase = prmin->second;
-    } else {
-      throw std::runtime_error("Invalid QOI: " + this->rank_qoi_);
-    }
+    // Get min qoi for this rank across all phases
+    auto prmin = std::max_element
+    (
+      std::begin(rank_qoi_map), std::end(rank_qoi_map),
+      [] (const std::pair<PhaseType, double>& p1, const std::pair<PhaseType, double>& p2) {
+        return p1.second > p2.second;
+      }
+    );
+    rqmin_for_phase = prmin->second;
+
     if (rqmax_for_phase > rq_max) rq_max = rqmax_for_phase;
     if (rqmin_for_phase < rq_min) rq_min = rqmin_for_phase;
   }
@@ -256,17 +238,11 @@ std::pair<double, double> Render::computeRankQoiRange_() {
 double Render::computeRankQoiAverage_(PhaseType phase, std::string qoi) {
   // Initialize rank QOI range attributes
   double rq_sum = 0.0;
-
-  if (qoi == "load"){
-    auto rank_loads_at_phase = this->info_.getAllRankLoadsAtPhase(phase);
-    for (auto [rank, rank_load] : rank_loads_at_phase){
-      rq_sum += rank_load;
-    }
-    return rq_sum / rank_loads_at_phase.size();
+  auto rank_loads_at_phase = this->info_.getAllRankQOIAtPhase(phase, qoi);
+  for (auto [rank, rank_load] : rank_loads_at_phase){
+    rq_sum += rank_load;
   }
-  else{
-    throw std::runtime_error("Invalid QOI: " + qoi);
-  }
+  return rq_sum / rank_loads_at_phase.size();
 }
 
 std::map<NodeType, std::unordered_map<ElementIDType, ObjectWork>> Render::createObjectMapping_(PhaseType phase) {
@@ -301,27 +277,7 @@ vtkNew<vtkPolyData> Render::createRankMesh_(PhaseType phase) {
 
     auto objects = this->info_.getRankObjects(rank_id, phase);
 
-    double rank_qoi_val = 0;
-    for (auto [id, obj_work] : objects) {
-      double oq = 0;
-      if (this->rank_qoi_ == "load") {
-        oq = obj_work.getLoad();
-      } else if (this->rank_qoi_ == "sent_volume") {
-        oq = info_.getObjectSentVolume(obj_work.getID(), phase);
-      } else if (this->rank_qoi_ == "received_volume") {
-        oq = info_.getObjectReceivedVolume(obj_work.getID(), phase);
-      } else if (this->rank_qoi_ == "max_volume") {
-        oq = obj_work.getMaxVolume();
-      } else if (this->rank_qoi_ == "total_sent_volume") {
-        oq = obj_work.getSentVolume();
-      } else if (this->rank_qoi_ == "total_received_volume") {
-        oq = obj_work.getReceivedVolume();
-      } else {
-        throw std::runtime_error("Invalid QOI: " + this->rank_qoi_);
-      }
-      rank_qoi_val += oq;
-    }
-
+    auto rank_qoi_val = this->info_.getRankQOIAtPhase(rank_id, phase, this->rank_qoi_);
     rank_arr->SetTuple1(rank_id, rank_qoi_val);
   }
 
@@ -451,22 +407,7 @@ vtkNew<vtkPolyData> Render::createObjectMesh_(PhaseType phase) {
 
       // Set object attributes
       ElementIDType obj_id = objectWork.getID();
-      double oq;
-      if (this->object_qoi_ == "load") {
-        oq = objectWork.getLoad();
-      } else if (this->object_qoi_ == "sent_volume") {
-        oq = info_.getObjectSentVolume(obj_id, phase);
-      } else if (this->object_qoi_ == "received_volume") {
-        oq = info_.getObjectReceivedVolume(obj_id, phase);
-      } else if (this->object_qoi_ == "max_volume") {
-        oq = objectWork.getMaxVolume();
-      } else if (this->object_qoi_ == "total_sent_volume") {
-        oq = objectWork.getSentVolume();
-      } else if (this->object_qoi_ == "total_received_volume") {
-        oq = objectWork.getReceivedVolume();
-      } else {
-        throw std::runtime_error("Invalid QOI: " + this->object_qoi_);
-      }
+      auto oq = this->info_.getObjectQoi(obj_id, phase, this->object_qoi_);
       q_arr->SetTuple1(point_index, oq);
       b_arr->SetTuple1(point_index, migratable);
       if (this->object_qoi_ != "load") {

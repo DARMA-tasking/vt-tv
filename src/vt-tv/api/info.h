@@ -141,45 +141,133 @@ struct Info {
     return n_phases;
   }
 
-  /**
-   * \brief Get load of a given rank
-   *
-   * \param[in] rank the rank
-   *
-   * \return the rank load
-   */
-  double getRankLoad(NodeType rank, PhaseType phase) const { return ranks_.at(rank).getLoad(phase); }
+  /////////////////////////////////////////////////////////////////////////////////////////
+  ////////////                                                                 ////////////
+  ////////////                     GENERALIZED QOI GETTERS                     ////////////
+  ////////////                                                                 ////////////
+  /////////////////////////////////////////////////////////////////////////////////////////
 
-  /**
-   * \brief Get loads of all ranks at given phase
-   *
-   * \return a map of loads per rank
-   */
-  std::unordered_map<NodeType, double> getAllRankLoadsAtPhase(PhaseType phase) const {
-    std::unordered_map<NodeType, double> rank_loads;
+  /*  -----------------------------------  Getters  -----------------------------------  */
 
-    for (auto const& [rank_id, rank] : this->ranks_) {
-      rank_loads.insert(std::make_pair(rank_id, rank.getLoad(phase)));
+ /**
+   * \brief Returns a getter to a specified rank QOI
+   */
+  std::function<QoiType(Rank, PhaseType)> getRankQOIGetter(std::string rank_qoi) const {
+    std::function<QoiType(Rank, PhaseType)> qoi_getter;
+    if (rank_qoi == "load") {
+        qoi_getter = [&](Rank rank, PhaseType phase) {
+            return getRankLoad(rank, phase);
+        };
+    } else if (rank_qoi == "received_volume") {
+      qoi_getter = [&](Rank rank, PhaseType phase) {
+          return getRankReceivedVolume(rank, phase);
+      };
+    } else if (rank_qoi == "sent_volume") {
+      qoi_getter = [&](Rank rank, PhaseType phase) {
+          return getRankSentVolume(rank, phase);
+      };
+    } else if (rank_qoi == "number_of_objects") {
+      qoi_getter = [&](Rank rank, PhaseType phase) {
+          return getRankNumObjects(rank, phase);
+      };
+    } else if (rank_qoi == "number_of_migratable_objects") {
+      qoi_getter = [&](Rank rank, PhaseType phase) {
+          return getRankNumMigratableObjects(rank, phase);
+      };
+    } else if (rank_qoi == "migratable_load") {
+      qoi_getter = [&](Rank rank, PhaseType phase) {
+          return getRankMigratableLoad(rank, phase);
+      };
+    } else {
+      throw std::runtime_error("Invalid Rank QOI: " + rank_qoi);
     }
-
-    return rank_loads;
+    return qoi_getter;
   }
 
-  /**
-   * \brief Get loads of a given rank across all phases
-   *
-   * \return a map of loads per rank
+ /**
+   * \brief Returns a getter to a specified object QOI
    */
-  std::unordered_map<PhaseType, double> getAllLoadsAtRank(NodeType rank_id) const {
-    std::unordered_map<PhaseType, double> rank_loads;
+  std::function<QoiType(ObjectWork)> getObjectQoiGetter(std::string object_qoi) const {
+    std::function<QoiType(ObjectWork)> qoi_getter;
+    if (object_qoi == "load") {
+        qoi_getter = [&](ObjectWork obj) {
+            return getObjectLoad(obj);
+        };
+    } else if (object_qoi == "received_volume") {
+      qoi_getter = [&](ObjectWork obj) {
+          return getObjectReceivedVolume(obj);
+      };
+    } else if (object_qoi == "sent_volume") {
+      qoi_getter = [&](ObjectWork obj) {
+          return getObjectSentVolume(obj);
+      };
+    } else if (object_qoi == "max_volume") {
+      qoi_getter = [&](ObjectWork obj) {
+          return getObjectMaxVolume(obj);
+      };
+    } else {
+      throw std::runtime_error("Invalid Object QOI: " + object_qoi);
+    }
+    return qoi_getter;
+  }
 
+  /*  ---------------------------------  Rank Getters  ---------------------------------  */
+
+ /**
+   * \brief Get QOI of a given rank at a given phase
+   *
+   * \return a map of QOI per rank
+   */
+  QoiType getRankQOIAtPhase(ElementIDType rank_id, PhaseType phase, std::string rank_qoi) const {
+    auto qoi_getter = getRankQOIGetter(rank_qoi);
+    auto const& rank = this->ranks_.at(rank_id);
+    return qoi_getter(rank, phase);
+  }
+
+ /**
+   * \brief Get QOI of a given rank across all phases
+   *
+   * \return a map of QOI per rank
+   */
+  std::unordered_map<PhaseType, QoiType> getAllQOIAtRank(ElementIDType rank_id, std::string rank_qoi) const {
+    std::unordered_map<PhaseType, QoiType> rank_qois;
+    auto qoi_getter = getRankQOIGetter(rank_qoi);
     auto const& rank = this->ranks_.at(rank_id);
     auto const& phase_work = rank.getPhaseWork();
     for (auto const& [phase, _] : phase_work) {
-      rank_loads.insert(std::make_pair(phase, rank.getLoad(phase)));
+      rank_qois.insert(std::make_pair(phase, qoi_getter(rank, phase)));
     }
 
-    return rank_loads;
+    return rank_qois;
+  }
+
+  /**
+   * \brief Get QOI of all ranks at given phase
+   *
+   * \return a map of QOI per rank
+   */
+  std::unordered_map<ElementIDType, QoiType> getAllRankQOIAtPhase(PhaseType phase, std::string rank_qoi) const {
+    std::unordered_map<ElementIDType, QoiType> rank_qois;
+    auto qoi_getter = getRankQOIGetter(rank_qoi);
+    for (auto const& [rank_id, rank] : this->ranks_) {
+      rank_qois.insert(std::make_pair(rank_id, qoi_getter(rank, phase)));
+    }
+
+    return rank_qois;
+  }
+
+  /*  --------------------------------  Object Getters  --------------------------------  */
+
+  /**
+   * \brief Get a specified object's QOI at a given phase
+   *
+   * \return the object QOI
+   */
+  QoiType getObjectQoi(ElementIDType obj_id, PhaseType phase, std::string obj_qoi) const {
+    auto qoi_getter = getObjectQoiGetter(obj_qoi);
+    auto const& objects = this->getPhaseObjects(phase);
+    auto const& obj = objects.at(obj_id);
+    return qoi_getter(obj);
   }
 
   /**
@@ -190,7 +278,7 @@ struct Info {
    *
    * \return the objects
    */
-  std::unordered_map<ElementIDType, ObjectWork> getRankObjects(NodeType rank_id, PhaseType phase) const {
+  std::unordered_map<ElementIDType, ObjectWork> getRankObjects(ElementIDType rank_id, PhaseType phase) const {
     std::unordered_map<ElementIDType, ObjectWork> objects;
 
     // Get Rank info for specified rank
@@ -421,50 +509,73 @@ struct Info {
   /* ------------------- Object QOI getters ------------------- */
 
   /**
+   * \brief Get the load of an object at a given phase
+   *
+   * \param[in] object the current object
+   *
+   * \return the load
+   */
+  QoiType getObjectLoad(ObjectWork object) const {
+     return object.getLoad();
+  }
+
+  /**
    * \brief Get the received volume of an object at a given phase
    *
-   * \param[in] obj_id the object id
-   * \param[in] phase the phase
+   * \param[in] object the current object
    *
    * \return the received volume
    */
-   double getObjectReceivedVolume(ElementIDType obj_id, PhaseType phase) const {
-     auto const& objects = this->getPhaseObjects(phase);
-     auto const& obj = objects.at(obj_id);
-     double received_volume = obj.getReceivedVolume();
-     return received_volume;
+   QoiType getObjectReceivedVolume(ObjectWork object) const {
+     return object.getReceivedVolume();
    }
 
    /**
     * \brief Get the sent volume of an object at a given phase
     *
-    * \param[in] obj_id the object id
-    * \param[in] phase the phase
+    * \param[in] object the current object
     *
     * \return the sent volume
     */
-    double getObjectSentVolume(ElementIDType obj_id, PhaseType phase) const {
-      auto const& objects = this->getPhaseObjects(phase);
-      auto const& obj = objects.at(obj_id);
-      double sent_volume = obj.getSentVolume();
-      return sent_volume;
+    QoiType getObjectSentVolume(ObjectWork object) const {
+      return object.getSentVolume();
+    }
+
+   /**
+    * \brief Get the max volume of an object at a given phase
+    *
+    * \param[in] object the current object
+    *
+    * \return the max volume
+    */
+    QoiType getObjectMaxVolume(ObjectWork object) const {
+      return object.getMaxVolume();
     }
 
   /* ---------------------------------------------------------- */
 
   /* -------------------- Rank QOI getters -------------------- */
 
+ /**
+   * \brief Get load of a given rank
+   *
+   * \param[in] rank the rank
+   *
+   * \return the rank load
+   */
+  QoiType getRankLoad(Rank rank, PhaseType phase) const { return rank.getLoad(phase); }
+
   /**
    * \brief Get the received volume of a rank at a given phase
    *
-   * \param[in] rank_id the rank id
+   * \param[in] rank the rank
    * \param[in] phase the phase
    *
    * \return the received volume
    */
-  double getRankReceivedVolume(NodeType rank_id, PhaseType phase) const {
-    auto const& rank = this->ranks_.at(rank_id);
-    double received_volume = 0.;
+  QoiType getRankReceivedVolume(Rank rank, PhaseType phase) const {
+
+    QoiType received_volume = 0.;
     auto const& phase_objects = rank.getPhaseWork().at(phase).getObjectWork();
     for (auto const& [obj_id, obj_work] : phase_objects) {
       received_volume += obj_work.getReceivedVolume();
@@ -475,14 +586,13 @@ struct Info {
   /**
    * \brief Get the sent volume of a rank at a given phase
    *
-   * \param[in] rank_id the rank id
+   * \param[in] rank the rank
    * \param[in] phase the phase
    *
    * \return the sent volume
    */
-  double getRankSentVolume(NodeType rank_id, PhaseType phase) const {
-    auto const& rank = this->ranks_.at(rank_id);
-    double sent_volume = 0.;
+  QoiType getRankSentVolume(Rank rank, PhaseType phase) const {
+    QoiType sent_volume = 0.;
     auto const& phase_objects = rank.getPhaseWork().at(phase).getObjectWork();
     for (auto const& [obj_id, obj_work] : phase_objects) {
       sent_volume += obj_work.getSentVolume();
@@ -493,28 +603,26 @@ struct Info {
   /**
    * \brief Get the number of objects at a given phase for a given rank
    *
-   * \param[in] rank_id the rank
+   * \param[in] rank the rank
    * \param[in] phase the phase
    *
    * \return the number of objects
    */
-  uint64_t getRankNumObjects(NodeType rank_id, PhaseType phase) const {
-    auto const& rank = this->ranks_.at(rank_id);
-    uint64_t num_objects = rank.getNumObjects(phase);
+  QoiType getRankNumObjects(Rank rank, PhaseType phase) const {
+    QoiType num_objects = rank.getNumObjects(phase);
     return num_objects;
   }
 
   /**
    * \brief Get the number of migratable objects at a given phase for a given rank
    *
-   * \param[in] rank_id the rank
+   * \param[in] rank the rank
    * \param[in] phase the phase
    *
    * \return the number of migratable objects
    */
-  uint64_t getRankNumMigratableObjects(NodeType rank_id, PhaseType phase) const {
-    auto const& rank = this->ranks_.at(rank_id);
-    uint64_t num_migratable_objects = 0;
+  QoiType getRankNumMigratableObjects(Rank rank, PhaseType phase) const {
+    QoiType num_migratable_objects = 0;
     auto const& phase_objects = rank.getPhaseWork().at(phase).getObjectWork();
     for (auto const& [obj_id, _] : phase_objects) {
       if (object_info_.at(obj_id).isMigratable()) {
@@ -527,14 +635,13 @@ struct Info {
   /**
    * \brief Get the total load of migratable objects at a given phase for a given rank
    *
-   * \param[in] rank_id the rank
+   * \param[in] rank the rank
    * \param[in] phase the phase
    *
    * \return the total load of migratable objects
    */
-  double getRankMigratableLoad(NodeType rank_id, PhaseType phase) const {
-    auto const& rank = this->ranks_.at(rank_id);
-    double migratable_load = 0.;
+  QoiType getRankMigratableLoad(Rank rank, PhaseType phase) const {
+    QoiType migratable_load = 0.;
     auto const& phase_objects = rank.getPhaseWork().at(phase).getObjectWork();
     for (auto const& [obj_id, obj_work] : phase_objects) {
       if (object_info_.at(obj_id).isMigratable()) {
