@@ -101,6 +101,13 @@ struct ObjectInfo {
   bool isMigratable() const { return migratable_; }
 
   /**
+   * \brief Get whether the object is sentinel
+   *
+   * \return whether it is sentinel
+   */
+  bool isSentinel() const { return !migratable_; }
+
+  /**
    * \brief Get the logical index for the task (if one exists)
    *
    * \note For singleton objects this may be empty.
