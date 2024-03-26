@@ -2,7 +2,7 @@
 //@HEADER
 // *****************************************************************************
 //
-//                                 types.h
+//                            qoi_serializer.h
 //             DARMA/vt-tv => Virtual Transport -- Task Visualizer
 //
 // Copyright 2019 National Technology & Engineering Solutions of Sandia, LLC
@@ -41,26 +41,42 @@
 //@HEADER
 */
 
-#if !defined INCLUDED_VT_TV_API_TYPES_H
-#define INCLUDED_VT_TV_API_TYPES_H
+#if !defined INCLUDED_VT_TV_API_QOI_SERIALIZER_H
+#define INCLUDED_VT_TV_API_QOI_SERIALIZER_H
 
-#include <cstdint>
+#include "vt-tv/api/types.h"
+
+#include <nlohmann/json.hpp>
 #include <variant>
-#include <string>
 
-namespace vt::tv {
+namespace nlohmann
+{
+  template <>
+  struct adl_serializer<::vt::tv::QOIVariantTypes> {
+    using VariantTypes = ::vt::tv::QOIVariantTypes;
 
-using PhaseType = uint64_t;
-using NodeType = int16_t;
-using ElementIDType = uint64_t;
-using SubphaseType = uint16_t;
-using UniqueIndexBitType = uint64_t;
-using TimeType = double;
-using CollectionObjGroupIDType = uint64_t;
+    // Produce compilation error if variant types were modified
+    static_assert(std::is_same_v<int, std::variant_alternative_t<0, VariantTypes>>);
+    static_assert(std::is_same_v<double, std::variant_alternative_t<1, VariantTypes>>);
+    static_assert(std::is_same_v<std::string, std::variant_alternative_t<2, VariantTypes>>);
 
-/// Possible QOIs types
-using QOIVariantTypes = std::variant<int, double, std::string>;
+    static void to_json(json &j, const VariantTypes &value) {
+      std::visit([&](auto const &arg)
+                 { j = arg; },
+                 value);
+    }
 
-} /* end namespace vt::tv */
+    static void from_json(const json &j, VariantTypes &value) {
+      if (j.is_number_integer()) {
+        value = j.get<int>();
+      } else if (j.is_number_float()) {
+        value = j.get<double>();
+      } else if (j.is_string()) {
+        value = j.get<std::string>();
+      }
+    }
+  };
 
-#endif /*INCLUDED_VT_TV_API_TYPES_H*/
+} /* end namespace nlohmann */
+
+#endif /* INCLUDED_VT_TV_API_QOI_SERIALIZER_H */

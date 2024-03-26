@@ -45,6 +45,7 @@
 #include "vt-tv/utility/json_reader.h"
 #include "vt-tv/utility/decompression_input_container.h"
 #include "vt-tv/utility/input_iterator.h"
+#include "vt-tv/utility/qoi_serializer.h"
 
 #include <nlohmann/json.hpp>
 #include <fmt-vt/core.h>
@@ -185,11 +186,22 @@ std::unique_ptr<Info> JSONReader::parseFile() {
                 }
               }
             }
+
+            std::unordered_map<std::string, QOIVariantTypes> readed_metadata;
+            if (task.find("attributes") != task.end()) {
+              auto attributes = task["attributes"];
+              if (attributes.is_object()) {
+                for (auto& [key, value] : attributes.items()) {
+                  readed_metadata[key] = value;
+                }
+              }
+            }
+
             // fmt::print(" Add object {}\n", (ElementIDType)object);
             objects.try_emplace(
               object,
               ObjectWork{
-                object, time, std::move(subphase_loads), std::move(user_defined)
+                object, time, std::move(subphase_loads), std::move(user_defined), std::move(readed_metadata)
               }
             );
           }
@@ -233,7 +245,20 @@ std::unique_ptr<Info> JSONReader::parseFile() {
     }
   }
 
-  Rank r{rank_, std::move(phase_info)};
+  std::unordered_map<std::string, QOIVariantTypes> readed_metadata;
+  if (j.find("metadata") != j.end()) {
+    auto metadata = j["metadata"];
+    if (metadata.find("attributes") != metadata.end()) {
+      auto attributes = metadata["attributes"];
+      if (attributes.is_object()) {
+        for (auto& [key, value] : attributes.items()) {
+          readed_metadata[key] = value;
+        }
+      }
+    }
+  }
+
+  Rank r{rank_, std::move(phase_info), std::move(readed_metadata)};
 
   std::unordered_map<NodeType, Rank> rank_info;
   rank_info.try_emplace(rank_, std::move(r));

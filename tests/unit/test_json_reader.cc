@@ -46,6 +46,7 @@
 
 #include <vt-tv/api/info.h>
 #include <vt-tv/utility/json_reader.h>
+#include "vt-tv/utility/qoi_serializer.h"
 
 #include <fmt-vt/format.h>
 
@@ -54,6 +55,7 @@
 #include <string>
 #include <filesystem>
 #include <iostream>
+#include <variant>
 
 namespace vt::tv::tests::unit {
 
@@ -113,6 +115,77 @@ TEST_F(TestJSONReader, test_json_reader_1) {
       fmt::print("\t elm_id={:x}: load={}\n", elm_id, work.getLoad());
     }
   }
+}
+
+TEST_F(TestJSONReader, test_json_reader_metadata_attributes) {
+  std::filesystem::path p = std::filesystem::path(SRC_DIR) / "tests/unit/lb_test_data" ;
+  std::string path = std::filesystem::absolute(p).string();
+
+  NodeType rank = 0;
+  utility::JSONReader reader{rank, path + "/reader_test_data.json"};
+
+  reader.readFile();
+  auto info = reader.parseFile();
+  auto& rank_info = info->getRank(rank);
+  EXPECT_EQ(rank_info.getRankID(), rank);
+
+  auto& rank_attributes = rank_info.getAttributes();
+  EXPECT_TRUE(rank_attributes.find("intSample") != rank_attributes.end());
+  EXPECT_EQ(1, std::get<int>(rank_attributes.at("intSample")));
+
+  EXPECT_TRUE(rank_attributes.find("doubleSample") != rank_attributes.end());
+  EXPECT_EQ(2.213, std::get<double>(rank_attributes.at("doubleSample")));
+
+  EXPECT_TRUE(rank_attributes.find("stringSample") != rank_attributes.end());
+  EXPECT_EQ("abc", std::get<std::string>(rank_attributes.at("stringSample")));
+}
+
+TEST_F(TestJSONReader, test_json_reader_object_info_attributes) {
+  std::filesystem::path p = std::filesystem::path(SRC_DIR) / "tests/unit/lb_test_data" ;
+  std::string path = std::filesystem::absolute(p).string();
+
+  NodeType rank = 0;
+  utility::JSONReader reader{rank, path + "/reader_test_data.json"};
+
+  reader.readFile();
+  auto info = reader.parseFile();
+  auto& rank_info = info->getRank(rank);
+  EXPECT_EQ(rank_info.getRankID(), rank);
+
+  auto const& objects = info->getRankObjects(0, 0);
+  auto const& object_work = objects.at(3407875);
+
+  auto& object_attributes = object_work.getAttributes();
+  EXPECT_TRUE(object_attributes.find("intSample") != object_attributes.end());
+  EXPECT_EQ(-100, std::get<int>(object_attributes.at("intSample")));
+
+  EXPECT_TRUE(object_attributes.find("doubleSample") != object_attributes.end());
+  EXPECT_EQ(0, std::get<double>(object_attributes.at("doubleSample")));
+
+  EXPECT_TRUE(object_attributes.find("stringSample") != object_attributes.end());
+  EXPECT_EQ("", std::get<std::string>(object_attributes.at("stringSample")));
+}
+
+TEST_F(TestJSONReader, test_json_reader_qoi_serializer) {
+  using json = nlohmann::json;
+
+  // int in json
+  json int_json = 1;
+  QOIVariantTypes int_variant = int_json.get<QOIVariantTypes>();
+  EXPECT_TRUE(std::holds_alternative<int>(int_variant));
+  EXPECT_EQ(1, std::get<int>(int_variant));
+
+  // double in json
+  json double_json = 123.456;
+  QOIVariantTypes double_variant = double_json.get<QOIVariantTypes>();
+  EXPECT_TRUE(std::holds_alternative<double>(double_variant));
+  EXPECT_EQ(123.456, std::get<double>(double_variant));
+
+  // std::string in json
+  json string_json = "some data";
+  QOIVariantTypes string_variant = string_json.get<QOIVariantTypes>();
+  EXPECT_TRUE(std::holds_alternative<std::string>(string_variant));
+  EXPECT_EQ("some data", std::get<std::string>(string_variant));
 }
 
 } // end namespace vt::tv::tests::unit
