@@ -155,28 +155,36 @@ struct Info {
   std::function<QoiType(Rank, PhaseType)> getRankQOIGetter(std::string rank_qoi) const {
     std::function<QoiType(Rank, PhaseType)> qoi_getter;
     if (rank_qoi == "load") {
-        qoi_getter = [&](Rank rank, PhaseType phase) {
-            return getRankLoad(rank, phase);
-        };
+      qoi_getter = [&](Rank rank, PhaseType phase) {
+        return getRankLoad(rank, phase);
+      };
     } else if (rank_qoi == "received_volume") {
       qoi_getter = [&](Rank rank, PhaseType phase) {
-          return getRankReceivedVolume(rank, phase);
+        return getRankReceivedVolume(rank, phase);
       };
     } else if (rank_qoi == "sent_volume") {
       qoi_getter = [&](Rank rank, PhaseType phase) {
-          return getRankSentVolume(rank, phase);
+        return getRankSentVolume(rank, phase);
       };
     } else if (rank_qoi == "number_of_objects") {
       qoi_getter = [&](Rank rank, PhaseType phase) {
-          return getRankNumObjects(rank, phase);
+        return getRankNumObjects(rank, phase);
       };
     } else if (rank_qoi == "number_of_migratable_objects") {
       qoi_getter = [&](Rank rank, PhaseType phase) {
-          return getRankNumMigratableObjects(rank, phase);
+        return getRankNumMigratableObjects(rank, phase);
       };
     } else if (rank_qoi == "migratable_load") {
       qoi_getter = [&](Rank rank, PhaseType phase) {
-          return getRankMigratableLoad(rank, phase);
+        return getRankMigratableLoad(rank, phase);
+      };
+    } else if (rank_qoi == "sentinel_load") {
+      qoi_getter = [&](Rank rank, PhaseType phase) {
+        return getRankSentinelLoad(rank, phase);
+      };
+    } else if (rank_qoi == "id") {
+      qoi_getter = [&](Rank rank, PhaseType phase) {
+        return getRankID(rank, phase);
       };
     } else {
       throw std::runtime_error("Invalid Rank QOI: " + rank_qoi);
@@ -190,20 +198,24 @@ struct Info {
   std::function<QoiType(ObjectWork)> getObjectQoiGetter(std::string object_qoi) const {
     std::function<QoiType(ObjectWork)> qoi_getter;
     if (object_qoi == "load") {
-        qoi_getter = [&](ObjectWork obj) {
-            return getObjectLoad(obj);
-        };
+      qoi_getter = [&](ObjectWork obj) {
+        return getObjectLoad(obj);
+      };
     } else if (object_qoi == "received_volume") {
       qoi_getter = [&](ObjectWork obj) {
-          return getObjectReceivedVolume(obj);
+        return getObjectReceivedVolume(obj);
       };
     } else if (object_qoi == "sent_volume") {
       qoi_getter = [&](ObjectWork obj) {
-          return getObjectSentVolume(obj);
+        return getObjectSentVolume(obj);
       };
     } else if (object_qoi == "max_volume") {
       qoi_getter = [&](ObjectWork obj) {
-          return getObjectMaxVolume(obj);
+        return getObjectMaxVolume(obj);
+      };
+    } else if (object_qoi == "id") {
+      qoi_getter = [&](ObjectWork obj) {
+        return getObjectID(obj);
       };
     } else {
       throw std::runtime_error("Invalid Object QOI: " + object_qoi);
@@ -509,6 +521,17 @@ struct Info {
   /* ------------------- Object QOI getters ------------------- */
 
   /**
+   * \brief Get the id of an object at a given phase
+   *
+   * \param[in] object the current object
+   *
+   * \return the id
+   */
+  QoiType getObjectID(ObjectWork object) const {
+     return object.getID();
+  }
+
+  /**
    * \brief Get the load of an object at a given phase
    *
    * \param[in] object the current object
@@ -557,9 +580,20 @@ struct Info {
   /* -------------------- Rank QOI getters -------------------- */
 
  /**
+   * \brief Get id of a given rank
+   *
+   * \param[in] rank the rank
+   * \param[in] phase the phase (unused for this QOI)
+   *
+   * \return the rank id
+   */
+  QoiType getRankID(Rank rank, PhaseType phase) const { return rank.getRankID(); }
+
+ /**
    * \brief Get load of a given rank
    *
    * \param[in] rank the rank
+   * \param[in] phase the phase
    *
    * \return the rank load
    */
@@ -649,6 +683,25 @@ struct Info {
       }
     }
     return migratable_load;
+  }
+
+  /**
+   * \brief Get the total load of sentinel objects at a given phase for a given rank
+   *
+   * \param[in] rank the rank
+   * \param[in] phase the phase
+   *
+   * \return the total load of sentinel objects
+   */
+  QoiType getRankSentinelLoad(Rank rank, PhaseType phase) const {
+    QoiType sentinel_load = 0.;
+    auto const& phase_objects = rank.getPhaseWork().at(phase).getObjectWork();
+    for (auto const& [obj_id, obj_work] : phase_objects) {
+      if (object_info_.at(obj_id).isSentinel()) {
+        sentinel_load += obj_work.getLoad();
+      }
+    }
+    return sentinel_load;
   }
 
   /* ---------------------------------------------------------- */
