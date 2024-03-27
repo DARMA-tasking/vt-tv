@@ -2,7 +2,7 @@
 //@HEADER
 // *****************************************************************************
 //
-//                                 types.h
+//                               tv.h
 //             DARMA/vt-tv => Virtual Transport -- Task Visualizer
 //
 // Copyright 2019 National Technology & Engineering Solutions of Sandia, LLC
@@ -41,27 +41,34 @@
 //@HEADER
 */
 
-#if !defined INCLUDED_VT_TV_API_TYPES_H
-#define INCLUDED_VT_TV_API_TYPES_H
+#if !defined INCLUDED_VT_TV_BINDINGS_PYTHON_JSON_INTERFACE_H
+#define INCLUDED_VT_TV_BINDINGS_PYTHON_JSON_INTERFACE_H
 
-#include <cstdint>
-#include <variant>
 #include <string>
 
-namespace vt::tv {
+#include <fmt-vt/format.h>
+#include "vt-tv/render/render.h"
+#include "vt-tv/api/types.h"
+#include "vt-tv/api/info.h"
+#include "vt-tv/utility/decompression_input_container.h"
+#include "vt-tv/utility/input_iterator.h"
 
-using PhaseType = uint64_t;
-using NodeType = int16_t;
-using ElementIDType = uint64_t;
-using SubphaseType = uint16_t;
-using UniqueIndexBitType = uint64_t;
-using TimeType = double;
-using CollectionObjGroupIDType = uint64_t;
-using QoiType = double; // temporary
+#include <nlohmann/json.hpp>
+#include <yaml-cpp/yaml.h>
 
-/// Possible QOIs types
-using QOIVariantTypes = std::variant<int, double, std::string>;
+#include <nanobind/nanobind.h>
+#include <nanobind/stl/string.h>
+#include <nanobind/stl/vector.h>
 
-} /* end namespace vt::tv */
+#include <filesystem>
+#include <map>
 
-#endif /*INCLUDED_VT_TV_API_TYPES_H*/
+#include <omp.h>
+
+namespace vt::tv::bindings::python {
+
+void tv_from_json(const std::vector<std::string>&, const std::string&, uint64_t);
+
+} /* end namespace vt::tv::bindings::python */
+
+#endif /*INCLUDED_VT_TV_BINDINGS_PYTHON_JSON_INTERFACE_H*/

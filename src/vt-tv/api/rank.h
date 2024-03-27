@@ -108,6 +108,15 @@ struct Rank {
   auto const& getAttributes() const { return attributes_; }
 
   /**
+   * \brief Get number of objects at given phase on this rank
+   *
+   * \param[in] phase the phase
+   *
+   * \return the number of objects
+   */
+   uint64_t getNumObjects(PhaseType phase) const { return phase_info_.at(phase).getObjectWork().size(); }
+
+  /**
    * \brief Serializer for data
    *
    * \param[in] s the serializer

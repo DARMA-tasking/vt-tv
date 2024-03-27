@@ -155,7 +155,6 @@ Render::Render(
 
 double Render::computeMaxObjectVolume_() {
   double ov_max = this->info_.getMaxVolume();
-  this->object_volume_max_ = ov_max;
   return ov_max;
 }
 
@@ -171,18 +170,13 @@ std::variant<std::pair<double, double>, std::set<double>> Render::computeObjectQ
     auto const& objects = this->info_.getPhaseObjects(phase);
     for (auto const& [obj_id, obj_work] : objects) {
       // Update maximum object qoi
-      if (this->object_qoi_ == "load") {
-        oq = obj_work.getLoad();
-
-        if (!continuous_object_qoi_) {
-          oq_all.insert(oq);
-          if(oq_all.size() > 20) {
-            oq_all.clear();
-            continuous_object_qoi_ = true;
-          }
+      oq = info_.getObjectQoi(obj_id, phase, this->object_qoi_);
+      if (!continuous_object_qoi_) {
+        oq_all.insert(oq);
+        if(oq_all.size() > 20) {
+          oq_all.clear();
+          continuous_object_qoi_ = true;
         }
-      } else {
-        throw std::runtime_error("Invalid QOI: " + this->object_qoi_);
       }
       if (oq > oq_max) oq_max = oq;
       if (oq < oq_min) oq_min = oq;
@@ -210,33 +204,29 @@ std::pair<double, double> Render::computeRankQoiRange_() {
 
   // Iterate over all ranks
   for (uint64_t rank_id = 0; rank_id < this->n_ranks_; rank_id++) {
-    // Update maximum rank qoi
-    if (this->rank_qoi_ == "load") {
-      // Get rank loads per phase
-      std::unordered_map<PhaseType, double> rank_loads_map = this->info_.getAllLoadsAtRank(rank_id);
+    std::unordered_map<PhaseType, double> rank_qoi_map;
+    rank_qoi_map = this->info_.getAllQOIAtRank(rank_id, this->rank_qoi_);
 
-      // Get max load for this rank across all phases
-      auto prmax = std::max_element
-      (
-        std::begin(rank_loads_map), std::end(rank_loads_map),
-        [] (const std::pair<PhaseType, double>& p1, const std::pair<PhaseType, double>& p2) {
-          return p1.second < p2.second;
-        }
-      );
-      rqmax_for_phase = prmax->second;
+    // Get max qoi for this rank across all phases
+    auto prmax = std::max_element
+    (
+      std::begin(rank_qoi_map), std::end(rank_qoi_map),
+      [] (const std::pair<PhaseType, double>& p1, const std::pair<PhaseType, double>& p2) {
+        return p1.second < p2.second;
+      }
+    );
+    rqmax_for_phase = prmax->second;
 
-      // Get min load for this rank across all phases
-      auto prmin = std::max_element
-      (
-        std::begin(rank_loads_map), std::end(rank_loads_map),
-        [] (const std::pair<PhaseType, double>& p1, const std::pair<PhaseType, double>& p2) {
-          return p1.second > p2.second;
-        }
-      );
-      rqmin_for_phase = prmin->second;
-    } else {
-      throw std::runtime_error("Invalid QOI: " + this->object_qoi_);
-    }
+    // Get min qoi for this rank across all phases
+    auto prmin = std::max_element
+    (
+      std::begin(rank_qoi_map), std::end(rank_qoi_map),
+      [] (const std::pair<PhaseType, double>& p1, const std::pair<PhaseType, double>& p2) {
+        return p1.second > p2.second;
+      }
+    );
+    rqmin_for_phase = prmin->second;
+
     if (rqmax_for_phase > rq_max) rq_max = rqmax_for_phase;
     if (rqmin_for_phase < rq_min) rq_min = rqmin_for_phase;
   }
@@ -248,17 +238,11 @@ std::pair<double, double> Render::computeRankQoiRange_() {
 double Render::computeRankQoiAverage_(PhaseType phase, std::string qoi) {
   // Initialize rank QOI range attributes
   double rq_sum = 0.0;
-
-  if (qoi == "load"){
-    auto rank_loads_at_phase = this->info_.getAllRankLoadsAtPhase(phase);
-    for (auto [rank, rank_load] : rank_loads_at_phase){
-      rq_sum += rank_load;
-    }
-    return rq_sum / rank_loads_at_phase.size();
+  auto rank_loads_at_phase = this->info_.getAllRankQOIAtPhase(phase, qoi);
+  for (auto [rank, rank_load] : rank_loads_at_phase){
+    rq_sum += rank_load;
   }
-  else{
-    throw std::runtime_error("Invalid QOI: " + qoi);
-  }
+  return rq_sum / rank_loads_at_phase.size();
 }
 
 std::map<NodeType, std::unordered_map<ElementIDType, ObjectWork>> Render::createObjectMapping_(PhaseType phase) {
@@ -270,9 +254,9 @@ std::map<NodeType, std::unordered_map<ElementIDType, ObjectWork>> Render::create
   return object_mapping;
 }
 
-vtkNew<vtkPolyData> Render::createRankMesh_(PhaseType iteration) {
+vtkNew<vtkPolyData> Render::createRankMesh_(PhaseType phase) {
   fmt::print("\n\n");
-  fmt::print("----- Creating rank mesh for phase {} -----\n", iteration);
+  fmt::print("----- Creating rank mesh for phase {} -----\n", phase);
   vtkNew<vtkPoints> rank_points_;
   rank_points_->SetNumberOfPoints(this->n_ranks_);
 
@@ -291,20 +275,16 @@ vtkNew<vtkPolyData> Render::createRankMesh_(PhaseType iteration) {
     // Insert point based on cartesian coordinates
     rank_points_->SetPoint(rank_id, offsets[0], offsets[1], offsets[2]);
 
-    auto objects = this->info_.getRankObjects(rank_id, iteration);
+    auto objects = this->info_.getRankObjects(rank_id, phase);
 
-    double rank_load = 0;
-    for (auto [id, object] : objects) {
-      rank_load += object.getLoad();
-    }
-
-    rank_arr->SetTuple1(rank_id, rank_load);
+    auto rank_qoi_val = this->info_.getRankQOIAtPhase(rank_id, phase, this->rank_qoi_);
+    rank_arr->SetTuple1(rank_id, rank_qoi_val);
   }
 
   vtkNew<vtkPolyData> pd_mesh;
   pd_mesh->SetPoints(rank_points_);
   pd_mesh->GetPointData()->SetScalars(rank_arr);
-  fmt::print("----- Finished creating rank mesh for phase {} -----\n", iteration);
+  fmt::print("----- Finished creating rank mesh for phase {} -----\n", phase);
   return pd_mesh;
 }
 
@@ -426,8 +406,13 @@ vtkNew<vtkPolyData> Render::createObjectMesh_(PhaseType phase) {
       );
 
       // Set object attributes
-      q_arr->SetTuple1(point_index, objectWork.getLoad());
+      ElementIDType obj_id = objectWork.getID();
+      auto oq = this->info_.getObjectQoi(obj_id, phase, this->object_qoi_);
+      q_arr->SetTuple1(point_index, oq);
       b_arr->SetTuple1(point_index, migratable);
+      if (this->object_qoi_ != "load") {
+        l_arr->SetTuple1(point_index, objectWork.getLoad());
+      }
 
       auto objSent = objectWork.getSent();
       for (auto [k, v] : objSent) {
@@ -485,6 +470,9 @@ vtkNew<vtkPolyData> Render::createObjectMesh_(PhaseType phase) {
   pd_mesh->SetLines(lines);
   pd_mesh->GetPointData()->SetScalars(q_arr);
   pd_mesh->GetPointData()->AddArray(b_arr);
+  if (this->object_qoi_ != "load") {
+    pd_mesh->GetPointData()->AddArray(l_arr);
+  }
   pd_mesh->GetCellData()->SetScalars(lineValuesArray);
 
   fmt::print("----- Finished creating object mesh -----\n");
