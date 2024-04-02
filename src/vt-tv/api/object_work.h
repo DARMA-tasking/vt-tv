@@ -60,8 +60,6 @@ namespace vt::tv {
  * \brief Holds work for an object for a given phase
  */
 struct ObjectWork {
-  /// Possible user-defined types for a task
-  using VariantType = std::variant<int, double, std::string>;
 
   ObjectWork() = default;
 
@@ -77,7 +75,7 @@ struct ObjectWork {
     ElementIDType in_id,
     TimeType in_whole_phase_load,
     std::unordered_map<SubphaseType, TimeType> in_subphase_loads,
-    std::unordered_map<std::string, VariantType> in_user_defined = {},
+    std::unordered_map<std::string, QOIVariantTypes> in_user_defined = {},
     std::unordered_map<std::string, QOIVariantTypes> in_attributes = {}
   ) : id_(in_id),
       whole_phase_load_(in_whole_phase_load),
@@ -194,7 +192,7 @@ private:
   /// Load broken down into subphases
   std::unordered_map<SubphaseType, TimeType> subphase_loads_;
   // User-defined field---used to populate the memory block
-  std::unordered_map<std::string, VariantType> user_defined_;
+  std::unordered_map<std::string, QOIVariantTypes> user_defined_;
   /// QOIs to be visualized
   std::unordered_map<std::string, QOIVariantTypes> attributes_;
 
