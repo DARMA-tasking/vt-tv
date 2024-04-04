@@ -131,6 +131,7 @@ private:
   // Maximum object attribute values
   double object_qoi_max_ = 0.0;
   double object_volume_max_ = 0.0;
+  double object_load_max_ = 0.0;
 
   // quantities of interest
   std::string rank_qoi_ = "load";

@@ -76,6 +76,16 @@ Render::Render(Info in_info)
   }
   max_o_per_dim_ = 0;
 
+  // Normalize communication edges
+  for(PhaseType phase = 0; phase < this->n_phases_; phase++) {
+    if (
+            selected_phase_ == std::numeric_limits<PhaseType>::max() or
+            selected_phase_ == phase
+            ) {
+      this->info_.normalizeEdges(phase);
+    }
+  }
+
   // Initialize jitter
   std::srand(std::time(nullptr));
   auto const& allObjects = info_.getAllObjectIDs();
@@ -92,6 +102,7 @@ Render::Render(Info in_info)
   object_qoi_range_ = this->computeObjectQoiRange_();
   rank_qoi_range_ = this->computeRankQoiRange_();
   object_volume_max_ = this->computeMaxObjectVolume_();
+  object_load_max_ = this->info_.getMaxLoad();
 };
 
 Render::Render(
@@ -135,6 +146,16 @@ Render::Render(
   }
   max_o_per_dim_ = 0;
 
+  // Normalize communication edges
+  for(PhaseType phase = 0; phase < this->n_phases_; phase++) {
+    if (
+        selected_phase_ == std::numeric_limits<PhaseType>::max() or
+        selected_phase_ == phase
+        ) {
+      this->info_.normalizeEdges(phase);
+    }
+  }
+
   // Initialize jitter
   std::srand(std::time(nullptr));
   auto const& allObjects = info_.getAllObjectIDs();
@@ -151,6 +172,7 @@ Render::Render(
   object_qoi_range_ = this->computeObjectQoiRange_();
   rank_qoi_range_ = this->computeRankQoiRange_();
   object_volume_max_ = this->computeMaxObjectVolume_();
+  object_load_max_ = this->info_.getMaxLoad();
 };
 
 double Render::computeMaxObjectVolume_() {
@@ -943,9 +965,6 @@ void Render::generate(uint64_t font_size, uint64_t win_size) {
       selected_phase_ == std::numeric_limits<PhaseType>::max() or
       selected_phase_ == phase
     ) {
-
-      this->info_.normalizeEdges(phase);
-
       vtkNew<vtkPolyData> object_mesh = this->createObjectMesh_(phase);
       vtkNew<vtkPolyData> rank_mesh = this->createRankMesh_(phase);
 
@@ -981,7 +1000,7 @@ void Render::generate(uint64_t font_size, uint64_t win_size) {
         uint64_t edge_width = 0.03 * window_size / *std::max_element(this->grid_size_.begin(), this->grid_size_.end());
         double glyph_factor = 0.8 * this->grid_resolution_ / (
                         (this->max_o_per_dim_ + 1)
-                        * std::sqrt(this->object_qoi_max_));
+                        * std::sqrt(object_load_max_));
         fmt::print("  Image size: {}x{}px\n", win_size, win_size);
         fmt::print("  Font size: {}pt\n", font_size);
         this->renderPNG(

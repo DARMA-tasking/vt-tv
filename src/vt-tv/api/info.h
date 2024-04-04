@@ -375,6 +375,26 @@ struct Info {
   }
 
   /**
+   * \brief Get maximum load of objects across all ranks and phases
+   *
+   * \return the maximum load
+   */
+  double getMaxLoad() const {
+    double ol_max = 0.;
+
+    auto n_phases = this->getNumPhases();
+    for (PhaseType phase = 0; phase < n_phases; phase++) {
+      auto const& objects = this->getPhaseObjects(phase);
+      for (auto const& [obj_id, obj_work] : objects) {
+        auto obj_load = obj_work.getLoad();
+        if (obj_load > ol_max) ol_max = obj_load;
+      }
+    }
+
+    return ol_max;
+  }
+
+  /**
    * \brief Create mapping of all objects in all ranks for a given phase (made for allowing changes to these objects)
    *
    * \param[in] phase the phase
@@ -458,40 +478,85 @@ struct Info {
    * \return void
    */
   void normalizeEdges(PhaseType phase) {
-      fmt::print("\n---- Normalizing Edges for phase {} ----\n", phase);
-      auto phaseObjects = createPhaseObjectsMapping(phase);
-      for (auto& [id1, objectWork1] : phaseObjects) {
-        auto sent1 = objectWork1.getSent();
-        auto received1 = objectWork1.getReceived();
-        for (auto& [id2, objectWork2] : phaseObjects) {
-          if (id1 != id2) {
-            auto sent2 = objectWork2.getSent();
-            auto received2 = objectWork2.getReceived();
+    fmt::print("\n---- Normalizing Edges for phase {} ----\n", phase);
+    // Vector of tuples of communications to add: {side_to_be_modified, id1, id2, bytes} for an id1 -> id2 communication (1 sends to 2, 2 receives from 1)
+    // if type is "sender", communication has to be added to sent communications for object id1
+    // if type is "recipient", communication has to be added to received communications for object id2
+    std::vector<std::tuple<std::string, ElementIDType, ElementIDType, double>> communications_to_add;
 
-            // Handle communications from object 2 to object 1
-            auto its2 = sent2.equal_range(id1);
-            for (auto it = its2.first; it != its2.second; ++it) {
-              objectWork1.addReceivedCommunications(id2, it->second);
-            }
+    auto phase_objects = createPhaseObjectsMapping(phase);
+    // Checking all communications for object A in all objects of all ranks at given phase: A <- ... and A -> ...
+    for (auto& [A_id, object_work] : phase_objects) {      fmt::print("- Object ID: {}\n", A_id);
+      auto sent = object_work.getSent();
+      fmt::print(" Has {} sent communications", sent.size());
+      auto received = object_work.getReceived();
+      fmt::print(" and {} received communications.\n", received.size());
+      // Going through A -> ... communications
+      fmt::print(" Checking sent communications:\n");
+      for (auto& [B_id, bytes] : sent) {
+        fmt::print("  Communication sent to object {} of {} bytes:\n", B_id, bytes);
+        // check if B exists for the A -> B communication
+        if (phase_objects.find(B_id) != phase_objects.end()) {
+          fmt::print("  Found recipient object {} when searching for communication sent by object {} of {} bytes.\n", B_id, A_id, bytes);
+          auto to_object_work = phase_objects.at(B_id);
+          auto target_received = to_object_work.getReceived();
+          fmt::print(  "Object {} has {} received communications.\n", B_id, target_received.size());
+          // Check if B has symmetric B <- A received communication
+          if (target_received.find(A_id) != target_received.end()) {
+            fmt::print(  "   Object {} already has received communication from object {}.\n", B_id, A_id);
+          } else {
+            fmt::print(  "   Object {} doesn't have received communication from object {}. Pushing to list of communications to add.\n", B_id, A_id);
+            communications_to_add.push_back(std::make_tuple("recipient", A_id, B_id, bytes));
+          }
+        } else {
+          fmt::print("  /!\\ Didn't find recipient object {} when searching for communication sent by object {} of {} bytes.\n", B_id, A_id, bytes);
+        }
+      }
+      // Going through A <- ... communications
+      fmt::print(" Checking received communications:\n");
+      for (auto& [B_id, bytes] : received) { // Going through A <- ... communications
+        fmt::print("  Communication received from object {} of {} bytes:\n", B_id, bytes);
+        // check if B exists for the A <- B communication
+        if (phase_objects.find(B_id) != phase_objects.end()) {
+          fmt::print("  Found sender object {} when searching for communication received by  object {} of {} bytes.\n", B_id, A_id, bytes);
+          auto from_object_work = phase_objects.at(B_id);
+          auto target_sent = from_object_work.getSent();
+          fmt::print(  "Object {} has {} sent communications.\n", B_id, target_sent.size());
+          // Check if B has symmetric B -> A received communication
+          if (target_sent.find(A_id) != target_sent.end()) {
+            fmt::print(  "   Object {} already has sent communication to object {}.\n", B_id, A_id);
+          } else {
+            fmt::print(  "   Object {} doesn't have sent communication to object {}. Pushing to list of communications to add.\n", B_id, A_id);
+            communications_to_add.push_back(std::make_tuple("sender", B_id, A_id, bytes));
+          }
+        } else {
+          fmt::print("  /!\\ Didn't find sender object {} when searching for communication received by object {} of {} bytes.\n", B_id, A_id, bytes);
+        }
+      }
+    }
 
-            auto itr2 = received2.equal_range(id1);
-            for (auto it = itr2.first; it != itr2.second; ++it) {
-              objectWork1.addSentCommunications(id2, it->second);
-            }
-
-            // Handle communications from object 1 to object 2
-            auto its1 = sent1.equal_range(id2);
-            for (auto it = its1.first; it != its1.second; ++it) {
-              objectWork2.addReceivedCommunications(id1, it->second);
-            }
-
-            auto itr1 = received1.equal_range(id2);
-            for (auto it = itr1.first; it != itr1.second; ++it) {
-              objectWork2.addSentCommunications(id1, it->second);
-            }
+    // loop through ranks and add communications
+    fmt::print("Updating communications for phase {}.\n", phase);
+    for (auto& [rank_id, rank] : ranks_) {
+      fmt::print(" Checking objects in rank {}.\n", rank_id);
+      auto& phaseWork = rank.getPhaseWork();
+      auto& phaseWorkAtPhase = phaseWork.at(phase);
+      auto& objects = phaseWorkAtPhase.getObjectWork();
+      for (auto& [obj_id, obj_work] : objects) {
+        fmt::print("  Checking if object {} needs to be updated.\n", obj_id);
+        fmt::print("  Communications to update:\n");
+        for (auto& [object_to_update, sender_id, recipient_id, bytes] : communications_to_add) {
+          fmt::print("    {} needs to be updated in {} -> {} communication of {} bytes.\n", object_to_update, sender_id, recipient_id, bytes);
+          if (object_to_update == "sender" && sender_id == obj_id) {
+            fmt::print("    Sender to be updated is object on this rank. Updating.\n");
+            rank.addObjectSentCommunicationAtPhase(phase, obj_id, recipient_id, bytes);
+          } else if (object_to_update == "recipient" && recipient_id == obj_id) {
+            fmt::print("    Recipient to be updated is object on this rank. Updating.\n");
+            rank.addObjectReceivedCommunicationAtPhase(phase, obj_id, recipient_id, bytes);
           }
         }
       }
+    }
   }
 
   /**

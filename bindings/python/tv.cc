@@ -3,6 +3,14 @@
 namespace vt::tv::bindings::python {
 
 void tv_from_json(const std::vector<std::string>& input_json_per_rank_list, const std::string& input_yaml_params_str, uint64_t num_ranks) {
+  std::string startup_logo = std::string("        __           __\n")
+                           + std::string(" _   __/ /_         / /__   __\n")
+                           + std::string("| | / / __/ _____  / __/ | / /\n")
+                           + std::string("| |/ / /   /____/ / /_ | |/ /\n")
+                           + std::string("|___/\\__/         \\__/ |___/\n");
+  fmt::print("==============================\n");
+  fmt::print(startup_logo);
+  fmt::print("==============================\n");
 
   // parse the input yaml parameters
   try {
@@ -59,20 +67,20 @@ void tv_from_json(const std::vector<std::string>& input_json_per_rank_list, cons
     }
 
     // print all saved configuration parameters
-    fmt::print("vt-tv:\n Parameters:\n");
-    fmt::print("   x_ranks: {}\n", grid_size[0]);
-    fmt::print("   y_ranks: {}\n", grid_size[1]);
-    fmt::print("   z_ranks: {}\n", grid_size[2]);
-    fmt::print("   object_jitter: {}\n", object_jitter);
-    fmt::print("   rank_qoi: {}\n", qoi_request[0]);
-    fmt::print("   object_qoi: {}\n", qoi_request[2]);
-    fmt::print("   save_meshes: {}\n", save_meshes);
-    fmt::print("   save_pngs: {}\n", save_pngs);
-    fmt::print("   force_continuous_object_qoi: {}\n", continuous_object_qoi);
-    fmt::print("   output_visualization_dir: {}\n", output_dir);
-    fmt::print("   output_visualization_file_stem: {}\n", output_file_stem);
-    fmt::print("   window_size: {}\n", win_size);
-    fmt::print("   font_size: {}\n", font_size);
+    fmt::print("Input Configuration Parameters:\n");
+    fmt::print("  x_ranks: {}\n", grid_size[0]);
+    fmt::print("  y_ranks: {}\n", grid_size[1]);
+    fmt::print("  z_ranks: {}\n", grid_size[2]);
+    fmt::print("  object_jitter: {}\n", object_jitter);
+    fmt::print("  rank_qoi: {}\n", qoi_request[0]);
+    fmt::print("  object_qoi: {}\n", qoi_request[2]);
+    fmt::print("  save_meshes: {}\n", save_meshes);
+    fmt::print("  save_pngs: {}\n", save_pngs);
+    fmt::print("  force_continuous_object_qoi: {}\n", continuous_object_qoi);
+    fmt::print("  output_visualization_dir: {}\n", output_dir);
+    fmt::print("  output_visualization_file_stem: {}\n", output_file_stem);
+    fmt::print("  window_size: {}\n", win_size);
+    fmt::print("  font_size: {}\n", font_size);
 
     using json = nlohmann::json;
 
@@ -90,11 +98,14 @@ void tv_from_json(const std::vector<std::string>& input_json_per_rank_list, cons
     // Initialize the info object, that will hold data for all ranks for all phases
     std::unique_ptr<Info> info = std::make_unique<Info>();
 
+    // map to store rank communications: for each rank, list of tuples of from_id, to_id, bytes
+    std::unordered_map<int64_t, std::vector<std::tuple<int64_t, int64_t, double>>> rank_communications;
+
     # pragma omp parallel for
     for (int64_t rank_id = 0; rank_id < num_ranks; rank_id++) {
       std::string rank_json_str = input_json_per_rank_list[rank_id];
       try {
-        // std::cerr << "vt-tv: Parsing JSON for rank " << rank_id << "\n";
+        std::cerr << "vt-tv: Parsing JSON for rank " << rank_id << "\n";
         auto j = json::parse(rank_json_str);
         assert(j != nullptr && "Must have valid json");
 
@@ -108,7 +119,7 @@ void tv_from_json(const std::vector<std::string>& input_json_per_rank_list, cons
         if (phases.is_array()) {
           for (auto const& phase : phases) {
             auto id = phase["id"];
-            // std::cerr << "vt-tv: Reading phase " << id << "\n";
+            std::cerr << "vt-tv: Reading phase " << id << "\n";
             auto tasks = phase["tasks"];
 
             std::unordered_map<ElementIDType, ObjectWork> objects;
@@ -195,13 +206,14 @@ void tv_from_json(const std::vector<std::string>& input_json_per_rank_list, cons
                 }
               }
 
+              fmt::print(" Parsing communications.\n");
               if (phase.find("communications") != phase.end()) {
                 auto communications = phase["communications"];
                 if (communications.is_array()) {
                   for (auto const& comm : communications) {
                     auto type = comm["type"];
                     if (type == "SendRecv") {
-                      auto bytes = comm["bytes"];
+                      double bytes = comm["bytes"];
                       auto messages = comm["messages"];
 
                       auto from = comm["from"];
@@ -214,12 +226,22 @@ void tv_from_json(const std::vector<std::string>& input_json_per_rank_list, cons
                       assert(from.is_number());
                       assert(to.is_number());
 
-                      // fmt::print(" From: {}, to: {}\n", from_id, to_id);
+                      fmt::print("  {} -> {} // {} bytes\n", from_id, to_id, bytes);
+//                      std::cout << "  bytes: " << bytes << std::endl;
                       // Object on this rank sent data
                       if (objects.find(from_id) != objects.end()) {
+                        fmt::print("   Found sender object.\n");
+                        fmt::print("   Adding Sent communication from object {} to object {}\n", from_id, to_id);
                         objects.at(from_id).addSentCommunications(to_id, bytes);
-                      } else if (objects.find(to_id) != objects.end()) {
+                      } else {
+                        fmt::print("   Didn't find sender object.\n");
+                      }
+                      if (objects.find(to_id) != objects.end()) {
+                        fmt::print("   Found recipient object.\n");
+                        fmt::print("   Adding Received communication from object {} to object {}\n", from_id, to_id);
                         objects.at(to_id).addReceivedCommunications(from_id, bytes);
+                      } else {
+                        fmt::print("   Didn't find recipient object.\n");
                       }
                     }
                   }

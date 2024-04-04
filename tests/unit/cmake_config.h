@@ -1,1 +1,1 @@
-#define SRC_DIR "/vt/lib/vt-tv"
+#define SRC_DIR "/home/pierrelp/Develop/NGA/vt-tv/source"
