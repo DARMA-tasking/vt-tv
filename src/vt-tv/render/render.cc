@@ -335,7 +335,7 @@ vtkNew<vtkPolyData> Render::createObjectMesh_(PhaseType phase) {
 
   // Load array must be added when it is not the object QOI
   vtkNew<vtkDoubleArray> l_arr;
-  if (object_qoi_ != "load") {
+  if (this->object_qoi_ != "load") {
     l_arr->SetName("load");
     l_arr->SetNumberOfTuples(n_o);
   }
