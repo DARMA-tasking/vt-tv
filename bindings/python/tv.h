@@ -52,6 +52,8 @@
 #include "vt-tv/api/info.h"
 #include "vt-tv/utility/decompression_input_container.h"
 #include "vt-tv/utility/input_iterator.h"
+#include "vt-tv/utility/qoi_serializer.h"
+#include "vt-tv/utility/json_reader.h"
 
 #include <nlohmann/json.hpp>
 #include <yaml-cpp/yaml.h>

@@ -65,9 +65,9 @@ int main() {
   std::unique_ptr<Info> info = std::make_unique<Info>();
 
   for (NodeType rank = 0; rank < n_ranks; rank++) {
-    utility::JSONReader reader{rank, path + "/data." + std::to_string(rank) + ".json"};
-    reader.readFile();
-    auto tmpInfo = reader.parseFile();
+    utility::JSONReader reader{rank};
+    reader.readFile(path + "/data." + std::to_string(rank) + ".json");
+    auto tmpInfo = reader.parse();
     info->addInfo(tmpInfo->getObjectInfo(), tmpInfo->getRank(rank));
   }
 

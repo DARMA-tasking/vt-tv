@@ -89,9 +89,9 @@ void ParseRender::parseAndRender(PhaseType phase_id, std::unique_ptr<Info> info)
       # pragma omp parallel for
       for (int64_t rank = 0; rank < n_ranks; rank++) {
         fmt::print("Reading file for rank {}\n", rank);
-        utility::JSONReader reader{static_cast<NodeType>(rank), input_dir + "data." + std::to_string(rank) + ".json"};
-        reader.readFile();
-        auto tmpInfo = reader.parseFile();
+        utility::JSONReader reader{static_cast<NodeType>(rank)};
+        reader.readFile(input_dir + "data." + std::to_string(rank) + ".json");
+        auto tmpInfo = reader.parse();
         #pragma omp critical
         {
         info->addInfo(tmpInfo->getObjectInfo(), tmpInfo->getRank(rank));

@@ -66,9 +66,9 @@ TEST_F(TestJSONReader, test_json_reader_1) {
   std::string path = std::filesystem::absolute(p).string();
 
   NodeType rank = 0;
-  utility::JSONReader reader{rank, path + "/data.0.json"};
-  reader.readFile();
-  auto info = reader.parseFile();
+  utility::JSONReader reader{rank};
+  reader.readFile(path + "/data.0.json");
+  auto info = reader.parse();
 
   auto const& obj_info = info->getObjectInfo();
 
@@ -122,10 +122,10 @@ TEST_F(TestJSONReader, test_json_reader_metadata_attributes) {
   std::string path = std::filesystem::absolute(p).string();
 
   NodeType rank = 0;
-  utility::JSONReader reader{rank, path + "/reader_test_data.json"};
+  utility::JSONReader reader{rank};
 
-  reader.readFile();
-  auto info = reader.parseFile();
+  reader.readFile(path + "/reader_test_data.json");
+  auto info = reader.parse();
   auto& rank_info = info->getRank(rank);
   EXPECT_EQ(rank_info.getRankID(), rank);
 
@@ -145,10 +145,10 @@ TEST_F(TestJSONReader, test_json_reader_object_info_attributes) {
   std::string path = std::filesystem::absolute(p).string();
 
   NodeType rank = 0;
-  utility::JSONReader reader{rank, path + "/reader_test_data.json"};
+  utility::JSONReader reader{rank};
 
-  reader.readFile();
-  auto info = reader.parseFile();
+  reader.readFile(path + "/reader_test_data.json");
+  auto info = reader.parse();
   auto& rank_info = info->getRank(rank);
   EXPECT_EQ(rank_info.getRankID(), rank);
 
@@ -193,10 +193,10 @@ TEST_F(TestJSONReader, test_json_reader_object_work_user_defined) {
   std::string path = std::filesystem::absolute(p).string();
 
   NodeType rank = 0;
-  utility::JSONReader reader{rank, path + "/reader_test_data.json"};
+  utility::JSONReader reader{rank};
 
-  reader.readFile();
-  auto info = reader.parseFile();
+  reader.readFile(path + "/reader_test_data.json");
+  auto info = reader.parse();
   auto& rank_info = info->getRank(rank);
   EXPECT_EQ(rank_info.getRankID(), rank);
 

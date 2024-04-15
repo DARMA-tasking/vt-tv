@@ -57,41 +57,48 @@ namespace vt::tv::utility {
 /**
  * \struct JSONReader
  *
- * \brief Reader for JSON files in the LBDataType format.
+ * \brief Reader for JSON in the LBDataType format.
  */
 struct JSONReader {
 
   /**
    * \brief Construct the reader
-   *
-   * \param[in] in_filename the file name to read
    */
-  JSONReader(NodeType in_rank, std::string const& in_filename)
-    : rank_(in_rank),
-      filename_(in_filename)
+  JSONReader(NodeType in_rank)
+    : rank_(in_rank)
   { }
 
   /**
    * \brief Check if the file is compressed or not
    *
+   * \param[in] in_filename the file name to check
+   *
    * \return whether the file is compressed
    */
-  bool isCompressed() const;
+  bool isCompressed(std::string const& in_filename) const;
 
   /**
-   * \brief Read the JSON file
+   * \brief Read a given JSON file
+   *
+   * \param[in] in_filename the file name to read
    */
-  void readFile();
+  void readFile(std::string const& in_filename);
+
+  /**
+   * \brief Read a given serialized json string
+   *
+   * \param[in] in_json_string the serialized json string to read
+   */
+  void readString(std::string const& in_json_string);
 
   /**
    * \brief Parse the json into vt-tv's data structure Info, with a single rank
    * filled out
    */
-  std::unique_ptr<Info> parseFile();
+  std::unique_ptr<Info> parse();
 
 private:
   NodeType rank_ = 0;
-  std::string filename_;
   std::unique_ptr<nlohmann::json> json_ = nullptr;
 };
 

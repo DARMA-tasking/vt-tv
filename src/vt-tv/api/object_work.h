@@ -214,7 +214,6 @@ private:
   /// QOIs to be visualized
   std::unordered_map<std::string, QOIVariantTypes> attributes_;
 
-  /// @todo: add communications
   ObjectCommunicator communicator_;
 };
 
