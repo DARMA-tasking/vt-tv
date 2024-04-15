@@ -242,6 +242,8 @@ std::unique_ptr<Info> JSONReader::parse() {
               auto to_it = objects.find(to_id);
               if (to_it != objects.end()) {
                 to_it->second.addReceivedCommunications(from_id, bytes);
+              } else {
+                fmt::print("Warning: Communication {} -> {}: neither sender nor recipient was found in objects.\n", from_id, to_id);
               }
             }
           }
