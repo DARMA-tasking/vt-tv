@@ -193,12 +193,12 @@ std::unique_ptr<Info> JSONReader::parse() {
               }
             }
 
-            std::unordered_map<std::string, QOIVariantTypes> readed_metadata;
+            std::unordered_map<std::string, QOIVariantTypes> readed_attributes;
             if (task.find("attributes") != task.end()) {
               auto attributes = task["attributes"];
               if (attributes.is_object()) {
                 for (auto& [key, value] : attributes.items()) {
-                  readed_metadata[key] = value;
+                  readed_attributes[key] = value;
                 }
               }
             }
@@ -207,7 +207,7 @@ std::unique_ptr<Info> JSONReader::parse() {
             objects.try_emplace(
               object,
               ObjectWork{
-                object, time, std::move(subphase_loads), std::move(readed_user_defined), std::move(readed_metadata)
+                object, time, std::move(subphase_loads), std::move(readed_user_defined), std::move(readed_attributes)
               }
             );
           }

@@ -152,7 +152,7 @@ struct Info {
  /**
    * \brief Converts a QOI from QOIVariantTypes to double
    */
-  double convertQOIVariantTypeToDouble_(QOIVariantTypes variant) const {
+  double convertQOIVariantTypeToDouble_(const QOIVariantTypes &variant) const {
     if (std::holds_alternative<ElementIDType>(variant)) {
       return static_cast<double>(std::get<ElementIDType>(variant));
     } else if (std::holds_alternative<int>(variant)) {
@@ -170,7 +170,7 @@ struct Info {
  /**
    * \brief Returns a getter to a specified rank QOI
    */
-  std::function<double(Rank, PhaseType)> getRankQOIGetter(std::string rank_qoi) const {
+  std::function<double(Rank, PhaseType)> getRankQOIGetter(const std::string &rank_qoi) const {
     std::function<double(Rank, PhaseType)> qoi_getter;
     if (rank_qoi == "load") {
       qoi_getter = [&](Rank rank, PhaseType phase) {
@@ -216,7 +216,7 @@ struct Info {
  /**
    * \brief Returns a getter to a specified object QOI
    */
-  std::function<double(ObjectWork)> getObjectQoiGetter(std::string object_qoi) const {
+  std::function<double(ObjectWork)> getObjectQoiGetter(const std::string &object_qoi) const {
     std::function<double(ObjectWork)> qoi_getter;
     if (object_qoi == "load") {
       qoi_getter = [&](ObjectWork obj) {
