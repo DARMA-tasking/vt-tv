@@ -31,6 +31,7 @@ RUN apt-get update \
      libgl1-mesa-dev \
      libglu1-mesa-dev \
      mesa-common-dev \
+     libosmesa6-dev \
      perl \
      curl \
   && rm -rf /var/lib/apt/lists/*
