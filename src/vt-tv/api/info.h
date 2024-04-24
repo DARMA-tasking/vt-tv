@@ -238,6 +238,10 @@ struct Info {
       qoi_getter = [&](ObjectWork obj) {
         return convertQOIVariantTypeToDouble_(getObjectID(obj));
       };
+    } else if (object_qoi == "rank_id") {
+      qoi_getter = [&](ObjectWork obj) {
+        return convertQOIVariantTypeToDouble_(getObjectRankID(obj));
+      };
     } else {
       // Look in attributes (will throw an error if QOI doesn't exist)
       qoi_getter = [&](ObjectWork obj) {
@@ -627,6 +631,19 @@ struct Info {
    */
   QOIVariantTypes getObjectID(ObjectWork object) const {
      return object.getID();
+  }
+
+  /**
+   * \brief Get the rank id of an object at a given phase
+   *
+   * \param[in] object the current object
+   *
+   * \return the rank id
+   */
+  QOIVariantTypes getObjectRankID(ObjectWork object) const {
+      auto obj_id = object.getID();
+      auto obj_info = object_info_.at(obj_id);
+      return obj_info.getHome();
   }
 
   /**

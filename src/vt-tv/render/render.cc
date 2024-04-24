@@ -180,12 +180,12 @@ double Render::computeMaxObjectVolume_() {
   return ov_max;
 }
 
-std::variant<std::pair<double, double>, std::set<double>> Render::computeObjectQoiRange_() {
+std::variant<std::pair<double, double>, std::set<std::variant<double,int>>> Render::computeObjectQoiRange_() {
   // Initialize object QOI range attributes
   double oq_max = -1 * std::numeric_limits<double>::infinity();
   double oq_min = std::numeric_limits<double>::infinity();
   double oq;
-  std::set<double> oq_all;
+  std::set<std::variant<double,int>> oq_all;
 
   // Iterate over all ranks
   for (PhaseType phase = 0; phase < this->n_phases_; phase++) {
@@ -194,7 +194,12 @@ std::variant<std::pair<double, double>, std::set<double>> Render::computeObjectQ
       // Update maximum object qoi
       oq = info_.getObjectQoi(obj_id, phase, this->object_qoi_);
       if (!continuous_object_qoi_) {
-        oq_all.insert(oq);
+        // Allow for integer categorical QOI (i.e. rank_id)
+        if (oq == static_cast<int>(oq)) {
+          oq_all.insert(static_cast<int>(oq));
+        } else {
+          oq_all.insert(oq);
+        }
         if(oq_all.size() > 20) {
           oq_all.clear();
           continuous_object_qoi_ = true;
@@ -532,7 +537,7 @@ void Render::getRgbFromTab20Colormap_(int index, double& r, double& g, double& b
 }
 
 /*static*/ vtkSmartPointer<vtkDiscretizableColorTransferFunction> Render::createColorTransferFunction_(
-  std::variant<std::pair<double, double>, std::set<double>> attribute_range, ColorType ct
+  std::variant<std::pair<double, double>, std::set<std::variant<double,int>>> attribute_range, ColorType ct
 ) {
   vtkSmartPointer<vtkDiscretizableColorTransferFunction> ctf = vtkSmartPointer<vtkDiscretizableColorTransferFunction>::New();
   ctf->SetNanColorRGBA(1., 1., 1., 0.);
@@ -540,16 +545,17 @@ void Render::getRgbFromTab20Colormap_(int index, double& r, double& g, double& b
   ctf->UseAboveRangeColorOn();
 
   // Make discrete when requested
-  if(std::holds_alternative<std::set<double>>(attribute_range)) {
-    const std::set<double>& values = std::get<std::set<double>>(attribute_range);
+  if(std::holds_alternative<std::set<std::variant<double,int>>>(attribute_range)) {
+    const std::set<std::variant<double,int>>& values = std::get<std::set<std::variant<double,int>>>(attribute_range);
+
     // Handle the set type
     ctf->DiscretizeOn();
     int n_colors = values.size();
     ctf->IndexedLookupOn();
     ctf->SetNumberOfIndexedColors(n_colors);
     int i = 0;
-    for (double v : values) {
-      ctf->SetAnnotation(v, std::to_string(v));
+    for (auto v : values) {
+      std::visit([&ctf](auto&& val) { ctf->SetAnnotation(val, std::to_string(val)); }, v);
       // Use discrete color map
       double r, g, b;
       getRgbFromTab20Colormap_(i, r, g, b);
@@ -614,7 +620,7 @@ void Render::getRgbFromTab20Colormap_(int index, double& r, double& g, double& b
   const std::string& title,
   double x, double y,
   uint64_t font_size,
-  std::set<double> values
+  std::set<std::variant<double,int>> values
 ) {
   vtkSmartPointer<vtkScalarBarActor> scalar_bar_actor = vtkSmartPointer<vtkScalarBarActor>::New();
   scalar_bar_actor->SetLookupTable(mapper->GetLookupTable());
@@ -696,7 +702,7 @@ void Render::getRgbFromTab20Colormap_(int index, double& r, double& g, double& b
 /* static */ vtkSmartPointer<vtkMapper> Render::createRanksMapper_(
   PhaseType phase,
   vtkPolyData* rank_mesh,
-  std::variant<std::pair<double, double>, std::set<double>> rank_qoi_range
+  std::variant<std::pair<double, double>, std::set<std::variant<double,int>>> rank_qoi_range
 ) {
   // Create square glyphs at ranks
   vtkSmartPointer<vtkGlyphSource2D> rank_glyph = vtkSmartPointer<vtkGlyphSource2D>::New();
@@ -724,10 +730,16 @@ void Render::getRgbFromTab20Colormap_(int index, double& r, double& g, double& b
   if (std::holds_alternative<std::pair<double, double>>(rank_qoi_range)) {
     auto range_pair = std::get<std::pair<double, double>>(rank_qoi_range);
     rank_mapper->SetScalarRange(range_pair.first, range_pair.second);
-  } else if (std::holds_alternative<std::set<double>>(rank_qoi_range)) {
-    const auto& range_set = std::get<std::set<double>>(rank_qoi_range);
+  } else if (std::holds_alternative<std::set<std::variant<double,int>>>(rank_qoi_range)) {
+    const auto& range_set = std::get<std::set<std::variant<double,int>>>(rank_qoi_range);
     if (!range_set.empty()) {
-      rank_mapper->SetScalarRange(*range_set.begin(), *range_set.rbegin());
+      auto range_begin = *range_set.begin();
+      auto range_end = *range_set.rbegin();
+      if (std::holds_alternative<int>(range_begin)) {
+        rank_mapper->SetScalarRange(std::get<int>(range_begin), std::get<int>(range_end));
+      } else {
+        rank_mapper->SetScalarRange(std::get<double>(range_begin), std::get<double>(range_end));
+      }
     } else {
       rank_mapper->SetScalarRange(0., 0.);
     }
@@ -754,7 +766,7 @@ void Render::renderPNG(
   vtkSmartPointer<vtkRenderer> renderer = setupRenderer_();
 
   // Create rank mapper for later use and create corresponding rank actor
-  std::variant<std::pair<double, double>, std::set<double>> rank_qoi_variant(rank_qoi_range_);
+  std::variant<std::pair<double, double>, std::set<std::variant<double,int>>> rank_qoi_variant(rank_qoi_range_);
   vtkSmartPointer<vtkMapper> rank_mapper = createRanksMapper_(
     phase,
     rank_mesh,
@@ -881,12 +893,12 @@ void Render::renderPNG(
 
     if (glyph_mappers.at(1.0)) {
       std::string object_qoi_name = "Object " + this->object_qoi_;
-      std::set<double> values = {};
+      std::set<std::variant<double,int>> values = {};
       // Check continuity of object qoi
       if (std::holds_alternative<std::pair<double, double>>(this->object_qoi_range_)) {
         values = {};
-      } else if (std::holds_alternative<std::set<double>>(this->object_qoi_range_)) {
-        values = std::get<std::set<double>>(this->object_qoi_range_);
+      } else if (std::holds_alternative<std::set<std::variant<double,int>>>(this->object_qoi_range_)) {
+        values = std::get<std::set<std::variant<double,int>>>(this->object_qoi_range_);
       } else {
         throw std::runtime_error("Unexpected type in object_qoi_range variant.");
       }
