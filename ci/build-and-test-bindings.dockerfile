@@ -1,7 +1,7 @@
 FROM pierrpebay/vt-tv:master AS build
 
 COPY . /opt/src/vt-tv
-RUN mkdir -p /opt/build/vt-tv
+RUN mkdir -p /opt/build/vt-tv/test_output
 
 # setup environment
 ENV VTTV_VTK_DIR=/opt/build/vtk-build

@@ -69,10 +69,13 @@ namespace nlohmann
     }
 
     static void from_json(const json &j, VariantTypes &value) {
-      if (j.is_number_unsigned()) {
-        value = j.get<ElementIDType>();
-      } else if (j.is_number_integer()) {
-        value = j.get<int>();
+      if (j.is_number_integer()) {
+        auto number = j.get<int64_t>();
+        if (number >= std::numeric_limits<int>::min() && number <= std::numeric_limits<int>::max()) {
+          value = static_cast<int>(number);
+        } else {
+          value = static_cast<ElementIDType>(number);
+        }
       } else if (j.is_number_float()) {
         value = j.get<double>();
       } else if (j.is_string()) {
