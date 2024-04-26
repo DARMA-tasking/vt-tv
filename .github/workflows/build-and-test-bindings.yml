@@ -2,11 +2,11 @@ name: Build and Test Bindings Ubuntu 22.04 gcc 11 x64
 
 # Trigger the workflow on push or pull request
 on:
-  push:
-    branches:
-      - master
-  pull_request:
-    types: [opened, reopened, synchronize, converted_to_draft, ready_for_review]
+#  push:
+#    branches:
+#      - master
+#  pull_request:
+#    types: [opened, reopened, synchronize, converted_to_draft, ready_for_review]
 
 jobs:
   build:
