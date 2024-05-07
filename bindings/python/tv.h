@@ -65,7 +65,9 @@
 #include <filesystem>
 #include <map>
 
-#include <omp.h>
+#ifdef VT_TV_OPENMP_ENABLED
+    #include <omp.h>
+#endif
 
 namespace vt::tv::bindings::python {
 
