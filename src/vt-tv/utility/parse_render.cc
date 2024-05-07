@@ -86,7 +86,6 @@ void ParseRender::parseAndRender(PhaseType phase_id, std::unique_ptr<Info> info)
         const int threads = 2;
       #endif
       #ifdef VT_TV_OPENMP_ENABLED
-        fmt::print("openmp enabled\n");
         omp_set_num_threads(threads);
         # pragma omp parallel for
       #endif // VT_TV_OPENMP_ENABLED

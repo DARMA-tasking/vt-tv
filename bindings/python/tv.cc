@@ -91,21 +91,27 @@ void tvFromJson(const std::vector<std::string>& input_json_per_rank_list, const 
     #else
       const int threads = 2;
     #endif
-    omp_set_num_threads(threads);
-    // print number of threads
-    fmt::print("vt-tv: Using {} threads\n", threads);
+    #ifdef VT_TV_OPENMP_ENABLED
+      omp_set_num_threads(threads);
+      // print number of threads
+      fmt::print("vt-tv: Using {} threads\n", threads);
+    #endif
 
     // Initialize the info object, that will hold data for all ranks for all phases
     std::unique_ptr<Info> info = std::make_unique<Info>();
 
-    # pragma omp parallel for
+    #ifdef VT_TV_OPENMP_ENABLED
+      # pragma omp parallel for
+    #endif
     for (int64_t rank_id = 0; rank_id < num_ranks; rank_id++) {
       fmt::print("Reading file for rank {}\n", rank_id);
       std::string rank_json_str = input_json_per_rank_list[rank_id];
       utility::JSONReader reader{static_cast<NodeType>(rank_id)};
       reader.readString(rank_json_str);
       auto tmpInfo = reader.parse();
-      #pragma omp critical
+      #ifdef VT_TV_OPENMP_ENABLED
+        #pragma omp critical
+      #endif
       {
         info->addInfo(tmpInfo->getObjectInfo(), tmpInfo->getRank(rank_id));
       }
