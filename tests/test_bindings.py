@@ -30,4 +30,4 @@ for rank in range(n_ranks):
 
   rank_data.append((data_serialized))
 
-vttv.tv_from_json(rank_data, params_serialized, n_ranks)
+vttv.tvFromJson(rank_data, params_serialized, n_ranks)

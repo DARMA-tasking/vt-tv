@@ -2,7 +2,7 @@
 
 namespace vt::tv::bindings::python {
 
-void tv_from_json(const std::vector<std::string>& input_json_per_rank_list, const std::string& input_yaml_params_str, uint64_t num_ranks) {
+void tvFromJson(const std::vector<std::string>& input_json_per_rank_list, const std::string& input_yaml_params_str, uint64_t num_ranks) {
   std::string startup_logo = std::string("        __           __\n")
                            + std::string(" _   __/ /_         / /__   __\n")
                            + std::string("| | / / __/ _____  / __/ | / /\n")
@@ -127,7 +127,7 @@ namespace nb = nanobind;
 using namespace nb::literals;
 
 NB_MODULE(vttv, m) {
-  m.def("tv_from_json", &tv_from_json);
+  m.def("tvFromJson", &tvFromJson);
 }
 
 } /* end namespace vt::tv::bindings::python */

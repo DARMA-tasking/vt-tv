@@ -28,10 +28,10 @@ add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/lib/yaml-cpp)
 
 include(cmake/load_vtk_package.cmake)
 
-if (vt_tv_python_bindings_enabled)
+if (VT_TV_PYTHON_BINDINGS_ENABLED)
   include(cmake/load_nanobind_package.cmake)
 endif()
 
-if (vt_tv_openmp_enabled)
+if (VT_TV_OPENMP_ENABLED)
   include(cmake/load_openmp.cmake)
 endif()

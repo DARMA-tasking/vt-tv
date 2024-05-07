@@ -51,8 +51,9 @@
 #include <limits>
 #include <memory>
 
-#include <omp.h>
-
+#ifdef VT_TV_OPENMP_ENABLED
+  #include <omp.h>
+#endif
 namespace vt::tv::utility {
 
 /**

@@ -17,4 +17,6 @@ find_package(
   RenderingAnnotation
 )
 
+message(STATUS "VTK version: ${VTK_VERSION}")
+
 message(STATUS "VTK libraries: ${VTK_LIBRARIES}")

@@ -69,7 +69,7 @@
 
 namespace vt::tv::bindings::python {
 
-void tv_from_json(const std::vector<std::string>&, const std::string&, uint64_t);
+void tvFromJson(const std::vector<std::string>&, const std::string&, uint64_t);
 
 } /* end namespace vt::tv::bindings::python */
 

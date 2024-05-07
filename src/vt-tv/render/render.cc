@@ -78,10 +78,8 @@ Render::Render(Info in_info)
 
   // Normalize communication edges
   for(PhaseType phase = 0; phase < this->n_phases_; phase++) {
-    if (
-            selected_phase_ == std::numeric_limits<PhaseType>::max() or
-            selected_phase_ == phase
-            ) {
+    if ( selected_phase_ == std::numeric_limits<PhaseType>::max() or
+         selected_phase_ == phase ) {
       this->info_.normalizeEdges(phase);
     }
   }
@@ -265,8 +263,8 @@ std::pair<double, double> Render::computeRankQoiRange_() {
 double Render::computeRankQoiAverage_(PhaseType phase, std::string qoi) {
   // Initialize rank QOI range attributes
   double rq_sum = 0.0;
-  auto rank_loads_at_phase = this->info_.getAllRankQOIAtPhase(phase, qoi);
-  for (auto [rank, rank_load] : rank_loads_at_phase){
+  auto const& rank_loads_at_phase = this->info_.getAllRankQOIAtPhase(phase, qoi);
+  for (auto const& [rank, rank_load] : rank_loads_at_phase){
     rq_sum += rank_load;
   }
   return rq_sum / rank_loads_at_phase.size();

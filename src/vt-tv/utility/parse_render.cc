@@ -85,18 +85,23 @@ void ParseRender::parseAndRender(PhaseType phase_id, std::unique_ptr<Info> info)
       #else
         const int threads = 2;
       #endif
-      omp_set_num_threads(threads);
-      # pragma omp parallel for
-      for (int64_t rank = 0; rank < n_ranks; rank++) {
-        fmt::print("Reading file for rank {}\n", rank);
-        utility::JSONReader reader{static_cast<NodeType>(rank)};
-        reader.readFile(input_dir + "data." + std::to_string(rank) + ".json");
-        auto tmpInfo = reader.parse();
-        #pragma omp critical
-        {
-        info->addInfo(tmpInfo->getObjectInfo(), tmpInfo->getRank(rank));
+      #ifdef VT_TV_OPENMP_ENABLED
+        fmt::print("openmp enabled\n");
+        omp_set_num_threads(threads);
+        # pragma omp parallel for
+      #endif // VT_TV_OPENMP_ENABLED
+        for (int64_t rank = 0; rank < n_ranks; rank++) {
+          fmt::print("Reading file for rank {}\n", rank);
+          utility::JSONReader reader{static_cast<NodeType>(rank)};
+          reader.readFile(input_dir + "data." + std::to_string(rank) + ".json");
+          auto tmpInfo = reader.parse();
+          #ifdef VT_TV_OPENMP_ENABLED
+            #pragma omp critical
+          #endif
+          {
+          info->addInfo(tmpInfo->getObjectInfo(), tmpInfo->getRank(rank));
+          }
         }
-      }
     }
 
     std::array<std::string, 3> qoi_request = {
