@@ -80,13 +80,14 @@ void ParseRender::parseAndRender(PhaseType phase_id, std::unique_ptr<Info> info)
 
       info = std::make_unique<Info>();
 
-      #ifdef VT_TV_NUM_THREADS
-        const int threads = VT_TV_NUM_THREADS;
+      #ifdef VT_TV_N_THREADS
+        const int threads = VT_TV_N_THREADS;
       #else
         const int threads = 2;
       #endif
       #ifdef VT_TV_OPENMP_ENABLED
         omp_set_num_threads(threads);
+        fmt::print("vt-tv: Using {} threads\n", threads);
         # pragma omp parallel for
       #endif // VT_TV_OPENMP_ENABLED
         for (int64_t rank = 0; rank < n_ranks; rank++) {

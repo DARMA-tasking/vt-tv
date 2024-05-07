@@ -86,8 +86,8 @@ void tvFromJson(const std::vector<std::string>& input_json_per_rank_list, const 
 
     assert(input_json_per_rank_list.size() == num_ranks && "Must have the same number of json files as ranks");
 
-    #ifdef VT_TV_NUM_THREADS
-      const int threads = VT_TV_NUM_THREADS;
+    #ifdef VT_TV_N_THREADS
+      const int threads = VT_TV_N_THREADS;
     #else
       const int threads = 2;
     #endif
