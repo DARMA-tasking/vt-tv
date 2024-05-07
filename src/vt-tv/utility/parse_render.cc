@@ -86,9 +86,11 @@ void ParseRender::parseAndRender(PhaseType phase_id, std::unique_ptr<Info> info)
         const int threads = 2;
       #endif
       #ifdef VT_TV_OPENMP_ENABLED
+      #if VT_TV_OPENMP_ENABLED
         omp_set_num_threads(threads);
         fmt::print("vt-tv: Using {} threads\n", threads);
         # pragma omp parallel for
+      #endif
       #endif // VT_TV_OPENMP_ENABLED
         for (int64_t rank = 0; rank < n_ranks; rank++) {
           fmt::print("Reading file for rank {}\n", rank);
@@ -96,7 +98,9 @@ void ParseRender::parseAndRender(PhaseType phase_id, std::unique_ptr<Info> info)
           reader.readFile(input_dir + "data." + std::to_string(rank) + ".json");
           auto tmpInfo = reader.parse();
           #ifdef VT_TV_OPENMP_ENABLED
+          #if VT_TV_OPENMP_ENABLED
             #pragma omp critical
+          #endif
           #endif
           {
           info->addInfo(tmpInfo->getObjectInfo(), tmpInfo->getRank(rank));

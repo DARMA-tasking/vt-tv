@@ -86,22 +86,21 @@ void tvFromJson(const std::vector<std::string>& input_json_per_rank_list, const 
 
     assert(input_json_per_rank_list.size() == num_ranks && "Must have the same number of json files as ranks");
 
+    // Initialize the info object, that will hold data for all ranks for all phases
+    std::unique_ptr<Info> info = std::make_unique<Info>();
+
     #ifdef VT_TV_N_THREADS
       const int threads = VT_TV_N_THREADS;
     #else
       const int threads = 2;
     #endif
     #ifdef VT_TV_OPENMP_ENABLED
+    #if VT_TV_OPENMP_ENABLED
       omp_set_num_threads(threads);
       // print number of threads
       fmt::print("vt-tv: Using {} threads\n", threads);
-    #endif
-
-    // Initialize the info object, that will hold data for all ranks for all phases
-    std::unique_ptr<Info> info = std::make_unique<Info>();
-
-    #ifdef VT_TV_OPENMP_ENABLED
       # pragma omp parallel for
+    #endif
     #endif
     for (int64_t rank_id = 0; rank_id < num_ranks; rank_id++) {
       fmt::print("Reading file for rank {}\n", rank_id);
@@ -110,7 +109,9 @@ void tvFromJson(const std::vector<std::string>& input_json_per_rank_list, const 
       reader.readString(rank_json_str);
       auto tmpInfo = reader.parse();
       #ifdef VT_TV_OPENMP_ENABLED
+      #if VT_TV_OPENMP_ENABLED
         #pragma omp critical
+      #endif
       #endif
       {
         info->addInfo(tmpInfo->getObjectInfo(), tmpInfo->getRank(rank_id));

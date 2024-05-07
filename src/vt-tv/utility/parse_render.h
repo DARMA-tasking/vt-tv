@@ -52,7 +52,9 @@
 #include <memory>
 
 #ifdef VT_TV_OPENMP_ENABLED
+#if VT_TV_OPENMP_ENABLED
   #include <omp.h>
+#endif
 #endif
 namespace vt::tv::utility {
 
