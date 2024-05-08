@@ -31,6 +31,7 @@ RUN apt-get update \
      libgl1-mesa-dev \
      libglu1-mesa-dev \
      mesa-common-dev \
+     libosmesa6-dev \
      perl \
      curl \
   && rm -rf /var/lib/apt/lists/*
@@ -68,6 +69,12 @@ RUN cmake \
   -DCMAKE_CXX_COMPILER=g++-11 \
   -DCMAKE_BUILD_TYPE:STRING=Release \
   -DBUILD_TESTING:BOOL=OFF \
+  -DVTK_OPENGL_HAS_OSMESA:BOOL=ON \
+  -DVTK_DEFAULT_RENDER_WINDOW_OFFSCREEN:BOOL=ON \
+  -DVTK_USE_X:BOOL=OFF \
+	-DVTK_USE_WIN32_OPENGL:BOOL=OFF \
+	-DVTK_USE_COCOA:BOOL=OFF \
+	-DVTK_USE_SDL2:BOOL=OFF \
   -DVTK_Group_Rendering:BOOL=OFF \
   -DBUILD_TESTING:BOOL=OFF \
   -DBUILD_SHARED_LIBS:BOOL=ON \

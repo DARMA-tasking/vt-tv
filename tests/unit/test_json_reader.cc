@@ -66,9 +66,9 @@ TEST_F(TestJSONReader, test_json_reader_1) {
   std::string path = std::filesystem::absolute(p).string();
 
   NodeType rank = 0;
-  utility::JSONReader reader{rank, path + "/data.0.json"};
-  reader.readFile();
-  auto info = reader.parseFile();
+  utility::JSONReader reader{rank};
+  reader.readFile(path + "/data.0.json");
+  auto info = reader.parse();
 
   auto const& obj_info = info->getObjectInfo();
 
@@ -122,10 +122,10 @@ TEST_F(TestJSONReader, test_json_reader_metadata_attributes) {
   std::string path = std::filesystem::absolute(p).string();
 
   NodeType rank = 0;
-  utility::JSONReader reader{rank, path + "/reader_test_data.json"};
+  utility::JSONReader reader{rank};
 
-  reader.readFile();
-  auto info = reader.parseFile();
+  reader.readFile(path + "/reader_test_data.json");
+  auto info = reader.parse();
   auto& rank_info = info->getRank(rank);
   EXPECT_EQ(rank_info.getRankID(), rank);
 
@@ -138,6 +138,9 @@ TEST_F(TestJSONReader, test_json_reader_metadata_attributes) {
 
   EXPECT_TRUE(rank_attributes.find("stringSample") != rank_attributes.end());
   EXPECT_EQ("abc", std::get<std::string>(rank_attributes.at("stringSample")));
+
+  EXPECT_TRUE(rank_attributes.find("elementIDSample") != rank_attributes.end());
+  EXPECT_EQ(30000000000, std::get<ElementIDType>(rank_attributes.at("elementIDSample")));
 }
 
 TEST_F(TestJSONReader, test_json_reader_object_info_attributes) {
@@ -145,10 +148,10 @@ TEST_F(TestJSONReader, test_json_reader_object_info_attributes) {
   std::string path = std::filesystem::absolute(p).string();
 
   NodeType rank = 0;
-  utility::JSONReader reader{rank, path + "/reader_test_data.json"};
+  utility::JSONReader reader{rank};
 
-  reader.readFile();
-  auto info = reader.parseFile();
+  reader.readFile(path + "/reader_test_data.json");
+  auto info = reader.parse();
   auto& rank_info = info->getRank(rank);
   EXPECT_EQ(rank_info.getRankID(), rank);
 
@@ -164,6 +167,9 @@ TEST_F(TestJSONReader, test_json_reader_object_info_attributes) {
 
   EXPECT_TRUE(object_attributes.find("stringSample") != object_attributes.end());
   EXPECT_EQ("", std::get<std::string>(object_attributes.at("stringSample")));
+
+  EXPECT_TRUE(object_attributes.find("elementIDSample") != object_attributes.end());
+  EXPECT_EQ(50000000000, std::get<ElementIDType>(object_attributes.at("elementIDSample")));
 }
 
 TEST_F(TestJSONReader, test_json_reader_qoi_serializer) {
@@ -193,10 +199,10 @@ TEST_F(TestJSONReader, test_json_reader_object_work_user_defined) {
   std::string path = std::filesystem::absolute(p).string();
 
   NodeType rank = 0;
-  utility::JSONReader reader{rank, path + "/reader_test_data.json"};
+  utility::JSONReader reader{rank};
 
-  reader.readFile();
-  auto info = reader.parseFile();
+  reader.readFile(path + "/reader_test_data.json");
+  auto info = reader.parse();
   auto& rank_info = info->getRank(rank);
   EXPECT_EQ(rank_info.getRankID(), rank);
 

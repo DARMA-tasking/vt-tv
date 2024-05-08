@@ -108,6 +108,24 @@ struct PhaseWork {
   void setCommunications(ElementIDType o_id, ObjectCommunicator& c) { objects_.at(o_id).setCommunications(c); };
 
   /**
+   * \brief add a received communication to an object in this phase
+   *
+   * \return void
+   */
+  void addObjectReceivedCommunication(ElementIDType o_id, ElementIDType from_id, double bytes) {
+    objects_.at(o_id).addReceivedCommunications(from_id, bytes);
+  };
+
+  /**
+   * \brief add a sent communication to an object in this phase
+   *
+   * \return void
+   */
+  void addObjectSentCommunication(ElementIDType o_id, ElementIDType to_id, double bytes) {
+    objects_.at(o_id).addSentCommunications(to_id, bytes);
+  };
+
+  /**
    * \brief Get maximum bytes received or sent between objects at this phase
    */
   double getMaxVolume() const {

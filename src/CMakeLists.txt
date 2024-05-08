@@ -52,9 +52,6 @@ foreach(SUB_DIR ${TOP_LEVEL_SUBDIRS})
     "${CMAKE_CURRENT_SOURCE_DIR}/vt-tv/${SUB_DIR}/*.cc"
   )
 
-  #message("headers=${${SUB_DIR}_HEADER_FILES}")
-  #message("source=${${SUB_DIR}_SOURCE_FILES}")
-
   list(
     APPEND
     HEADER_FILES

@@ -141,45 +141,173 @@ struct Info {
     return n_phases;
   }
 
-  /**
-   * \brief Get load of a given rank
-   *
-   * \param[in] rank the rank
-   *
-   * \return the rank load
-   */
-  double getRankLoad(NodeType rank, PhaseType phase) const { return ranks_.at(rank).getLoad(phase); }
+  /////////////////////////////////////////////////////////////////////////////////////////
+  ////////////                                                                 ////////////
+  ////////////                     GENERALIZED QOI GETTERS                     ////////////
+  ////////////                                                                 ////////////
+  /////////////////////////////////////////////////////////////////////////////////////////
 
-  /**
-   * \brief Get loads of all ranks at given phase
-   *
-   * \return a map of loads per rank
-   */
-  std::unordered_map<NodeType, double> getAllRankLoadsAtPhase(PhaseType phase) const {
-    std::unordered_map<NodeType, double> rank_loads;
+  /*  -----------------------------------  Getters  -----------------------------------  */
 
-    for (auto const& [rank_id, rank] : this->ranks_) {
-      rank_loads.insert(std::make_pair(rank_id, rank.getLoad(phase)));
+ /**
+   * \brief Converts a QOI from QOIVariantTypes to double
+   */
+  double convertQOIVariantTypeToDouble_(const QOIVariantTypes &variant) const {
+    if (std::holds_alternative<ElementIDType>(variant)) {
+      return static_cast<double>(std::get<ElementIDType>(variant));
+    } else if (std::holds_alternative<int>(variant)) {
+      return static_cast<double>(std::get<int>(variant));
+    } else if (std::holds_alternative<double>(variant)) {
+      return std::get<double>(variant);
+    } else if (std::holds_alternative<std::string>(variant)) {
+      throw std::runtime_error("QOI type must be numerical (received std::string).");
+    } else {
+      throw std::runtime_error("Invalid QOI type received (must be numerical).");
     }
-
-    return rank_loads;
   }
 
-  /**
-   * \brief Get loads of a given rank across all phases
-   *
-   * \return a map of loads per rank
-   */
-  std::unordered_map<PhaseType, double> getAllLoadsAtRank(NodeType rank_id) const {
-    std::unordered_map<PhaseType, double> rank_loads;
 
+ /**
+   * \brief Returns a getter to a specified rank QOI
+   */
+  std::function<double(Rank, PhaseType)> getRankQOIGetter(const std::string &rank_qoi) const {
+    std::function<double(Rank, PhaseType)> qoi_getter;
+    if (rank_qoi == "load") {
+      qoi_getter = [&](Rank rank, PhaseType phase) {
+        return convertQOIVariantTypeToDouble_(getRankLoad(rank, phase));
+      };
+    } else if (rank_qoi == "received_volume") {
+      qoi_getter = [&](Rank rank, PhaseType phase) {
+        return convertQOIVariantTypeToDouble_(getRankReceivedVolume(rank, phase));
+      };
+    } else if (rank_qoi == "sent_volume") {
+      qoi_getter = [&](Rank rank, PhaseType phase) {
+        return convertQOIVariantTypeToDouble_(getRankSentVolume(rank, phase));
+      };
+    } else if (rank_qoi == "number_of_objects") {
+      qoi_getter = [&](Rank rank, PhaseType phase) {
+        return convertQOIVariantTypeToDouble_(getRankNumObjects(rank, phase));
+      };
+    } else if (rank_qoi == "number_of_migratable_objects") {
+      qoi_getter = [&](Rank rank, PhaseType phase) {
+        return convertQOIVariantTypeToDouble_(getRankNumMigratableObjects(rank, phase));
+      };
+    } else if (rank_qoi == "migratable_load") {
+      qoi_getter = [&](Rank rank, PhaseType phase) {
+        return convertQOIVariantTypeToDouble_(getRankMigratableLoad(rank, phase));
+      };
+    } else if (rank_qoi == "sentinel_load") {
+      qoi_getter = [&](Rank rank, PhaseType phase) {
+        return convertQOIVariantTypeToDouble_(getRankSentinelLoad(rank, phase));
+      };
+    } else if (rank_qoi == "id") {
+      qoi_getter = [&](Rank rank, PhaseType phase) {
+        return convertQOIVariantTypeToDouble_(getRankID(rank, phase));
+      };
+    } else {
+      // Look in attributes (will throw an error if QOI doesn't exist)
+      qoi_getter = [&](Rank rank, PhaseType phase) {
+        return convertQOIVariantTypeToDouble_(getRankAttribute(rank, rank_qoi, phase));
+      };
+    }
+    return qoi_getter;
+  }
+
+ /**
+   * \brief Returns a getter to a specified object QOI
+   */
+  std::function<double(ObjectWork)> getObjectQoiGetter(const std::string &object_qoi) const {
+    std::function<double(ObjectWork)> qoi_getter;
+    if (object_qoi == "load") {
+      qoi_getter = [&](ObjectWork obj) {
+        return convertQOIVariantTypeToDouble_(getObjectLoad(obj));
+      };
+    } else if (object_qoi == "received_volume") {
+      qoi_getter = [&](ObjectWork obj) {
+        return convertQOIVariantTypeToDouble_(getObjectReceivedVolume(obj));
+      };
+    } else if (object_qoi == "sent_volume") {
+      qoi_getter = [&](ObjectWork obj) {
+        return convertQOIVariantTypeToDouble_(getObjectSentVolume(obj));
+      };
+    } else if (object_qoi == "max_volume") {
+      qoi_getter = [&](ObjectWork obj) {
+        return convertQOIVariantTypeToDouble_(getObjectMaxVolume(obj));
+      };
+    } else if (object_qoi == "id") {
+      qoi_getter = [&](ObjectWork obj) {
+        return convertQOIVariantTypeToDouble_(getObjectID(obj));
+      };
+    } else if (object_qoi == "rank_id") {
+      qoi_getter = [&](ObjectWork obj) {
+        return convertQOIVariantTypeToDouble_(getObjectRankID(obj));
+      };
+    } else {
+      // Look in attributes (will throw an error if QOI doesn't exist)
+      qoi_getter = [&](ObjectWork obj) {
+        return convertQOIVariantTypeToDouble_(getObjectAttribute(obj, object_qoi));
+      };
+    }
+    return qoi_getter;
+  }
+
+  /*  ---------------------------------  Rank Getters  ---------------------------------  */
+
+ /**
+   * \brief Get QOI of a given rank at a given phase
+   *
+   * \return a map of QOI per rank
+   */
+  double getRankQOIAtPhase(ElementIDType rank_id, PhaseType phase, std::string rank_qoi) const {
+    auto qoi_getter = getRankQOIGetter(rank_qoi);
+    auto const& rank = this->ranks_.at(rank_id);
+    return qoi_getter(rank, phase);
+  }
+
+ /**
+   * \brief Get QOI of a given rank across all phases
+   *
+   * \return a map of QOI per rank
+   */
+  std::unordered_map<PhaseType, double> getAllQOIAtRank(ElementIDType rank_id, std::string rank_qoi) const {
+    std::unordered_map<PhaseType, double> rank_qois;
+    auto qoi_getter = getRankQOIGetter(rank_qoi);
     auto const& rank = this->ranks_.at(rank_id);
     auto const& phase_work = rank.getPhaseWork();
     for (auto const& [phase, _] : phase_work) {
-      rank_loads.insert(std::make_pair(phase, rank.getLoad(phase)));
+      rank_qois.insert(std::make_pair(phase, qoi_getter(rank, phase)));
     }
 
-    return rank_loads;
+    return rank_qois;
+  }
+
+  /**
+   * \brief Get QOI of all ranks at given phase
+   *
+   * \return a map of QOI per rank
+   */
+  std::unordered_map<ElementIDType, double> getAllRankQOIAtPhase(PhaseType phase, std::string rank_qoi) const {
+    std::unordered_map<ElementIDType, double> rank_qois;
+    auto qoi_getter = getRankQOIGetter(rank_qoi);
+    for (auto const& [rank_id, rank] : this->ranks_) {
+      rank_qois.insert(std::make_pair(rank_id, qoi_getter(rank, phase)));
+    }
+
+    return rank_qois;
+  }
+
+  /*  --------------------------------  Object Getters  --------------------------------  */
+
+  /**
+   * \brief Get a specified object's QOI at a given phase
+   *
+   * \return the object QOI
+   */
+  double getObjectQoi(ElementIDType obj_id, PhaseType phase, std::string obj_qoi) const {
+    auto qoi_getter = getObjectQoiGetter(obj_qoi);
+    auto const& objects = this->getPhaseObjects(phase);
+    auto const& obj = objects.at(obj_id);
+    return qoi_getter(obj);
   }
 
   /**
@@ -190,7 +318,7 @@ struct Info {
    *
    * \return the objects
    */
-  std::unordered_map<ElementIDType, ObjectWork> getRankObjects(NodeType rank_id, PhaseType phase) const {
+  std::unordered_map<ElementIDType, ObjectWork> getRankObjects(ElementIDType rank_id, PhaseType phase) const {
     std::unordered_map<ElementIDType, ObjectWork> objects;
 
     // Get Rank info for specified rank
@@ -272,6 +400,26 @@ struct Info {
     }
 
     return ov_max;
+  }
+
+  /**
+   * \brief Get maximum load of objects across all ranks and phases
+   *
+   * \return the maximum load
+   */
+  double getMaxLoad() const {
+    double ol_max = 0.;
+
+    auto n_phases = this->getNumPhases();
+    for (PhaseType phase = 0; phase < n_phases; phase++) {
+      auto const& objects = this->getPhaseObjects(phase);
+      for (auto const& [obj_id, obj_work] : objects) {
+        auto obj_load = obj_work.getLoad();
+        if (obj_load > ol_max) ol_max = obj_load;
+      }
+    }
+
+    return ol_max;
   }
 
   /**
@@ -358,40 +506,94 @@ struct Info {
    * \return void
    */
   void normalizeEdges(PhaseType phase) {
-      fmt::print("\n---- Normalizing Edges for phase {} ----\n", phase);
-      auto phaseObjects = createPhaseObjectsMapping(phase);
-      for (auto& [id1, objectWork1] : phaseObjects) {
-        auto sent1 = objectWork1.getSent();
-        auto received1 = objectWork1.getReceived();
-        for (auto& [id2, objectWork2] : phaseObjects) {
-          if (id1 != id2) {
-            auto sent2 = objectWork2.getSent();
-            auto received2 = objectWork2.getReceived();
+    fmt::print("\n---- Normalizing Edges for phase {} ----\n", phase);
+    // Vector of tuples of communications to add: {side_to_be_modified, id1, id2, bytes} for an id1 -> id2 communication (1 sends to 2, 2 receives from 1)
+    // if type is "sender", communication has to be added to sent communications for object id1
+    // if type is "recipient", communication has to be added to received communications for object id2
+    std::vector<std::tuple<std::string, ElementIDType, ElementIDType, double>> communications_to_add;
 
-            // Handle communications from object 2 to object 1
-            auto its2 = sent2.equal_range(id1);
-            for (auto it = its2.first; it != its2.second; ++it) {
-              objectWork1.addReceivedCommunications(id2, it->second);
-            }
-
-            auto itr2 = received2.equal_range(id1);
-            for (auto it = itr2.first; it != itr2.second; ++it) {
-              objectWork1.addSentCommunications(id2, it->second);
-            }
-
-            // Handle communications from object 1 to object 2
-            auto its1 = sent1.equal_range(id2);
-            for (auto it = its1.first; it != its1.second; ++it) {
-              objectWork2.addReceivedCommunications(id1, it->second);
-            }
-
-            auto itr1 = received1.equal_range(id2);
-            for (auto it = itr1.first; it != itr1.second; ++it) {
-              objectWork2.addSentCommunications(id1, it->second);
-            }
+    auto phase_objects = createPhaseObjectsMapping(phase);
+    // Checking all communications for object A in all objects of all ranks at given phase: A <- ... and A -> ...
+    for (auto& [A_id, object_work] : phase_objects) {
+//      fmt::print("- Object ID: {}\n", A_id);
+      auto sent = object_work.getSent();
+//      fmt::print(" Has {} sent communications", sent.size());
+      auto received = object_work.getReceived();
+//      fmt::print(" and {} received communications.\n", received.size());
+      // Going through A -> ... communications
+//      fmt::print(" Checking sent communications:\n");
+      for (auto& [B_id, bytes] : sent) {
+//        fmt::print("  Communication sent to object {} of {} bytes:\n", B_id, bytes);
+        // check if B exists for the A -> B communication
+        if (phase_objects.find(B_id) != phase_objects.end()) {
+//          fmt::print("  Found recipient object {} when searching for communication sent by object {} of {} bytes.\n", B_id, A_id, bytes);
+          auto to_object_work = phase_objects.at(B_id);
+          auto target_received = to_object_work.getReceived();
+//          fmt::print(  "Object {} has {} received communications.\n", B_id, target_received.size());
+          // Check if B has symmetric B <- A received communication
+          if (target_received.find(A_id) != target_received.end()) {
+//            fmt::print(  "   Object {} already has received communication from object {}.\n", B_id, A_id);
+          } else {
+//            fmt::print(  "   Object {} doesn't have received communication from object {}. Pushing to list of communications to add.\n", B_id, A_id);
+            communications_to_add.push_back(std::make_tuple("recipient", A_id, B_id, bytes));
           }
+        } else {
+          fmt::print("  /!\\ Didn't find recipient object {} when searching for communication sent by object {} of {} bytes.\n", B_id, A_id, bytes);
         }
       }
+      // Going through A <- ... communications
+//      fmt::print(" Checking received communications:\n");
+      for (auto& [B_id, bytes] : received) { // Going through A <- ... communications
+//        fmt::print("  Communication received from object {} of {} bytes:\n", B_id, bytes);
+        // check if B exists for the A <- B communication
+        if (phase_objects.find(B_id) != phase_objects.end()) {
+//          fmt::print("  Found sender object {} when searching for communication received by object {} of {} bytes.\n", B_id, A_id, bytes);
+          auto from_object_work = phase_objects.at(B_id);
+          auto target_sent = from_object_work.getSent();
+//          fmt::print(  "Object {} has {} sent communications.\n", B_id, target_sent.size());
+          // Check if B has symmetric B -> A received communication
+          if (target_sent.find(A_id) != target_sent.end()) {
+//            fmt::print(  "   Object {} already has sent communication to object {}.\n", B_id, A_id);
+          } else {
+//            fmt::print(  "   Object {} doesn't have sent communication to object {}. Pushing to list of communications to add.\n", B_id, A_id);
+            communications_to_add.push_back(std::make_tuple("sender", B_id, A_id, bytes));
+          }
+        } else {
+//          fmt::print("  /!\\ Didn't find sender object {} when searching for communication received by object {} of {} bytes.\n", B_id, A_id, bytes);
+        }
+      }
+    }
+
+    // loop through ranks and add communications
+    fmt::print("Updating communications for phase {}.\n", phase);
+    for (auto &[rank_id, rank]: ranks_) {
+      fmt::print(" Checking objects in rank {}.\n", rank_id);
+      auto &phaseWork = rank.getPhaseWork();
+      auto &phaseWorkAtPhase = phaseWork.at(phase);
+      auto &objects = phaseWorkAtPhase.getObjectWork();
+      for (auto &[obj_id, obj_work]: objects) {
+        fmt::print("  Checking if object {} needs to be updated.\n", obj_id);
+        fmt::print("  Communications to update:\n");
+        uint64_t i = 0;
+        for (auto &[object_to_update, sender_id, recipient_id, bytes]: communications_to_add) {
+          fmt::print("    {} needs to be updated in {} -> {} communication of {} bytes.\n", object_to_update,
+                     sender_id, recipient_id, bytes);
+          if (object_to_update == "sender" && sender_id == obj_id) {
+            fmt::print("    Sender to be updated is object on this rank. Updating.\n");
+            rank.addObjectSentCommunicationAtPhase(phase, obj_id, recipient_id, bytes);
+            communications_to_add.erase(communications_to_add.begin() + i);
+          } else if (object_to_update == "recipient" && recipient_id == obj_id) {
+            fmt::print("    Recipient to be updated is object on this rank. Updating.\n");
+            rank.addObjectReceivedCommunicationAtPhase(phase, obj_id, sender_id, bytes);
+            communications_to_add.erase(communications_to_add.begin() + i);
+          }
+          if (communications_to_add.empty()) {
+            return;
+          }
+          i++;
+        }
+      }
+    }
   }
 
   /**
@@ -417,6 +619,240 @@ struct Info {
     }
     return imbalance;
   }
+
+  /* ------------------- Object QOI getters ------------------- */
+
+  /**
+   * \brief Get the id of an object at a given phase
+   *
+   * \param[in] object the current object
+   *
+   * \return the id
+   */
+  QOIVariantTypes getObjectID(ObjectWork object) const {
+     return object.getID();
+  }
+
+  /**
+   * \brief Get the rank id of an object at a given phase
+   *
+   * \param[in] object the current object
+   *
+   * \return the rank id
+   */
+  QOIVariantTypes getObjectRankID(ObjectWork object) const {
+      auto obj_id = object.getID();
+      auto obj_info = object_info_.at(obj_id);
+      return obj_info.getHome();
+  }
+
+  /**
+   * \brief Get the load of an object at a given phase
+   *
+   * \param[in] object the current object
+   *
+   * \return the load
+   */
+  QOIVariantTypes getObjectLoad(ObjectWork object) const {
+     return object.getLoad();
+  }
+
+  /**
+   * \brief Get the received volume of an object at a given phase
+   *
+   * \param[in] object the current object
+   *
+   * \return the received volume
+   */
+  QOIVariantTypes getObjectReceivedVolume(ObjectWork object) const {
+    return object.getReceivedVolume();
+  }
+
+   /**
+    * \brief Get the sent volume of an object at a given phase
+    *
+    * \param[in] object the current object
+    *
+    * \return the sent volume
+    */
+  QOIVariantTypes getObjectSentVolume(ObjectWork object) const {
+    return object.getSentVolume();
+  }
+
+   /**
+    * \brief Get the max volume of an object at a given phase
+    *
+    * \param[in] object the current object
+    *
+    * \return the max volume
+    */
+  QOIVariantTypes getObjectMaxVolume(ObjectWork object) const {
+    return object.getMaxVolume();
+  }
+
+  /**
+    * \brief Get the specified attribute of an object at a given phase
+    *
+    * \param[in] object the current object
+    *
+    * \return the requested attribute
+    */
+  QOIVariantTypes getObjectAttribute(ObjectWork object, std::string object_qoi) const {
+    auto obj_attributes = object.getAttributes();
+    if (obj_attributes.count(object_qoi) > 0) {
+      return obj_attributes.at(object_qoi);
+    } else {
+      throw std::runtime_error("Invalid Object QOI: " + object_qoi);
+    }
+  }
+
+  /* ---------------------------------------------------------- */
+
+  /* -------------------- Rank QOI getters -------------------- */
+
+ /**
+   * \brief Get id of a given rank
+   *
+   * \param[in] rank the rank
+   * \param[in] phase the phase (unused for this QOI)
+   *
+   * \return the rank id
+   */
+  QOIVariantTypes getRankID(Rank rank, PhaseType phase) const { return rank.getRankID(); }
+
+ /**
+   * \brief Get load of a given rank
+   *
+   * \param[in] rank the rank
+   * \param[in] phase the phase
+   *
+   * \return the rank load
+   */
+  QOIVariantTypes getRankLoad(Rank rank, PhaseType phase) const { return rank.getLoad(phase); }
+
+  /**
+   * \brief Get the received volume of a rank at a given phase
+   *
+   * \param[in] rank the rank
+   * \param[in] phase the phase
+   *
+   * \return the received volume
+   */
+  QOIVariantTypes getRankReceivedVolume(Rank rank, PhaseType phase) const {
+
+    auto received_volume = 0.;
+    auto const& phase_objects = rank.getPhaseWork().at(phase).getObjectWork();
+    for (auto const& [obj_id, obj_work] : phase_objects) {
+      received_volume += obj_work.getReceivedVolume();
+    }
+    return received_volume;
+  }
+
+  /**
+   * \brief Get the sent volume of a rank at a given phase
+   *
+   * \param[in] rank the rank
+   * \param[in] phase the phase
+   *
+   * \return the sent volume
+   */
+  QOIVariantTypes getRankSentVolume(Rank rank, PhaseType phase) const {
+    auto sent_volume = 0.;
+    auto const& phase_objects = rank.getPhaseWork().at(phase).getObjectWork();
+    for (auto const& [obj_id, obj_work] : phase_objects) {
+      sent_volume += obj_work.getSentVolume();
+    }
+    return sent_volume;
+  }
+
+  /**
+   * \brief Get the number of objects at a given phase for a given rank
+   *
+   * \param[in] rank the rank
+   * \param[in] phase the phase
+   *
+   * \return the number of objects
+   */
+  QOIVariantTypes getRankNumObjects(Rank rank, PhaseType phase) const {
+    auto num_objects = rank.getNumObjects(phase);
+    return num_objects;
+  }
+
+  /**
+   * \brief Get the number of migratable objects at a given phase for a given rank
+   *
+   * \param[in] rank the rank
+   * \param[in] phase the phase
+   *
+   * \return the number of migratable objects
+   */
+  QOIVariantTypes getRankNumMigratableObjects(Rank rank, PhaseType phase) const {
+    auto num_migratable_objects = 0;
+    auto const& phase_objects = rank.getPhaseWork().at(phase).getObjectWork();
+    for (auto const& [obj_id, _] : phase_objects) {
+      if (object_info_.at(obj_id).isMigratable()) {
+        num_migratable_objects++;
+      }
+    }
+    return num_migratable_objects;
+  }
+
+  /**
+   * \brief Get the total load of migratable objects at a given phase for a given rank
+   *
+   * \param[in] rank the rank
+   * \param[in] phase the phase
+   *
+   * \return the total load of migratable objects
+   */
+  QOIVariantTypes getRankMigratableLoad(Rank rank, PhaseType phase) const {
+    auto migratable_load = 0.;
+    auto const& phase_objects = rank.getPhaseWork().at(phase).getObjectWork();
+    for (auto const& [obj_id, obj_work] : phase_objects) {
+      if (object_info_.at(obj_id).isMigratable()) {
+        migratable_load += obj_work.getLoad();
+      }
+    }
+    return migratable_load;
+  }
+
+  /**
+   * \brief Get the total load of sentinel objects at a given phase for a given rank
+   *
+   * \param[in] rank the rank
+   * \param[in] phase the phase
+   *
+   * \return the total load of sentinel objects
+   */
+  QOIVariantTypes getRankSentinelLoad(Rank rank, PhaseType phase) const {
+    auto sentinel_load = 0.;
+    auto const& phase_objects = rank.getPhaseWork().at(phase).getObjectWork();
+    for (auto const& [obj_id, obj_work] : phase_objects) {
+      if (object_info_.at(obj_id).isSentinel()) {
+        sentinel_load += obj_work.getLoad();
+      }
+    }
+    return sentinel_load;
+  }
+
+  /**
+    * \brief Get the specified attribute of a rank at a given phase
+    *
+    * \param[in] rank the current rank
+    * \param[in] rank_qoi the attribute
+    *
+    * \return the requested attribute
+    */
+  QOIVariantTypes getRankAttribute(Rank rank, std::string rank_qoi, PhaseType phase) const {
+    auto rank_attributes = rank.getAttributes();
+    if (rank_attributes.count(rank_qoi) > 0) {
+      return rank_attributes.at(rank_qoi);
+    } else {
+      throw std::runtime_error("Invalid Rank QOI: " + rank_qoi);
+    }
+  }
+
+  /* ---------------------------------------------------------- */
 
   /**
    * \brief Serializer for data

@@ -55,13 +55,13 @@
 
 namespace vt::tv::utility {
 
-bool JSONReader::isCompressed() const {
+bool JSONReader::isCompressed(std::string const& in_filename) const {
   bool compressed = true;
 
   // determine if the file is compressed or not
-  std::ifstream is(filename_);
+  std::ifstream is(in_filename);
   if (not is.good()) {
-    auto str = fmt::format("Filename is not valid: {}", filename_);
+    auto str = fmt::format("Filename is not valid: {}", in_filename);
     fmt::print(str);
     assert(false && "Invalid file");
     return false;
@@ -83,15 +83,15 @@ bool JSONReader::isCompressed() const {
   return compressed;
 }
 
-void JSONReader::readFile() {
+void JSONReader::readFile(std::string const& in_filename) {
   using json = nlohmann::json;
 
-  if (isCompressed()) {
-    DecompressionInputContainer c(filename_);
+  if (isCompressed(in_filename)) {
+    DecompressionInputContainer c(in_filename);
     json j = json::parse(c);
     json_ = std::make_unique<json>(std::move(j));
   } else {
-    std::ifstream is(filename_, std::ios::binary);
+    std::ifstream is(in_filename, std::ios::binary);
     assert(is.good() && "File must be good");
     json j = json::parse(is);
     is.close();
@@ -99,7 +99,13 @@ void JSONReader::readFile() {
   }
 }
 
-std::unique_ptr<Info> JSONReader::parseFile() {
+void JSONReader::readString(std::string const& in_json_string) {
+  using json = nlohmann::json;
+  json j = json::parse(in_json_string);
+  json_ = std::make_unique<json>(std::move(j));
+}
+
+std::unique_ptr<Info> JSONReader::parse() {
   using json = nlohmann::json;
 
   assert(json_ != nullptr && "Must have valid json");
@@ -187,12 +193,12 @@ std::unique_ptr<Info> JSONReader::parseFile() {
               }
             }
 
-            std::unordered_map<std::string, QOIVariantTypes> readed_metadata;
+            std::unordered_map<std::string, QOIVariantTypes> readed_attributes;
             if (task.find("attributes") != task.end()) {
               auto attributes = task["attributes"];
               if (attributes.is_object()) {
                 for (auto& [key, value] : attributes.items()) {
-                  readed_metadata[key] = value;
+                  readed_attributes[key] = value;
                 }
               }
             }
@@ -201,7 +207,7 @@ std::unique_ptr<Info> JSONReader::parseFile() {
             objects.try_emplace(
               object,
               ObjectWork{
-                object, time, std::move(subphase_loads), std::move(readed_user_defined), std::move(readed_metadata)
+                object, time, std::move(subphase_loads), std::move(readed_user_defined), std::move(readed_attributes)
               }
             );
           }
@@ -223,8 +229,8 @@ std::unique_ptr<Info> JSONReader::parseFile() {
             ElementIDType to_id = to["id"];
 
             assert(bytes.is_number());
-            assert(from.is_number());
-            assert(to.is_number());
+            // assert(from.is_number());
+            // assert(to.is_number());
 
             // fmt::print(" From: {}, to: {}\n", from_id, to_id);
 
@@ -236,6 +242,8 @@ std::unique_ptr<Info> JSONReader::parseFile() {
               auto to_it = objects.find(to_id);
               if (to_it != objects.end()) {
                 to_it->second.addReceivedCommunications(from_id, bytes);
+              } else {
+                fmt::print("Warning: Communication {} -> {}: neither sender nor recipient was found in objects.\n", from_id, to_id);
               }
             }
           }

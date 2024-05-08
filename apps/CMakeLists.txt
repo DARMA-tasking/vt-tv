@@ -51,4 +51,10 @@ foreach(APP_FULL ${PROJECT_APPS})
     PUBLIC
     ${VT_TV_LIBRARY_NS}
   )
+
+  vtk_module_autoinit(
+    TARGETS ${APP}
+    MODULES ${VTK_LIBRARIES}
+  )
+
 endforeach()

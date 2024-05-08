@@ -80,23 +80,32 @@ void ParseRender::parseAndRender(PhaseType phase_id, std::unique_ptr<Info> info)
 
       info = std::make_unique<Info>();
 
-      #ifdef VT_TV_NUM_THREADS
-        const int threads = VT_TV_NUM_THREADS;
+      #ifdef VT_TV_N_THREADS
+        const int threads = VT_TV_N_THREADS;
       #else
         const int threads = 2;
       #endif
-      omp_set_num_threads(threads);
-      # pragma omp parallel for
-      for (int64_t rank = 0; rank < n_ranks; rank++) {
-        fmt::print("Reading file for rank {}\n", rank);
-        utility::JSONReader reader{static_cast<NodeType>(rank), input_dir + "data." + std::to_string(rank) + ".json"};
-        reader.readFile();
-        auto tmpInfo = reader.parseFile();
-        #pragma omp critical
-        {
-        info->addInfo(tmpInfo->getObjectInfo(), tmpInfo->getRank(rank));
+      #ifdef VT_TV_OPENMP_ENABLED
+      #if VT_TV_OPENMP_ENABLED
+        omp_set_num_threads(threads);
+        fmt::print("vt-tv: Using {} threads\n", threads);
+        # pragma omp parallel for
+      #endif
+      #endif // VT_TV_OPENMP_ENABLED
+        for (int64_t rank = 0; rank < n_ranks; rank++) {
+          fmt::print("Reading file for rank {}\n", rank);
+          utility::JSONReader reader{static_cast<NodeType>(rank)};
+          reader.readFile(input_dir + "data." + std::to_string(rank) + ".json");
+          auto tmpInfo = reader.parse();
+          #ifdef VT_TV_OPENMP_ENABLED
+          #if VT_TV_OPENMP_ENABLED
+            #pragma omp critical
+          #endif
+          #endif
+          {
+          info->addInfo(tmpInfo->getObjectInfo(), tmpInfo->getRank(rank));
+          }
         }
-      }
     }
 
     std::array<std::string, 3> qoi_request = {

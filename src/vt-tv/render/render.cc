@@ -76,6 +76,14 @@ Render::Render(Info in_info)
   }
   max_o_per_dim_ = 0;
 
+  // Normalize communication edges
+  for(PhaseType phase = 0; phase < this->n_phases_; phase++) {
+    if ( selected_phase_ == std::numeric_limits<PhaseType>::max() or
+         selected_phase_ == phase ) {
+      this->info_.normalizeEdges(phase);
+    }
+  }
+
   // Initialize jitter
   std::srand(std::time(nullptr));
   auto const& allObjects = info_.getAllObjectIDs();
@@ -92,6 +100,7 @@ Render::Render(Info in_info)
   object_qoi_range_ = this->computeObjectQoiRange_();
   rank_qoi_range_ = this->computeRankQoiRange_();
   object_volume_max_ = this->computeMaxObjectVolume_();
+  object_load_max_ = this->info_.getMaxLoad();
 };
 
 Render::Render(
@@ -135,6 +144,16 @@ Render::Render(
   }
   max_o_per_dim_ = 0;
 
+  // Normalize communication edges
+  for(PhaseType phase = 0; phase < this->n_phases_; phase++) {
+    if (
+        selected_phase_ == std::numeric_limits<PhaseType>::max() or
+        selected_phase_ == phase
+        ) {
+      this->info_.normalizeEdges(phase);
+    }
+  }
+
   // Initialize jitter
   std::srand(std::time(nullptr));
   auto const& allObjects = info_.getAllObjectIDs();
@@ -151,38 +170,38 @@ Render::Render(
   object_qoi_range_ = this->computeObjectQoiRange_();
   rank_qoi_range_ = this->computeRankQoiRange_();
   object_volume_max_ = this->computeMaxObjectVolume_();
+  object_load_max_ = this->info_.getMaxLoad();
 };
 
 double Render::computeMaxObjectVolume_() {
   double ov_max = this->info_.getMaxVolume();
-  this->object_volume_max_ = ov_max;
   return ov_max;
 }
 
-std::variant<std::pair<double, double>, std::set<double>> Render::computeObjectQoiRange_() {
+std::variant<std::pair<double, double>, std::set<std::variant<double,int>>> Render::computeObjectQoiRange_() {
   // Initialize object QOI range attributes
   double oq_max = -1 * std::numeric_limits<double>::infinity();
   double oq_min = std::numeric_limits<double>::infinity();
   double oq;
-  std::set<double> oq_all;
+  std::set<std::variant<double,int>> oq_all;
 
   // Iterate over all ranks
   for (PhaseType phase = 0; phase < this->n_phases_; phase++) {
     auto const& objects = this->info_.getPhaseObjects(phase);
     for (auto const& [obj_id, obj_work] : objects) {
       // Update maximum object qoi
-      if (this->object_qoi_ == "load") {
-        oq = obj_work.getLoad();
-
-        if (!continuous_object_qoi_) {
+      oq = info_.getObjectQoi(obj_id, phase, this->object_qoi_);
+      if (!continuous_object_qoi_) {
+        // Allow for integer categorical QOI (i.e. rank_id)
+        if (oq == static_cast<int>(oq)) {
+          oq_all.insert(static_cast<int>(oq));
+        } else {
           oq_all.insert(oq);
-          if(oq_all.size() > 20) {
-            oq_all.clear();
-            continuous_object_qoi_ = true;
-          }
         }
-      } else {
-        throw std::runtime_error("Invalid QOI: " + this->object_qoi_);
+        if(oq_all.size() > 20) {
+          oq_all.clear();
+          continuous_object_qoi_ = true;
+        }
       }
       if (oq > oq_max) oq_max = oq;
       if (oq < oq_min) oq_min = oq;
@@ -210,33 +229,29 @@ std::pair<double, double> Render::computeRankQoiRange_() {
 
   // Iterate over all ranks
   for (uint64_t rank_id = 0; rank_id < this->n_ranks_; rank_id++) {
-    // Update maximum rank qoi
-    if (this->rank_qoi_ == "load") {
-      // Get rank loads per phase
-      std::unordered_map<PhaseType, double> rank_loads_map = this->info_.getAllLoadsAtRank(rank_id);
+    std::unordered_map<PhaseType, double> rank_qoi_map;
+    rank_qoi_map = this->info_.getAllQOIAtRank(rank_id, this->rank_qoi_);
 
-      // Get max load for this rank across all phases
-      auto prmax = std::max_element
-      (
-        std::begin(rank_loads_map), std::end(rank_loads_map),
-        [] (const std::pair<PhaseType, double>& p1, const std::pair<PhaseType, double>& p2) {
-          return p1.second < p2.second;
-        }
-      );
-      rqmax_for_phase = prmax->second;
+    // Get max qoi for this rank across all phases
+    auto prmax = std::max_element
+    (
+      std::begin(rank_qoi_map), std::end(rank_qoi_map),
+      [] (const std::pair<PhaseType, double>& p1, const std::pair<PhaseType, double>& p2) {
+        return p1.second < p2.second;
+      }
+    );
+    rqmax_for_phase = prmax->second;
 
-      // Get min load for this rank across all phases
-      auto prmin = std::max_element
-      (
-        std::begin(rank_loads_map), std::end(rank_loads_map),
-        [] (const std::pair<PhaseType, double>& p1, const std::pair<PhaseType, double>& p2) {
-          return p1.second > p2.second;
-        }
-      );
-      rqmin_for_phase = prmin->second;
-    } else {
-      throw std::runtime_error("Invalid QOI: " + this->object_qoi_);
-    }
+    // Get min qoi for this rank across all phases
+    auto prmin = std::max_element
+    (
+      std::begin(rank_qoi_map), std::end(rank_qoi_map),
+      [] (const std::pair<PhaseType, double>& p1, const std::pair<PhaseType, double>& p2) {
+        return p1.second > p2.second;
+      }
+    );
+    rqmin_for_phase = prmin->second;
+
     if (rqmax_for_phase > rq_max) rq_max = rqmax_for_phase;
     if (rqmin_for_phase < rq_min) rq_min = rqmin_for_phase;
   }
@@ -248,17 +263,11 @@ std::pair<double, double> Render::computeRankQoiRange_() {
 double Render::computeRankQoiAverage_(PhaseType phase, std::string qoi) {
   // Initialize rank QOI range attributes
   double rq_sum = 0.0;
-
-  if (qoi == "load"){
-    auto rank_loads_at_phase = this->info_.getAllRankLoadsAtPhase(phase);
-    for (auto [rank, rank_load] : rank_loads_at_phase){
-      rq_sum += rank_load;
-    }
-    return rq_sum / rank_loads_at_phase.size();
+  auto const& rank_loads_at_phase = this->info_.getAllRankQOIAtPhase(phase, qoi);
+  for (auto const& [rank, rank_load] : rank_loads_at_phase){
+    rq_sum += rank_load;
   }
-  else{
-    throw std::runtime_error("Invalid QOI: " + qoi);
-  }
+  return rq_sum / rank_loads_at_phase.size();
 }
 
 std::map<NodeType, std::unordered_map<ElementIDType, ObjectWork>> Render::createObjectMapping_(PhaseType phase) {
@@ -270,9 +279,9 @@ std::map<NodeType, std::unordered_map<ElementIDType, ObjectWork>> Render::create
   return object_mapping;
 }
 
-vtkNew<vtkPolyData> Render::createRankMesh_(PhaseType iteration) {
+vtkNew<vtkPolyData> Render::createRankMesh_(PhaseType phase) {
   fmt::print("\n\n");
-  fmt::print("----- Creating rank mesh for phase {} -----\n", iteration);
+  fmt::print("----- Creating rank mesh for phase {} -----\n", phase);
   vtkNew<vtkPoints> rank_points_;
   rank_points_->SetNumberOfPoints(this->n_ranks_);
 
@@ -291,20 +300,16 @@ vtkNew<vtkPolyData> Render::createRankMesh_(PhaseType iteration) {
     // Insert point based on cartesian coordinates
     rank_points_->SetPoint(rank_id, offsets[0], offsets[1], offsets[2]);
 
-    auto objects = this->info_.getRankObjects(rank_id, iteration);
+    auto objects = this->info_.getRankObjects(rank_id, phase);
 
-    double rank_load = 0;
-    for (auto [id, object] : objects) {
-      rank_load += object.getLoad();
-    }
-
-    rank_arr->SetTuple1(rank_id, rank_load);
+    auto rank_qoi_val = this->info_.getRankQOIAtPhase(rank_id, phase, this->rank_qoi_);
+    rank_arr->SetTuple1(rank_id, rank_qoi_val);
   }
 
   vtkNew<vtkPolyData> pd_mesh;
   pd_mesh->SetPoints(rank_points_);
   pd_mesh->GetPointData()->SetScalars(rank_arr);
-  fmt::print("----- Finished creating rank mesh for phase {} -----\n", iteration);
+  fmt::print("----- Finished creating rank mesh for phase {} -----\n", phase);
   return pd_mesh;
 }
 
@@ -333,7 +338,7 @@ vtkNew<vtkPolyData> Render::createObjectMesh_(PhaseType phase) {
 
   // Load array must be added when it is not the object QOI
   vtkNew<vtkDoubleArray> l_arr;
-  if (object_qoi_ != "load") {
+  if (this->object_qoi_ != "load") {
     l_arr->SetName("load");
     l_arr->SetNumberOfTuples(n_o);
   }
@@ -426,8 +431,13 @@ vtkNew<vtkPolyData> Render::createObjectMesh_(PhaseType phase) {
       );
 
       // Set object attributes
-      q_arr->SetTuple1(point_index, objectWork.getLoad());
+      ElementIDType obj_id = objectWork.getID();
+      auto oq = this->info_.getObjectQoi(obj_id, phase, this->object_qoi_);
+      q_arr->SetTuple1(point_index, oq);
       b_arr->SetTuple1(point_index, migratable);
+      if (this->object_qoi_ != "load") {
+        l_arr->SetTuple1(point_index, objectWork.getLoad());
+      }
 
       auto objSent = objectWork.getSent();
       for (auto [k, v] : objSent) {
@@ -485,6 +495,9 @@ vtkNew<vtkPolyData> Render::createObjectMesh_(PhaseType phase) {
   pd_mesh->SetLines(lines);
   pd_mesh->GetPointData()->SetScalars(q_arr);
   pd_mesh->GetPointData()->AddArray(b_arr);
+  if (this->object_qoi_ != "load") {
+    pd_mesh->GetPointData()->AddArray(l_arr);
+  }
   pd_mesh->GetCellData()->SetScalars(lineValuesArray);
 
   fmt::print("----- Finished creating object mesh -----\n");
@@ -522,7 +535,7 @@ void Render::getRgbFromTab20Colormap_(int index, double& r, double& g, double& b
 }
 
 /*static*/ vtkSmartPointer<vtkDiscretizableColorTransferFunction> Render::createColorTransferFunction_(
-  std::variant<std::pair<double, double>, std::set<double>> attribute_range, ColorType ct
+  std::variant<std::pair<double, double>, std::set<std::variant<double,int>>> attribute_range, ColorType ct
 ) {
   vtkSmartPointer<vtkDiscretizableColorTransferFunction> ctf = vtkSmartPointer<vtkDiscretizableColorTransferFunction>::New();
   ctf->SetNanColorRGBA(1., 1., 1., 0.);
@@ -530,16 +543,17 @@ void Render::getRgbFromTab20Colormap_(int index, double& r, double& g, double& b
   ctf->UseAboveRangeColorOn();
 
   // Make discrete when requested
-  if(std::holds_alternative<std::set<double>>(attribute_range)) {
-    const std::set<double>& values = std::get<std::set<double>>(attribute_range);
+  if(std::holds_alternative<std::set<std::variant<double,int>>>(attribute_range)) {
+    const std::set<std::variant<double,int>>& values = std::get<std::set<std::variant<double,int>>>(attribute_range);
+
     // Handle the set type
     ctf->DiscretizeOn();
     int n_colors = values.size();
     ctf->IndexedLookupOn();
     ctf->SetNumberOfIndexedColors(n_colors);
     int i = 0;
-    for (double v : values) {
-      ctf->SetAnnotation(v, std::to_string(v));
+    for (auto v : values) {
+      std::visit([&ctf](auto&& val) { ctf->SetAnnotation(val, std::to_string(val)); }, v);
       // Use discrete color map
       double r, g, b;
       getRgbFromTab20Colormap_(i, r, g, b);
@@ -604,7 +618,7 @@ void Render::getRgbFromTab20Colormap_(int index, double& r, double& g, double& b
   const std::string& title,
   double x, double y,
   uint64_t font_size,
-  std::set<double> values
+  std::set<std::variant<double,int>> values
 ) {
   vtkSmartPointer<vtkScalarBarActor> scalar_bar_actor = vtkSmartPointer<vtkScalarBarActor>::New();
   scalar_bar_actor->SetLookupTable(mapper->GetLookupTable());
@@ -686,7 +700,7 @@ void Render::getRgbFromTab20Colormap_(int index, double& r, double& g, double& b
 /* static */ vtkSmartPointer<vtkMapper> Render::createRanksMapper_(
   PhaseType phase,
   vtkPolyData* rank_mesh,
-  std::variant<std::pair<double, double>, std::set<double>> rank_qoi_range
+  std::variant<std::pair<double, double>, std::set<std::variant<double,int>>> rank_qoi_range
 ) {
   // Create square glyphs at ranks
   vtkSmartPointer<vtkGlyphSource2D> rank_glyph = vtkSmartPointer<vtkGlyphSource2D>::New();
@@ -714,10 +728,16 @@ void Render::getRgbFromTab20Colormap_(int index, double& r, double& g, double& b
   if (std::holds_alternative<std::pair<double, double>>(rank_qoi_range)) {
     auto range_pair = std::get<std::pair<double, double>>(rank_qoi_range);
     rank_mapper->SetScalarRange(range_pair.first, range_pair.second);
-  } else if (std::holds_alternative<std::set<double>>(rank_qoi_range)) {
-    const auto& range_set = std::get<std::set<double>>(rank_qoi_range);
+  } else if (std::holds_alternative<std::set<std::variant<double,int>>>(rank_qoi_range)) {
+    const auto& range_set = std::get<std::set<std::variant<double,int>>>(rank_qoi_range);
     if (!range_set.empty()) {
-      rank_mapper->SetScalarRange(*range_set.begin(), *range_set.rbegin());
+      auto range_begin = *range_set.begin();
+      auto range_end = *range_set.rbegin();
+      if (std::holds_alternative<int>(range_begin)) {
+        rank_mapper->SetScalarRange(std::get<int>(range_begin), std::get<int>(range_end));
+      } else {
+        rank_mapper->SetScalarRange(std::get<double>(range_begin), std::get<double>(range_end));
+      }
     } else {
       rank_mapper->SetScalarRange(0., 0.);
     }
@@ -744,7 +764,7 @@ void Render::renderPNG(
   vtkSmartPointer<vtkRenderer> renderer = setupRenderer_();
 
   // Create rank mapper for later use and create corresponding rank actor
-  std::variant<std::pair<double, double>, std::set<double>> rank_qoi_variant(rank_qoi_range_);
+  std::variant<std::pair<double, double>, std::set<std::variant<double,int>>> rank_qoi_variant(rank_qoi_range_);
   vtkSmartPointer<vtkMapper> rank_mapper = createRanksMapper_(
     phase,
     rank_mesh,
@@ -871,12 +891,12 @@ void Render::renderPNG(
 
     if (glyph_mappers.at(1.0)) {
       std::string object_qoi_name = "Object " + this->object_qoi_;
-      std::set<double> values = {};
+      std::set<std::variant<double,int>> values = {};
       // Check continuity of object qoi
       if (std::holds_alternative<std::pair<double, double>>(this->object_qoi_range_)) {
         values = {};
-      } else if (std::holds_alternative<std::set<double>>(this->object_qoi_range_)) {
-        values = std::get<std::set<double>>(this->object_qoi_range_);
+      } else if (std::holds_alternative<std::set<std::variant<double,int>>>(this->object_qoi_range_)) {
+        values = std::get<std::set<std::variant<double,int>>>(this->object_qoi_range_);
       } else {
         throw std::runtime_error("Unexpected type in object_qoi_range variant.");
       }
@@ -955,9 +975,6 @@ void Render::generate(uint64_t font_size, uint64_t win_size) {
       selected_phase_ == std::numeric_limits<PhaseType>::max() or
       selected_phase_ == phase
     ) {
-
-      this->info_.normalizeEdges(phase);
-
       vtkNew<vtkPolyData> object_mesh = this->createObjectMesh_(phase);
       vtkNew<vtkPolyData> rank_mesh = this->createRankMesh_(phase);
 
@@ -993,7 +1010,7 @@ void Render::generate(uint64_t font_size, uint64_t win_size) {
         uint64_t edge_width = 0.03 * window_size / *std::max_element(this->grid_size_.begin(), this->grid_size_.end());
         double glyph_factor = 0.8 * this->grid_resolution_ / (
                         (this->max_o_per_dim_ + 1)
-                        * std::sqrt(this->object_qoi_max_));
+                        * std::sqrt(object_load_max_));
         fmt::print("  Image size: {}x{}px\n", win_size, win_size);
         fmt::print("  Font size: {}pt\n", font_size);
         this->renderPNG(

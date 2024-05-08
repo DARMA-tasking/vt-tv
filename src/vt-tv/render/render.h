@@ -125,12 +125,13 @@ private:
   uint64_t max_o_per_dim_ = 0;
 
   // numeric parameters
-  std::variant<std::pair<double, double>, std::set<double>> object_qoi_range_;
+  std::variant<std::pair<double, double>, std::set<std::variant<double,int>>> object_qoi_range_;
   std::pair<double, double> rank_qoi_range_;
 
   // Maximum object attribute values
   double object_qoi_max_ = 0.0;
   double object_volume_max_ = 0.0;
+  double object_load_max_ = 0.0;
 
   // quantities of interest
   std::string rank_qoi_ = "load";
@@ -161,7 +162,7 @@ private:
    *
    * \return object qoi range
    */
-  std::variant<std::pair<double, double>, std::set<double>> computeObjectQoiRange_();
+  std::variant<std::pair<double, double>, std::set<std::variant<double,int>>> computeObjectQoiRange_();
 
   /**
    * \brief Compute range of rank qoi.
@@ -209,7 +210,7 @@ private:
   static void getRgbFromTab20Colormap_(int index, double& r, double& g, double& b);
 
   static vtkSmartPointer<vtkDiscretizableColorTransferFunction> createColorTransferFunction_(
-    std::variant<std::pair<double, double>, std::set<double>> attribute_range, ColorType ct = ColorType::Default
+    std::variant<std::pair<double, double>, std::set<std::variant<double,int>>> attribute_range, ColorType ct = ColorType::Default
   );
 
   static vtkSmartPointer<vtkScalarBarActor> createScalarBarActor_(
@@ -217,7 +218,7 @@ private:
     const std::string& title,
     double x, double y,
     uint64_t font_size = 50,
-    std::set<double> values = {}
+    std::set<std::variant<double,int>> values = {}
   );
 
   static vtkSmartPointer<vtkRenderer> setupRenderer_();
@@ -225,7 +226,7 @@ private:
   static vtkSmartPointer<vtkMapper> createRanksMapper_(
     PhaseType phase,
     vtkPolyData* rank_mesh,
-    std::variant<std::pair<double, double>, std::set<double>> rank_qoi_range
+    std::variant<std::pair<double, double>, std::set<std::variant<double,int>>> rank_qoi_range
   );
 
   /**

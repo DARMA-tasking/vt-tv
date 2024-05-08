@@ -108,6 +108,33 @@ struct Rank {
   auto const& getAttributes() const { return attributes_; }
 
   /**
+   * \brief Get number of objects at given phase on this rank
+   *
+   * \param[in] phase the phase
+   *
+   * \return the number of objects
+   */
+   uint64_t getNumObjects(PhaseType phase) const { return phase_info_.at(phase).getObjectWork().size(); }
+
+  /**
+  * \brief add a received communication to an object at a given phase
+  *
+  * \return void
+  */
+  void addObjectReceivedCommunicationAtPhase(PhaseType phase_id, ElementIDType o_id, ElementIDType from_id, double bytes) {
+    phase_info_.at(phase_id).addObjectReceivedCommunication(o_id, from_id, bytes);
+  };
+
+  /**
+   * \brief add a sent communication to an object at a given phase
+   *
+   * \return void
+   */
+  void addObjectSentCommunicationAtPhase(PhaseType phase_id, ElementIDType o_id, ElementIDType to_id, double bytes) {
+    phase_info_.at(phase_id).addObjectSentCommunication(o_id, to_id, bytes);
+  };
+
+  /**
    * \brief Serializer for data
    *
    * \param[in] s the serializer
