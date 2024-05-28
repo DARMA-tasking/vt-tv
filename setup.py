@@ -3,10 +3,13 @@ from setuptools.command.build_ext import build_ext
 import subprocess
 import os
 import sys
+import shutil
 
 # Ensure python-build directory exists
 build_dir = 'python-build'
-os.makedirs(build_dir, exist_ok=True)
+if os.path.exists(build_dir):
+    shutil.rmtree(build_dir)
+os.makedirs(build_dir)
 
 class CMakeExtension(Extension):
   def __init__(self, name, sourcedir=''):
