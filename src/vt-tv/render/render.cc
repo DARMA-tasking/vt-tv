@@ -186,25 +186,30 @@ std::variant<std::pair<double, double>, std::set<std::variant<double,int>>> Rend
   std::set<std::variant<double,int>> oq_all;
 
   // Iterate over all ranks
-  for (PhaseType phase = 0; phase < this->n_phases_; phase++) {
-    auto const& objects = this->info_.getPhaseObjects(phase);
-    for (auto const& [obj_id, obj_work] : objects) {
-      // Update maximum object qoi
-      oq = info_.getObjectQoi(obj_id, phase, this->object_qoi_);
-      if (!continuous_object_qoi_) {
-        // Allow for integer categorical QOI (i.e. rank_id)
-        if (oq == static_cast<int>(oq)) {
-          oq_all.insert(static_cast<int>(oq));
-        } else {
-          oq_all.insert(oq);
+  for(PhaseType phase = 0; phase < this->n_phases_; phase++) {
+    if (
+      selected_phase_ == std::numeric_limits<PhaseType>::max() or
+      selected_phase_ == phase
+    ) {
+      auto const& objects = this->info_.getPhaseObjects(phase);
+      for (auto const& [obj_id, obj_work] : objects) {
+        // Update maximum object qoi
+        oq = info_.getObjectQoi(obj_id, phase, this->object_qoi_);
+        if (!continuous_object_qoi_) {
+          // Allow for integer categorical QOI (i.e. rank_id)
+          if (oq == static_cast<int>(oq)) {
+            oq_all.insert(static_cast<int>(oq));
+          } else {
+            oq_all.insert(oq);
+          }
+          if(oq_all.size() > 20) {
+            oq_all.clear();
+            continuous_object_qoi_ = true;
+          }
         }
-        if(oq_all.size() > 20) {
-          oq_all.clear();
-          continuous_object_qoi_ = true;
-        }
+        if (oq > oq_max) oq_max = oq;
+        if (oq < oq_min) oq_min = oq;
       }
-      if (oq > oq_max) oq_max = oq;
-      if (oq < oq_min) oq_min = oq;
     }
   }
 
