@@ -364,6 +364,10 @@ struct Info {
 
       // Get phase work at specified phase
       auto const& phase_work = phase_history.find(phase);
+      if (phase_work == phase_history.end()) {
+        auto ex = "info::getPhaseObjects: Phase " + std::to_string(phase) + " doesn't exist for rank " + std::to_string(rank);
+        throw std::runtime_error(ex);
+      }
 
       // Get all objects at specified phase
       auto const& object_work_at_phase = phase_work->second.getObjectWork();
