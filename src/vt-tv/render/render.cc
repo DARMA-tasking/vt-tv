@@ -76,6 +76,9 @@ Render::Render(Info in_info)
   }
   max_o_per_dim_ = 0;
 
+  // Set the info selected_phase
+  this->info_.setSelectedPhase(selected_phase_);
+
   // Normalize communication edges
   for(PhaseType phase = 0; phase < this->n_phases_; phase++) {
     if ( selected_phase_ == std::numeric_limits<PhaseType>::max() or
@@ -143,6 +146,9 @@ Render::Render(
     if(grid_size_[d] > 1) rank_dims_.insert(d);
   }
   max_o_per_dim_ = 0;
+
+  // Set the info selected_phase
+  this->info_.setSelectedPhase(selected_phase_);
 
   // Normalize communication edges
   for(PhaseType phase = 0; phase < this->n_phases_; phase++) {
