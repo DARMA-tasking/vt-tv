@@ -56,8 +56,10 @@ Render::Render(Info in_info)
 , n_ranks_(in_info.getNumRanks())
 , n_phases_(in_info.getNumPhases())
 {
-  // Generically set rank grid dimensions according to the total number of ranks
+  // If selected_phase is not provided, use all phases
+  selected_phase_ = std::numeric_limits<PhaseType>::max();
 
+  // Generically set rank grid dimensions according to the total number of ranks
   grid_size_[2] = 1; // we assume 2D representation
 
   int sqrt_n_ranks = std::sqrt(n_ranks_);
