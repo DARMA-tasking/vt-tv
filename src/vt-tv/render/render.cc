@@ -189,12 +189,11 @@ std::variant<std::pair<double, double>, std::set<std::variant<double,int>>> Rend
   double oq;
   std::set<std::variant<double,int>> oq_all;
 
-  // Iterate over all ranks
-  if (selected_phase_ != std::numeric_limits<PhaseType>::max()) {
-    auto const& objects = this->info_.getPhaseObjects(selected_phase_);
+  // Update the QOI range
+  auto updateQoiRange = [&](auto const& objects, PhaseType phase) {
     for (auto const& [obj_id, obj_work] : objects) {
       // Update maximum object qoi
-      oq = info_.getObjectQoi(obj_id, selected_phase_, this->object_qoi_);
+      oq = info_.getObjectQoi(obj_id, phase, this->object_qoi_);
       if (!continuous_object_qoi_) {
         // Allow for integer categorical QOI (i.e. rank_id)
         if (oq == static_cast<int>(oq)) {
@@ -210,27 +209,16 @@ std::variant<std::pair<double, double>, std::set<std::variant<double,int>>> Rend
       if (oq > oq_max) oq_max = oq;
       if (oq < oq_min) oq_min = oq;
     }
+  };
+
+  // Iterate over all ranks
+  if (selected_phase_ != std::numeric_limits<PhaseType>::max()) {
+    auto const& objects = this->info_.getPhaseObjects(selected_phase_);
+    updateQoiRange(objects, selected_phase_);
   } else {
     for (PhaseType phase = 0; phase < this->n_phases_; phase++) {
       auto const& objects = this->info_.getPhaseObjects(phase);
-      for (auto const& [obj_id, obj_work] : objects) {
-        // Update maximum object qoi
-        oq = info_.getObjectQoi(obj_id, phase, this->object_qoi_);
-        if (!continuous_object_qoi_) {
-          // Allow for integer categorical QOI (i.e. rank_id)
-          if (oq == static_cast<int>(oq)) {
-            oq_all.insert(static_cast<int>(oq));
-          } else {
-            oq_all.insert(oq);
-          }
-          if(oq_all.size() > 20) {
-            oq_all.clear();
-            continuous_object_qoi_ = true;
-          }
-        }
-        if (oq > oq_max) oq_max = oq;
-        if (oq < oq_min) oq_min = oq;
-      }
+      updateQoiRange(objects, phase);
     }
   }
 
@@ -1000,63 +988,11 @@ void Render::generate(uint64_t font_size, uint64_t win_size) {
 
   fmt::print("selected phase={}\n", selected_phase_);
 
-  if (selected_phase_ != std::numeric_limits<PhaseType>::max()) {
-      vtkNew<vtkPolyData> object_mesh = this->createObjectMesh_(selected_phase_);
-      vtkNew<vtkPolyData> rank_mesh = this->createRankMesh_(selected_phase_);
-
-      if (save_meshes_){
-        fmt::print("== Writing object mesh for phase {}\n", selected_phase_);
-        vtkNew<vtkXMLPolyDataWriter> writer;
-        std::string object_mesh_filename = output_dir_ + output_file_stem_ + "_object_mesh_" + std::to_string(selected_phase_) + ".vtp";
-        writer->SetFileName(object_mesh_filename.c_str());
-        writer->SetInputData(object_mesh);
-        writer->Write();
-
-        fmt::print("== Writing rank mesh for phase {}\n", selected_phase_);
-        vtkNew<vtkXMLPolyDataWriter> writer2;
-        std::string rank_mesh_filneame = output_dir_ + output_file_stem_ + "_rank_mesh_" + std::to_string(selected_phase_) + ".vtp";
-        writer2->SetFileName(rank_mesh_filneame.c_str());
-        writer2->SetInputData(rank_mesh);
-        writer2->Write();
-      }
-
-      if (save_pngs_){
-        fmt::print("== Rendering visualization PNG for phase {}\n", selected_phase_);
-
-        std::pair<double, double> obj_qoi_range;
-        try {
-          obj_qoi_range = std::get<std::pair<double, double>>(this->object_qoi_range_);
-        }
-        catch(const std::exception& e) {
-          std::cerr << e.what() << '\n';
-          obj_qoi_range = {0, 1};
-        }
-
-        uint64_t window_size = win_size;
-        uint64_t edge_width = 0.03 * window_size / *std::max_element(this->grid_size_.begin(), this->grid_size_.end());
-        double glyph_factor = 0.8 * this->grid_resolution_ / (
-                        (this->max_o_per_dim_ + 1)
-                        * std::sqrt(object_load_max_));
-        fmt::print("  Image size: {}x{}px\n", win_size, win_size);
-        fmt::print("  Font size: {}pt\n", font_size);
-        this->renderPNG(
-          selected_phase_,
-          rank_mesh,
-          object_mesh,
-          edge_width,
-          glyph_factor,
-          window_size,
-          font_size,
-          output_dir_,
-          output_file_stem_
-        );
-      }
-  } else {
-    for (PhaseType phase = 0; phase < this->n_phases_; phase++) {
+  auto createMeshAndRender = [&](PhaseType phase) {
       vtkNew<vtkPolyData> object_mesh = this->createObjectMesh_(phase);
       vtkNew<vtkPolyData> rank_mesh = this->createRankMesh_(phase);
 
-      if (save_meshes_){
+      if (save_meshes_) {
         fmt::print("== Writing object mesh for phase {}\n", phase);
         vtkNew<vtkXMLPolyDataWriter> writer;
         std::string object_mesh_filename = output_dir_ + output_file_stem_ + "_object_mesh_" + std::to_string(phase) + ".vtp";
@@ -1072,7 +1008,7 @@ void Render::generate(uint64_t font_size, uint64_t win_size) {
         writer2->Write();
       }
 
-      if (save_pngs_){
+      if (save_pngs_) {
         fmt::print("== Rendering visualization PNG for phase {}\n", phase);
 
         std::pair<double, double> obj_qoi_range;
@@ -1103,6 +1039,13 @@ void Render::generate(uint64_t font_size, uint64_t win_size) {
           output_file_stem_
         );
       }
+  };
+
+  if (selected_phase_ != std::numeric_limits<PhaseType>::max()) {
+      createMeshAndRender(selected_phase_);
+  } else {
+    for (PhaseType phase = 0; phase < this->n_phases_; phase++) {
+      createMeshAndRender(phase);
     }
   }
 }
