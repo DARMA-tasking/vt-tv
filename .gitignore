@@ -1,1 +1,6 @@
 .*~undo-tree~
+
+# Items generated at build time
+/tests/unit/cmake_config.h
+/build
+/python-build
