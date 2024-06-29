@@ -2,14 +2,16 @@
 Setup vt-tv as a python package using pip.
 
 To run the script you need to set VTK_DIR environemnt variable
-Example: `VTK_DIR=../vtk/build pip install .`
+Example commands to build and install: 
+`VTK_DIR=../vtk/build pip install .`
+VTK_DIR=../vtk/build python setup.py build_ext install
 """
 import subprocess
 import os
 import sys
 import shutil
 
-from setuptools import setup, Extension, find_packages
+from setuptools import setup, Extension, find_packages, Distribution
 from setuptools.command.build_ext import build_ext
 
 
@@ -28,8 +30,12 @@ class CMakeExtension(Extension):
         self.sourcedir = os.path.abspath(sourcedir)
 
 class CMakeBuild(build_ext):
-
     """A setup command to build vt-tv using CMake"""
+
+    def __init__(self, dist: Distribution):
+        build_ext.__init__(self, dist)
+        # this moves built libraries in python-build dir but then not in package
+        # self.build_lib = BUILD_DIR
 
     def run(self):
         """Run build"""
@@ -47,10 +53,7 @@ class CMakeBuild(build_ext):
         """Builds the extension"""
 
         extdir = os.path.abspath(os.path.dirname(self.get_ext_fullpath(ext.name)))
-        # The following fix output of /home/thomas/repositories/vt-tv/build/lib.linux-x86_64-cpython-38
-        # but then are not copied to site-packages/ There should be additional thing to do
-        # extdir = os.path.join(BUILD_DIR, 'build', 'ext')
-        build_temp = os.path.join(BUILD_DIR, 'build', 'temp')
+        build_temp = os.path.join(BUILD_DIR, 'temp')
         os.makedirs(build_temp, exist_ok=True)
 
         vtk_dir = os.environ.get('VTK_DIR')
