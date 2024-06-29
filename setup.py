@@ -9,7 +9,7 @@ import os
 import sys
 import shutil
 
-from setuptools import setup, Extension, find_packages, Distribution
+from setuptools import setup, Extension, find_packages
 from setuptools.command.build_ext import build_ext
 
 
@@ -28,11 +28,8 @@ class CMakeExtension(Extension):
         self.sourcedir = os.path.abspath(sourcedir)
 
 class CMakeBuild(build_ext):
-    """A setup command to build vt-tv using CMake"""
 
-    def __init__(self, dist: Distribution):
-        build_ext.__init__(self, dist)
-        self.build_lib = BUILD_DIR
+    """A setup command to build vt-tv using CMake"""
 
     def run(self):
         """Run build"""
@@ -50,6 +47,9 @@ class CMakeBuild(build_ext):
         """Builds the extension"""
 
         extdir = os.path.abspath(os.path.dirname(self.get_ext_fullpath(ext.name)))
+        # The following fix output of /home/thomas/repositories/vt-tv/build/lib.linux-x86_64-cpython-38
+        # but then are not copied to site-packages/ There should be additional thing to do
+        # extdir = os.path.join(BUILD_DIR, 'build', 'ext')
         build_temp = os.path.join(BUILD_DIR, 'build', 'temp')
         os.makedirs(build_temp, exist_ok=True)
 
