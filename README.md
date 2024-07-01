@@ -20,8 +20,8 @@ tasks over phases.
 
 ## Unit Testing
 
-Unit tests are implemented using googletest library.
-The tests source files are located under the `tests` directory.
+Unit tests are implemented with the help of the [Google's C++ test framework](https://github.com/google/googletest).
+The tests source files are located under the `tests` directory as test_*.cpp.
 
 To run the test from the CLI first build vttv then call ctest using the command line:
  `ctest --test-dir build`
