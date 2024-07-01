@@ -57,7 +57,60 @@
 
 namespace vt::tv::tests::unit {
 
-struct TestInfo : TestHarness { };
+struct Sample {
+
+  public:
+    std::unordered_map<NodeType, Rank> ranks;
+    std::unordered_map<ElementIDType, ObjectWork> objects;
+    std::unordered_map<ElementIDType, ObjectInfo> object_info_map;
+};
+
+struct TestInfo : TestHarness {
+
+  auto create_sample(int num_ranks, int num_objects_per_rank) {
+    std::unordered_map<NodeType, Rank> ranks = std::unordered_map<NodeType, Rank>();
+    std::unordered_map<ElementIDType, ObjectWork> objects = std::unordered_map<ElementIDType, ObjectWork>();
+    std::unordered_map<ElementIDType, ObjectInfo> object_info_map = std::unordered_map<ElementIDType, ObjectInfo>();
+      
+    std::vector<size_t> in_index;
+
+    for (NodeType rank_id = 0; rank_id < num_ranks; rank_id++) {
+      // Add some objects
+      for (auto object_index = 0; object_index < num_objects_per_rank; object_index++) {
+        auto object_id = rank_id * num_objects_per_rank + object_index;
+        auto phase_load = 2.0;
+        std::unordered_map<SubphaseType, TimeType> sub_phase_loads = std::unordered_map<SubphaseType, TimeType>();
+        auto object = ObjectWork(object_id, phase_load, sub_phase_loads);
+        objects.insert(std::make_pair(object_id, object));
+
+        ObjectInfo object_info = ObjectInfo(object_id, rank_id, true, in_index);
+        object_info_map.insert(std::make_pair(object_id, object_info));
+      }
+    }
+
+    // Add some phase 0
+    std::unordered_map<PhaseType, PhaseWork> phase_info = std::unordered_map<PhaseType, PhaseWork>();
+    auto phase = PhaseWork(0, objects);
+    phase_info.insert(std::make_pair(0, phase));
+
+    // Add some ranks
+    for (NodeType rank_id = 0; rank_id < num_ranks; rank_id++) {
+      auto rank = Rank(rank_id, phase_info);
+      ranks.insert(std::make_pair(rank_id, rank));
+    }
+
+    auto sample = Sample();
+    sample.ranks = ranks;
+    sample.object_info_map = object_info_map;
+    sample.objects = objects;
+
+    return sample;
+  }
+
+  virtual void SetUp() {
+    TestHarness::SetUp();
+  }
+};
 
 /* 
   Common Assertions: EXPECT_EQ(a, b), EXPECT_TRUE(condition)
@@ -66,6 +119,9 @@ struct TestInfo : TestHarness { };
     );
  */
 
+ 
+
+
 TEST_F(TestInfo, test_info_get_num_ranks_empty) {
   std::unique_ptr<Info> info = std::make_unique<Info>();  
   EXPECT_EQ(info->getNumRanks(), 0);
@@ -73,17 +129,18 @@ TEST_F(TestInfo, test_info_get_num_ranks_empty) {
 
 TEST_F(TestInfo, test_info_get_num_ranks) {
   // Initialize a info object, that will hold data for all ranks for all phases
-  auto num_ranks = 5;
-  std::unordered_map<NodeType, Rank> in_ranks = std::unordered_map<NodeType, Rank>();
-  for (NodeType rank_id = 0; rank_id < num_ranks; rank_id++) {
-    auto rank = Rank();
-    in_ranks.insert(std::make_pair(rank_id, rank));
-  }
+  
+  auto sample_01 = create_sample(2, 5);
+  std::unique_ptr<Info> info_01 = std::make_unique<Info>(sample_01.object_info_map, sample_01.ranks);
+  std::cout << "Test sample_01 (2 ranks, 5 objects per rank)" << std::endl;
+  EXPECT_EQ(info_01->getNumRanks(), 2);
+  EXPECT_EQ(info_01->getAllObjectIDs().size(), sample_01.objects.size()) << "getAllObjectIDs() ok";
 
-  std::unordered_map<ElementIDType, ObjectInfo> in_object_info;
-  std::unique_ptr<Info> info = std::make_unique<Info>(Info(in_object_info, in_ranks));
-
-  EXPECT_EQ(info->getNumRanks(), num_ranks);
+  auto sample_02 = create_sample(6, 1);
+  printf("Test sample_01 (6 ranks, 1 object per rank)\n");
+  std::unique_ptr<Info> info_02 = std::make_unique<Info>(sample_02.object_info_map, sample_02.ranks);
+  EXPECT_EQ(info_02->getNumRanks(), 6);
+  EXPECT_EQ(info_02->getAllObjectIDs().size(), sample_02.objects.size()) << "getAllObjectIDs() ok";
 }
 
 } // end namespace vt::tv::tests::unit
