@@ -59,19 +59,31 @@ namespace vt::tv::tests::unit {
 
 struct TestInfo : TestHarness { };
 
-TEST_F(TestInfo, test_info_1) {
-  
-  /* TODO */
-
-  std::unique_ptr<Info> info = std::make_unique<Info>();
-
-  /* 
+/* 
   Common Assertions: EXPECT_EQ(a, b), EXPECT_TRUE(condition)
   Common print: fmt::print(
       format, var1, var2 etc.
     );
-  */
+ */
+
+TEST_F(TestInfo, test_info_get_num_ranks_empty) {
+  std::unique_ptr<Info> info = std::make_unique<Info>();  
   EXPECT_EQ(info->getNumRanks(), 0);
+}
+
+TEST_F(TestInfo, test_info_get_num_ranks) {
+  // Initialize a info object, that will hold data for all ranks for all phases
+  auto num_ranks = 5;
+  std::unordered_map<NodeType, Rank> in_ranks = std::unordered_map<NodeType, Rank>();
+  for (NodeType rank_id = 0; rank_id < num_ranks; rank_id++) {
+    auto rank = Rank();
+    in_ranks.insert(std::make_pair(rank_id, rank));
+  }
+
+  std::unordered_map<ElementIDType, ObjectInfo> in_object_info;
+  std::unique_ptr<Info> info = std::make_unique<Info>(Info(in_object_info, in_ranks));
+
+  EXPECT_EQ(info->getNumRanks(), num_ranks);
 }
 
 } // end namespace vt::tv::tests::unit
