@@ -18,6 +18,17 @@ tasks over phases.
 
 ![Example Output PNG](./docs/example-output-image.png)
 
+## Unit Testing
+
+Unit tests are implemented using googletest library.
+The tests source files are located under the `tests` directory.
+
+To run the test from the CLI first build vttv then call ctest using the command line:
+ `ctest --test-dir build`
+
+To run specific tests you can use the ctest search option:
+ `ctest --test-dir build --verbose -R "reader"`
+
 ## Building the Python bindings
 
 ### Requirements
