@@ -27,7 +27,7 @@ if(NOT CMAKE_CXX_STANDARD)
 endif()
 message(STATUS "CMAKE_CXX_STANDARD: ${CMAKE_CXX_STANDARD}")
 
-option(VT_TV_PYTHON_BINDINGS_ENABLED "Build vt-tv with Python bindings" ON)
+option(VT_TV_PYTHON_BINDINGS_ENABLED "Build vt-tv with Python bindings" OFF)
 option(VT_TV_OPENMP_ENABLED "Build vt-tv with openMP support" ON)
 set(VT_TV_N_THREADS "2" CACHE STRING "Number of OpenMP threads to use")
 
