@@ -62,7 +62,7 @@ namespace vt::tv::tests::unit {
 struct TestJSONReader : TestHarness { };
 
 TEST_F(TestJSONReader, test_json_reader_1) {
-  std::filesystem::path p = std::filesystem::path(SRC_DIR) / "tests/unit/lb_test_data" ;
+  std::filesystem::path p = std::filesystem::path(SRC_DIR) / "tests/data/lb_test_data" ;
   std::string path = std::filesystem::absolute(p).string();
 
   NodeType rank = 0;
@@ -118,7 +118,7 @@ TEST_F(TestJSONReader, test_json_reader_1) {
 }
 
 TEST_F(TestJSONReader, test_json_reader_metadata_attributes) {
-  std::filesystem::path p = std::filesystem::path(SRC_DIR) / "tests/unit/lb_test_data" ;
+  std::filesystem::path p = std::filesystem::path(SRC_DIR) / "tests/data/lb_test_data" ;
   std::string path = std::filesystem::absolute(p).string();
 
   NodeType rank = 0;
@@ -141,7 +141,7 @@ TEST_F(TestJSONReader, test_json_reader_metadata_attributes) {
 }
 
 TEST_F(TestJSONReader, test_json_reader_object_info_attributes) {
-  std::filesystem::path p = std::filesystem::path(SRC_DIR) / "tests/unit/lb_test_data" ;
+  std::filesystem::path p = std::filesystem::path(SRC_DIR) / "tests/data/lb_test_data" ;
   std::string path = std::filesystem::absolute(p).string();
 
   NodeType rank = 0;
@@ -189,7 +189,7 @@ TEST_F(TestJSONReader, test_json_reader_qoi_serializer) {
 }
 
 TEST_F(TestJSONReader, test_json_reader_object_work_user_defined) {
-  std::filesystem::path p = std::filesystem::path(SRC_DIR) / "tests/unit/lb_test_data" ;
+  std::filesystem::path p = std::filesystem::path(SRC_DIR) / "tests/data/lb_test_data" ;
   std::string path = std::filesystem::absolute(p).string();
 
   NodeType rank = 0;
