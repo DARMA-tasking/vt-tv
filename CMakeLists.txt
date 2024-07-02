@@ -49,6 +49,7 @@ endif()
 
 add_definitions(-DVT_TV_N_THREADS=${VT_TV_N_THREADS})
 add_definitions(-DVT_TV_OPENMP_ENABLED=${VT_TV_OPENMP_ENABLED})
+add_compile_definitions(SRC_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
 
 add_custom_target(vt_tv_examples)
 add_custom_target(vt_tv_tests)
@@ -74,10 +75,10 @@ configure_file(
   "${PROJECT_BINARY_DIR}/vtTVConfig.cmake" @ONLY
 )
 
-configure_file(
-  ${PROJECT_BASE_DIR}/cmake/cmake_config.h.in
-  ${PROJECT_BASE_DIR}/tests/unit/cmake_config.h @ONLY
-)
+# configure_file(
+#   ${PROJECT_BASE_DIR}/cmake/cmake_config.h.in
+#   ${PROJECT_BASE_DIR}/tests/unit/cmake_config.h @ONLY
+# )
 
 install(
   FILES        "${PROJECT_BINARY_DIR}/vtTVConfig.cmake"
