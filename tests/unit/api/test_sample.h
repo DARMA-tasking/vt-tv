@@ -41,42 +41,45 @@
 //@HEADER
 */
 
-#include <gtest/gtest.h>
-#include "test_harness.h"
-
-#include "vt-tv/api/info.h"
-
-#include <fmt-vt/format.h>
-
-#include "cmake_config.h"
-
+#include "vt-tv/api/types.h"
+#include "vt-tv/api/rank.h"
+#include "vt-tv/api/object_work.h"
+#include "vt-tv/api/object_info.h"
 #include <string>
-#include <filesystem>
-#include <iostream>
-#include <variant>
 
-namespace vt::tv::tests::unit {
+namespace vt::tv::tests::unit::api {
 
-/**
- * Represents a sample set of data for the tests Info class tests
- */
 struct Sample {
-
   public:
+    Sample(
+      std::unordered_map<NodeType, Rank> &in_ranks,
+      std::unordered_map<ElementIDType, ObjectWork> &in_object_work_map,
+      std::unordered_map<ElementIDType, ObjectInfo> &in_object_info_map
+    ): ranks(in_ranks), object_work_map(in_object_work_map), object_info_map(in_object_info_map) {
+
+    }
+
+    std::string get_slug() const
+    {
+      return "sample_" + std::to_string(ranks.size()) + "_ranks_" + std::to_string(object_info_map.size()) + "_objects";
+    }
+
     std::unordered_map<NodeType, Rank> ranks;
     std::unordered_map<ElementIDType, ObjectWork> object_work_map;
     std::unordered_map<ElementIDType, ObjectInfo> object_info_map;
 };
 
 /**
- * Provides unit tests for the vttv.api.Info class
+ * Represents a sample set of data for the tests Info class tests
  */
-struct TestInfo : TestHarness {
+class SampleFactory {
+
+  public:
 
   /**
    * Generates sample data using a single phase and a default phase load
    */
-  auto create_sample(int num_ranks, int num_objects_per_rank) {
+  static const Sample create_one_phase_sample(int num_ranks, int num_objects_per_rank) {
     std::unordered_map<NodeType, Rank> ranks = std::unordered_map<NodeType, Rank>();
     std::unordered_map<ElementIDType, ObjectWork> object_work_map = std::unordered_map<ElementIDType, ObjectWork>();
     std::unordered_map<ElementIDType, ObjectInfo> object_info_map = std::unordered_map<ElementIDType, ObjectInfo>();
@@ -111,40 +114,10 @@ struct TestInfo : TestHarness {
     }
 
     // Return sample data
-    auto sample = Sample();
-    sample.ranks = ranks;
-    sample.object_info_map = object_info_map;
-    sample.object_work_map = object_work_map;
+    auto sample = Sample(ranks, object_work_map, object_info_map);
 
     return sample;
   }
-
-  virtual void SetUp() {
-    TestHarness::SetUp();
-  }
 };
-
-/**
- * Test Info:get* methods
- */
-TEST_F(TestInfo, test_info_getter_methods) {
-
-  std::cout << "Testing empty" << std::endl;
-  std::unique_ptr<Info> info_00 = std::make_unique<Info>();  
-  EXPECT_EQ(info_00->getNumRanks(), 0);
-  EXPECT_EQ(info_00->getAllObjectIDs().size(), 0) << "getAllObjectIDs() ok";
-
-  auto sample_01 = create_sample(2, 5);
-  std::unique_ptr<Info> info_01 = std::make_unique<Info>(sample_01.object_info_map, sample_01.ranks);
-  std::cout << "Testing sample_01 (2 ranks, 5 objects per rank)" << std::endl;
-  EXPECT_EQ(info_01->getNumRanks(), 2);
-  EXPECT_EQ(info_01->getAllObjectIDs().size(), sample_01.object_work_map.size()) << "getAllObjectIDs() ok";
-
-  auto sample_02 = create_sample(6, 1);
-  printf("Test sample_01 (6 ranks, 1 object per rank)\n");
-  std::unique_ptr<Info> info_02 = std::make_unique<Info>(sample_02.object_info_map, sample_02.ranks);
-  EXPECT_EQ(info_02->getNumRanks(), 6);
-  EXPECT_EQ(info_02->getAllObjectIDs().size(), sample_02.object_work_map.size()) << "getAllObjectIDs() ok";
-}
 
 } // end namespace vt::tv::tests::unit
