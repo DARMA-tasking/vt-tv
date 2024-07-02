@@ -47,6 +47,7 @@ class CMakeBuild(build_ext):
 
     cmake_args = ['-DCMAKE_LIBRARY_OUTPUT_DIRECTORY=' + extdir,
                   '-DPYTHON_EXECUTABLE=' + sys.executable,
+                  '-DVT_TV_PYTHON_BINDINGS_ENABLED=ON',
                   '-DVTK_DIR=' + vtk_dir,
                   '-DVT_TV_N_THREADS=' + str(n_threads)]
 
