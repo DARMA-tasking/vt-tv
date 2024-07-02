@@ -1,5 +1,5 @@
 input:
-  directory: tests/unit/lb_test_data
+  directory: tests/data/lb_test_data
   n_ranks: 4
 
 viz:
