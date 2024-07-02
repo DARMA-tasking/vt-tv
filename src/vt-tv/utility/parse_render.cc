@@ -46,7 +46,6 @@
 #include "vt-tv/render/render.h"
 #include "vt-tv/api/info.h"
 
-#include "../tests/unit/cmake_config.h"
 
 #include <filesystem>
 

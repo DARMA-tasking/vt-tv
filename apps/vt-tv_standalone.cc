@@ -45,7 +45,6 @@
 #include <vt-tv/utility/json_reader.h>
 #include <vt-tv/render/render.h>
 #include <vt-tv/utility/parse_render.h>
-#include "../tests/unit/cmake_config.h"
 
 #include <fmt-vt/format.h>
 #include <CLI/CLI11.hpp>

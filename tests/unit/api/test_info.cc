@@ -2,7 +2,7 @@
 //@HEADER
 // *****************************************************************************
 //
-//                                test_harness.h
+//                           test_json_reader.cc
 //             DARMA/vt-tv => Virtual Transport -- Task Visualizer
 //
 // Copyright 2019 National Technology & Engineering Solutions of Sandia, LLC
@@ -41,52 +41,59 @@
 //@HEADER
 */
 
-#if !defined INCLUDED_VT_TV_TEST_HARNESS
-#define INCLUDED_VT_TV_TEST_HARNESS
-
 #include <gtest/gtest.h>
 
-#include <vector>
+#include <vt-tv/api/info.h>
+
+#include <fmt-vt/format.h>
+
 #include <string>
+#include <filesystem>
+#include <iostream>
+#include <variant>
 
-namespace vt { namespace tv { namespace tests { namespace unit {
+#include "test_sample.h"
 
-template <typename TestBase>
-struct TestHarnessAny : TestBase {
-  virtual void SetUp() override {
-    argc_ = orig_args_.size();
-    argv_ = new char*[argc_];
+namespace vt::tv::tests::unit::api {
 
-    for (int i = 0; i < argc_; i++) {
-      auto const len = orig_args_[i].size();
-      argv_[i] = new char[len + 1];
-      argv_[i][len] = 0;
-      orig_args_[i].copy(argv_[i], len);
+/**
+ * Provides unit tests for the vt::tv::api::Info class
+ */
+class SampleParametherizedTestFixture :public ::testing::TestWithParam<Sample> {};
+
+/**
+ * Test Info:getNumRanks returns same number of ranks as defined in the sample
+ */
+TEST_P(SampleParametherizedTestFixture, test_get_num_ranks) {
+  Sample const & sample = GetParam();
+  Info* info = new Info(sample.object_info_map, sample.ranks);
+  EXPECT_EQ(info->getNumRanks(), sample.ranks.size());
+  delete info;
+}
+
+/**
+ * Test Info:getAllObjectIDs returns same items as defined in the sample
+ */
+TEST_P(SampleParametherizedTestFixture, test_get_all_object_ids) {
+  Sample const & sample = GetParam();
+  Info* info = new Info(sample.object_info_map, sample.ranks);
+  EXPECT_EQ(info->getAllObjectIDs().size(),  sample.object_info_map.size());
+  delete info;
+}
+
+/* Run Unit tests using different data sets as Tests params */
+INSTANTIATE_TEST_SUITE_P(
+    TestInfo,
+    SampleParametherizedTestFixture,
+    ::testing::Values<Sample>(
+        SampleFactory::create_one_phase_sample(0, 0),
+        SampleFactory::create_one_phase_sample(2, 5),
+        SampleFactory::create_one_phase_sample(6, 1)
+    ),
+    [](const testing::TestParamInfo<SampleParametherizedTestFixture::ParamType>& info) {
+      // test suffix
+      return info.param.get_slug();
     }
-  }
+);
 
-  virtual void TearDown() override {
-    for (int i = 0; i < argc_; i++) {
-      delete [] argv_[i];
-    }
-    delete [] argv_;
-  }
-
-  static void store_cmdline_args(int argc, char **argv) {
-    orig_args_ = std::vector<std::string>(argv, argv + argc);
-  }
-
-  static std::vector<std::string> orig_args_;
-
-  int argc_ = 0;
-  char** argv_ = nullptr;
-};
-
-template <typename TestBase>
-std::vector<std::string> TestHarnessAny<TestBase>::orig_args_;
-
-using TestHarness = TestHarnessAny<testing::Test>;
-
-}}}} // end namespace vt::tv::tests::unit
-
-#endif /*INCLUDED_VT_TV_TEST_HARNESS*/
+} // end namespace vt::tv::tests::unit

@@ -42,31 +42,33 @@
 */
 
 #include <gtest/gtest.h>
-#include "test_harness.h"
 
 #include <vt-tv/api/info.h>
 #include <vt-tv/utility/json_reader.h>
-#include "vt-tv/utility/qoi_serializer.h"
+#include <vt-tv/utility/qoi_serializer.h>
 
 #include <fmt-vt/format.h>
-
-#include "cmake_config.h"
 
 #include <string>
 #include <filesystem>
 #include <iostream>
 #include <variant>
 
-namespace vt::tv::tests::unit {
+namespace vt::tv::tests::unit::utility {
 
-struct TestJSONReader : TestHarness { };
+using JSONReader = vt::tv::utility::JSONReader;
+
+/**
+ * Provides unit tests for the vt::tv::utility::JSONReader class
+ */
+struct TestJSONReader :public ::testing::Test {};
 
 TEST_F(TestJSONReader, test_json_reader_1) {
   std::filesystem::path p = std::filesystem::path(SRC_DIR) / "tests/data/lb_test_data" ;
   std::string path = std::filesystem::absolute(p).string();
 
   NodeType rank = 0;
-  utility::JSONReader reader{rank};
+  JSONReader reader{rank};
   reader.readFile(path + "/data.0.json");
   auto info = reader.parse();
 
@@ -122,7 +124,7 @@ TEST_F(TestJSONReader, test_json_reader_metadata_attributes) {
   std::string path = std::filesystem::absolute(p).string();
 
   NodeType rank = 0;
-  utility::JSONReader reader{rank};
+  JSONReader reader{rank};
 
   reader.readFile(path + "/reader_test_data.json");
   auto info = reader.parse();
@@ -145,7 +147,7 @@ TEST_F(TestJSONReader, test_json_reader_object_info_attributes) {
   std::string path = std::filesystem::absolute(p).string();
 
   NodeType rank = 0;
-  utility::JSONReader reader{rank};
+  JSONReader reader{rank};
 
   reader.readFile(path + "/reader_test_data.json");
   auto info = reader.parse();
@@ -193,7 +195,7 @@ TEST_F(TestJSONReader, test_json_reader_object_work_user_defined) {
   std::string path = std::filesystem::absolute(p).string();
 
   NodeType rank = 0;
-  utility::JSONReader reader{rank};
+  JSONReader reader{rank};
 
   reader.readFile(path + "/reader_test_data.json");
   auto info = reader.parse();
