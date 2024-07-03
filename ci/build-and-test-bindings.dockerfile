@@ -4,7 +4,7 @@ COPY . /opt/src/vt-tv
 RUN mkdir -p /opt/build/vt-tv/test_output
 
 # setup environment
-ENV VTTV_VTK_DIR=/opt/build/vtk-build
+ENV VTK_DIR=/opt/build/vtk-build
 ENV CC=gcc-11
 ENV CXX=g++-11
 
