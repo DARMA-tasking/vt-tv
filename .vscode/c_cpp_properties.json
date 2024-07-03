@@ -1,14 +1,16 @@
 {
+    "env": {
+        "defines": ["SRC_DIR=\"~/repositories/vt-tv\""], // defined in cmakelists for compile time
+        "includePath": [
+            "${workspaceFolder}/**",
+            "${workspaceFolder}/../vtk/**" // edit vtk include dirs as needed
+        ]
+    },
     "configurations": [
         {
             "name": "Linux",
-            "includePath": [
-                "${workspaceFolder}/**",
-                "${workspaceFolder}/../vtk/**" // edit vtk include dirs as needed
-            ],
-            "defines": [
-                "SRC_DIR=${workspaceFolder}" // defined in cmakelists for compile time
-            ],
+            "includePath": ["${env:includePath}"],
+            "defines": ["${env:defines}"],
             "compilerPath": "/usr/bin/clang",
             "cStandard": "c17",
             "cppStandard": "c++17",
