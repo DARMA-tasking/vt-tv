@@ -51,6 +51,7 @@
 #include <filesystem>
 #include <iostream>
 #include <variant>
+#include <set>
 
 #include "test_sample.h"
 
@@ -66,9 +67,8 @@ class SampleParametherizedTestFixture :public ::testing::TestWithParam<Sample> {
  */
 TEST_P(SampleParametherizedTestFixture, test_get_num_ranks) {
   Sample const & sample = GetParam();
-  Info* info = new Info(sample.object_info_map, sample.ranks);
-  EXPECT_EQ(info->getNumRanks(), sample.ranks.size());
-  delete info;
+  Info info = Info(sample.object_info_map, sample.ranks);
+  EXPECT_EQ(info.getNumRanks(), sample.ranks.size());
 }
 
 /**
@@ -76,9 +76,16 @@ TEST_P(SampleParametherizedTestFixture, test_get_num_ranks) {
  */
 TEST_P(SampleParametherizedTestFixture, test_get_all_object_ids) {
   Sample const & sample = GetParam();
-  Info* info = new Info(sample.object_info_map, sample.ranks);
-  EXPECT_EQ(info->getAllObjectIDs().size(),  sample.object_info_map.size());
-  delete info;
+  Info info = Info(sample.object_info_map, sample.ranks);
+
+  auto const& expected = sample.object_info_map;
+  auto const& actual = info.getAllObjectIDs();
+
+  EXPECT_EQ(expected.size(), actual.size());
+  for (auto& pair: expected) {
+    auto object_id = pair.first;
+    EXPECT_NE(actual.find(pair.first), actual.end()) << "Cannot find element with id " << object_id;
+  }
 }
 
 /* Run Unit tests using different data sets as Tests params */
