@@ -4,7 +4,7 @@
             "name": "Linux",
             "includePath": [
                 "${workspaceFolder}/**",
-                "${workspaceFolder}/../vtk/**"
+                "${workspaceFolder}/../vtk/**" // edit vtk include dirs as needed
             ],
             "defines": [
                 "SRC_DIR=${workspaceFolder}" // defined in cmakelists for compile time
