@@ -44,6 +44,7 @@
 #include <gtest/gtest.h>
 
 #include <vt-tv/api/info.h>
+#include <vt-tv/api/phase_work.h>
 
 #include <fmt-vt/format.h>
 
@@ -102,5 +103,45 @@ INSTANTIATE_TEST_SUITE_P(
       return info.param.get_slug();
     }
 );
+
+/**
+ * Test Info:addInfo access correctly to added data after method call
+ */
+TEST_F(SampleParametherizedTestFixture, test_add_info) {
+  
+  Info info = Info();
+
+  std::vector<size_t> idx;
+  
+  // Create object info and add to a map
+  ObjectInfo oInfo = ObjectInfo(0, 0, true, idx);
+  auto object_info_map = std::unordered_map<ElementIDType, ObjectInfo>();
+  object_info_map.insert(std::make_pair(oInfo.getID(), oInfo));
+
+  // TODO: make some Data generator to return what we want:
+  // ex: ObjectWork map with x ObjectWork instances with id_first = 0, id_increment = 1
+  // etc.
+
+
+  // Create PhaseWork including one object work
+  auto object_work_objects = std::unordered_map<PhaseType, ObjectWork>();
+  PhaseWork phase = PhaseWork(0, object_work_objects);
+
+  // Create PhaseWork map
+  auto phase_object_map = std::unordered_map<PhaseType, PhaseWork>();
+  phase_object_map.insert(std::make_pair(0, phase));
+
+  // Create a rank with id 0 and the PhaseWork map instance
+  Rank rank = Rank(0, phase_object_map);
+
+  EXPECT_EQ(info.getNumRanks(), 0);
+  info.addInfo(object_info_map, rank);
+
+  EXPECT_EQ(info.getNumRanks(), 1);
+  EXPECT_EQ(info.getRank(0).getPhaseWork().size(), 1);
+
+  info.addInfo(object_info_map, rank);
+  EXPECT_EQ(info.getRank(0).getPhaseWork().size(), 1) << "object info has already been added and must not be added to the map again";
+}
 
 } // end namespace vt::tv::tests::unit
