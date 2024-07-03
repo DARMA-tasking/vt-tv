@@ -32,9 +32,9 @@ class CMakeBuild(build_ext):
     build_temp = os.path.join('python-build', 'build', 'temp')
     os.makedirs(build_temp, exist_ok=True)
 
-    vtk_dir = os.environ.get('VTTV_VTK_DIR')
+    vtk_dir = os.environ.get('VTK_DIR')
     if not vtk_dir:
-      raise RuntimeError("Environment variable VTTV_VTK_DIR is required")
+      raise RuntimeError("Environment variable VTK_DIR is required")
 
     jobs = os.environ.get('VTTV_CMAKE_JOBS', os.cpu_count())
 
