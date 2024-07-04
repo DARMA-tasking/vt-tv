@@ -27,4 +27,5 @@ RUN /bin/bash -c ". /opt/conda/etc/profile.d/conda.sh && conda activate deves &&
 RUN mkdir -p /opt/build/vt-tv/test_output
 
 # test
-RUN bash /opt/src/vt-tv/ci/test-bindings.sh
+RUN ["chmod", "+x", "/opt/src/vt-tv/ci/test-bindings.sh"]
+RUN ["/bin/sh", "/opt/src/vt-tv/ci/test-bindings.sh"]
