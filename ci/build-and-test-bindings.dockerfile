@@ -9,7 +9,12 @@ ENV CC=gcc-11
 ENV CXX=g++-11
 
 # setup virtual X11
-RUN apt-get install xvfb
+RUN apt-get update \
+  && apt-get install -y \
+  && DEBIAN_FRONTEND="noninteractive" apt-get install -y \
+      xvfb \
+  && rm -rf /var/lib/apt/lists/*
+
 ENV DISPLAY=:99.0
 RUN Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
 
