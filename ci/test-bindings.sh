@@ -8,4 +8,5 @@ pip install PyYAML
 pip install /opt/src/vt-tv
 
 # Test
+export VTKI_OFF_SCREEN=True
 python /opt/src/vt-tv/tests/test_bindings.py
