@@ -16,12 +16,6 @@ RUN apt-get update \
   && rm -rf /var/lib/apt/lists/*
 
 ENV DISPLAY=:99
-RUN Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
-
-# build bindings
-RUN /bin/bash -c ". /opt/conda/etc/profile.d/conda.sh && conda activate deves && pip install /opt/src/vt-tv"
-
-# test bindings
 
 # create output directory
 RUN mkdir -p /opt/build/vt-tv/test_output
@@ -29,3 +23,7 @@ RUN mkdir -p /opt/build/vt-tv/test_output
 # test
 RUN ["chmod", "+x", "/opt/src/vt-tv/ci/test-bindings.sh"]
 RUN ["/bin/sh", "/opt/src/vt-tv/ci/test-bindings.sh"]
+
+# Entrypoint to setup conda environment and xvfb
+RUN ["chmod", "+x", "/opt/src/vt-tv/ci/test-bindings-entrypoint.sh"]
+ENTRYPOINT ["/opt/src/vt-tv/ci/test-bindings-entrypoint.sh"]
