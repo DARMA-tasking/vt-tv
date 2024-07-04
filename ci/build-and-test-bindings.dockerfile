@@ -15,8 +15,8 @@ RUN apt-get update \
       xvfb \
   && rm -rf /var/lib/apt/lists/*
 
-ENV DISPLAY :99
-RUN Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
+RUN export DISPLAY=:99 \
+  && Xvfb :99 -screen 0 1024x768x24 &
 
 # build bindings
 RUN /bin/bash -c ". /opt/conda/etc/profile.d/conda.sh && conda activate deves && pip install /opt/src/vt-tv"
