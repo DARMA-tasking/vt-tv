@@ -15,8 +15,8 @@ RUN apt-get update \
       xvfb \
   && rm -rf /var/lib/apt/lists/*
 
-RUN export DISPLAY=:99 \
-  && Xvfb :99 -screen 0 1024x768x24 &
+ENV DISPLAY=:99
+RUN Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
 
 # build bindings
 RUN /bin/bash -c ". /opt/conda/etc/profile.d/conda.sh && conda activate deves && pip install /opt/src/vt-tv"
@@ -26,4 +26,5 @@ RUN /bin/bash -c ". /opt/conda/etc/profile.d/conda.sh && conda activate deves &&
 # create output directory
 RUN mkdir -p /opt/build/vt-tv/test_output
 
-RUN /bin/bash -c ". /opt/conda/etc/profile.d/conda.sh && conda activate deves && pip install PyYAML && python /opt/src/vt-tv/tests/test_bindings.py"
+# test
+RUN bash /opt/src/vt-tv/ci/test-bindings.sh
