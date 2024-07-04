@@ -8,10 +8,13 @@ include(CMakePrintHelpers)
 # set(CMAKE_CXX_STANDARD 14)
 # set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+
+
 include(FetchContent)
+set(FETCHCONTENT_BASE_DIR ${CMAKE_BINARY_DIR}/_deps)
 FetchContent_Declare(
   googletest
-  DOWNLOAD_EXTRACT_TIMESTAMP False # Option needed with CMake <= 3.24 which introduced CMP0135 Policy
+  DOWNLOAD_EXTRACT_TIMESTAMP True # Option needed with CMake <= 3.24 which introduced CMP0135 Policy
   URL https://github.com/google/googletest/archive/refs/tags/v1.14.0.zip
 )
 # For Windows: Prevent overriding the parent project's compiler/linker settings
