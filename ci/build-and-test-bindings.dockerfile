@@ -7,6 +7,7 @@ RUN mkdir -p /opt/build/vt-tv/test_output
 ENV VTK_DIR=/opt/build/vtk-build
 ENV CC=gcc-11
 ENV CXX=g++-11
+ENV DISPLAY=:99
 
 # setup virtual X11
 RUN apt-get update \
@@ -14,10 +15,6 @@ RUN apt-get update \
   && DEBIAN_FRONTEND="noninteractive" apt-get install -y \
       xvfb \
   && rm -rf /var/lib/apt/lists/*
-
-# Set X11 display
-ENV DISPLAY=:99
-RUN Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
 
 RUN . /opt/conda/etc/profile.d/conda.sh && conda activate deves
 
