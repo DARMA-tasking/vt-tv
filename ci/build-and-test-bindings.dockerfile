@@ -17,7 +17,9 @@ RUN apt-get update \
 
 ENV DISPLAY=:99
 
-FROM build as run
+FROM build AS run
+
+RUN . /opt/conda/etc/profile.d/conda.sh && conda activate deves
 
 # create output directory
 RUN mkdir -p /opt/build/vt-tv/test_output
