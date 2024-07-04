@@ -24,6 +24,6 @@ RUN mkdir -p /opt/build/vt-tv/test_output
 RUN ["chmod", "+x", "/opt/src/vt-tv/ci/test-bindings.sh"]
 RUN ["/bin/sh", "/opt/src/vt-tv/ci/test-bindings.sh"]
 
-# Entrypoint to setup conda environment and xvfb
+# Entrypoint to activate conda environment and create a xvfb display
 RUN ["chmod", "+x", "/opt/src/vt-tv/ci/test-bindings-entrypoint.sh"]
 ENTRYPOINT ["/opt/src/vt-tv/ci/test-bindings-entrypoint.sh"]
