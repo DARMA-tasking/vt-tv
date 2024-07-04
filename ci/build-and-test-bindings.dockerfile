@@ -15,7 +15,7 @@ RUN apt-get update \
       xvfb \
   && rm -rf /var/lib/apt/lists/*
 
-ENV DISPLAY=:99.0
+ENV DISPLAY :99
 RUN Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
 
 # build bindings
