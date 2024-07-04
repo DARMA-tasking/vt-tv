@@ -16,8 +16,6 @@ RUN apt-get update \
       xvfb \
   && rm -rf /var/lib/apt/lists/*
 
-RUN . /opt/conda/etc/profile.d/conda.sh && conda activate deves
-
 # create output directory
 RUN mkdir -p /opt/build/vt-tv/test_output
 
