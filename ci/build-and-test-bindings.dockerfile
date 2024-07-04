@@ -15,7 +15,9 @@ RUN apt-get update \
       xvfb \
   && rm -rf /var/lib/apt/lists/*
 
-FROM build AS run
+# Set X11 display
+ENV DISPLAY=:99
+RUN Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
 
 RUN . /opt/conda/etc/profile.d/conda.sh && conda activate deves
 
@@ -25,7 +27,3 @@ RUN mkdir -p /opt/build/vt-tv/test_output
 # test
 RUN ["chmod", "+x", "/opt/src/vt-tv/ci/test-bindings.sh"]
 RUN ["/bin/sh", "/opt/src/vt-tv/ci/test-bindings.sh"]
-
-# Entrypoint to activate conda environment and create a xvfb display
-RUN ["chmod", "+x", "/opt/src/vt-tv/ci/test-bindings-entrypoint.sh"]
-ENTRYPOINT ["/opt/src/vt-tv/ci/test-bindings-entrypoint.sh"]
