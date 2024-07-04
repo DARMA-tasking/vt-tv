@@ -37,12 +37,6 @@ jobs:
           echo "Platforms: ${{ steps.buildx.outputs.platforms }}"
           echo "DOCKER_TAG: ${{ env.DOCKER_TAG }}"
 
-      - name: Set up virtual X11
-        run: |
-          sudo apt-get install xvfb
-          Xvfb :19 -screen 0 1024x768x16 &
-          export DISPLAY=:19
-
       - name: Build the Docker Image; build and test vt-tv bindings
         id: docker_build
         uses: docker/build-push-action@v3
