@@ -15,8 +15,6 @@ RUN apt-get update \
       xvfb \
   && rm -rf /var/lib/apt/lists/*
 
-ENV DISPLAY=:99
-
 FROM build AS run
 
 RUN . /opt/conda/etc/profile.d/conda.sh && conda activate deves
