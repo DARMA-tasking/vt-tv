@@ -17,6 +17,8 @@ RUN apt-get update \
 
 ENV DISPLAY=:99
 
+FROM build as run
+
 # create output directory
 RUN mkdir -p /opt/build/vt-tv/test_output
 
