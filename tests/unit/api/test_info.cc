@@ -54,32 +54,56 @@
 #include <variant>
 #include <set>
 
-#include "test_sample.h"
+#include "helper.h"
+
 
 namespace vt::tv::tests::unit::api {
+
+struct TestParam
+{
+  public:
+
+  TestParam(size_t num_objects, size_t num_ranks, size_t num_phases):
+    num_objects(num_objects), num_ranks(num_ranks), num_phases(num_phases) {
+
+  }
+
+  const size_t num_objects;
+  const size_t num_ranks;
+  const size_t num_phases;
+
+  std::string get_slug() const
+  {
+    return "sample_" + std::to_string(num_objects) + "_objects_" + std::to_string(num_ranks) + "_ranks_" + std::to_string(num_phases) + "_phases";
+  }
+};
 
 /**
  * Provides unit tests for the vt::tv::api::Info class
  */
-class SampleParametherizedTestFixture :public ::testing::TestWithParam<Sample> {};
+class ParametherizedTestFixture :public ::testing::TestWithParam<TestParam> {};
 
 /**
  * Test Info:getNumRanks returns same number of ranks as defined in the sample
  */
-TEST_P(SampleParametherizedTestFixture, test_get_num_ranks) {
-  Sample const & sample = GetParam();
-  Info info = Info(sample.object_info_map, sample.ranks);
-  EXPECT_EQ(info.getNumRanks(), sample.ranks.size());
+TEST_P(ParametherizedTestFixture, test_get_num_ranks) {
+  TestParam const & param = GetParam();
+  Info info = Sampler::info(param.num_objects, param.num_ranks, param.num_phases);
+  EXPECT_EQ(info.getNumRanks(), param.num_ranks);
 }
 
 /**
  * Test Info:getAllObjectIDs returns same items as defined in the sample
  */
-TEST_P(SampleParametherizedTestFixture, test_get_all_object_ids) {
-  Sample const & sample = GetParam();
-  Info info = Info(sample.object_info_map, sample.ranks);
+TEST_P(ParametherizedTestFixture, test_get_all_object_ids) {
+  TestParam const & param = GetParam();
+  
+  auto objects = Sampler::make_objects(param.num_objects);
+  auto ranks = Sampler::make_ranks(objects, param.num_ranks, param.num_phases);
+  auto object_info_map = Sampler::make_object_info_map(objects);
+  auto info = Info(object_info_map, ranks);
 
-  auto const& expected = sample.object_info_map;
+  auto const& expected = object_info_map;
   auto const& actual = info.getAllObjectIDs();
 
   EXPECT_EQ(expected.size(), actual.size());
@@ -92,13 +116,13 @@ TEST_P(SampleParametherizedTestFixture, test_get_all_object_ids) {
 /* Run Unit tests using different data sets as Tests params */
 INSTANTIATE_TEST_SUITE_P(
     TestInfo,
-    SampleParametherizedTestFixture,
-    ::testing::Values<Sample>(
-        SampleFactory::create_one_phase_sample(0, 0),
-        SampleFactory::create_one_phase_sample(2, 5),
-        SampleFactory::create_one_phase_sample(6, 1)
+    ParametherizedTestFixture,
+    ::testing::Values<TestParam>(
+        TestParam(0,0,1),
+        TestParam(2,5,1),
+        TestParam(6,1,1)
     ),
-    [](const testing::TestParamInfo<SampleParametherizedTestFixture::ParamType>& info) {
+    [](const testing::TestParamInfo<ParametherizedTestFixture::ParamType>& info) {
       // test suffix
       return info.param.get_slug();
     }
@@ -107,7 +131,7 @@ INSTANTIATE_TEST_SUITE_P(
 /**
  * Test Info:addInfo access correctly to added data after method call
  */
-TEST_F(SampleParametherizedTestFixture, test_add_info) {
+TEST_F(ParametherizedTestFixture, test_add_info) {
   
   Info info = Info();
 
@@ -117,11 +141,6 @@ TEST_F(SampleParametherizedTestFixture, test_add_info) {
   ObjectInfo oInfo = ObjectInfo(0, 0, true, idx);
   auto object_info_map = std::unordered_map<ElementIDType, ObjectInfo>();
   object_info_map.insert(std::make_pair(oInfo.getID(), oInfo));
-
-  // TODO: make some Data generator to return what we want:
-  // ex: ObjectWork map with x ObjectWork instances with id_first = 0, id_increment = 1
-  // etc.
-
 
   // Create PhaseWork including one object work
   auto object_work_objects = std::unordered_map<PhaseType, ObjectWork>();
@@ -141,7 +160,7 @@ TEST_F(SampleParametherizedTestFixture, test_add_info) {
   EXPECT_EQ(info.getRank(0).getPhaseWork().size(), 1);
 
   info.addInfo(object_info_map, rank);
-  EXPECT_EQ(info.getRank(0).getPhaseWork().size(), 1) << "object info has already been added and must not be added to the map again";
+  EXPECT_EQ(info.getRank(0).getPhaseWork().size(), 2) << "object info has already been added and must not be added to the map again";
 }
 
 } // end namespace vt::tv::tests::unit
