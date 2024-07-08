@@ -64,12 +64,12 @@ class ObjectWorkTestFixture :public ::testing::Test {
       12,
       10.0,
       {{ 3, 12.0 }},
-      { 
+      {
         { "user_defined_1", "user_defined_1_value" },
         { "user_defined_2", "user_defined_2_value" },
         { "user_defined_3", "user_defined_3_value" }
       },
-      { 
+      {
         { "attribute_1", "attribute_1_value" },
         { "attribute_2", "attribute_2_value" }
       }
