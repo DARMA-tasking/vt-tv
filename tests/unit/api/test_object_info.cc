@@ -42,8 +42,9 @@
 */
 
 #include <gtest/gtest.h>
+#include <gmock/gmock.h>
 
-#include <vt-tv/api/object_work.h>
+#include <vt-tv/api/object_info.h>
 
 #include <fmt-vt/format.h>
 
@@ -53,26 +54,26 @@
 #include <variant>
 #include <set>
 
+
 namespace vt::tv::tests::unit::api {
 
 /**
  * Provides unit tests for the vt::tv::api::ObjectWork class
  */
-class ObjectWorkTestFixture :public ::testing::Test {
+class ObjectInfoTestFixture :public ::testing::Test {
   public:
-    ObjectWork object_0 = ObjectWork(
-      12,
-      10.0,
-      {{ 3, 12.0 }},
-      { 
-        { "user_defined_1", "user_defined_1_value" },
-        { "user_defined_2", "user_defined_2_value" },
-        { "user_defined_3", "user_defined_3_value" }
-      },
-      { 
-        { "attribute_1", "attribute_1_value" },
-        { "attribute_2", "attribute_2_value" }
-      }
+    ObjectInfo object_0 = ObjectInfo(
+      6, // id
+      2, // home
+      false, // migratable
+      std::vector<size_t>({ 0, 1, 2})
+    );
+
+    ObjectInfo object_1 = ObjectInfo(
+      7, // id
+      1, // home
+      true, // migratable
+      std::vector<size_t>({ 3, 5, 6})
     );
 };
 
@@ -80,39 +81,30 @@ class ObjectWorkTestFixture :public ::testing::Test {
 /**
  * Test ObjectWork:ObjectWork() and getters
  */
-TEST_F(ObjectWorkTestFixture, test_initializer) {
-  EXPECT_EQ(object_0.getID(), 12);
-  EXPECT_EQ(object_0.getLoad(), 10.0);
-  EXPECT_EQ(object_0.getSubphaseLoads().size(), 1);
-  EXPECT_EQ(object_0.getSubphaseLoads().at(3), static_cast<TimeType>(12.0));
+TEST_F(ObjectInfoTestFixture, test_initializer) {
+  // Assertions for object_0
+  EXPECT_EQ(object_0.getID(), 6);
+  EXPECT_EQ(object_0.getHome(), 2);
+  EXPECT_EQ(object_0.getIndexArray().size(), 3);
+  ASSERT_THAT(object_0.getIndexArray(), ::testing::ElementsAre(0, 1, 2));
+  EXPECT_FALSE(object_0.isMigratable());
 
-  EXPECT_EQ(object_0.getUserDefined().size(), 3);
-  EXPECT_EQ(object_0.getUserDefined().at("user_defined_1"), static_cast<QOIVariantTypes>("user_defined_1_value"));
-  EXPECT_EQ(object_0.getUserDefined().at("user_defined_2"), static_cast<QOIVariantTypes>("user_defined_2_value"));
-  EXPECT_EQ(object_0.getUserDefined().at("user_defined_3"), static_cast<QOIVariantTypes>("user_defined_3_value"));
+  // Assertions for object_1
+  EXPECT_EQ(object_1.getID(), 7);
+  EXPECT_EQ(object_1.getHome(), 1);
+  EXPECT_EQ(object_1.getIndexArray().size(), 3);
+  ASSERT_THAT(object_1.getIndexArray(), ::testing::ElementsAre(3, 5, 6));
+  EXPECT_TRUE(object_1.isMigratable());
+  
+  // Post-modifiers assertions on object_0
+  object_0.setMetaID(static_cast<vt::tv::CollectionObjGroupIDType>(2));
+  EXPECT_EQ(object_0.getMetaID(), 2);
 
-  EXPECT_EQ(object_0.getAttributes().size(), 2);
-  EXPECT_EQ(object_0.getAttributes().at("attribute_1"), static_cast<QOIVariantTypes>("attribute_1_value"));
-  EXPECT_EQ(object_0.getAttributes().at("attribute_2"), static_cast<QOIVariantTypes>("attribute_2_value"));
+  object_0.setIsObjGroup(true);
+  EXPECT_TRUE(object_0.getIsObjGroup());
 
-  EXPECT_EQ(object_0.getReceivedVolume(), 0.0);
-  EXPECT_EQ(object_0.getSentVolume(), 0.0);
-}
-
-TEST_F(ObjectWorkTestFixture, test_received_volumes) {
-  object_0.addReceivedCommunications(12, 56.0);
-  EXPECT_EQ(object_0.getReceivedVolume(), 56.0);
-
-  object_0.addReceivedCommunications(10, 22.5);
-  EXPECT_EQ(object_0.getReceivedVolume(), 78.5);
-}
-
-TEST_F(ObjectWorkTestFixture, test_sent_volumes) {
-  object_0.addSentCommunications(10, 10.2);
-  EXPECT_EQ(object_0.getSentVolume(), 10.2);
-
-  object_0.addSentCommunications(10, 5.65);
-  EXPECT_EQ(object_0.getSentVolume(), 15.85);
+  object_0.setIsObjGroup(false);
+  EXPECT_FALSE(object_0.getIsObjGroup());
 }
 
 } // end namespace vt::tv::tests::unit
