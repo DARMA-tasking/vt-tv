@@ -54,7 +54,7 @@ namespace vt::tv::tests::unit::api {
  * Helper class that provide useful static methods to be used by the different unit tests classes related to the api.
  */
 class Helper {
-    public:  
+    public:
 
         /**
          * Make a map of new objects
@@ -70,7 +70,7 @@ class Helper {
                 auto object_work = ObjectWork(object_id, whole_phase_load, subphase_loads, user_defined, attributes);
                 object_work_map.insert(std::make_pair(object_id, object_work));
             }
-            return object_work_map;    
+            return object_work_map;
         }
 
         /**
@@ -96,7 +96,7 @@ class Helper {
          * Make a map of new ranks
          */
         static const std::unordered_map<NodeType, Rank> make_ranks(std::unordered_map<ElementIDType, ObjectWork> objects, int num_ranks = rand() % 10, int num_phases = rand() % 10) {
-            auto rank_map = std::unordered_map<NodeType, Rank>();      
+            auto rank_map = std::unordered_map<NodeType, Rank>();
             for (NodeType rank_id = 0; rank_id < num_ranks; rank_id++) {
                 auto rank = Rank(rank_id, make_phases(objects, num_phases));
                 rank_map.insert(std::make_pair(rank_id, rank));
@@ -121,7 +121,7 @@ class Helper {
         /**
          * Make an Info instance
          */
-        static const Info info(int num_objects = rand() % 100, int num_ranks = rand() % 10, int num_phases = 10) {  
+        static const Info info(int num_objects = rand() % 100, int num_ranks = rand() % 10, int num_phases = 10) {
             auto objects = make_objects(num_objects);
             auto ranks = make_ranks(objects, num_ranks, num_phases);
             return Info(make_object_info_map(objects), ranks);

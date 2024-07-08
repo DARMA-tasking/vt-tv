@@ -95,7 +95,7 @@ TEST_F(ObjectInfoTestFixture, test_initializer) {
   EXPECT_EQ(object_1.getIndexArray().size(), 3);
   ASSERT_THAT(object_1.getIndexArray(), ::testing::ElementsAre(3, 5, 6));
   EXPECT_TRUE(object_1.isMigratable());
-  
+
   // Post-modifiers assertions on object_0
   object_0.setMetaID(static_cast<vt::tv::CollectionObjGroupIDType>(2));
   EXPECT_EQ(object_0.getMetaID(), 2);
