@@ -97,7 +97,7 @@ TEST_P(ParametherizedTestFixture, test_get_num_ranks) {
  */
 TEST_P(ParametherizedTestFixture, test_get_all_object_ids) {
   TestParam const & param = GetParam();
-  
+
   auto objects = Helper::make_objects(param.num_objects);
   auto ranks = Helper::make_ranks(objects, param.num_ranks, param.num_phases);
   auto object_info_map = Helper::make_object_info_map(objects);
@@ -132,11 +132,11 @@ INSTANTIATE_TEST_SUITE_P(
  * Test Info:addInfo does not add twice an already-added object info.
  */
 TEST_F(ParametherizedTestFixture, test_add_info) {
-  
+
   Info info = Info();
 
   std::vector<size_t> idx;
-  
+
   // Create object info and add to a map
   ObjectInfo oInfo = ObjectInfo(0, 0, true, idx);
   auto object_info_map = std::unordered_map<ElementIDType, ObjectInfo>();

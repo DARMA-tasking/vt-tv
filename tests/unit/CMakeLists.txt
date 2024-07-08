@@ -42,13 +42,13 @@ FetchContent_MakeAvailable(googletest)
 
 # Collect sources
 file(
-  GLOB_RECURSE 
+  GLOB_RECURSE
   TEST_SOURCE_FILES
   "*.cc"
 )
 
 file(
-  GLOB_RECURSE 
+  GLOB_RECURSE
   TEST_HEADER_FILES
   "*.h"
 )
