@@ -88,7 +88,7 @@ class ParametherizedTestFixture :public ::testing::TestWithParam<TestParam> {};
  */
 TEST_P(ParametherizedTestFixture, test_get_num_ranks) {
   TestParam const & param = GetParam();
-  Info info = Sampler::info(param.num_objects, param.num_ranks, param.num_phases);
+  Info info = Helper::info(param.num_objects, param.num_ranks, param.num_phases);
   EXPECT_EQ(info.getNumRanks(), param.num_ranks);
 }
 
@@ -98,9 +98,9 @@ TEST_P(ParametherizedTestFixture, test_get_num_ranks) {
 TEST_P(ParametherizedTestFixture, test_get_all_object_ids) {
   TestParam const & param = GetParam();
   
-  auto objects = Sampler::make_objects(param.num_objects);
-  auto ranks = Sampler::make_ranks(objects, param.num_ranks, param.num_phases);
-  auto object_info_map = Sampler::make_object_info_map(objects);
+  auto objects = Helper::make_objects(param.num_objects);
+  auto ranks = Helper::make_ranks(objects, param.num_ranks, param.num_phases);
+  auto object_info_map = Helper::make_object_info_map(objects);
   auto info = Info(object_info_map, ranks);
 
   auto const& expected = object_info_map;
@@ -129,7 +129,7 @@ INSTANTIATE_TEST_SUITE_P(
 );
 
 /**
- * Test Info:addInfo access correctly to added data after method call
+ * Test Info:addInfo does not add twice an already-added object info.
  */
 TEST_F(ParametherizedTestFixture, test_add_info) {
   
@@ -160,7 +160,7 @@ TEST_F(ParametherizedTestFixture, test_add_info) {
   EXPECT_EQ(info.getRank(0).getPhaseWork().size(), 1);
 
   info.addInfo(object_info_map, rank);
-  EXPECT_EQ(info.getRank(0).getPhaseWork().size(), 2) << "object info has already been added and must not be added to the map again";
+  EXPECT_EQ(info.getRank(0).getPhaseWork().size(), 1) << "object info has already been added and must not be added to the map again";
 }
 
 } // end namespace vt::tv::tests::unit
