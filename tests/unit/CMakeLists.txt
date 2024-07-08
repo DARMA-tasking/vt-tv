@@ -19,11 +19,8 @@ FetchContent_Declare(
 )
 # For Windows: Prevent overriding the parent project's compiler/linker settings
 set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
-FetchContent_MakeAvailable(googletest)
 
-# 2. Add tests
-
-set(BUILD_GMOCK OFF CACHE BOOL "Builds the googlemock subproject" FORCE)
+set(BUILD_GMOCK ON CACHE BOOL "Builds the googlemock subproject" FORCE)
 set(INSTALL_GTEST OFF CACHE BOOL "Enable installation of googletest. (Projects embedding googletest may want to turn this OFF.)" FORCE)
 
 # Hide various options from UI-based property editors
@@ -32,6 +29,10 @@ mark_as_advanced(
   gtest_build_samples gtest_build_tests
   gtest_disable_pthreads gtest_force_shared_crt gtest_hide_internal_symbols
 )
+
+FetchContent_MakeAvailable(googletest)
+
+# 2. Add tests
 
 # Group targets, in IDEs supporting such
 # set_target_properties(gtest PROPERTIES FOLDER extern)
@@ -59,10 +60,10 @@ cmake_print_variables(FETCHCONTENT_BASE_DIR)
 
 enable_testing()
 
-# Macro to include 
+# Macro to link vt-tv, gtest and gmock to a target
 macro(vt_tv_link_target target)
-  # target_include_directories(${target} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
   target_link_libraries(${target} PRIVATE gtest)
+  target_link_libraries(${target} PRIVATE gmock)
   target_link_libraries(${target} PUBLIC ${VT_TV_LIBRARY})
 endmacro()
 
