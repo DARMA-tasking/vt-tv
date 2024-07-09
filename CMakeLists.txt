@@ -31,6 +31,7 @@ message(STATUS "CMAKE_CXX_STANDARD: ${CMAKE_CXX_STANDARD}")
 
 option(VT_TV_PYTHON_BINDINGS_ENABLED "Build vt-tv with Python bindings" OFF)
 option(VT_TV_OPENMP_ENABLED "Build vt-tv with openMP support" ON)
+option(VT_TV_TESTS_ENABLED "Build vt-tv with unit tests" ON)
 
 # add -fPIC to all targets (if building with nanobind)
 if(VT_TV_PYTHON_BINDINGS_ENABLED)
@@ -52,7 +53,9 @@ add_definitions(-DVT_TV_OPENMP_ENABLED=${VT_TV_OPENMP_ENABLED})
 add_compile_definitions(SRC_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
 
 add_custom_target(vt_tv_examples)
-add_custom_target(vt_tv_tests)
+if (VT_TV_TESTS_ENABLED)
+  add_custom_target(vt_tv_tests)
+endif()
 add_custom_target(vt_tv_apps)
 
 set(PROJECT_BIN_DIR      ${CMAKE_CURRENT_BINARY_DIR})
@@ -66,9 +69,13 @@ include(CTest)
 
 add_subdirectory(src)
 add_subdirectory(examples)
-add_subdirectory(tests)
+
 add_subdirectory(apps)
 add_subdirectory(bindings)
+
+if (VT_TV_TESTS_ENABLED)
+  add_subdirectory(tests)
+endif()
 
 configure_file(
   cmake/vtTVConfig.cmake.in
