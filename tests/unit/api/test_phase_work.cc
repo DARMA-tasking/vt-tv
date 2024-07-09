@@ -52,10 +52,15 @@
 #include <set>
 #include <string>
 #include <variant>
+#include <algorithm>
 
 #include "helper.h"
+#include "basic_serializer.h"
+
 
 namespace vt::tv::tests::unit::api {
+
+using ObjectWorkMap = std::unordered_map<ElementIDType, ObjectWork>;
 
 /**
  * Provides unit tests for the vt::tv::api::ObjectWork class
@@ -70,7 +75,7 @@ class PhaseWorkTestFixture : public ::testing::Test {
     );
   }
 
-  std::unordered_map<ElementIDType, ObjectWork> objects_0;
+  ObjectWorkMap objects_0;
   PhaseWork phase_0;
 };
 
@@ -83,15 +88,19 @@ TEST_F(PhaseWorkTestFixture, test_initializer) {
   EXPECT_EQ(
       phase_0.getLoad(),
       std::accumulate(objects_0.begin(), objects_0.end(), 0,
-                      [](double value, const std::pair<ElementIDType, ObjectWork>& p) {
+                      [](double value, const auto& p) {
                         return value + p.second.getLoad();
                       }));
+  EXPECT_EQ(phase_0.getMaxVolume(), 0.0);
 }
 
+/**
+ * Test PhaseWork communications
+ */
 TEST_F(PhaseWorkTestFixture, test_communications) {
   // Assertions for phase_0
 
-  // create communicator for object with id 2
+  // change some object communicator
   auto object_id = 2;
   ObjectCommunicator communicator = ObjectCommunicator(214);
   phase_0.setCommunications(object_id, communicator);
@@ -103,11 +112,34 @@ TEST_F(PhaseWorkTestFixture, test_communications) {
   auto to_id = 3;
   phase_0.addObjectSentCommunication(object_id, to_id, 25.0);
   phase_0.addObjectReceivedCommunication(object_id, from_id, 25.0);
-  
   EXPECT_EQ(phase_0.getObjectWork().at(object_id).getSent().size(), 1);
   EXPECT_EQ(phase_0.getObjectWork().at(object_id).getSentVolume(), 25.0);
   EXPECT_EQ(phase_0.getObjectWork().at(object_id).getReceived().size(), 1);
   EXPECT_EQ(phase_0.getObjectWork().at(object_id).getReceivedVolume(), 25.0);
+
+  EXPECT_EQ(phase_0.getMaxVolume(), 25.0);
+  phase_0.addObjectReceivedCommunication(object_id, from_id, 40.0);
+  EXPECT_EQ(phase_0.getMaxVolume(), 40.0);
+}
+
+/**
+ * Test PhaseWork serialization
+ */
+TEST_F(PhaseWorkTestFixture, test_serialization) {
+  BasicSerializer<std::variant<PhaseType,ObjectWorkMap>> s = BasicSerializer<std::variant<PhaseType,ObjectWorkMap>>();
+
+  phase_0.serialize(s);
+  EXPECT_EQ(s.items.size(), 2);
+
+  auto actual_phase_id = std::get<PhaseType>(s.items[0]);
+  EXPECT_EQ(actual_phase_id, phase_0.getPhase()); // phase id
+
+  ObjectWorkMap actual_objects = std::get<ObjectWorkMap>(s.items[1]);
+  for (auto const& [object_id, o] : phase_0.getObjectWork()) {
+    EXPECT_EQ(actual_objects[object_id].getID(), o.getID());
+    EXPECT_EQ(actual_objects[object_id].getLoad(), o.getLoad());
+    EXPECT_EQ(actual_objects[object_id].getMaxVolume(), o.getMaxVolume());
+  }
 }
 
 }  // namespace vt::tv::tests::unit::api
