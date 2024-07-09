@@ -16,7 +16,7 @@ curl -L https://github.com/google/googletest/archive/refs/tags/$GTEST_BRANCHTAG.
 pushd $GTEST_DIR
 rm -fr .[!.]* BUILD.bazel WORKSPACE appveyor.yml library.json platformio.ini
 rm -fr ci/
-# rm -fr googlemock/
 rm -fr googletest/test/ googletest/samples/ googletest/docs/ googletest/scripts/
+rm -fr googlemock/test/ googlemock/samples/ googlemock/docs/ googlemock/scripts/
 rm -fr docs
 popd
