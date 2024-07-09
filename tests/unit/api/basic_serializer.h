@@ -44,7 +44,7 @@
 namespace vt::tv::tests::unit::api {
 
 /**
- * Helper class that acts as a serializer to help with testing serialization calls.
+ * Testing Helper class that acts as a serializer to help with testing serialization calls.
  * This basic serializer stores items as a map and enable the pipe operator to add
  * items to the inner map. This is useful to test api calls to serialization methods.
  */

@@ -51,15 +51,16 @@
 namespace vt::tv::tests::unit::api {
 
 /**
- * Helper class that provide useful static methods to be used by the different unit tests classes related to the api.
+ * Testing Helper class that provide useful static methods to be used by the different
+ * unit tests classes related to the api to generate some data in memory.
  */
-class Helper {
+class Generator {
     public:
 
         /**
          * Make a map of new objects
          */
-        static const std::unordered_map<ElementIDType, ObjectWork> make_objects(const int num_objects = rand() % 10) {
+        static const std::unordered_map<ElementIDType, ObjectWork> makeObjects(const int num_objects = rand() % 10) {
             auto object_work_map = std::unordered_map<ElementIDType, ObjectWork>();
             for (auto object_id = 0; object_id < num_objects; object_id++) {
                 // Make some ObjectWork instance
@@ -76,7 +77,7 @@ class Helper {
         /**
          * Make a new phase
          */
-        static const PhaseWork make_phase(PhaseType phase_id, std::unordered_map<ElementIDType, ObjectWork> objects) {
+        static const PhaseWork makePhase(PhaseType phase_id, std::unordered_map<ElementIDType, ObjectWork> objects) {
             PhaseWork phase = PhaseWork(0, objects);
             return phase;
         }
@@ -84,10 +85,10 @@ class Helper {
         /**
          * Make a map of new phases
          */
-        static const std::unordered_map<PhaseType, PhaseWork> make_phases(std::unordered_map<ElementIDType, ObjectWork> objects, const int num_phases = rand() % 10) {
+        static const std::unordered_map<PhaseType, PhaseWork> makePhases(std::unordered_map<ElementIDType, ObjectWork> objects, const int num_phases = rand() % 10) {
             auto phase_info_map = std::unordered_map<PhaseType, PhaseWork>();
             for (PhaseType phase_id = 0; phase_id < num_phases; phase_id++) {
-                phase_info_map.insert(std::make_pair(phase_id, make_phase(phase_id, objects)));
+                phase_info_map.insert(std::make_pair(phase_id, makePhase(phase_id, objects)));
             }
             return phase_info_map;
         }
@@ -95,10 +96,10 @@ class Helper {
         /**
          * Make a map of new ranks
          */
-        static const std::unordered_map<NodeType, Rank> make_ranks(std::unordered_map<ElementIDType, ObjectWork> objects, int num_ranks = rand() % 10, int num_phases = rand() % 10) {
+        static const std::unordered_map<NodeType, Rank> makeRanks(std::unordered_map<ElementIDType, ObjectWork> objects, int num_ranks = rand() % 10, int num_phases = rand() % 10) {
             auto rank_map = std::unordered_map<NodeType, Rank>();
             for (NodeType rank_id = 0; rank_id < num_ranks; rank_id++) {
-                auto rank = Rank(rank_id, make_phases(objects, num_phases));
+                auto rank = Rank(rank_id, makePhases(objects, num_phases));
                 rank_map.insert(std::make_pair(rank_id, rank));
             }
             return rank_map;
@@ -107,7 +108,7 @@ class Helper {
         /**
          * Make a map object info from an object map
          */
-        static std::unordered_map<ElementIDType, ObjectInfo> make_object_info_map (const std::unordered_map<ElementIDType, ObjectWork> object_work_map) {
+        static std::unordered_map<ElementIDType, ObjectInfo> makeObjectInfoMap (const std::unordered_map<ElementIDType, ObjectWork> object_work_map) {
             auto object_info_map = std::unordered_map<ElementIDType, ObjectInfo>();
             std::vector<size_t> idx;
             for (auto& it: object_work_map) {
@@ -121,10 +122,10 @@ class Helper {
         /**
          * Make an Info instance
          */
-        static const Info info(int num_objects = rand() % 100, int num_ranks = rand() % 10, int num_phases = 10) {
-            auto objects = make_objects(num_objects);
-            auto ranks = make_ranks(objects, num_ranks, num_phases);
-            return Info(make_object_info_map(objects), ranks);
+        static const Info makeInfo(int num_objects = rand() % 100, int num_ranks = rand() % 10, int num_phases = 10) {
+            auto objects = makeObjects(num_objects);
+            auto ranks = makeRanks(objects, num_ranks, num_phases);
+            return Info(makeObjectInfoMap(objects), ranks);
         }
 };
 

@@ -54,7 +54,7 @@
 #include <variant>
 #include <set>
 
-#include "helper.h"
+#include "generator.h"
 
 
 namespace vt::tv::tests::unit::api {
@@ -88,7 +88,7 @@ class ParametherizedTestFixture :public ::testing::TestWithParam<TestParam> {};
  */
 TEST_P(ParametherizedTestFixture, test_get_num_ranks) {
   TestParam const & param = GetParam();
-  Info info = Helper::info(param.num_objects, param.num_ranks, param.num_phases);
+  Info info = Generator::makeInfo(param.num_objects, param.num_ranks, param.num_phases);
   EXPECT_EQ(info.getNumRanks(), param.num_ranks);
 }
 
@@ -98,9 +98,9 @@ TEST_P(ParametherizedTestFixture, test_get_num_ranks) {
 TEST_P(ParametherizedTestFixture, test_get_all_object_ids) {
   TestParam const & param = GetParam();
 
-  auto objects = Helper::make_objects(param.num_objects);
-  auto ranks = Helper::make_ranks(objects, param.num_ranks, param.num_phases);
-  auto object_info_map = Helper::make_object_info_map(objects);
+  auto objects = Generator::makeObjects(param.num_objects);
+  auto ranks = Generator::makeRanks(objects, param.num_ranks, param.num_phases);
+  auto object_info_map = Generator::makeObjectInfoMap(objects);
   auto info = Info(object_info_map, ranks);
 
   auto const& expected = object_info_map;
