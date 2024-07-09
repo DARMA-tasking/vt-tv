@@ -63,7 +63,7 @@ namespace vt::tv::tests::unit::api {
 using ObjectWorkMap = std::unordered_map<ElementIDType, ObjectWork>;
 
 /**
- * Provides unit tests for the vt::tv::api::ObjectWork class
+ * Provides unit tests for the vt::tv::api::PhaseWork class
  */
 class PhaseWorkTestFixture : public ::testing::Test {
  public:
