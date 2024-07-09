@@ -1,14 +1,12 @@
-# Help at https://google.github.io/googletest/quickstart-cmake.html
+# 1. Require Google Test dependency
 
-# 1. Add Google Test Dependency
+# Help at https://google.github.io/googletest/quickstart-cmake.html
 
 include(CMakePrintHelpers)
 
 # GoogleTest requires at least C++14
 # set(CMAKE_CXX_STANDARD 14)
 # set(CMAKE_CXX_STANDARD_REQUIRED ON)
-
-
 
 include(FetchContent)
 set(FETCHCONTENT_BASE_DIR ${CMAKE_BINARY_DIR}/_deps)
