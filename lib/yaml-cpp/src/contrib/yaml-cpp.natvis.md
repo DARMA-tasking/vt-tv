@@ -1,7 +1,7 @@
 # MSVC debugger visualizer for YAML::Node
 
 ## How to use
-Add yaml-cpp.natvis to your Visual C++ project like any other source file.  It will be included in the debug information, and improve debugger display on YAML::Node and contained types. 
+Add yaml-cpp.natvis to your Visual C++ project like any other source file.  It will be included in the debug information, and improve debugger display on YAML::Node and contained types.
 
 ## Compatibility and Troubleshooting
 
