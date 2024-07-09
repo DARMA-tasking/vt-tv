@@ -107,7 +107,7 @@ TEST_F(PhaseWorkTestFixture, test_communications) {
   phase_0.setCommunications(object_id, communicator);
   EXPECT_EQ(phase_0.getObjectWork().at(object_id).getSent().size(), 0);
   EXPECT_EQ(phase_0.getObjectWork().at(object_id).getSentVolume(), 0.0);
-  
+
   // scenario: move 25 bytes from task 2 to task 3.
   auto from_id = 2;
   auto to_id = 3;
