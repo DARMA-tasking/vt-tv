@@ -58,7 +58,7 @@
 namespace vt::tv::tests::unit::api {
 
 /**
- * Provides unit tests for the vt::tv::api::ObjectWork class
+ * Provides unit tests for the vt::tv::api::ObjectInfo class
  */
 class ObjectInfoTestFixture :public ::testing::Test {
   public:
