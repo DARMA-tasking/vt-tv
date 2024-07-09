@@ -54,7 +54,7 @@
 #include <variant>
 #include <algorithm>
 
-#include "helper.h"
+#include "generator.h"
 #include "basic_serializer.h"
 
 
@@ -68,7 +68,7 @@ using ObjectWorkMap = std::unordered_map<ElementIDType, ObjectWork>;
 class PhaseWorkTestFixture : public ::testing::Test {
  public:
   PhaseWorkTestFixture() {
-    objects_0 = Helper::make_objects(10);
+    objects_0 = Generator::makeObjects(10);
     phase_0 = PhaseWork(
       11, // phase id
       objects_0 // map of ObjectWork
@@ -80,7 +80,7 @@ class PhaseWorkTestFixture : public ::testing::Test {
 };
 
 /**
- * Test PhaseWork contructor and getters
+ * Test PhaseWork contructor and getters at initial state: getPhase, getMaxVolume
  */
 TEST_F(PhaseWorkTestFixture, test_initializer) {
   // Assertions for phase_0
@@ -95,7 +95,8 @@ TEST_F(PhaseWorkTestFixture, test_initializer) {
 }
 
 /**
- * Test PhaseWork communications
+ * Test PhaseWork communications methods:
+ * addObjectSentCommunication, addObjectReceivedCommunication, getMaxVolume before and after some communications
  */
 TEST_F(PhaseWorkTestFixture, test_communications) {
   // Assertions for phase_0
@@ -123,7 +124,7 @@ TEST_F(PhaseWorkTestFixture, test_communications) {
 }
 
 /**
- * Test PhaseWork serialization
+ * Test PhaseWork::serialize correctly serialize PhaseWork instance members
  */
 TEST_F(PhaseWorkTestFixture, test_serialization) {
   BasicSerializer<std::variant<PhaseType,ObjectWorkMap>> s = BasicSerializer<std::variant<PhaseType,ObjectWorkMap>>();
