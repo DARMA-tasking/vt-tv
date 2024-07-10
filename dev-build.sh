@@ -35,17 +35,15 @@ cd ${BUILD_DIR}
 cmake -B "${BUILD_DIR}" \
   -DCMAKE_BUILD_TYPE=DEBUG \
   -DVTK_DIR=${VTK_DIR} \
-  -DVT_TV_TESTS_ALL_IN_ONE=ON \
-  -DVT_TV_PYTHON_BINDINGS_ENABLED=OFF \
-  -DPython_EXECUTABLE="$(which python)" \
-  -DPython_INCLUDE_DIRS=$(python -c "import sysconfig; print(sysconfig.get_path('include'))") \
+  \
   -DBUILD_TESTING=ON \
   -DVT_TV_TESTS_ENABLED=ON \
+  -DVT_TV_TESTS_ALL_IN_ONE=ON \
+  -DVT_TV_PYTHON_BINDINGS_ENABLED=OFF \
+  \
+  -DPython_EXECUTABLE="$(which python)" \
+  -DPython_INCLUDE_DIRS=$(python -c "import sysconfig; print(sysconfig.get_path('include'))") \
+  \
   "${VT_TV_DIR}"
-
-  # Optional
-  # -BUILD_TESTING=OFF turnoff ctest
-  # -DVT_TV_TESTS_ENABLED=OFF \
-  # -DVT_TV_PYTHON_BINDINGS_ENABLED=ON
 
 time cmake --build . --parallel -j"${JOBS}"
