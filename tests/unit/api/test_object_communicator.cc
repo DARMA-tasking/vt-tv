@@ -42,11 +42,8 @@
 */
 
 #include <gtest/gtest.h>
-#include <gmock/gmock.h>
 
-#include <vt-tv/api/object_info.h>
-
-#include <fmt-vt/format.h>
+#include <vt-tv/api/object_communicator.h>
 
 #include <string>
 #include <filesystem>
@@ -57,54 +54,44 @@
 namespace vt::tv::tests::unit::api {
 
 /**
- * Provides unit tests for the vt::tv::api::ObjectInfo class
+ * Provides unit tests for the vt::tv::api::ObjectCommunicator class
  */
-class ObjectInfoTest :public ::testing::Test {
+class ObjectCommunicatorTest :public ::testing::Test {
   public:
-    ObjectInfo object_0 = ObjectInfo(
-      6, // id
-      2, // home
-      false, // migratable
-      std::vector<size_t>({ 0, 1, 2})
-    );
+    ObjectCommunicator comm_0 = ObjectCommunicator(0);
 
-    ObjectInfo object_1 = ObjectInfo(
-      7, // id
-      1, // home
-      true, // migratable
-      std::vector<size_t>({ 3, 5, 6})
+    ObjectCommunicator comm_1 = ObjectCommunicator(
+        1,
+        // recv
+        {
+            { 1, 25.5 }, { 2, 12.0 }
+        },
+        // sent
+        {
+            { 1, 29.5 },  { 2, 10.2 },  { 3, 10.3 }
+        }
     );
 };
 
 /**
- * Test ObjectInfo initial state
+ * Test ObjectCommunicator initial state
  */
-TEST_F(ObjectInfoTest, test_initial_state) {
-  using ::testing::ElementsAre;
+TEST_F(ObjectCommunicatorTest, test_initial_state) {
+  // Assertions for comm_0
+  EXPECT_EQ(comm_0.getObjectId(), 0);
+  EXPECT_EQ(comm_0.getMaxVolume(), 0.0);
+  EXPECT_EQ(comm_0.getReceived().size(), 0);
+  EXPECT_EQ(comm_0.getTotalReceivedVolume(), 0.0);
+  EXPECT_EQ(comm_0.getSent().size(), 0);
+  EXPECT_EQ(comm_0.getTotalSentVolume(), 0.0);
 
-  // Assertions for object_0
-  EXPECT_EQ(object_0.getID(), 6);
-  EXPECT_EQ(object_0.getHome(), 2);
-  EXPECT_EQ(object_0.getIndexArray().size(), 3);
-  ASSERT_THAT(object_0.getIndexArray(), ElementsAre(0, 1, 2));
-  EXPECT_FALSE(object_0.isMigratable());
-
-  // Assertions for object_1
-  EXPECT_EQ(object_1.getID(), 7);
-  EXPECT_EQ(object_1.getHome(), 1);
-  EXPECT_EQ(object_1.getIndexArray().size(), 3);
-  ASSERT_THAT(object_1.getIndexArray(), ElementsAre(3, 5, 6));
-  EXPECT_TRUE(object_1.isMigratable());
-
-  // Post-modifiers assertions on object_0
-  object_0.setMetaID(static_cast<vt::tv::CollectionObjGroupIDType>(2));
-  EXPECT_EQ(object_0.getMetaID(), 2);
-
-  object_0.setIsObjGroup(true);
-  EXPECT_TRUE(object_0.getIsObjGroup());
-
-  object_0.setIsObjGroup(false);
-  EXPECT_FALSE(object_0.getIsObjGroup());
+  // Assertions for comm_1
+  EXPECT_EQ(comm_1.getObjectId(), 1);
+  EXPECT_EQ(comm_1.getMaxVolume(), 29.5);
+  EXPECT_EQ(comm_1.getReceived().size(), 2);
+  EXPECT_EQ(comm_1.getTotalReceivedVolume(), 37.5);
+  EXPECT_EQ(comm_1.getSent().size(), 3);
+  EXPECT_EQ(comm_1.getTotalSentVolume(), 50.0);
 }
 
 } // end namespace vt::tv::tests::unit
