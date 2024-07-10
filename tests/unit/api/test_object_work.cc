@@ -76,7 +76,6 @@ class ObjectWorkTest :public ::testing::Test {
     );
 };
 
-
 /**
  * Test ObjectWork:ObjectWork() and getters
  */
