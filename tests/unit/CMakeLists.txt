@@ -2,9 +2,12 @@ set(BUILD_GMOCK ON CACHE BOOL "Builds the googlemock subproject" FORCE)
 set(INSTALL_GTEST OFF CACHE BOOL "Enable installation of googletest. (Projects embedding googletest may want to turn this OFF.)" FORCE)
 
 if (NOT TARGET gtest)
+  # include GoogleTest and enable testing
   add_subdirectory(${PROJECT_LIB_DIR}/googletest ${PROJECT_BIN_DIR}/lib/googletest)
 endif()
 set(GOOGLETEST_LIBRARY gtest)
+
+include(GoogleTest)
 
 # Hide various options from UI-based property editors
 mark_as_advanced(
@@ -14,14 +17,10 @@ mark_as_advanced(
 )
 
 # Group targets, in IDEs supporting such
-# set_target_properties(gtest PROPERTIES FOLDER lib)
-# set_target_properties(gtest_main PROPERTIES FOLDER lib)
-
-include(GoogleTest)
+set_target_properties(gtest PROPERTIES FOLDER lib)
+set_target_properties(gtest_main PROPERTIES FOLDER lib)
 
 set(PROJECT_TEST_UNIT_DIR ${SRC_DIR}/unit)
-set(GTEST_INCLUDE_DIR ${PROJECT_LIB_DIR}/googletest/googletest/include)
-set(GMOCK_INCLUDE_DIR ${PROJECT_LIB_DIR}/googletest/googlemock/include)
 
 # Collect sources
 file(
@@ -36,12 +35,9 @@ file(
   "*.h"
 )
 
-enable_testing()
-
 # Macro to link vt-tv, gtest and gmock to a target
 macro(vt_tv_link_target target)
-  target_include_directories(${target} PRIVATE ${GTEST_INCLUDE_DIR})
-  target_include_directories(${target} PRIVATE ${GMOCK_INCLUDE_DIR})
+  target_include_directories(${target} PRIVATE ${gtest_SOURCE_DIR}/include ${gmock_SOURCE_DIR}/include)
   target_link_libraries(${target} PRIVATE gtest)
   target_link_libraries(${target} PUBLIC ${VT_TV_LIBRARY})
 endmacro()
@@ -64,17 +60,6 @@ foreach(TEST_FILENAME ${TEST_SOURCE_FILES})
   )
 
   vt_tv_link_target(${TEST})
-
-  add_test(
-    vt-tv:${TEST}
-    ${TEST}
-  )
-
-  set_tests_properties(
-    vt-tv:${TEST}
-    PROPERTIES TIMEOUT 60
-    FAIL_REGULAR_EXPRESSION "FAILED;should be deleted but never is"
-    PASS_REGULAR_EXPRESSION "PASSED"
-  )
+  gtest_discover_tests(${TEST})
 
 endforeach()
