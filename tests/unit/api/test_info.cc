@@ -165,4 +165,8 @@ TEST_F(InfoTest, test_add_info) {
   EXPECT_EQ(info.getRank(0).getPhaseWork().size(), 1) << "object info has already been added and must not be added to the map again";
 }
 
+TEST_F(InfoTest, test_must_fail) {
+  EXPECT_EQ(true, false);
+}
+
 } // end namespace vt::tv::tests::unit
