@@ -68,20 +68,23 @@ struct TestParam
 
   }
 
+  friend std::ostream& operator<< (std::ostream& stream, const TestParam& param) {
+    stream << "{num_objects: " << std::to_string(param.num_objects) << ", num_ranks: " << std::to_string(param.num_ranks) << ", num_phases: " << std::to_string(param.num_phases) << "}";
+    return stream;
+  }
+
   const size_t num_objects;
   const size_t num_ranks;
   const size_t num_phases;
-
-  std::string get_slug() const
-  {
-    return "sample_" + std::to_string(num_objects) + "_objects_" + std::to_string(num_ranks) + "_ranks_" + std::to_string(num_phases) + "_phases";
-  }
 };
 
 /**
  * Provides unit tests for the vt::tv::api::Info class
  */
-class ParametherizedTestFixture :public ::testing::TestWithParam<TestParam> {};
+class ParametherizedTestFixture :public ::testing::TestWithParam<TestParam> {
+
+  
+};
 
 /**
  * Test Info:getNumRanks returns same number of ranks as defined in the sample
@@ -124,7 +127,9 @@ INSTANTIATE_TEST_SUITE_P(
     ),
     [](const testing::TestParamInfo<ParametherizedTestFixture::ParamType>& info) {
       // test suffix
-      return info.param.get_slug();
+      return std::to_string(info.param.num_objects) + "_" +
+             std::to_string(info.param.num_ranks) + "_" +
+             std::to_string(info.param.num_phases);
     }
 );
 

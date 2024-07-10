@@ -53,9 +53,7 @@ add_definitions(-DVT_TV_OPENMP_ENABLED=${VT_TV_OPENMP_ENABLED})
 add_compile_definitions(SRC_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
 
 add_custom_target(vt_tv_examples)
-if (VT_TV_TESTS_ENABLED)
-  add_custom_target(vt_tv_tests)
-endif()
+add_custom_target(vt_tv_tests)
 add_custom_target(vt_tv_apps)
 
 set(PROJECT_BIN_DIR      ${CMAKE_CURRENT_BINARY_DIR})
@@ -65,15 +63,15 @@ set(PROJECT_EXAMPLE_DIR  ${CMAKE_CURRENT_SOURCE_DIR}/examples)
 set(PROJECT_APP_DIR      ${CMAKE_CURRENT_SOURCE_DIR}/apps)
 set(PROJECT_BINDINGS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/bindings)
 
-include(CTest)
-
 add_subdirectory(src)
 add_subdirectory(examples)
 
 add_subdirectory(apps)
 add_subdirectory(bindings)
 
-if (VT_TV_TESTS_ENABLED)
+include(CTest) #adds option BUILD_TESTING (default ON)
+
+if (BUILD_TESTING AND VT_TV_TESTS_ENABLED)
   add_subdirectory(tests)
 endif()
 
