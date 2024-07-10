@@ -125,12 +125,12 @@ class Generator {
             std::string key_prefix = "attr_",
             std::string value_suffix = "_value"
         ) {
-            auto qoi_map = std::unordered_map<std::string, QOIVariantTypes>();      
+            auto qoi_map = std::unordered_map<std::string, QOIVariantTypes>();
             for (size_t i=0; i<num; i++) {
                 qoi_map[key_prefix + std::to_string(i)] = key_prefix + std::to_string(i) + value_suffix;
             }
             return qoi_map;
-        }        
+        }
 
         /**
          * Make an Info instance
