@@ -57,7 +57,6 @@
 #include "generator.h"
 #include "basic_serializer.h"
 
-
 namespace vt::tv::tests::unit::api {
 
 using ObjectWorkMap = std::unordered_map<ElementIDType, ObjectWork>;
@@ -103,8 +102,14 @@ TEST_F(PhaseWorkTest, test_communications) {
 
   // change some object communicator
   auto object_id = 2;
-  ObjectCommunicator communicator = ObjectCommunicator(214);
+  ObjectCommunicator communicator = ObjectCommunicator(3);
+  
+  // object id (2) != communicator object id (3)
+  ASSERT_DEATH({ phase_0.setCommunications(object_id, communicator); }, "");
+  
+  object_id = 3;
   phase_0.setCommunications(object_id, communicator);
+  
   EXPECT_EQ(phase_0.getObjectWork().at(object_id).getSent().size(), 0);
   EXPECT_EQ(phase_0.getObjectWork().at(object_id).getSentVolume(), 0.0);
 
