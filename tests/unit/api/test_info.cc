@@ -59,16 +59,16 @@
 
 namespace vt::tv::tests::unit::api {
 
-struct TestParam
+struct InfoTestParam
 {
   public:
 
-  TestParam(size_t num_objects, size_t num_ranks, size_t num_phases):
+  InfoTestParam(size_t num_objects, size_t num_ranks, size_t num_phases):
     num_objects(num_objects), num_ranks(num_ranks), num_phases(num_phases) {
 
   }
 
-  friend std::ostream& operator<< (std::ostream& stream, const TestParam& param) {
+  friend std::ostream& operator<< (std::ostream& stream, const InfoTestParam& param) {
     stream << "{num_objects: " << std::to_string(param.num_objects) << ", num_ranks: " << std::to_string(param.num_ranks) << ", num_phases: " << std::to_string(param.num_phases) << "}";
     return stream;
   }
@@ -81,13 +81,13 @@ struct TestParam
 /**
  * Provides unit tests for the vt::tv::api::Info class
  */
-class ParametherizedTestFixture :public ::testing::TestWithParam<TestParam> { };
+class InfoTest :public ::testing::TestWithParam<InfoTestParam> { };
 
 /**
  * Test Info:getNumRanks returns same number of ranks as defined in the sample
  */
-TEST_P(ParametherizedTestFixture, test_get_num_ranks) {
-  TestParam const & param = GetParam();
+TEST_P(InfoTest, test_get_num_ranks) {
+  InfoTestParam const & param = GetParam();
   Info info = Generator::makeInfo(param.num_objects, param.num_ranks, param.num_phases);
   EXPECT_EQ(info.getNumRanks(), param.num_ranks);
 }
@@ -95,8 +95,8 @@ TEST_P(ParametherizedTestFixture, test_get_num_ranks) {
 /**
  * Test Info:getAllObjectIDs returns same items as defined in the sample
  */
-TEST_P(ParametherizedTestFixture, test_get_all_object_ids) {
-  TestParam const & param = GetParam();
+TEST_P(InfoTest, test_get_all_object_ids) {
+  InfoTestParam const & param = GetParam();
 
   auto objects = Generator::makeObjects(param.num_objects);
   auto ranks = Generator::makeRanks(objects, param.num_ranks, param.num_phases);
@@ -115,14 +115,14 @@ TEST_P(ParametherizedTestFixture, test_get_all_object_ids) {
 
 /* Run Unit tests using different data sets as Tests params */
 INSTANTIATE_TEST_SUITE_P(
-    TestInfo,
-    ParametherizedTestFixture,
-    ::testing::Values<TestParam>(
-        TestParam(0,0,1),
-        TestParam(2,5,1),
-        TestParam(6,1,1)
+    InfoTests,
+    InfoTest,
+    ::testing::Values<InfoTestParam>(
+        InfoTestParam(0,0,1),
+        InfoTestParam(2,5,1),
+        InfoTestParam(6,1,1)
     ),
-    [](const testing::TestParamInfo<ParametherizedTestFixture::ParamType>& info) {
+    [](const testing::TestParamInfo<InfoTest::ParamType>& info) {
       // test suffix
       return std::to_string(info.param.num_objects) + "_" +
              std::to_string(info.param.num_ranks) + "_" +
@@ -133,7 +133,7 @@ INSTANTIATE_TEST_SUITE_P(
 /**
  * Test Info:addInfo does not add twice an already-added object info.
  */
-TEST_F(ParametherizedTestFixture, test_add_info) {
+TEST_F(InfoTest, test_add_info) {
 
   Info info = Info();
 

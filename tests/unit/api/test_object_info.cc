@@ -60,7 +60,7 @@ namespace vt::tv::tests::unit::api {
 /**
  * Provides unit tests for the vt::tv::api::ObjectInfo class
  */
-class ObjectInfoTestFixture :public ::testing::Test {
+class ObjectInfoTest :public ::testing::Test {
   public:
     ObjectInfo object_0 = ObjectInfo(
       6, // id
@@ -81,7 +81,7 @@ class ObjectInfoTestFixture :public ::testing::Test {
 /**
  * Test ObjectWork:ObjectWork() and getters
  */
-TEST_F(ObjectInfoTestFixture, test_initializer) {
+TEST_F(ObjectInfoTest, test_initializer) {
   // Assertions for object_0
   EXPECT_EQ(object_0.getID(), 6);
   EXPECT_EQ(object_0.getHome(), 2);

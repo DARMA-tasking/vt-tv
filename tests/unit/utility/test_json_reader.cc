@@ -61,9 +61,9 @@ using JSONReader = vt::tv::utility::JSONReader;
 /**
  * Provides unit tests for the vt::tv::utility::JSONReader class
  */
-struct TestJSONReader :public ::testing::Test {};
+struct JSONReaderTest :public ::testing::Test {};
 
-TEST_F(TestJSONReader, test_json_reader_1) {
+TEST_F(JSONReaderTest, test_json_reader_1) {
   std::filesystem::path p = std::filesystem::path(SRC_DIR) / "tests/data/lb_test_data" ;
   std::string path = std::filesystem::absolute(p).string();
 
@@ -119,7 +119,7 @@ TEST_F(TestJSONReader, test_json_reader_1) {
   }
 }
 
-TEST_F(TestJSONReader, test_json_reader_metadata_attributes) {
+TEST_F(JSONReaderTest, test_json_reader_metadata_attributes) {
   std::filesystem::path p = std::filesystem::path(SRC_DIR) / "tests/data/lb_test_data" ;
   std::string path = std::filesystem::absolute(p).string();
 
@@ -142,7 +142,7 @@ TEST_F(TestJSONReader, test_json_reader_metadata_attributes) {
   EXPECT_EQ("abc", std::get<std::string>(rank_attributes.at("stringSample")));
 }
 
-TEST_F(TestJSONReader, test_json_reader_object_info_attributes) {
+TEST_F(JSONReaderTest, test_json_reader_object_info_attributes) {
   std::filesystem::path p = std::filesystem::path(SRC_DIR) / "tests/data/lb_test_data" ;
   std::string path = std::filesystem::absolute(p).string();
 
@@ -168,7 +168,7 @@ TEST_F(TestJSONReader, test_json_reader_object_info_attributes) {
   EXPECT_EQ("", std::get<std::string>(object_attributes.at("stringSample")));
 }
 
-TEST_F(TestJSONReader, test_json_reader_qoi_serializer) {
+TEST_F(JSONReaderTest, test_json_reader_qoi_serializer) {
   using json = nlohmann::json;
 
   // int in json
@@ -190,7 +190,7 @@ TEST_F(TestJSONReader, test_json_reader_qoi_serializer) {
   EXPECT_EQ("some data", std::get<std::string>(string_variant));
 }
 
-TEST_F(TestJSONReader, test_json_reader_object_work_user_defined) {
+TEST_F(JSONReaderTest, test_json_reader_object_work_user_defined) {
   std::filesystem::path p = std::filesystem::path(SRC_DIR) / "tests/data/lb_test_data" ;
   std::string path = std::filesystem::absolute(p).string();
 
