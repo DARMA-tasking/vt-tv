@@ -77,7 +77,7 @@ else()
       ${TEST_HEADER_FILES}
       ${TEST_FILENAME}
     )
-  
+
     vt_tv_link_target(${TEST})
 
     gtest_discover_tests(${TEST})

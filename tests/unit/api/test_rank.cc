@@ -121,7 +121,7 @@ TEST_F(RankTest, test_communications_and_get_max_volume) {
   ASSERT_EQ(rank_0.getPhaseWork().at(1).getMaxVolume(), 3.5);
 
   // send volume of 1000.0 from object to another object in same phase
-  rank_0.addObjectSentCommunicationAtPhase(0, 0, 1, 6.0); 
+  rank_0.addObjectSentCommunicationAtPhase(0, 0, 1, 6.0);
   ASSERT_EQ(rank_0.getPhaseWork().at(0).getMaxVolume(), 6.0);
   // send load=1.0 from object to another object in another phase
   rank_0.addObjectSentCommunicationAtPhase(0, 0, 5, 7.0);
