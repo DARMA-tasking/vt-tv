@@ -58,7 +58,7 @@ namespace vt::tv::tests::unit::api {
 /**
  * Provides unit tests for the vt::tv::api::ObjectWork class
  */
-class ObjectWorkTestFixture :public ::testing::Test {
+class ObjectWorkTest :public ::testing::Test {
   public:
     ObjectWork object_0 = ObjectWork(
       12,
@@ -80,7 +80,7 @@ class ObjectWorkTestFixture :public ::testing::Test {
 /**
  * Test ObjectWork:ObjectWork() and getters
  */
-TEST_F(ObjectWorkTestFixture, test_initializer) {
+TEST_F(ObjectWorkTest, test_initializer) {
   EXPECT_EQ(object_0.getID(), 12);
   EXPECT_EQ(object_0.getLoad(), 10.0);
   EXPECT_EQ(object_0.getSubphaseLoads().size(), 1);
@@ -99,7 +99,7 @@ TEST_F(ObjectWorkTestFixture, test_initializer) {
   EXPECT_EQ(object_0.getSentVolume(), 0.0);
 }
 
-TEST_F(ObjectWorkTestFixture, test_received_volumes) {
+TEST_F(ObjectWorkTest, test_received_volumes) {
   object_0.addReceivedCommunications(12, 56.0);
   EXPECT_EQ(object_0.getReceivedVolume(), 56.0);
 
@@ -107,7 +107,7 @@ TEST_F(ObjectWorkTestFixture, test_received_volumes) {
   EXPECT_EQ(object_0.getReceivedVolume(), 78.5);
 }
 
-TEST_F(ObjectWorkTestFixture, test_sent_volumes) {
+TEST_F(ObjectWorkTest, test_sent_volumes) {
   object_0.addSentCommunications(10, 10.2);
   EXPECT_EQ(object_0.getSentVolume(), 10.2);
 
