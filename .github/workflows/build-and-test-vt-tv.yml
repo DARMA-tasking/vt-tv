@@ -39,7 +39,7 @@ jobs:
       - name: Build the Docker Image; build and test vt-tv
         id: docker_build
         continue-on-error: true
-        uses: docker/build-push-action@v3
+        uses: docker/build-push-action@v4
         with:
           push: false
           tags: ${{ env.DOCKER_TAG }}
