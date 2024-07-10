@@ -1,6 +1,6 @@
 ### VT-TV Dependencies
 
-VT-TV depends on external librairies: 
+VT-TV depends on external librairies:
 These libraries must have their sources residing in the current `lib` directory.
 
 The `googletest`dependency is only required by the unit tests.
