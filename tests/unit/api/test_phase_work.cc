@@ -42,7 +42,6 @@
 */
 
 #include <fmt-vt/format.h>
-#include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include <vt-tv/api/phase_work.h>
 
@@ -79,9 +78,9 @@ class PhaseWorkTest : public ::testing::Test {
 };
 
 /**
- * Test PhaseWork contructor and getters at initial state: getPhase, getMaxVolume
+ * Test PhaseWork initial state
  */
-TEST_F(PhaseWorkTest, test_initializer) {
+TEST_F(PhaseWorkTest, test_initial_state) {
   // Assertions for phase_0
   EXPECT_EQ(phase_0.getPhase(), 11);
   EXPECT_EQ(

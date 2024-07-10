@@ -131,7 +131,7 @@ INSTANTIATE_TEST_SUITE_P(
 );
 
 /**
- * Test Info:addInfo does not add twice an already-added object info.
+ * Test Info::addInfo
  */
 TEST_F(InfoTest, test_add_info) {
 
