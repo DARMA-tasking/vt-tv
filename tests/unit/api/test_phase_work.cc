@@ -65,9 +65,9 @@ using ObjectWorkMap = std::unordered_map<ElementIDType, ObjectWork>;
 /**
  * Provides unit tests for the vt::tv::api::PhaseWork class
  */
-class PhaseWorkTestFixture : public ::testing::Test {
+class PhaseWorkTest : public ::testing::Test {
  public:
-  PhaseWorkTestFixture() {
+  PhaseWorkTest() {
     objects_0 = Generator::makeObjects(10);
     phase_0 = PhaseWork(
       11, // phase id
@@ -82,7 +82,7 @@ class PhaseWorkTestFixture : public ::testing::Test {
 /**
  * Test PhaseWork contructor and getters at initial state: getPhase, getMaxVolume
  */
-TEST_F(PhaseWorkTestFixture, test_initializer) {
+TEST_F(PhaseWorkTest, test_initializer) {
   // Assertions for phase_0
   EXPECT_EQ(phase_0.getPhase(), 11);
   EXPECT_EQ(
@@ -98,7 +98,7 @@ TEST_F(PhaseWorkTestFixture, test_initializer) {
  * Test PhaseWork communications methods:
  * addObjectSentCommunication, addObjectReceivedCommunication, getMaxVolume before and after some communications
  */
-TEST_F(PhaseWorkTestFixture, test_communications) {
+TEST_F(PhaseWorkTest, test_communications) {
   // Assertions for phase_0
 
   // change some object communicator
@@ -126,7 +126,7 @@ TEST_F(PhaseWorkTestFixture, test_communications) {
 /**
  * Test PhaseWork::serialize correctly serialize PhaseWork instance members
  */
-TEST_F(PhaseWorkTestFixture, test_serialization) {
+TEST_F(PhaseWorkTest, test_serialization) {
   BasicSerializer<std::variant<PhaseType,ObjectWorkMap>> s = BasicSerializer<std::variant<PhaseType,ObjectWorkMap>>();
 
   phase_0.serialize(s);
