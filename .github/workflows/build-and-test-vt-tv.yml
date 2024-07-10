@@ -60,3 +60,12 @@ jobs:
           cat ${{ env.OUTPUT_DIR }}/tmp/artifacts/success_flag.txt
           if [[  $(cat ${{ env.OUTPUT_DIR }}/tmp/artifacts/success_flag.txt) -eq 0 ]]; then exit 0; else exit 1; fi
         shell: bash
+
+      - name: Report Test results
+        uses: phoenix-actions/test-reporting@v15
+        if: success() || failure()
+        with:
+          name: Tests report
+          path: ${{ env.OUTPUT_DIR }}/tmp/artifacts/junit-report.xml
+          reporter: java-junit
+          output-to: step-summary
