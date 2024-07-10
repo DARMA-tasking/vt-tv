@@ -53,6 +53,8 @@
 #include <variant>
 #include <set>
 
+#include "generator.h"
+
 namespace vt::tv::tests::unit::api {
 
 /**
@@ -64,35 +66,28 @@ class ObjectWorkTest :public ::testing::Test {
       12,
       10.0,
       {{ 3, 12.0 }},
-      {
-        { "user_defined_1", "user_defined_1_value" },
-        { "user_defined_2", "user_defined_2_value" },
-        { "user_defined_3", "user_defined_3_value" }
-      },
-      {
-        { "attribute_1", "attribute_1_value" },
-        { "attribute_2", "attribute_2_value" }
-      }
+      Generator::makeQOIVariants(3, "user_", "_value"),
+      Generator::makeQOIVariants(2, "attr_", "_value")
     );
 };
 
 /**
- * Test ObjectWork:ObjectWork() and getters
+ * Test ObjectWork initial state
  */
-TEST_F(ObjectWorkTest, test_initializer) {
+TEST_F(ObjectWorkTest, test_initial_state) {
   EXPECT_EQ(object_0.getID(), 12);
   EXPECT_EQ(object_0.getLoad(), 10.0);
   EXPECT_EQ(object_0.getSubphaseLoads().size(), 1);
   EXPECT_EQ(object_0.getSubphaseLoads().at(3), static_cast<TimeType>(12.0));
 
   EXPECT_EQ(object_0.getUserDefined().size(), 3);
-  EXPECT_EQ(object_0.getUserDefined().at("user_defined_1"), static_cast<QOIVariantTypes>("user_defined_1_value"));
-  EXPECT_EQ(object_0.getUserDefined().at("user_defined_2"), static_cast<QOIVariantTypes>("user_defined_2_value"));
-  EXPECT_EQ(object_0.getUserDefined().at("user_defined_3"), static_cast<QOIVariantTypes>("user_defined_3_value"));
+  EXPECT_EQ(object_0.getUserDefined().at("user_0"), static_cast<QOIVariantTypes>("user_0_value"));
+  EXPECT_EQ(object_0.getUserDefined().at("user_1"), static_cast<QOIVariantTypes>("user_1_value"));
+  EXPECT_EQ(object_0.getUserDefined().at("user_2"), static_cast<QOIVariantTypes>("user_2_value"));
 
   EXPECT_EQ(object_0.getAttributes().size(), 2);
-  EXPECT_EQ(object_0.getAttributes().at("attribute_1"), static_cast<QOIVariantTypes>("attribute_1_value"));
-  EXPECT_EQ(object_0.getAttributes().at("attribute_2"), static_cast<QOIVariantTypes>("attribute_2_value"));
+  EXPECT_EQ(object_0.getAttributes().at("attr_0"), static_cast<QOIVariantTypes>("attr_0_value"));
+  EXPECT_EQ(object_0.getAttributes().at("attr_1"), static_cast<QOIVariantTypes>("attr_1_value"));
 
   EXPECT_EQ(object_0.getReceivedVolume(), 0.0);
   EXPECT_EQ(object_0.getSentVolume(), 0.0);

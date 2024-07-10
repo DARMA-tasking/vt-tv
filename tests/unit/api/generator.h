@@ -41,11 +41,12 @@
 //@HEADER
 */
 
-#include "vt-tv/api/types.h"
-#include "vt-tv/api/rank.h"
-#include "vt-tv/api/object_work.h"
-#include "vt-tv/api/object_info.h"
-#include "vt-tv/api/info.h"
+#include <vt-tv/api/types.h>
+#include <vt-tv/api/rank.h>
+#include <vt-tv/api/object_work.h>
+#include <vt-tv/api/object_info.h>
+#include <vt-tv/api/info.h>
+
 #include <string>
 
 namespace vt::tv::tests::unit::api {
@@ -60,15 +61,14 @@ class Generator {
         /**
          * Make a map of new objects
          */
-        static const std::unordered_map<ElementIDType, ObjectWork> makeObjects(const int num_objects = rand() % 10) {
+        static const std::unordered_map<ElementIDType, ObjectWork> makeObjects(const int num_objects = rand() % 10, TimeType load = 2.0) {
             auto object_work_map = std::unordered_map<ElementIDType, ObjectWork>();
             for (auto object_id = 0; object_id < num_objects; object_id++) {
                 // Make some ObjectWork instance
-                TimeType whole_phase_load = 2.0;
                 auto subphase_loads = std::unordered_map<SubphaseType, TimeType>();
-                auto user_defined = std::unordered_map<std::string, QOIVariantTypes>();
-                auto attributes = std::unordered_map<std::string, QOIVariantTypes>();
-                auto object_work = ObjectWork(object_id, whole_phase_load, subphase_loads, user_defined, attributes);
+                auto user_defined = makeQOIVariants(5, "user_");
+                auto attributes = makeQOIVariants(5, "attr_");
+                auto object_work = ObjectWork(object_id, load, subphase_loads, user_defined, attributes);
                 object_work_map.insert(std::make_pair(object_id, object_work));
             }
             return object_work_map;
@@ -78,7 +78,7 @@ class Generator {
          * Make a new phase
          */
         static const PhaseWork makePhase(PhaseType phase_id, std::unordered_map<ElementIDType, ObjectWork> objects) {
-            PhaseWork phase = PhaseWork(0, objects);
+            PhaseWork phase = PhaseWork(phase_id, objects);
             return phase;
         }
 
@@ -108,7 +108,9 @@ class Generator {
         /**
          * Make a map object info from an object map
          */
-        static std::unordered_map<ElementIDType, ObjectInfo> makeObjectInfoMap (const std::unordered_map<ElementIDType, ObjectWork> object_work_map) {
+        static std::unordered_map<ElementIDType, ObjectInfo> makeObjectInfoMap (
+            const std::unordered_map<ElementIDType, ObjectWork> object_work_map
+        ) {
             auto object_info_map = std::unordered_map<ElementIDType, ObjectInfo>();
             std::vector<size_t> idx;
             for (auto& it: object_work_map) {
@@ -116,8 +118,19 @@ class Generator {
                 object_info_map.insert(std::make_pair(it.first, object_info));
             }
             return object_info_map;
-
         }
+
+        static std::unordered_map<std::string, QOIVariantTypes> makeQOIVariants (
+            int num = rand() % 10,
+            std::string key_prefix = "attr_",
+            std::string value_suffix = "_value"
+        ) {
+            auto qoi_map = std::unordered_map<std::string, QOIVariantTypes>();      
+            for (size_t i=0; i<num; i++) {
+                qoi_map[key_prefix + std::to_string(i)] = key_prefix + std::to_string(i) + value_suffix;
+            }
+            return qoi_map;
+        }        
 
         /**
          * Make an Info instance
