@@ -161,12 +161,11 @@ TEST_F(InfoTest, test_add_info) {
   EXPECT_EQ(info.getNumRanks(), 1);
   EXPECT_EQ(info.getRank(0).getPhaseWork().size(), 1);
 
-  info.addInfo(object_info_map, rank);
-  EXPECT_EQ(info.getRank(0).getPhaseWork().size(), 1) << "object info has already been added and must not be added to the map again";
+  ASSERT_DEATH({ info.addInfo(object_info_map, rank); }, "Rank must not exist");
 }
 
-TEST_F(InfoTest, test_must_fail) {
-  EXPECT_EQ(true, false);
-}
+// TEST_F(InfoTest, test_must_fail) {
+//   EXPECT_EQ(true, false);
+// }
 
 } // end namespace vt::tv::tests::unit

@@ -54,7 +54,6 @@
 #include <variant>
 #include <set>
 
-
 namespace vt::tv::tests::unit::api {
 
 /**
@@ -76,7 +75,6 @@ class ObjectInfoTest :public ::testing::Test {
       std::vector<size_t>({ 3, 5, 6})
     );
 };
-
 
 /**
  * Test ObjectWork:ObjectWork() and getters
