@@ -16,7 +16,7 @@ JOBS=10  # for instance, modify as needed
 
 while getopts ":ch" opt; do
  case $opt in
-  c) 
+  c)
     # Remove CMakeCache for fresh build
     rm -rf CMakeCache.txt
     rm -rf ${BUILD_DIR} # recreate clean and build
