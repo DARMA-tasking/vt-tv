@@ -38,28 +38,41 @@ file(
 # Macro to link vt-tv, gtest and gmock to a target
 macro(vt_tv_link_target target)
   target_include_directories(${target} PRIVATE ${gtest_SOURCE_DIR}/include ${gmock_SOURCE_DIR}/include)
-  target_link_libraries(${target} PRIVATE gtest)
+  target_link_libraries(${target} PRIVATE GTest::gtest_main)
   target_link_libraries(${target} PUBLIC ${VT_TV_LIBRARY})
 endmacro()
 
-foreach(TEST_FILENAME ${TEST_SOURCE_FILES})
+set(SPLIT_TESTS, ON) # Set OFF to have only one executable with all tests
 
-  # Extract the test file base name to use as the CMake target name
-  GET_FILENAME_COMPONENT(
-    TEST
-    ${TEST_FILENAME}
-    NAME_WE
-  )
+if (SPLIT_TESTS)
+  foreach(TEST_FILENAME ${TEST_SOURCE_FILES})
+    # Extract the test file base name to use as the CMake target name
+    GET_FILENAME_COMPONENT(
+      TEST
+      ${TEST_FILENAME}
+      NAME_WE
+    )
 
-  # Build test as an individual executable
+    # Build test as an individual executable
+    add_executable(
+      ${TEST}
+      main.cc
+      ${TEST_HEADER_FILES}
+      ${TEST_FILENAME}
+    )
+
+    vt_tv_link_target(${TEST})
+    gtest_discover_tests(${TEST})
+
+  endforeach()
+else()
   add_executable(
-    ${TEST}
+    AllTests
     main.cc
     ${TEST_HEADER_FILES}
-    ${TEST_FILENAME}
+    ${TEST_SOURCE_FILES}
   )
 
-  vt_tv_link_target(${TEST})
-  gtest_discover_tests(${TEST})
-
-endforeach()
+  vt_tv_link_target(AllTests)
+  gtest_discover_tests(AllTests)
+endif()
