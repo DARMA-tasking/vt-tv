@@ -81,10 +81,7 @@ struct TestParam
 /**
  * Provides unit tests for the vt::tv::api::Info class
  */
-class ParametherizedTestFixture :public ::testing::TestWithParam<TestParam> {
-
-  
-};
+class ParametherizedTestFixture :public ::testing::TestWithParam<TestParam> { };
 
 /**
  * Test Info:getNumRanks returns same number of ranks as defined in the sample
