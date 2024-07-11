@@ -4,7 +4,7 @@ set -e
 
 export DISPLAY=:99.0
 
-# Start X virtual frame buffer
+# Start custom display with X virtual frame buffer
 Xvfb :99 -screen 0 1024x768x24 -nolisten tcp > /dev/null 2>&1 &
 
 sleep 1s
@@ -19,7 +19,7 @@ pip install /opt/src/vt-tv
 # Test
 python /opt/src/vt-tv/tests/test_bindings.py
 
+# Clean and restore regular display
 pkill xvfb
 rm -rf /tmp/.X11-unix/X99
-
 export DISPLAY=:0
