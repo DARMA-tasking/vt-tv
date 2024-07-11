@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-set -e
+echo "Current user: $USER"
 
 export DISPLAY=:99.0
 
@@ -20,5 +20,6 @@ pip install /opt/src/vt-tv
 python /opt/src/vt-tv/tests/test_bindings.py
 
 # Clean and restore regular display
+# pkill Xvfb
 rm -rf /tmp/.X11-unix/X99
 export DISPLAY=:0
