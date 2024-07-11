@@ -1,7 +1,5 @@
 #!/usr/bin/env bash
 
-echo "Current user: $USER"
-
 export DISPLAY=:99.0
 
 # Start custom display with X virtual frame buffer
@@ -20,6 +18,6 @@ pip install /opt/src/vt-tv
 python /opt/src/vt-tv/tests/test_bindings.py
 
 # Clean and restore regular display
-# pkill Xvfb
+sudo pkill Xvfb
 rm -rf /tmp/.X11-unix/X99
 export DISPLAY=:0
