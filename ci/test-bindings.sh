@@ -20,6 +20,5 @@ pip install /opt/src/vt-tv
 python /opt/src/vt-tv/tests/test_bindings.py
 
 # Clean and restore regular display
-pkill xvfb
 rm -rf /tmp/.X11-unix/X99
 export DISPLAY=:0
