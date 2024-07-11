@@ -7,7 +7,6 @@ RUN mkdir -p /opt/build/vt-tv/test_output
 ENV VTK_DIR=/opt/build/vtk-build
 ENV CC=gcc-11
 ENV CXX=g++-11
-ENV DISPLAY=:99
 
 # setup virtual X11
 RUN apt-get update \

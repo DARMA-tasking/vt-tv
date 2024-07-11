@@ -2,6 +2,8 @@
 
 set -e
 
+export DISPLAY=:99.0
+
 # Start X virtual frame buffer
 Xvfb :99 -screen 0 1024x768x24 -nolisten tcp > /dev/null 2>&1 &
 
@@ -16,3 +18,5 @@ pip install /opt/src/vt-tv
 
 # Test
 python /opt/src/vt-tv/tests/test_bindings.py
+
+export DISPLAY=:0
