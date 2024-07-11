@@ -54,7 +54,7 @@
 #include <variant>
 #include <set>
 
-#include "generator.h"
+#include "../generator.h"
 
 
 namespace vt::tv::tests::unit::api {
