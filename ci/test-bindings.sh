@@ -19,7 +19,7 @@ pip install /opt/src/vt-tv
 # Test
 python /opt/src/vt-tv/tests/test_bindings.py
 
-pKill xvfb
+pkill xvfb
 rm -rf /tmp/.X11-unix/X99
 
 export DISPLAY=:0
