@@ -4,10 +4,6 @@ input:
   n_ranks: 4
 
 
-# Specify output
-output_dir: ../output
-output_file_stem: output_file
-
 viz:
   x_ranks: 2
   y_ranks: 2
@@ -20,5 +16,5 @@ viz:
   force_continuous_object_qoi: true
 
 output:
-  directory: output
-  file_stem: tv
+  directory: output/tests
+  file_stem: test_vt_tv

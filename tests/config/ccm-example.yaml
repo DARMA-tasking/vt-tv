@@ -14,5 +14,5 @@ viz:
   force_continuous_object_qoi: true
 
 output:
-  directory: output
+  directory: output/tests
   file_stem: ccm_example

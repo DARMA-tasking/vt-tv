@@ -53,7 +53,7 @@
 #include <variant>
 #include <algorithm>
 
-#include "generator.h"
+#include "../generator.h"
 #include "basic_serializer.h"
 
 namespace vt::tv::tests::unit::api {

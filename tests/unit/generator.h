@@ -41,15 +41,19 @@
 //@HEADER
 */
 
+#include <yaml-cpp/yaml.h>
+
 #include <vt-tv/api/types.h>
 #include <vt-tv/api/rank.h>
 #include <vt-tv/api/object_work.h>
 #include <vt-tv/api/object_info.h>
 #include <vt-tv/api/info.h>
 
+#include <vt-tv/utility/json_reader.h>
+
 #include <string>
 
-namespace vt::tv::tests::unit::api {
+namespace vt::tv::tests::unit {
 
 /**
  * Testing Helper class that provide useful static methods to be used by the different
@@ -139,6 +143,42 @@ class Generator {
             auto objects = makeObjects(num_objects);
             auto ranks = makeRanks(objects, num_ranks, num_phases);
             return Info(makeObjectInfoMap(objects), ranks);
+        }
+
+        static std::unique_ptr<Info> loadInfoFromConfig(YAML::Node config) {
+            using JSONReader = ::vt::tv::utility::JSONReader;
+
+            std::string input_dir = config["input"]["directory"].as<std::string>();
+            std::filesystem::path input_path(input_dir);
+            // If it's a relative path, prepend the SRC_DIR
+            if (input_path.is_relative()) {
+                input_path = std::filesystem::path(SRC_DIR) / input_path;
+            }
+            input_dir = input_path.string();
+
+            int64_t n_ranks = config["input"]["n_ranks"].as<int64_t>();
+
+            // append / to avoid problems with file stems
+            if (!input_dir.empty() && input_dir.back() != '/') {
+                input_dir += '/';
+            }
+
+            std::unique_ptr<Info> info = std::make_unique<Info>();
+            for (int64_t rank = 0; rank < n_ranks; rank++) {
+                fmt::print("Reading file for rank {}\n", rank);
+                JSONReader reader{static_cast<NodeType>(rank)};
+                reader.readFile(input_dir + "data." + std::to_string(rank) + ".json");
+                auto tmpInfo = reader.parse();
+                #ifdef VT_TV_OPENMP_ENABLED
+                #if VT_TV_OPENMP_ENABLED
+                    #pragma omp critical
+                #endif
+                #endif
+                {
+                info->addInfo(tmpInfo->getObjectInfo(), tmpInfo->getRank(rank));
+                }    
+            }
+            return info; 
         }
 };
 
