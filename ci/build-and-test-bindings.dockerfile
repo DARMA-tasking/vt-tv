@@ -20,8 +20,7 @@ RUN apt-get update \
 RUN mkdir -p /opt/build/vt-tv/test_output
 
 # make X11 directory writable by Xvfb
-RUN mkdir -p -m /tmp/.X11-unix
-
+RUN mkdir -p -m 1777 /tmp/.X11-unix
 
 # test
 RUN ["chmod", "+x", "/opt/src/vt-tv/ci/test-bindings.sh"]
