@@ -19,9 +19,6 @@ RUN apt-get update \
 # create output directory
 RUN mkdir -p /opt/build/vt-tv/test_output
 
-# create X11 tmp directory as needed
-RUN mkdir -p -m 1777 /tmp/.X11-unix
-
 # test
 RUN ["chmod", "+x", "/opt/src/vt-tv/ci/test-bindings.sh"]
 RUN ["/bin/sh", "/opt/src/vt-tv/ci/test-bindings.sh"]

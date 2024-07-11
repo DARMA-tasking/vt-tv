@@ -46,4 +46,4 @@ jobs:
           context: .
           file: ./ci/build-and-test-bindings.dockerfile
           outputs: type=local,dest=${{ env.OUTPUT_DIR }}
-          #build-args: "--volume /tmp/.X11-unix:/tmp/X11.unix:rw"
+          build-args: "--volume=\"/tmp/.X11-unix:/tmp/X11.unix:rw\""
