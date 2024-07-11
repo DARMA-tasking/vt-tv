@@ -176,9 +176,9 @@ class Generator {
                 #endif
                 {
                 info->addInfo(tmpInfo->getObjectInfo(), tmpInfo->getRank(rank));
-                }    
+                }
             }
-            return info; 
+            return info;
         }
 };
 
