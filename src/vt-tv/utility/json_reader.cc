@@ -119,7 +119,7 @@ std::unique_ptr<Info> JSONReader::parse() {
   if (phases.is_array()) {
     for (auto const& phase : phases) {
       auto id = phase["id"];
-      auto tasks = phase["tasks"];
+      auto tasks = phase.value("tasks", j.array());
 
       std::unordered_map<ElementIDType, ObjectWork> objects;
 
@@ -214,7 +214,7 @@ std::unique_ptr<Info> JSONReader::parse() {
         }
       }
 
-      auto communications = phase["communications"];
+      auto communications = phase.value("communications", j.array());
       if (communications.is_array()) {
         for (auto const& comm : communications) {
           auto type = comm["type"];
