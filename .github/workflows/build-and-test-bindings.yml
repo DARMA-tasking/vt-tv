@@ -39,7 +39,7 @@ jobs:
 
       - name: Build the Docker Image; build and test vt-tv bindings
         id: docker_build
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v4
         with:
           push: false
           tags: ${{ env.DOCKER_TAG }}
