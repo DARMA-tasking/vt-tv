@@ -39,6 +39,8 @@ jobs:
 
       - name: Build the Docker Image; build and test vt-tv bindings
         id: docker_build
+        env:
+          DOCKER_BUILD_NO_SUMMARY: true
         uses: docker/build-push-action@v6 # from 5.3 error appears with some X11 file
         with:
           push: false
