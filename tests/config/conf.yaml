@@ -14,5 +14,5 @@ viz:
   force_continuous_object_qoi: true
 
 output:
-  directory: output
-  file_stem: test
+  directory: output/tests
+  file_stem: default
