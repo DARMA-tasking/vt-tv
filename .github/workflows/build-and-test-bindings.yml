@@ -39,10 +39,11 @@ jobs:
 
       - name: Build the Docker Image; build and test vt-tv bindings
         id: docker_build
-        uses: docker/build-push-action@v5.2.0 # from 5.3 error appears with some X11 file
+        uses: docker/build-push-action@v6 # from 5.3 error appears with some X11 file
         with:
           push: false
           tags: ${{ env.DOCKER_TAG }}
           context: .
           file: ./ci/build-and-test-bindings.dockerfile
           outputs: type=local,dest=${{ env.OUTPUT_DIR }}
+          #build-args: "--volume /tmp/.X11-unix:/tmp/X11.unix:rw"

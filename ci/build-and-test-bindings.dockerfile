@@ -19,7 +19,7 @@ RUN apt-get update \
 # create output directory
 RUN mkdir -p /opt/build/vt-tv/test_output
 
-# make X11 directory writable by Xvfb
+# create X11 tmp directory as needed
 RUN mkdir -p -m 1777 /tmp/.X11-unix
 
 # test
