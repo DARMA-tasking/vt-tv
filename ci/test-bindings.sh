@@ -19,4 +19,4 @@ pip install /opt/src/vt-tv
 # Test
 python /opt/src/vt-tv/tests/test_bindings.py
 
-export DISPLAY=:0
+rm -rf /tmp/.X11-unix/X99
