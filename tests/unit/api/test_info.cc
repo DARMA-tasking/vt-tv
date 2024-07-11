@@ -161,7 +161,8 @@ TEST_F(InfoTest, test_add_info) {
   EXPECT_EQ(info.getNumRanks(), 1);
   EXPECT_EQ(info.getRank(0).getPhaseWork().size(), 1);
 
-  ASSERT_DEATH({ info.addInfo(object_info_map, rank); }, "Rank must not exist");
+  // Rank already added. Expected assertion error (DEBUG).
+  ASSERT_DEBUG_DEATH({ info.addInfo(object_info_map, rank); }, "Rank must not exist");
 }
 
 // TEST_F(InfoTest, test_must_fail) {

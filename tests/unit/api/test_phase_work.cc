@@ -103,8 +103,8 @@ TEST_F(PhaseWorkTest, test_communications) {
   auto object_id = 2;
   ObjectCommunicator communicator = ObjectCommunicator(3);
 
-  // object id (2) != communicator object id (3)
-  ASSERT_DEATH({ phase_0.setCommunications(object_id, communicator); }, "");
+  // object id (2) != communicator object id (3). Expected assertion error (DEBUG).
+  ASSERT_DEBUG_DEATH({ phase_0.setCommunications(object_id, communicator); }, "");
 
   object_id = 3;
   phase_0.setCommunications(object_id, communicator);
