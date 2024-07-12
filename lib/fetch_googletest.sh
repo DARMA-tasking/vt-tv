@@ -1,6 +1,6 @@
 #! /bin/sh
 
-GTEST_BRANCHTAG=release-1.12.1
+GTEST_BRANCHTAG=release-1.12.1 # next is v1.14.0
 
 # Fetch googletest from Github.
 LIB_DIR="$(dirname -- "$(realpath -- "$0")")"
