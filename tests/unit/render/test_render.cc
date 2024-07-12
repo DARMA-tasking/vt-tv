@@ -48,6 +48,7 @@
 #include <vt-tv/render/render.h>
 #include <vt-tv/utility/json_reader.h>
 #include <vt-tv/utility/parse_render.h>
+// #include <gperftools/heap-checker.h>
 
 #include <string>
 #include <filesystem>
@@ -113,20 +114,26 @@ class RenderTest :public ::testing::TestWithParam<std::string> {
  * Test Render:generate correcty run the different configuration files
  */
 TEST_P(RenderTest, test_render_from_config) {
-  std::string const & config_file = GetParam();
-  YAML::Node config = YAML::LoadFile(fmt::format("{}/tests/config/{}", SRC_DIR, config_file));
-  std::unique_ptr<Info> info = Generator::loadInfoFromConfig(config);
 
-  uint64_t win_size = 2000;
-  uint64_t font_size = 50;
+  // HeapLeakChecker heap_checker("test_render_from_config");
+  // {
+    std::string const & config_file = GetParam();
+    YAML::Node config = YAML::LoadFile(fmt::format("{}/tests/config/{}", SRC_DIR, config_file));
+    std::unique_ptr<Info> info = Generator::loadInfoFromConfig(config);
 
-  if (config["viz"]["object_qoi"].as<std::string>() == "shared_block_id") {
-    // Temporary: this case must be removed as soon as the `shared_block_id` QOI becomes supported.
-    EXPECT_THROW(createRender(config, std::move(info)), std::runtime_error); // "Invalid Object QOI: shared_block_id"
-  } else {
-    Render render = createRender(config, std::move(info));
-    render.generate(font_size, win_size);
-  }
+    uint64_t win_size = 2000;
+    uint64_t font_size = 50;
+
+    if (config["viz"]["object_qoi"].as<std::string>() == "shared_block_id") {
+      // Temporary: this case must be removed as soon as the `shared_block_id` QOI becomes supported.
+      EXPECT_THROW(createRender(config, std::move(info)), std::runtime_error); // "Invalid Object QOI: shared_block_id"
+    } else {
+      Render render = createRender(config, std::move(info));
+      render.generate(font_size, win_size);
+    }
+  // }
+  // if (!heap_checker.NoLeaks()) assert(NULL == "heap memory leak");
+  // cout << "RenderTest::test_render_from_config - end" << endl;
 }
 
 /* Run with different configuration files */
@@ -135,8 +142,8 @@ INSTANTIATE_TEST_SUITE_P(
     RenderTest,
     ::testing::Values<std::string>(
         "conf.yaml",
-        "ccm-example.yaml"
-        //"test-vt-tv.yaml" // TODO: PB SegFault
+        "ccm-example.yaml",
+        "test-vt-tv.yaml"
     )
 );
 
