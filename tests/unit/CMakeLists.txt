@@ -9,6 +9,19 @@ set(GOOGLETEST_LIBRARY gtest)
 
 include(GoogleTest)
 
+# if(CMAKE_BUILD_TYPE MATCHES "DEBUG")
+#   -ltcmalloc links profiling tools
+
+#   add_compile_options(-fsanitize=address -fno-omit-frame-pointer -fprofile-arcs -ltcmalloc)
+#   add_link_options(-fsanitize=address -fno-omit-frame-pointer -fprofile-arcs -ltcmalloc)
+
+#   add_compile_options(-ltcmalloc -fno-omit-frame-pointer)
+#   add_link_options(-ltcmalloc -fno-omit-frame-pointer)
+
+#   add_compile_options(-fsanitize=leak,address,undefined -fno-omit-frame-pointer -fno-common -O1)
+#   link_libraries(-fsanitize=leak,address,undefined)
+# endif()
+
 # Hide various options from UI-based property editors
 mark_as_advanced(
   BUILD_GTEST INSTALL_GTEST BUILD_SHARED_LIBS
@@ -40,8 +53,9 @@ macro(vt_tv_link_target target)
   target_include_directories(${target} PRIVATE
     ${gtest_SOURCE_DIR}/include
     ${gmock_SOURCE_DIR}/include
+    # /usr/include/gperftools
   )
-  target_link_libraries(${target} PRIVATE GTest::gtest_main)
+  target_link_libraries(${target} PRIVATE GTest::gtest_main tcmalloc pthread)
   target_link_libraries(${target} PUBLIC ${VT_TV_LIBRARY})
 endmacro()
 

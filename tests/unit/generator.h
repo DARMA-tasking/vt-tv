@@ -164,6 +164,20 @@ class Generator {
             }
 
             std::unique_ptr<Info> info = std::make_unique<Info>();
+
+            #ifdef VT_TV_N_THREADS
+                const int threads = VT_TV_N_THREADS;
+            #else
+                const int threads = 2;
+            #endif
+            #ifdef VT_TV_OPENMP_ENABLED
+            #if VT_TV_OPENMP_ENABLED
+                omp_set_num_threads(threads);
+                fmt::print("vt-tv: Using {} threads\n", threads);
+                # pragma omp parallel for
+            #endif
+            #endif // VT_TV_OPENMP_ENABLED
+
             for (int64_t rank = 0; rank < n_ranks; rank++) {
                 fmt::print("Reading file for rank {}\n", rank);
                 JSONReader reader{static_cast<NodeType>(rank)};
