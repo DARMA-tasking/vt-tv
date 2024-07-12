@@ -10,7 +10,7 @@ set(GOOGLETEST_LIBRARY gtest)
 include(GoogleTest)
 
 # if(CMAKE_BUILD_TYPE MATCHES "DEBUG")
-#   -ltcmalloc links profiling tools
+#   -ltcmalloc links profiling tools library installed in googleperf-tools package
 
 #   add_compile_options(-fsanitize=address -fno-omit-frame-pointer -fprofile-arcs -ltcmalloc)
 #   add_link_options(-fsanitize=address -fno-omit-frame-pointer -fprofile-arcs -ltcmalloc)
@@ -55,7 +55,7 @@ macro(vt_tv_link_target target)
     ${gmock_SOURCE_DIR}/include
     # /usr/include/gperftools
   )
-  target_link_libraries(${target} PRIVATE GTest::gtest_main tcmalloc pthread)
+  target_link_libraries(${target} PRIVATE GTest::gtest_main) # profiling: tcmalloc pthread
   target_link_libraries(${target} PUBLIC ${VT_TV_LIBRARY})
 endmacro()
 
