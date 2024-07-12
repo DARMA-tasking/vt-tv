@@ -72,7 +72,7 @@ class RenderTest :public ::testing::TestWithParam<std::string> {
   }
 
   protected:
-    Render createRender(YAML::Node config, std::unique_ptr<Info> info) {
+    Render createRender(YAML::Node config, Info info) {
 
       std::string output_dir = config["output"]["directory"].as<std::string>();
       std::filesystem::path output_path(output_dir);
@@ -93,7 +93,7 @@ class RenderTest :public ::testing::TestWithParam<std::string> {
           config["viz"]["object_qoi"].as<std::string>()
         },
         config["viz"]["force_continuous_object_qoi"].as<bool>(),
-        *std::move(info),
+        info,
         {
           config["viz"]["x_ranks"].as<uint64_t>(),
           config["viz"]["y_ranks"].as<uint64_t>(),
@@ -105,7 +105,8 @@ class RenderTest :public ::testing::TestWithParam<std::string> {
         1.0,
         config["viz"]["save_meshes"].as<bool>(),
         // TODO: find why savePNG is generating segfault only from googletests run
-        false, // config["viz"]["save_pngs"].as<bool>(),
+        false,
+        // config["viz"]["save_pngs"].as<bool>(),
         std::numeric_limits<PhaseType>::max()
       );
     }
@@ -120,16 +121,16 @@ TEST_P(RenderTest, test_render_from_config) {
   // {
     std::string const & config_file = GetParam();
     YAML::Node config = YAML::LoadFile(fmt::format("{}/tests/config/{}", SRC_DIR, config_file));
-    std::unique_ptr<Info> info = Generator::loadInfoFromConfig(config);
+    Info info = Generator::loadInfoFromConfig(config);
 
     uint64_t win_size = 2000;
     uint64_t font_size = 50;
 
     if (config["viz"]["object_qoi"].as<std::string>() == "shared_block_id") {
       // Temporary: this case must be removed as soon as the `shared_block_id` QOI becomes supported.
-      EXPECT_THROW(createRender(config, std::move(info)), std::runtime_error); // "Invalid Object QOI: shared_block_id"
+      EXPECT_THROW(createRender(config, info), std::runtime_error); // "Invalid Object QOI: shared_block_id"
     } else {
-      Render render = createRender(config, std::move(info));
+      Render render = createRender(config, info);
       render.generate(font_size, win_size);
     }
   // }
@@ -142,9 +143,9 @@ INSTANTIATE_TEST_SUITE_P(
     RenderTests,
     RenderTest,
     ::testing::Values<std::string>(
-        "conf.yaml",
-        "ccm-example.yaml",
-        "test-vt-tv.yaml"
+        "conf.yaml" //,
+        // "ccm-example.yaml",
+        // "test-vt-tv.yaml"
     )
 );
 

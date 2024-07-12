@@ -145,7 +145,7 @@ class Generator {
             return Info(makeObjectInfoMap(objects), ranks);
         }
 
-        static std::unique_ptr<Info> loadInfoFromConfig(YAML::Node config) {
+        static Info loadInfoFromConfig(YAML::Node config) {
             using JSONReader = ::vt::tv::utility::JSONReader;
 
             std::string input_dir = config["input"]["directory"].as<std::string>();
@@ -163,7 +163,7 @@ class Generator {
                 input_dir += '/';
             }
 
-            std::unique_ptr<Info> info = std::make_unique<Info>();
+            Info info = Info();
 
             #ifdef VT_TV_N_THREADS
                 const int threads = VT_TV_N_THREADS;
@@ -189,7 +189,7 @@ class Generator {
                 #endif
                 #endif
                 {
-                info->addInfo(tmpInfo->getObjectInfo(), tmpInfo->getRank(rank));
+                info.addInfo(tmpInfo->getObjectInfo(), tmpInfo->getRank(rank));
                 }
             }
             return info;

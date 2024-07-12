@@ -9,14 +9,16 @@ set(GOOGLETEST_LIBRARY gtest)
 
 include(GoogleTest)
 
+# Profiling and debug tests
 # if(CMAKE_BUILD_TYPE MATCHES "DEBUG")
-#   -ltcmalloc links profiling tools library installed in googleperf-tools package
+  #   -ltcmalloc links profiling tools library installed in googleperf-tools package
 
-#   add_compile_options(-fsanitize=address -fno-omit-frame-pointer -fprofile-arcs -ltcmalloc)
-#   add_link_options(-fsanitize=address -fno-omit-frame-pointer -fprofile-arcs -ltcmalloc)
+  # add_compile_options(-fsanitize=address -fno-omit-frame-pointer -fprofile-arcs -ltcmalloc)
+  # add_link_options(-fsanitize=address -fno-omit-frame-pointer -fprofile-arcs -ltcmalloc)
 
-#   add_compile_options(-ltcmalloc -fno-omit-frame-pointer)
-#   add_link_options(-ltcmalloc -fno-omit-frame-pointer)
+  # add_compile_options(-fsanitize=address,undefined -fprofile-arcs -fno-omit-frame-pointer) # -ltcmalloc
+  # add_link_options(-fsanitize=address,undefined -fprofile-arcs -fno-omit-frame-pointer) # -ltcmalloc
+  # set(ENV{ASAN_OPTIONS} intercept_tls_get_addr=0)
 
 #   add_compile_options(-fsanitize=leak,address,undefined -fno-omit-frame-pointer -fno-common -O1)
 #   link_libraries(-fsanitize=leak,address,undefined)
