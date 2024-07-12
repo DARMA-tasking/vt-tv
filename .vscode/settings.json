@@ -1,5 +1,5 @@
 {
     "cmake.environment": {
-        "VTK_DIR": "${workspaceFolder}/../vtk/build" 
+        "VTK_DIR": "${workspaceFolder}/../vtk/build"
     }
 }
