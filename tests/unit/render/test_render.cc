@@ -55,6 +55,7 @@
 #include <iostream>
 #include <variant>
 #include <set>
+#include <regex>
 
 #include "../generator.h"
 
@@ -72,9 +73,9 @@ class RenderTest :public ::testing::TestWithParam<std::string> {
   }
 
   protected:
-    Render createRender(YAML::Node config, Info info) {
+    Render createRender(YAML::Node config, Info info, std::string &output_dir) {
 
-      std::string output_dir = config["output"]["directory"].as<std::string>();
+      output_dir = config["output"]["directory"].as<std::string>();
       std::filesystem::path output_path(output_dir);
       if (output_path.is_relative()) {
         output_path = std::filesystem::path(SRC_DIR) / output_path;
@@ -126,12 +127,25 @@ TEST_P(RenderTest, test_render_from_config) {
     uint64_t win_size = 2000;
     uint64_t font_size = 50;
 
+    std::string output_dir;
     if (config["viz"]["object_qoi"].as<std::string>() == "shared_block_id") {
       // Temporary: this case must be removed as soon as the `shared_block_id` QOI becomes supported.
-      EXPECT_THROW(createRender(config, info), std::runtime_error); // "Invalid Object QOI: shared_block_id"
+      EXPECT_THROW(createRender(config, info, output_dir), std::runtime_error); // "Invalid Object QOI: shared_block_id"
     } else {
-      Render render = createRender(config, info);
+      Render render = createRender(config, info, output_dir);
+      // auto files = render.output_dir_ std::filesystem::
       render.generate(font_size, win_size);
+
+      // Verify that files are generated with 1 rank_mesh and 1 object mesh per rank
+      auto n_ranks = config["input"]["n_ranks"].as<int64_t>();
+      std::string output_file_stem = config["output"]["file_stem"].as<std::string>();
+
+      for (int64_t i = 0; i<n_ranks; i++) {
+        ASSERT_TRUE(std::filesystem::is_fifo(fmt::format("[}{}_rank_mesh_{}.vtp", output_dir, output_file_stem, i)));
+        ASSERT_TRUE(std::filesystem::is_fifo(fmt::format("[}{}_object_mesh_{}.vtp", output_dir, output_file_stem, i)));
+      }
+
+      // TODO: verify file content: is it needed ?
     }
   // }
   // if (!heap_checker.NoLeaks()) assert(NULL == "heap memory leak");
@@ -143,10 +157,16 @@ INSTANTIATE_TEST_SUITE_P(
     RenderTests,
     RenderTest,
     ::testing::Values<std::string>(
-        "conf.yaml" //,
-        // "ccm-example.yaml",
-        // "test-vt-tv.yaml"
-    )
+        "conf.yaml",
+        "ccm-example.yaml",
+        "test-vt-tv.yaml"
+    ),
+    [](const ::testing::TestParamInfo<std::string>& info) {
+      // test suffix as slug
+      auto suffix = std::regex_replace(info.param, std::regex("\\.yaml"), "");
+      suffix = std::regex_replace(suffix, std::regex("\\-"), "_");
+      return suffix;
+    }
 );
 
 } // end namespace vt::tv::tests::unit
