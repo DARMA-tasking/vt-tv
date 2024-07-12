@@ -140,9 +140,11 @@ TEST_P(RenderTest, test_render_from_config) {
       auto n_ranks = config["input"]["n_ranks"].as<int64_t>();
       std::string output_file_stem = config["output"]["file_stem"].as<std::string>();
 
+      // TODO: determine why test_vt_tv (4 input rank files) has only 1 output file.
+      // This seems to be normal but why ? investigate inner code...
       for (int64_t i = 0; i<n_ranks; i++) {
-        ASSERT_TRUE(std::filesystem::is_fifo(fmt::format("[}{}_rank_mesh_{}.vtp", output_dir, output_file_stem, i)));
-        ASSERT_TRUE(std::filesystem::is_fifo(fmt::format("[}{}_object_mesh_{}.vtp", output_dir, output_file_stem, i)));
+        ASSERT_TRUE(std::filesystem::exists(fmt::format("{}{}_rank_mesh_{}.vtp", output_dir, output_file_stem, i))) << fmt::format("{}{}_rank_mesh_{}.vtp", output_dir, output_file_stem, i);
+        ASSERT_TRUE(std::filesystem::exists(fmt::format("{}{}_object_mesh_{}.vtp", output_dir, output_file_stem, i))) << fmt::format("{}{}_rank_mesh_{}.vtp", output_dir, output_file_stem, i);
       }
 
       // TODO: verify file content: is it needed ?
@@ -164,7 +166,7 @@ INSTANTIATE_TEST_SUITE_P(
     [](const ::testing::TestParamInfo<std::string>& info) {
       // test suffix as slug
       auto suffix = std::regex_replace(info.param, std::regex("\\.yaml"), "");
-      suffix = std::regex_replace(suffix, std::regex("\\-"), "_");
+      suffix = std::regex_replace(suffix, std::regex("-"), "_");
       return suffix;
     }
 );

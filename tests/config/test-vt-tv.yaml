@@ -1,8 +1,6 @@
-# Specify input
 input:
   directory: tests/data/synthetic_lb_data
   n_ranks: 4
-
 
 viz:
   x_ranks: 2
