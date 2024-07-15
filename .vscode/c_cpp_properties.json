@@ -1,6 +1,6 @@
 {
     "env": {
-        "defines": ["SRC_DIR=\"~/repositories/vt-tv\""], // defined in cmakelists for compile time
+        "defines": ["SRC_DIR=\"~/repositories/vt-tv\"", "BUILD_DIR=\"~/repositories/vt-tv/build\""], // defined in cmakelists for compile time
         "includePath": [
             "${workspaceFolder}/**",
             "${workspaceFolder}/../vtk/**" // edit vtk include dirs as needed

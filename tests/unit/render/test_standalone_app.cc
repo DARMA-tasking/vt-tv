@@ -90,7 +90,9 @@ TEST_P(StandaloneAppTest, test_run) {
     std::string config_file = fmt::format("{}/tests/config/{}", SRC_DIR, std::get<0>(GetParam()));
     int expected_phases = std::get<1>(GetParam());
 
-    auto cmd = fmt::format("{}/build/apps/vt-tv_standalone --conf={}", SRC_DIR, config_file);
+    
+
+    auto cmd = fmt::format("{}/apps/vt-tv_standalone --conf={}", BUILD_DIR, config_file);
     auto output = exec(cmd.c_str());
     fmt::print(output);
 
