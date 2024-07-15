@@ -48,7 +48,6 @@
 #include <vt-tv/render/render.h>
 #include <vt-tv/utility/json_reader.h>
 #include <vt-tv/utility/parse_render.h>
-// #include <gperftools/heap-checker.h>
 
 #include <string>
 #include <filesystem>
@@ -67,9 +66,8 @@ namespace vt::tv::tests::unit::render {
 class RenderTest :public ::testing::TestWithParam<std::string> {
 
   virtual void SetUp() {
-    // Failing: segfault in vtk calls
-    GTEST_SKIP();
-    return;
+    // GTEST_SKIP();
+    // return;
 
     // Make the output directory for these tests
     std::filesystem::create_directory(fmt::format("{}/output", SRC_DIR));
@@ -144,18 +142,14 @@ TEST_P(RenderTest, test_render_from_config) {
       auto n_ranks = config["input"]["n_ranks"].as<int64_t>();
       std::string output_file_stem = config["output"]["file_stem"].as<std::string>();
 
-      // TODO: determine why test_vt_tv (4 input rank files) has only 1 output file.
-      // This seems to be normal but why ? investigate inner code...
-      for (int64_t i = 0; i<n_ranks; i++) {
+      // Expect 1 output file per phase for both rank meshes and object meshes
+      for (int64_t i = 0; i<info.getNumPhases(); i++) {
         ASSERT_TRUE(std::filesystem::exists(fmt::format("{}{}_rank_mesh_{}.vtp", output_dir, output_file_stem, i))) << fmt::format("{}{}_rank_mesh_{}.vtp", output_dir, output_file_stem, i);
         ASSERT_TRUE(std::filesystem::exists(fmt::format("{}{}_object_mesh_{}.vtp", output_dir, output_file_stem, i))) << fmt::format("{}{}_rank_mesh_{}.vtp", output_dir, output_file_stem, i);
       }
 
       // TODO: verify file content: is it needed ?
     }
-  // }
-  // if (!heap_checker.NoLeaks()) assert(NULL == "heap memory leak");
-  // cout << "RenderTest::test_render_from_config - end" << endl;
 }
 
 /* Run with different configuration files */
