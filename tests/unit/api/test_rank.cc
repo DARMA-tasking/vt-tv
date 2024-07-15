@@ -42,7 +42,6 @@
 */
 
 #include <gtest/gtest.h>
-#include <gmock/gmock.h>
 
 #include <vt-tv/api/rank.h>
 
@@ -90,10 +89,6 @@ class RankTest :public ::testing::Test {
  * Test Rank initial state
  */
 TEST_F(RankTest, test_initial_state) {
-
-  using ::testing::UnorderedElementsAre;
-  using ::testing::Pair;
-
   // Assertions for rank_0
   EXPECT_EQ(rank_0.getRankID(), 2);
   EXPECT_EQ(rank_0.getNumPhases(), 3);
