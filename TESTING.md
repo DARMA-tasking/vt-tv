@@ -13,4 +13,3 @@ To run tests with coverage:
 
 To run specific tests you can use the ctest search option:
 `ctest --test-dir build --verbose -R "reader"`
-
