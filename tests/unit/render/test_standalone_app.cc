@@ -2,7 +2,7 @@
 //@HEADER
 // *****************************************************************************
 //
-//                           test_render.cc
+//                           test_standalone_app.cc
 //             DARMA/vt-tv => Virtual Transport -- Task Visualizer
 //
 // Copyright 2019 National Technology & Engineering Solutions of Sandia, LLC
@@ -42,11 +42,10 @@
 */
 
 #include <gtest/gtest.h>
+#include <gmock/gmock.h>
 
 #include <yaml-cpp/yaml.h>
 
-#include <vt-tv/render/render.h>
-#include <vt-tv/utility/json_reader.h>
 #include <vt-tv/utility/parse_render.h>
 
 #include <string>
@@ -56,115 +55,85 @@
 #include <set>
 #include <regex>
 
-#include "../generator.h"
-
 namespace vt::tv::tests::unit::render {
 
 /**
- * Provides unit tests for the vt::tv::render::Render class to test with config file input
+ * Provides unit tests for the standalone vt-tv app.
+ * It is similar to the ParseRender tests except it runs as a separate process.
  */
-class RenderTest :public ::testing::TestWithParam<std::string> {
-
+class StandaloneAppTest :public ::testing::TestWithParam<std::tuple<std::string, int>> {
   virtual void SetUp() {
-    // Disable this test because of gcc segfault at vtkWindowToImageFilter (memcpy)
-    GTEST_SKIP();
-    return;
-
     // Make the output directory for these tests
     std::filesystem::create_directory(fmt::format("{}/output", SRC_DIR));
     std::filesystem::create_directory(fmt::format("{}/output/tests", SRC_DIR));
   }
 
   protected:
-    Render createRender(YAML::Node config, Info info, std::string &output_dir) {
-
-      output_dir = config["output"]["directory"].as<std::string>();
-      std::filesystem::path output_path(output_dir);
-      if (output_path.is_relative()) {
-        output_path = std::filesystem::path(SRC_DIR) / output_path;
-      }
-      output_dir = output_path.string();
-
-      // append / to avoid problems with file stems
-      if (!output_dir.empty() && output_dir.back() != '/') {
-        output_dir += '/';
-      }
-
-      return Render(
-      {
-          config["viz"]["rank_qoi"].as<std::string>(),
-          "",
-          config["viz"]["object_qoi"].as<std::string>()
-        },
-        config["viz"]["force_continuous_object_qoi"].as<bool>(),
-        info,
-        {
-          config["viz"]["x_ranks"].as<uint64_t>(),
-          config["viz"]["y_ranks"].as<uint64_t>(),
-          config["viz"]["z_ranks"].as<uint64_t>()
-        },
-        config["viz"]["object_jitter"].as<double>(),
-        output_dir,
-        config["output"]["file_stem"].as<std::string>(),
-        1.0,
-        config["viz"]["save_meshes"].as<bool>(),
-        // TODO: find why savePNG is generating segfault only from googletests run
-        false,
-        // config["viz"]["save_pngs"].as<bool>(),
-        std::numeric_limits<PhaseType>::max()
-      );
+    std::string exec(const char* cmd) {
+        std::array<char, 128> buffer;
+        std::string result;
+        std::unique_ptr<FILE, decltype(&pclose)> pipe(popen(cmd, "r"), pclose);
+        if (!pipe) {
+            throw std::runtime_error("popen() failed!");
+        }
+        while (fgets(buffer.data(), static_cast<int>(buffer.size()), pipe.get()) != nullptr) {
+            result += buffer.data();
+        }
+        return result;
     }
 };
 
 /**
- * Test Render:generate correcty run the different configuration files
+ * Test standalone app run with different configuration files
  */
-TEST_P(RenderTest, test_render_from_config) {
+TEST_P(StandaloneAppTest, test_run) {
+    std::string config_file = fmt::format("{}/tests/config/{}", SRC_DIR, std::get<0>(GetParam()));
+    int expected_phases = std::get<1>(GetParam());
 
-  // HeapLeakChecker heap_checker("test_render_from_config");
-  // {
-    std::string const & config_file = GetParam();
-    YAML::Node config = YAML::LoadFile(fmt::format("{}/tests/config/{}", SRC_DIR, config_file));
-    Info info = Generator::loadInfoFromConfig(config);
+    auto cmd = fmt::format("{}/build/apps/vt-tv_standalone --conf={}", SRC_DIR, config_file);
+    auto output = exec(cmd.c_str());
+    fmt::print(output);
 
-    uint64_t win_size = 2000;
-    uint64_t font_size = 50;
+    auto config = YAML::LoadFile(config_file);
+    std::string output_dir = config["output"]["directory"].as<std::string>();
+    std::filesystem::path output_path(output_dir);
+    // If it's a relative path, prepend the SRC_DIR
+    if (output_path.is_relative()) {
+      output_path = std::filesystem::path(SRC_DIR) / output_path;
+    }
+    output_dir = output_path.string();
 
-    std::string output_dir;
+    // append / to avoid problems with file stems
+    if (!output_dir.empty() && output_dir.back() != '/') {
+      output_dir += '/';
+    }
+    std::string output_file_stem = config["output"]["file_stem"].as<std::string>();
+
     if (config["viz"]["object_qoi"].as<std::string>() == "shared_block_id") {
       // Temporary: this case must be removed as soon as the `shared_block_id` QOI becomes supported.
-      EXPECT_THROW(createRender(config, info, output_dir), std::runtime_error); // "Invalid Object QOI: shared_block_id"
+      EXPECT_THAT(output, ::testing::HasSubstr("Error reading the configuration file: Invalid Object QOI: shared_block_id"));
     } else {
-      Render render = createRender(config, info, output_dir);
-      // auto files = render.output_dir_ std::filesystem::
-      render.generate(font_size, win_size);
-
-      // Verify that files are generated with 1 rank_mesh and 1 object mesh per rank
-      auto n_ranks = config["input"]["n_ranks"].as<int64_t>();
-      std::string output_file_stem = config["output"]["file_stem"].as<std::string>();
-
       // Expect 1 output file per phase for both rank meshes and object meshes
-      for (int64_t i = 0; i<info.getNumPhases(); i++) {
+      for (int64_t i = 0; i<expected_phases; i++) {
         ASSERT_TRUE(std::filesystem::exists(fmt::format("{}{}_rank_mesh_{}.vtp", output_dir, output_file_stem, i))) << fmt::format("{}{}_rank_mesh_{}.vtp", output_dir, output_file_stem, i);
         ASSERT_TRUE(std::filesystem::exists(fmt::format("{}{}_object_mesh_{}.vtp", output_dir, output_file_stem, i))) << fmt::format("{}{}_rank_mesh_{}.vtp", output_dir, output_file_stem, i);
       }
-
-      // TODO: verify file content: is it needed ?
     }
 }
 
 /* Run with different configuration files */
 INSTANTIATE_TEST_SUITE_P(
-    RenderTests,
-    RenderTest,
-    ::testing::Values<std::string>(
-        "conf.yaml",
-        "ccm-example.yaml",
-        "test-vt-tv.yaml"
+    StandaloneAppTests,
+    StandaloneAppTest,
+    // config file and expected number of phases
+    ::testing::Values(
+        // std::make_tuple<std::string, int>("conf.yaml", 8),
+        std::make_tuple<std::string, int>("ccm-example.yaml", 1)
+        // std::make_tuple<std::string, int>("test-vt-tv.yaml", 1)
     ),
-    [](const ::testing::TestParamInfo<std::string>& info) {
+    [](const ::testing::TestParamInfo<std::tuple<std::string, int>>& info) {
       // test suffix as slug
-      auto suffix = std::regex_replace(info.param, std::regex("\\.yaml"), "");
+      auto suffix = std::regex_replace(std::get<0>(info.param), std::regex("\\.yaml"), "");
       suffix = std::regex_replace(suffix, std::regex("-"), "_");
       return suffix;
     }
