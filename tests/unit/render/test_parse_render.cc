@@ -54,8 +54,6 @@
 #include <set>
 #include <regex>
 
-#include "../generator.h"
-
 namespace vt::tv::tests::unit::render {
 
 using ParseRender = vt::tv::utility::ParseRender;
@@ -65,9 +63,8 @@ using ParseRender = vt::tv::utility::ParseRender;
  */
 class ParseRenderTest :public ::testing::TestWithParam<std::string> {
   virtual void SetUp() {
-    // Failing: segfault in vtk calls
-    GTEST_SKIP();
-    return;
+    // GTEST_SKIP();
+    // return;
 
     // Make the output directory for these tests
     std::filesystem::create_directory(fmt::format("{}/output", SRC_DIR));
