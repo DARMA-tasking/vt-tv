@@ -10,6 +10,7 @@ set(GOOGLETEST_LIBRARY gtest)
 include(GoogleTest)
 
 # Profiling and debug tests
+# add_compile_options(-g -ggdb)
 # if(CMAKE_BUILD_TYPE MATCHES "DEBUG")
   #   -ltcmalloc links profiling tools library installed in googleperf-tools package
 
@@ -101,3 +102,8 @@ else()
   endforeach()
 
 endif()
+
+# IMPORTANT: The vtkWindowToImageFilter class generated segfault when compiled with gcc and running
+# as a test.
+# All tests rendering PNG then fails unless clang and clang++ are used.
+# Currently impacted tests: test_render, test_parse_render and test_vtk
