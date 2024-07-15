@@ -9,22 +9,6 @@ set(GOOGLETEST_LIBRARY gtest)
 
 include(GoogleTest)
 
-# Profiling and debug tests
-# add_compile_options(-g -ggdb)
-# if(CMAKE_BUILD_TYPE MATCHES "DEBUG")
-  #   -ltcmalloc links profiling tools library installed in googleperf-tools package
-
-  # add_compile_options(-fsanitize=address -fno-omit-frame-pointer -fprofile-arcs -ltcmalloc)
-  # add_link_options(-fsanitize=address -fno-omit-frame-pointer -fprofile-arcs -ltcmalloc)
-
-  # add_compile_options(-fsanitize=address,undefined -fprofile-arcs -fno-omit-frame-pointer) # -ltcmalloc
-  # add_link_options(-fsanitize=address,undefined -fprofile-arcs -fno-omit-frame-pointer) # -ltcmalloc
-  # set(ENV{ASAN_OPTIONS} intercept_tls_get_addr=0)
-
-#   add_compile_options(-fsanitize=leak,address,undefined -fno-omit-frame-pointer -fno-common -O1)
-#   link_libraries(-fsanitize=leak,address,undefined)
-# endif()
-
 # Hide various options from UI-based property editors
 mark_as_advanced(
   BUILD_GTEST INSTALL_GTEST BUILD_SHARED_LIBS
@@ -56,9 +40,8 @@ macro(vt_tv_link_target target)
   target_include_directories(${target} PRIVATE
     ${gtest_SOURCE_DIR}/include
     ${gmock_SOURCE_DIR}/include
-    # /usr/include/gperftools
   )
-  target_link_libraries(${target} PRIVATE GTest::gtest_main) # profiling: tcmalloc pthread
+  target_link_libraries(${target} PRIVATE GTest::gtest_main)
   target_link_libraries(${target} PUBLIC ${VT_TV_LIBRARY})
 endmacro()
 
@@ -103,7 +86,10 @@ else()
 
 endif()
 
-# IMPORTANT: The vtkWindowToImageFilter class generated segfault when compiled with gcc and running
-# as a test.
-# All tests rendering PNG then fails unless clang and clang++ are used.
-# Currently impacted tests: test_render, test_parse_render and test_vtk
+# ERROR (gcc): The vtkWindowToImageFilter class generated segfault when running a unit test that should generates PNG output through VTK.
+# Impacted test files: test_render, test_parse_render and test_vtk
+# A detailed report can be generated using valgrind utility
+# add_compile_options(-g -ggdb)
+# `valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes --verbose --log-file=output/valgrind-report.txt ./build/tests/unit/test_vtk`
+set(CMAKE_C_COMPILER "/usr/bin/clang")
+set(CMAKE_CXX_COMPILER "/usr/bin/clang++")
