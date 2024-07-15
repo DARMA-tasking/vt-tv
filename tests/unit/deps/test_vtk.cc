@@ -72,7 +72,7 @@ class VtkTest :public ::testing::Test {
 };
 
 /**
- * Test saving a PNG from a VTK window
+ * Test a VTK example (adapted for tests)
  */
 TEST_F(VtkTest, test_vtk_screenshot_example) {
   vtkNew<vtkNamedColors> colors;
@@ -98,8 +98,6 @@ TEST_F(VtkTest, test_vtk_screenshot_example) {
   renderWindow->SetAlphaBitPlanes(1); // enable usage of alpha channel
   renderWindow->SetWindowName("Screenshot");
 
-  vtkNew<vtkRenderWindowInteractor> renderWindowInteractor;
-  renderWindowInteractor->SetRenderWindow(renderWindow);
 
   renderer->AddActor(actor);
   renderer->SetBackground(colors->GetColor3d("MistyRose").GetData());
@@ -123,11 +121,6 @@ TEST_F(VtkTest, test_vtk_screenshot_example) {
   writer->SetFileName(fmt::format("{}/output/tests/vtk_example_screenshot.png", SRC_DIR).c_str());
   writer->SetInputConnection(windowToImageFilter->GetOutputPort());
   writer->Write();
-
-  renderWindow->Render();
-  renderer->ResetCamera();
-  renderWindow->Render();
-  renderWindowInteractor->Start();
 }
 
 } // end namespace vt::tv::tests::unit
