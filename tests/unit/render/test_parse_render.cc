@@ -63,8 +63,9 @@ using ParseRender = vt::tv::utility::ParseRender;
  */
 class ParseRenderTest :public ::testing::TestWithParam<std::string> {
   virtual void SetUp() {
-    // GTEST_SKIP();
-    // return;
+    // Disable this test because of gcc segfault at vtkWindowToImageFilter (memcpy)
+    GTEST_SKIP();
+    return;
 
     // Make the output directory for these tests
     std::filesystem::create_directory(fmt::format("{}/output", SRC_DIR));
@@ -73,7 +74,7 @@ class ParseRenderTest :public ::testing::TestWithParam<std::string> {
 };
 
 /**
- * Test Render:generate correcty run the different configuration files
+ * Test ParseRender:parseAndRender correcty run the different configuration files
  */
 TEST_P(ParseRenderTest, test_render_from_config) {
     std::string config_file = fmt::format("{}/tests/config/{}", SRC_DIR, GetParam());

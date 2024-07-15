@@ -2,7 +2,7 @@
 //@HEADER
 // *****************************************************************************
 //
-//                           test_json_reader.cc
+//                           test_info.cc
 //             DARMA/vt-tv => Virtual Transport -- Task Visualizer
 //
 // Copyright 2019 National Technology & Engineering Solutions of Sandia, LLC
