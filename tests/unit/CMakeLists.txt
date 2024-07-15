@@ -91,5 +91,6 @@ endif()
 # A detailed report can be generated using valgrind utility
 # add_compile_options(-g -ggdb)
 # `valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes --verbose --log-file=output/valgrind-report.txt ./build/tests/unit/test_vtk`
-set(CMAKE_C_COMPILER "/usr/bin/clang-15")
-set(CMAKE_CXX_COMPILER "/usr/bin/clang++-15")
+# For now: force working compiler to be used in unit tests.
+set(CMAKE_C_COMPILER "/usr/bin/clang")
+set(CMAKE_CXX_COMPILER "/usr/bin/clang++")
