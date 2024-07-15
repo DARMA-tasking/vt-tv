@@ -66,9 +66,9 @@ namespace vt::tv::tests::unit::render {
 class RenderTest :public ::testing::TestWithParam<std::string> {
 
   virtual void SetUp() {
-    // Disable this test because of gcc segfault at vtkWindowToImageFilter (memcpy)
-    GTEST_SKIP();
-    return;
+    // Disable this test because of gcc segfault at vtkWindowToImageFilter (memcpy) if save png is true in config
+    // GTEST_SKIP();
+    // return;
 
     // Make the output directory for these tests
     std::filesystem::create_directory(fmt::format("{}/output", SRC_DIR));
