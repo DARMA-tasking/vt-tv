@@ -32,6 +32,7 @@ message(STATUS "CMAKE_CXX_STANDARD: ${CMAKE_CXX_STANDARD}")
 option(VT_TV_PYTHON_BINDINGS_ENABLED "Build vt-tv with Python bindings" OFF)
 option(VT_TV_OPENMP_ENABLED "Build vt-tv with openMP support" ON)
 option(VT_TV_TESTS_ENABLED "Build vt-tv with unit tests" ON)
+option(VT_TV_COVERAGE_ENABLED "Build vt-tv with coverage" ON)
 
 # add -fPIC to all targets (if building with nanobind)
 if(VT_TV_PYTHON_BINDINGS_ENABLED)
@@ -71,6 +72,11 @@ add_subdirectory(apps)
 add_subdirectory(bindings)
 
 include(CTest) #adds option BUILD_TESTING (default ON)
+
+if (VT_TV_COVERAGE_ENABLED)
+  add_compile_options(-fprofile-arcs -ftest-coverage)
+  add_link_options(-lgcov --coverage)
+endif()
 
 if (BUILD_TESTING AND VT_TV_TESTS_ENABLED)
   add_subdirectory(tests)
