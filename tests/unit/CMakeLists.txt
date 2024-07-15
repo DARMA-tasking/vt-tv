@@ -87,7 +87,7 @@ else()
 endif()
 
 # ERROR (gcc): The vtkWindowToImageFilter class generated segfault when running a unit test that should generates PNG output through VTK.
-# Impacted test files: test_render, test_parse_render and test_vtk
-# A detailed report can be generated using valgrind utility
+# --> SKIPPED TESTS: test_render, test_parse_render and test_vtk
 # add_compile_options(-g -ggdb)
+# A detailed report can be generated using valgrind utility. A valgrind report has already been added to #32 comment on GH.
 # `valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes --verbose --log-file=output/valgrind-report.txt ./build/tests/unit/test_vtk`

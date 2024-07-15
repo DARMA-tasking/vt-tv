@@ -8,5 +8,9 @@ You might also add an example in the `example` directory which will be also run 
 To run the test from the CLI first build vttv then call ctest using the command line:
 `ctest --test-dir build`
 
+To run tests with coverage:
+`ctest --test-dir build -T Test -T Coverage`
+
 To run specific tests you can use the ctest search option:
 `ctest --test-dir build --verbose -R "reader"`
+
