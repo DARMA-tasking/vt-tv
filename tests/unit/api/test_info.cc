@@ -267,7 +267,7 @@ TEST_F(InfoTest, test_get_phase_objects) {
   for (const auto& [key, val]: phase_0_objects) {
     actual_phase_0_object_ids.push_back(key);
   }
-  ASSERT_THAT(actual_phase_0_object_ids, ::testing::ElementsAre(0, 1, 4, 5));
+  ASSERT_THAT(actual_phase_0_object_ids, ::testing::UnorderedElementsAre(0, 1, 4, 5));
   ASSERT_EQ(phase_0_objects.at(0).getLoad(), 1.5);
   ASSERT_EQ(phase_0_objects.at(1).getLoad(), 1.5);
   ASSERT_EQ(phase_0_objects.at(4).getLoad(), 2.0);
