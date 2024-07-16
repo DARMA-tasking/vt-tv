@@ -41,7 +41,7 @@ macro(vt_tv_link_target target)
     ${gtest_SOURCE_DIR}/include
     ${gmock_SOURCE_DIR}/include
   )
-  target_link_libraries(${target} PRIVATE GTest::gtest_main)
+  target_link_libraries(${target} PRIVATE GTest::gtest_main GTest::gmock_main)
   target_link_libraries(${target} PUBLIC ${VT_TV_LIBRARY})
 endmacro()
 
