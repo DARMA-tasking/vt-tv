@@ -30,7 +30,7 @@ lcov --capture --directory build --output-file output/lcov_vt-tv_test.info
 
 2. Remove lib, include and tests directories to cover only the source directories
 ```shell
-lcov --remove output/lcov_vt-tv_test.info -o output/lcov_vt-tv_test_no_deps.info '*/lib/*' '/usr/include/*' '*/vtk/*'
+lcov --remove output/lcov_vt-tv_test.info -o output/lcov_vt-tv_test_no_deps.info '*/lib/*' '/usr/include/*' '*/vtk/*' '*/tests/*'
 ```
 3. Generate an HTML report
 ```shell
