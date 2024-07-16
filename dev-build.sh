@@ -63,7 +63,7 @@ time cmake --build . --parallel -j"${JOBS}"
 # Tests and coverage
 cd ${PROJECT_DIR}
 
-ctest --test-dir build -T Coverage -T Test || true 
+ctest --test-dir build -T Coverage -T Test || true
 #  || true to catch some strange error:
 # Error(s) while accumulating results:
 #   Problem reading source file: /home/thomas/repositories/vt-tv/lib/yaml-cpp/include/yaml-cpp/node/detail/impl.h line:235  out total: 384
