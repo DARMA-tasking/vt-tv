@@ -156,8 +156,17 @@ TEST_F(ObjectCommunicatorTest, test_serialization) {
 
   bool any_failure = false;
   for (auto const& [object_id, received_volume] : comm_1.getReceived()) {
-    auto object_received = actual_received.equal_range(object_id);
+    if (actual_received.find(object_id) == actual_received.cend()) {
+      fmt::print("Missing received volume {} from object {} in serialized communicator data", received_volume, object_id);
+      any_failure = true;
+      ADD_FAILURE();
+    } else if (actual_received.count(object_id) != comm_1.getReceived().count(object_id)) {
+      fmt::print("Different count of received volume from object {} in serialized communicator data", object_id);
+      any_failure = true;
+      ADD_FAILURE();
+    }
 
+    auto object_received = actual_received.equal_range(object_id);
     // check for some missing sent volumes in serialized data
     bool found = false;
     for (auto it = object_received.first; it != object_received.second; ++it) {
@@ -174,8 +183,17 @@ TEST_F(ObjectCommunicatorTest, test_serialization) {
   }
 
   for (auto const& [object_id, sent_volume] : comm_1.getSent()) {
+    if (actual_sent.find(object_id) == actual_sent.cend()) {
+      fmt::print("Missing sent volume {} from object {} in serialized communicator data", sent_volume, object_id);
+      any_failure = true;
+      ADD_FAILURE();
+    } else if (actual_sent.count(object_id) != comm_1.getReceived().count(object_id)) {
+      fmt::print("Different count of sent volume from object {} in serialized communicator data", object_id);
+      any_failure = true;
+      ADD_FAILURE();
+    }
+  
     auto object_sent = actual_sent.equal_range(object_id);
-
     // check for some missing sent volumes in serialized data
     bool found = false;
     for (auto it = object_sent.first; it != object_sent.second; ++it) {
