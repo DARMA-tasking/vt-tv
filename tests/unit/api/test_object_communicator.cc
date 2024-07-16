@@ -152,9 +152,10 @@ TEST_F(ObjectCommunicatorTest, test_serialization) {
   EXPECT_EQ(actual_object_id, comm_1.getObjectId()); // object id
 
   std::multimap<ElementIDType, double> actual_received = std::get<std::multimap<ElementIDType, double>>(s.items[1]);
+  std::multimap<ElementIDType, double> actual_sent = std::get<std::multimap<ElementIDType, double>>(s.items[2]);
+
   bool any_failure = false;
   for (auto const& [object_id, received_volume] : comm_1.getReceived()) {
-    
     auto object_received = actual_received.equal_range(object_id);
 
     // check for some missing sent volumes in serialized data
@@ -168,6 +169,24 @@ TEST_F(ObjectCommunicatorTest, test_serialization) {
     if (!found) {
       any_failure = true;
       fmt::print("Missing received volume {} from object {} in serialized communicator data", received_volume, object_id);
+      ADD_FAILURE();
+    }
+  }
+
+  for (auto const& [object_id, sent_volume] : comm_1.getSent()) {
+    auto object_sent = actual_sent.equal_range(object_id);
+
+    // check for some missing sent volumes in serialized data
+    bool found = false;
+    for (auto it = object_sent.first; it != object_sent.second; ++it) {
+      if (it->second == sent_volume) {
+        found = true;
+      }
+    }
+
+    if (!found) {
+      any_failure = true;
+      fmt::print("Missing received volume {} from object {} in serialized communicator data", sent_volume, object_id);
       ADD_FAILURE();
     }
   }
