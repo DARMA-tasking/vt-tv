@@ -42,6 +42,7 @@
 */
 
 #include <gtest/gtest.h>
+#include <gmock/gmock.h>
 
 #include <vt-tv/api/info.h>
 #include <vt-tv/api/phase_work.h>
@@ -93,6 +94,33 @@ TEST_P(InfoTest, test_get_num_ranks) {
 }
 
 /**
+ * Test Info:getNumPhases
+ */
+TEST_P(InfoTest, test_get_num_phases) {
+  InfoTestParam const & param = GetParam();
+  Info info = Generator::makeInfo(param.num_objects, param.num_ranks, param.num_phases);
+  fmt::print("{}={}", param.num_phases, info.getNumPhases());
+
+  EXPECT_EQ(info.getNumPhases(), param.num_phases);
+}
+
+/**
+ * Test Info:getRankIDs
+ */
+TEST_P(InfoTest, test_get_rank_ids) {
+  InfoTestParam const & param = GetParam();
+  Info info = Generator::makeInfo(param.num_objects, param.num_ranks, param.num_phases);
+  fmt::print("{}={}", param.num_phases, info.getNumPhases());
+
+  auto rank_ids = std::vector<NodeType>();
+  for (NodeType rank_id = 0; rank_id< param.num_ranks; rank_id++) {
+    rank_ids.push_back(rank_id);
+  }
+
+  ASSERT_THAT(info.getRankIDs(), ::testing::UnorderedElementsAreArray(rank_ids));
+}
+
+/**
  * Test Info:getAllObjectIDs returns same items as defined in the sample
  */
 TEST_P(InfoTest, test_get_all_object_ids) {
@@ -118,7 +146,8 @@ INSTANTIATE_TEST_SUITE_P(
     InfoTests,
     InfoTest,
     ::testing::Values<InfoTestParam>(
-        InfoTestParam(0,0,1),
+        // num_objects, num_ranks, num_phases
+        InfoTestParam(0,0,0), // empty case
         InfoTestParam(2,5,1),
         InfoTestParam(6,1,1)
     ),
@@ -163,6 +192,16 @@ TEST_F(InfoTest, test_add_info) {
 
   // Rank already added. Expected assertion error (DEBUG).
   ASSERT_DEBUG_DEATH({ info.addInfo(object_info_map, rank); }, "Rank must not exist");
+}
+
+/**
+ * Test Info:getNumPhases with inconstent rank phases.
+ */
+TEST_F(InfoTest, test_inconsistent_number_of_phases_across_ranks_throws_error) {
+  Rank rank_0 = Rank(0, {{0, {}}}, {}); // Rank with 1 phase
+  Rank rank_1 = Rank(1, {{0, {}}, {1, {}}}, {}); // Rank with 2 phases
+  Info info = Info(Generator::makeObjectInfoMap(Generator::makeObjects(10)), { {0, rank_0}, {1, rank_1} } );
+  EXPECT_THROW(info.getNumPhases(), std::runtime_error);
 }
 
 // TEST_F(InfoTest, test_must_fail) {
