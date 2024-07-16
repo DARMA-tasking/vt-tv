@@ -113,42 +113,37 @@ private:
     WhiteToBlack
   };
 
-  // General data info
+  // quantities of interest
+  std::string rank_qoi_ = "load";
+  std::string object_qoi_ = "load";
+  bool continuous_object_qoi_;
+
+  // Render input data
   Info info_;
   uint64_t n_ranks_;
   uint64_t n_phases_;
-
-  // Geometric parameters
   std::array<uint64_t, 3> grid_size_ = {1, 1, 1};
+  double object_jitter_ = 0.5;
   std::set<uint64_t> rank_dims_;
+  std::string output_dir_;
+  std::string output_file_stem_;
   double grid_resolution_ = 1.0;
-  uint64_t max_o_per_dim_ = 0;
+  bool save_meshes_;
+  bool save_pngs_;
+  PhaseType selected_phase_;
 
   // numeric parameters
   std::variant<std::pair<double, double>, std::set<std::variant<double,int>>> object_qoi_range_;
   std::pair<double, double> rank_qoi_range_;
 
   // Maximum object attribute values
+  uint64_t max_o_per_dim_ = 0;
   double object_qoi_max_ = 0.0;
   double object_volume_max_ = 0.0;
   double object_load_max_ = 0.0;
 
-  // quantities of interest
-  std::string rank_qoi_ = "load";
-  std::string object_qoi_ = "load";
-  bool continuous_object_qoi_;
-
-  // output parameters
-  std::string output_dir_;
-  std::string output_file_stem_;
-  bool save_meshes_;
-  bool save_pngs_;
-
   // Jitter per object
-  double object_jitter_ = 0.5;
   std::unordered_map<ElementIDType, std::array<double, 3>> jitter_dims_;
-
-  PhaseType selected_phase_;
 
   /**
    * \brief Compute maximum value of object volumes.
@@ -224,7 +219,6 @@ private:
   static vtkSmartPointer<vtkRenderer> setupRenderer_();
 
   static vtkSmartPointer<vtkMapper> createRanksMapper_(
-    PhaseType phase,
     vtkPolyData* rank_mesh,
     std::variant<std::pair<double, double>, std::set<std::variant<double,int>>> rank_qoi_range
   );

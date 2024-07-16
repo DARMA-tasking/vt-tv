@@ -542,7 +542,7 @@ void Render::getRgbFromTab20Colormap_(int index, double& r, double& g, double& b
     {0.09019607843137255, 0.7450980392156863, 0.8117647058823529},
     {0.6196078431372549, 0.8549019607843137, 0.8980392156862745}
   };
-  if (index < 0 || index >= tab20_cmap.size()) {
+  if (index < 0 || static_cast<std::size_t>(index) >= tab20_cmap.size()) {
     throw std::runtime_error("Index out of bounds for tab20 colormap.");
   }
   std::tie(r, g, b) = tab20_cmap[index];
@@ -689,7 +689,7 @@ void Render::getRgbFromTab20Colormap_(int index, double& r, double& g, double& b
   std::array<uint64_t, 3> cartesian = {0, 0, 0};
   // Sanity check
   uint64_t n01 = grid_sizes[0] * grid_sizes[1];
-  if (flat_id < 0 || flat_id >= n01 * grid_sizes[2]) {
+  if (flat_id >= n01 * grid_sizes[2]) {
     throw std::out_of_range("Index error");
   }
 
@@ -712,7 +712,6 @@ void Render::getRgbFromTab20Colormap_(int index, double& r, double& g, double& b
 }
 
 /* static */ vtkSmartPointer<vtkMapper> Render::createRanksMapper_(
-  PhaseType phase,
   vtkPolyData* rank_mesh,
   std::variant<std::pair<double, double>, std::set<std::variant<double,int>>> rank_qoi_range
 ) {
@@ -780,7 +779,6 @@ void Render::renderPNG(
   // Create rank mapper for later use and create corresponding rank actor
   std::variant<std::pair<double, double>, std::set<std::variant<double,int>>> rank_qoi_variant(rank_qoi_range_);
   vtkSmartPointer<vtkMapper> rank_mapper = createRanksMapper_(
-    phase,
     rank_mesh,
     rank_qoi_variant
   );

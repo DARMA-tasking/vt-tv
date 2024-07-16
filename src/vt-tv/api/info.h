@@ -206,12 +206,14 @@ struct Info {
       };
     } else if (rank_qoi == "id") {
       qoi_getter = [&](Rank rank, PhaseType phase) {
-        return convertQOIVariantTypeToDouble_(getRankID(rank, phase));
+        (void)phase; // unused for this qoi
+        return convertQOIVariantTypeToDouble_(getRankID(rank));
       };
     } else {
       // Look in attributes (will throw an error if QOI doesn't exist)
       qoi_getter = [&](Rank rank, PhaseType phase) {
-        return convertQOIVariantTypeToDouble_(getRankAttribute(rank, rank_qoi, phase));
+        (void)phase;
+        return convertQOIVariantTypeToDouble_(getRankAttribute(rank, rank_qoi));
       };
     }
     return qoi_getter;
@@ -743,7 +745,7 @@ struct Info {
    *
    * \return the rank id
    */
-  QOIVariantTypes getRankID(Rank rank, PhaseType phase) const { return rank.getRankID(); }
+  QOIVariantTypes getRankID(Rank rank) const { return rank.getRankID(); }
 
  /**
    * \brief Get load of a given rank
@@ -868,7 +870,7 @@ struct Info {
     *
     * \return the requested attribute
     */
-  QOIVariantTypes getRankAttribute(Rank rank, std::string rank_qoi, PhaseType phase) const {
+  QOIVariantTypes getRankAttribute(Rank rank, std::string rank_qoi) const {
     auto rank_attributes = rank.getAttributes();
     if (rank_attributes.count(rank_qoi) > 0) {
       return rank_attributes.at(rank_qoi);
