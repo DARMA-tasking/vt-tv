@@ -79,6 +79,7 @@ if (VT_TV_COVERAGE_ENABLED)
 endif()
 
 if (BUILD_TESTING AND VT_TV_TESTS_ENABLED)
+  set(CTEST_SOURCE_DIRECTORY ${SOURCE_DIR}/src)
   add_subdirectory(tests)
 endif()
 
