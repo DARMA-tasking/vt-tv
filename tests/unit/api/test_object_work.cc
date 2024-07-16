@@ -71,10 +71,16 @@ class ObjectWorkTest :public ::testing::Test {
     );
 };
 
+TEST_F(ObjectWorkTest, test_empty_constructor) {
+  ObjectWork empty = ObjectWork();
+  EXPECT_EQ(empty.getID(), 0);
+  EXPECT_EQ(empty.getLoad(), 0.);
+}
+
 /**
  * Test ObjectWork initial state
  */
-TEST_F(ObjectWorkTest, test_initial_state) {
+TEST_F(ObjectWorkTest, test_extended_constructor_and_getters) {
   EXPECT_EQ(object_0.getID(), 12);
   EXPECT_EQ(object_0.getLoad(), 10.0);
   EXPECT_EQ(object_0.getSubphaseLoads().size(), 1);
@@ -93,7 +99,7 @@ TEST_F(ObjectWorkTest, test_initial_state) {
   EXPECT_EQ(object_0.getSentVolume(), 0.0);
 }
 
-TEST_F(ObjectWorkTest, test_received_volumes) {
+TEST_F(ObjectWorkTest, test_add_and_get_received_volumes) {
   object_0.addReceivedCommunications(12, 56.0);
   EXPECT_EQ(object_0.getReceivedVolume(), 56.0);
 
@@ -101,7 +107,7 @@ TEST_F(ObjectWorkTest, test_received_volumes) {
   EXPECT_EQ(object_0.getReceivedVolume(), 78.5);
 }
 
-TEST_F(ObjectWorkTest, test_sent_volumes) {
+TEST_F(ObjectWorkTest, test_add_and_get_sent_volumes) {
   object_0.addSentCommunications(10, 10.2);
   EXPECT_EQ(object_0.getSentVolume(), 10.2);
 

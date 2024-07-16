@@ -32,13 +32,25 @@ set -ex
 mkdir -p ${BUILD_DIR}
 cd ${BUILD_DIR}
 
+# export CC=/usr/bin/clang
+# export CXX=/usr/bin/clang++
+
+# -DCMAKE_C_COMPILER="$(which clang)" \
+# -DCMAKE_CXX_COMPILER=$(which clang++) \
+# -DCMAKE_CXX_FLAGS_INIT="-std=c++17" \
+
+# -DCMAKE_C_COMPILER="$(which clang)" \
+# -DCMAKE_CXX_COMPILER=$(which clang++) \
+
 cmake -B "${BUILD_DIR}" \
-  -DCMAKE_BUILD_TYPE=DEBUG \
+  -DCMAKE_BUILD_TYPE=RELEASE \
   -DVTK_DIR=${VTK_DIR} \
   \
   -DBUILD_TESTING=ON \
   -DVT_TV_TESTS_ENABLED=ON \
-  -DVT_TV_TESTS_ALL_IN_ONE=ON \
+  -DVT_TV_COVERAGE_ENABLED=ON \
+  \
+  -DVT_TV_TESTS_ALL_IN_ONE=OFF \
   -DVT_TV_PYTHON_BINDINGS_ENABLED=OFF \
   \
   -DPython_EXECUTABLE="$(which python)" \
@@ -47,3 +59,10 @@ cmake -B "${BUILD_DIR}" \
   "${VT_TV_DIR}"
 
 time cmake --build . --parallel -j"${JOBS}"
+
+# Tests and coverage
+cd ${PROJECT_DIR}
+ctest --test-dir build -T Coverage -T Test
+lcov --capture --directory build --output-file output/lcov_vt-tv_test.info
+lcov --remove output/lcov_vt-tv_test.info -o output/lcov_vt-tv_test_no_deps.info '*/lib/*' '/usr/include/*' '*/vtk/*' '*/tests/*'
+genhtml --prefix ./src --ignore-errors source ./output/lcov_vt-tv_test_no_deps.info --legend --title "$(git rev-parse HEAD)" --output-directory=output/lcov_vt-tv_html
