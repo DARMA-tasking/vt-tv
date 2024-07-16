@@ -51,6 +51,8 @@
 #include <variant>
 #include <set>
 
+#include "basic_serializer.h"
+
 namespace vt::tv::tests::unit::api {
 
 /**
@@ -74,6 +76,32 @@ class ObjectCommunicatorTest :public ::testing::Test {
 };
 
 /**
+ * Test empty ObjectCommunicator initial state
+ */
+TEST_F(ObjectCommunicatorTest, test_empty_communicator_getters) {
+  // Assertions for comm_0
+  EXPECT_EQ(comm_0.getObjectId(), 0);
+  EXPECT_EQ(comm_0.getMaxVolume(), 0.0);
+  EXPECT_EQ(comm_0.getReceived().size(), 0);
+  EXPECT_EQ(comm_0.getTotalReceivedVolume(), 0.0);
+  EXPECT_EQ(comm_0.getSent().size(), 0);
+  EXPECT_EQ(comm_0.getTotalSentVolume(), 0.0);
+}
+
+/**
+ * Test ObjectCommunicator initial state
+ */
+TEST_F(ObjectCommunicatorTest, test_sample_communicator_and_getters) {
+  // Assertions for comm_1
+  EXPECT_EQ(comm_1.getObjectId(), 1);
+  EXPECT_EQ(comm_1.getMaxVolume(), 29.5);
+  EXPECT_EQ(comm_1.getReceived().size(), 2);
+  EXPECT_EQ(comm_1.getTotalReceivedVolume(), 37.5);
+  EXPECT_EQ(comm_1.getSent().size(), 3);
+  EXPECT_EQ(comm_1.getTotalSentVolume(), 50.0);
+}
+
+/**
  * Test ObjectCommunicator initial state
  */
 TEST_F(ObjectCommunicatorTest, test_initial_state) {
@@ -92,6 +120,61 @@ TEST_F(ObjectCommunicatorTest, test_initial_state) {
   EXPECT_EQ(comm_1.getTotalReceivedVolume(), 37.5);
   EXPECT_EQ(comm_1.getSent().size(), 3);
   EXPECT_EQ(comm_1.getTotalSentVolume(), 50.0);
+}
+
+/**
+ * Test ObjectCommunicator initial state
+ */
+TEST_F(ObjectCommunicatorTest, test_summarize_empty_communicator) {
+  // std::make_pair(w_sent, w_recv);
+  auto summary = comm_0.summarize();
+  EXPECT_EQ(summary.first.size(), 0);
+  EXPECT_EQ(summary.second.size(), 0);
+}
+
+/**
+ * Test ObjectCommunicator initial state
+ */
+TEST_F(ObjectCommunicatorTest, test_summarize) {
+  // std::make_pair(w_sent, w_recv);
+  auto summary = comm_0.summarize();
+  EXPECT_EQ(summary.first.size(), 3);
+  EXPECT_EQ(summary.second.size(), 2);
+}
+
+TEST_F(ObjectCommunicatorTest, test_serialization) {
+  BasicSerializer<std::variant<ElementIDType,std::multimap<ElementIDType, double>>> s = BasicSerializer<std::variant<ElementIDType,std::multimap<ElementIDType, double>>>();
+
+  comm_1.serialize(s);
+  EXPECT_EQ(s.items.size(), 3); // object_id_, received_, sent_
+
+  auto actual_object_id = std::get<PhaseType>(s.items[0]);
+  EXPECT_EQ(actual_object_id, comm_1.getObjectId()); // object id
+
+  std::multimap<ElementIDType, double> actual_received = std::get<std::multimap<ElementIDType, double>>(s.items[1]);
+  bool any_failure = false;
+  for (auto const& [object_id, received_volume] : comm_1.getReceived()) {
+    
+    auto object_received = actual_received.equal_range(object_id);
+
+    // check for some missing sent volumes in serialized data
+    bool found = false;
+    for (auto it = object_received.first; it != object_received.second; ++it) {
+      if (it->second == received_volume) {
+        found = true;
+      }
+    }
+
+    if (!found) {
+      any_failure = true;
+      fmt::print("Missing received volume {} from object {} in serialized communicator data", received_volume, object_id);
+      ADD_FAILURE();
+    }
+  }
+
+  if (any_failure) {
+    FAIL();
+  }
 }
 
 } // end namespace vt::tv::tests::unit
