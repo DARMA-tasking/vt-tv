@@ -125,7 +125,7 @@ TEST_F(ObjectCommunicatorTest, test_initial_state) {
 /**
  * Test ObjectCommunicator initial state
  */
-TEST_F(ObjectCommunicatorTest, test_summarize_empty_communicator) {
+TEST_F(ObjectCommunicatorTest, test_summarize_communications_count_empty_communicator) {
   // std::make_pair(w_sent, w_recv);
   auto summary = comm_0.summarize();
   EXPECT_EQ(summary.first.size(), 0);
@@ -135,7 +135,7 @@ TEST_F(ObjectCommunicatorTest, test_summarize_empty_communicator) {
 /**
  * Test ObjectCommunicator initial state
  */
-TEST_F(ObjectCommunicatorTest, test_summarize) {
+TEST_F(ObjectCommunicatorTest, test_summarize_communications_count) {
   // std::make_pair(w_sent, w_recv);
   auto summary = comm_0.summarize();
   EXPECT_EQ(summary.first.size(), 3);
@@ -187,7 +187,7 @@ TEST_F(ObjectCommunicatorTest, test_serialization) {
       fmt::print("Missing sent volume {} from object {} in serialized communicator data", sent_volume, object_id);
       any_failure = true;
       ADD_FAILURE();
-    } else if (actual_sent.count(object_id) != comm_1.getReceived().count(object_id)) {
+    } else if (actual_sent.count(object_id) != comm_1.getSent().count(object_id)) {
       fmt::print("Different count of sent volume from object {} in serialized communicator data", object_id);
       any_failure = true;
       ADD_FAILURE();
