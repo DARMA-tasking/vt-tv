@@ -65,9 +65,9 @@ class Generator {
         /**
          * Make a map of new objects
          */
-        static const std::unordered_map<ElementIDType, ObjectWork> makeObjects(const int num_objects = rand() % 10, TimeType load = 2.0) {
+        static const std::unordered_map<ElementIDType, ObjectWork> makeObjects(const int num_objects = rand() % 10, TimeType load = 2.0, int first_id = 0) {
             auto object_work_map = std::unordered_map<ElementIDType, ObjectWork>();
-            for (auto object_id = 0; object_id < num_objects; object_id++) {
+            for (auto object_id = first_id; object_id < first_id + num_objects; object_id++) {
                 // Make some ObjectWork instance
                 auto subphase_loads = std::unordered_map<SubphaseType, TimeType>();
                 auto user_defined = makeQOIVariants(5, "user_");
