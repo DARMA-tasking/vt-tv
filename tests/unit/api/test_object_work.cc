@@ -80,7 +80,7 @@ TEST_F(ObjectWorkTest, test_empty_constructor) {
 /**
  * Test ObjectWork initial state
  */
-TEST_F(ObjectWorkTest, test_extended_constructor_and_getters) {
+TEST_F(ObjectWorkTest, test_std_constructor_and_getters) {
   EXPECT_EQ(object_0.getID(), 12);
   EXPECT_EQ(object_0.getLoad(), 10.0);
   EXPECT_EQ(object_0.getSubphaseLoads().size(), 1);
