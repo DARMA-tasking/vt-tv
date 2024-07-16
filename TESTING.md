@@ -32,7 +32,16 @@ lcov --capture --directory . --output-file output/lcov_vt-tv_test.info
 ```shell
 lcov --remove output/lcov_vt-tv_test.info -o output/lcov_vt-tv_test_no_deps.info '*/lib/*' '/usr/include/*' '*/vtk/*' '*/tests/*'
 ```
-3. Generate an HTML report
+3. Get report
+
+- Basic summary or per-file coverage
+
+```shell
+lcov --summary output/lcov_vt-tv_test_no_deps.info
+lcov --list output/lcov_vt-tv_test_no_deps.info
+```
+This mode enables to view which part of code has been hit or not hit by ctest.
+
 ```shell
 genhtml --prefix ./src --ignore-errors source ./output/lcov_vt-tv_test_no_deps.info --legend --title "$(git rev-parse HEAD)" --output-directory=output/lcov_vt-tv_html
 ```
