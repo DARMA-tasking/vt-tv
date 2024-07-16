@@ -192,7 +192,7 @@ TEST_F(ObjectCommunicatorTest, test_serialization) {
       any_failure = true;
       ADD_FAILURE();
     }
-  
+
     auto object_sent = actual_sent.equal_range(object_id);
     // check for some missing sent volumes in serialized data
     bool found = false;
