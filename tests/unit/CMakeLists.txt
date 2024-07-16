@@ -45,7 +45,7 @@ macro(vt_tv_link_target target)
   target_link_libraries(${target} PUBLIC ${VT_TV_LIBRARY})
 endmacro()
 
-option(VT_TV_TESTS_ALL_IN_ONE "Integrates all tests in a single build target." OFF)
+option(VT_TV_TESTS_ALL_IN_ONE "Integrates all tests in a single build target named AllTests." OFF)
 
 if (VT_TV_TESTS_ALL_IN_ONE)
 
@@ -73,7 +73,7 @@ else()
     # Build test as an individual target
     add_executable(
       ${TEST}
-      main.cc
+      ${TEST_FILENAME}
       ${TEST_HEADER_FILES}
       ${TEST_FILENAME}
     )
