@@ -99,8 +99,8 @@ while getopts btch-: OPT; do  # allow -b -t -c -h, and --long_attr=value"
   # $(on_off $OPTARG) || $(echo "run-tests is required" >&2; exit 2)
   case "$OPT" in
     b | build)     BUILD_TYPE=$(on_off $OPTARG) ;;
-    t | tests)     TESTS_ENABLED=$(on_off $OPTARG) ;;
-    c | coverage)  COVERAGE_ENABLED=$(on_off $OPTARG) ;;
+    t | tests)     TESTS_ENABLED=$(on_off $OPTARG ON) ;;
+    c | coverage)  COVERAGE_ENABLED=$(on_off $OPTARG ON) ;;
     p | procs)     JOBS=$OPTARG ;;
     cc)            C_COMPILER="$OPTARG" ;;
     cxxc)          CXX_COMPILER="$OPTARG" ;;
