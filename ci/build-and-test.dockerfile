@@ -4,7 +4,8 @@ COPY . /opt/src/vt-tv
 RUN mkdir -p /opt/build/vt-tv
 
 # build
-RUN bash /opt/src/vt-tv/ci/build.sh
+RUN chmod +x /opt/src/vt-tv/build.sh
+RUN /opt/src/vt-tv/build.sh --build-dir=/opt/build/vt-tv --vtk-dir=/opt/build/vtk-build
 
 FROM build AS test
 
