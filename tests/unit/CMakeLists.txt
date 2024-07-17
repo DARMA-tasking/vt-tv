@@ -56,6 +56,12 @@ if (VT_TV_TESTS_ALL_IN_ONE)
     ${TEST_SOURCE_FILES}
   )
 
+  # Initialize VTK modules
+  vtk_module_autoinit(
+    TARGETS AllTests
+    MODULES ${VTK_LIBRARIES}
+  )
+
   vt_tv_link_target(AllTests)
   gtest_discover_tests(AllTests)
 
@@ -76,6 +82,12 @@ else()
       ${TEST_FILENAME}
       ${TEST_HEADER_FILES}
       ${TEST_FILENAME}
+    )
+
+    # Initialize VTK modules
+    vtk_module_autoinit(
+      TARGETS ${TEST}
+      MODULES ${VTK_LIBRARIES}
     )
 
     vt_tv_link_target(${TEST})
