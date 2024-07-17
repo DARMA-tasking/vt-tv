@@ -30,8 +30,8 @@ help() {
           -b   --build          Set build type (DEBUG|RELEASE|COVERAGE...) ($BUILD_TYPE)
           -t   --tests          Enable tests  ($TESTS_ENABLED)
           -c   --coverage       Enable coverage  ($COVERAGE_ENABLED)
-          -h   --help           Show this message
-          --clean               Clean the output directory and cmake cache
+          -h   --help           Show this help text
+                -clean          Clean the output directory and cmake cache
 EOF
   exit 1;
 }
