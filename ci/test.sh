@@ -28,8 +28,8 @@ cp /opt/src/vt-tv/output/lcov-list-report.txt /tmp/artifacts/
 
 # extract total coverage (Lines) for later use in a badge in the CI
 LCOV_SUMMARY=$(lcov --summary lcov_vt-tv_test_no_deps.info)
-LCOV_TOTAL_LINES_COV=$LCOV_SUMMARY | grep -E -o 'lines......: ([0-9.]+)*' | grep -o -E '[0-9]+.[0-9]+'
-echo LCOV_TOTAL_LINES_COV > lcov-lines-total.txt
+LCOV_TOTAL_LINES_COV=$(echo $LCOV_SUMMARY | grep -E -o 'lines......: ([0-9.]+)*' | grep -o -E '[0-9]+.[0-9]+')
+echo $LCOV_TOTAL_LINES_COV > lcov-lines-total.txt
 cp /opt/src/vt-tv/output/lcov-lines-total.txt /tmp/artifacts/
 
 popd
