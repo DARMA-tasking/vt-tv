@@ -54,6 +54,11 @@ jobs:
           name: vt-tv-LastTestLogs
           path: ${{ env.OUTPUT_DIR }}
 
+      - name: Coverage report
+        run: |
+          echo '### Coverage\n' >> $GITHUB_STEP_SUMMARY
+          cat ${{ env.OUTPUT_DIR }}/tmp/artifacts/lcov-list-report.txt >> $GITHUB_STEP_SUMMARY
+
       - name: Determine Job Failure or Success
         run: |
           echo "Success Flag with 0 pass and 1 fail:"
