@@ -32,12 +32,10 @@ COVERAGE_ENABLED=OFF # Enable coverage
 COVERAGE_BUILD_HTML_REPORT=ON # Generates coverage report in HTML format if COVERAGE_ENABLED is ON
 CLEAN=ON
 PYTHON_BINDINGS_ENABLED=OFF
-C_COMPILER="$(which gcc)" || ''
-CXX_COMPILER="$(which g++)" || ''
-RUN_TESTS=OFF
+C_COMPILER="$(which gcc || echo '')"
+CXX_COMPILER="$(which g++ || echo '')"
 DO_BUILD=ON
-
-set -e
+RUN_TESTS=OFF
 
 echo -e $'\e[32m\nVT-TV Build script\e[0m'
 
@@ -119,10 +117,6 @@ while getopts btch-: OPT; do  # allow -b -t -c -h, and --long_attr=value"
   esac
 done
 shift $((OPTIND-1)) # remove parsed options and args from $@ list
-
-# set -ex
-# echo "RUN_TESTS=$RUN_TESTS"
-# exit 0
 
 if [[ "${DO_BUILD}" == "ON" ]]; then
 
