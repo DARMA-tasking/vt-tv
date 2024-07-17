@@ -3,8 +3,6 @@ FROM pierrpebay/vt-tv:master AS build
 COPY . /opt/src/vt-tv
 RUN mkdir -p /opt/build/vt-tv
 
-RUN pip install lcov
-
 # build
 RUN chmod +x /opt/src/vt-tv/build.sh
 RUN /opt/src/vt-tv/build.sh \
@@ -16,6 +14,8 @@ RUN /opt/src/vt-tv/build.sh \
     --tests
 
 FROM build AS test
+
+RUN pip install lcov
 
 # test
 RUN bash /opt/src/vt-tv/ci/test.sh
