@@ -1,5 +1,9 @@
 FROM pierrpebay/vt-tv:master AS build
 
+# setup lcov for coverage
+RUN apt-get update \
+  && apt-get install -y lcov
+
 COPY . /opt/src/vt-tv
 RUN mkdir -p /opt/build/vt-tv
 
@@ -14,8 +18,6 @@ RUN /opt/src/vt-tv/build.sh \
     --tests
 
 FROM build AS test
-
-RUN pip install lcov
 
 # test
 RUN bash /opt/src/vt-tv/ci/test.sh
