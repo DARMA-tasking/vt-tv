@@ -904,8 +904,8 @@ private:
   /// Work for each rank across phases
   std::unordered_map<NodeType, Rank> ranks_;
 
-  /// The current phase (or indication to use all phases. Default all phases)
-  PhaseType selected_phase_ = std::numeric_limits<PhaseType>::max();
+  /// The current phase (or indication to use all phases)
+  PhaseType selected_phase_;
 };
 
 } /* end namespace vt::tv */
