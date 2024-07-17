@@ -56,8 +56,10 @@ jobs:
 
       - name: Coverage report
         run: |
-          echo '### Coverage\n' >> $GITHUB_STEP_SUMMARY
+          echo '### Coverage' >> $GITHUB_STEP_SUMMARY
+          echo '```shell' >> $GITHUB_STEP_SUMMARY
           cat ${{ env.OUTPUT_DIR }}/tmp/artifacts/lcov-list-report.txt >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
 
       - name: Determine Job Failure or Success
         run: |
