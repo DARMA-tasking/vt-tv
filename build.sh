@@ -32,8 +32,8 @@ COVERAGE_ENABLED=OFF # Enable coverage
 COVERAGE_BUILD_HTML_REPORT=ON # Generates coverage report in HTML format if COVERAGE_ENABLED is ON
 CLEAN=ON
 PYTHON_BINDINGS_ENABLED=OFF
-C_COMPILER="$(which gcc || '')"
-CXX_COMPILER="$(which g++ || '')"
+C_COMPILER="$(which gcc)" || ''
+CXX_COMPILER="$(which g++)" || ''
 RUN_TESTS=OFF
 DO_BUILD=ON
 
