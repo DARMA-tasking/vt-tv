@@ -10,7 +10,6 @@ ENV CXX=g++-11
 
 # setup virtual X11
 RUN apt-get update \
-  && apt-get install -y \
   && DEBIAN_FRONTEND="noninteractive" apt-get install -y \
       xvfb \
   && rm -rf /var/lib/apt/lists/*
