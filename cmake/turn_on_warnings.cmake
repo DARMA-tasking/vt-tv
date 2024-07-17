@@ -29,7 +29,7 @@ if(NOT DEFINED VT_TV_WARNING_FLAGS)
     add_cxx_compiler_flag_if_supported("-ftemplate-backtrace-limit=100")
   endif()
 
-  if (vt_werror_enabled)   # Treat warning as errors
+  if (VT_TV_WERROR_ENABLED)   # Treat warning as errors
     add_cxx_compiler_flag_if_supported("-Werror")
   endif()
 endif()
@@ -38,6 +38,6 @@ set(
   VT_TV_WARNING_FLAGS ${VT_TV_WARNING_FLAGS} CACHE INTERNAL
   "Project's warning options")
 
-macro(turn_on_warnings vt_target)
-  target_compile_options(${vt_target} PRIVATE ${VT_TV_WARNING_FLAGS})
+macro(turn_on_warnings vt_tv_target)
+  target_compile_options(${vt_tv_target} PRIVATE ${VT_TV_WARNING_FLAGS})
 endmacro()

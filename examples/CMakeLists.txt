@@ -19,7 +19,6 @@ file(
 )
 
 include(turn_on_warnings)
-turn_on_warnings(${VT_TV_LIBRARY})
 
 foreach(EXAMPLE_FULL ${PROJECT_EXAMPLES})
   GET_FILENAME_COMPONENT(
@@ -32,6 +31,8 @@ foreach(EXAMPLE_FULL ${PROJECT_EXAMPLES})
     ${EXAMPLE}
     ${PROJECT_EXAMPLE_DIR}/${EXAMPLE}.cc
   )
+
+  turn_on_warnings(${EXAMPLE})
 
   target_include_directories(${EXAMPLE} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/../src)
   target_include_directories(${EXAMPLE} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/../lib/CLI)
