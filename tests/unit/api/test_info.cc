@@ -310,8 +310,8 @@ TEST_F(InfoTest, test_get_max_load_after_changing_selected_phase) {
 
   Info info = Info(objects_info, { {0, rank_0}, {1, rank_1} , {2, rank_2} } );
 
-  // before selecting a phase it seems that value is not 0 but random (2, 16)
-  // in that case info.getMaxLoad() generates an error if not selecting phase first.
+  // max volume for all phases (initial state)
+  EXPECT_EQ(info.getMaxLoad(), 2.0);
 
   info.setSelectedPhase(1);
   EXPECT_EQ(info.getMaxLoad(), 1.8);
@@ -319,7 +319,7 @@ TEST_F(InfoTest, test_get_max_load_after_changing_selected_phase) {
   info.setSelectedPhase(0);
   EXPECT_EQ(info.getMaxLoad(), 2.0);
 
-  // if max volume must be all-phases max volume
+  // max volume for all phases
   info.setSelectedPhase(std::numeric_limits<PhaseType>::max());
   EXPECT_EQ(info.getMaxLoad(), 2.0);
 }
