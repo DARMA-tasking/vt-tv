@@ -310,8 +310,13 @@ TEST_F(InfoTest, test_get_max_load_after_changing_selected_phase) {
 
   Info info = Info(objects_info, { {0, rank_0}, {1, rank_1} , {2, rank_2} } );
 
-  // max volume for all phases (initial state)
-  EXPECT_EQ(info.getMaxLoad(), 2.0);
+  // case selected phase is not initialized.
+  // Initial value is memory value at time it is allocated (not allocated in constructor)
+  try {
+    info.getMaxLoad();
+  } catch(std::exception & e) {
+    fmt::print("Authorized exception (unitialized selected phase): {}\n", e.what());
+  }
 
   info.setSelectedPhase(1);
   EXPECT_EQ(info.getMaxLoad(), 1.8);
@@ -319,7 +324,7 @@ TEST_F(InfoTest, test_get_max_load_after_changing_selected_phase) {
   info.setSelectedPhase(0);
   EXPECT_EQ(info.getMaxLoad(), 2.0);
 
-  // max volume for all phases
+   // selected phase = all phases
   info.setSelectedPhase(std::numeric_limits<PhaseType>::max());
   EXPECT_EQ(info.getMaxLoad(), 2.0);
 }
@@ -333,6 +338,116 @@ TEST_F(InfoTest, test_get_max_volume_throws_out_of_range_after_set_invalid_phase
   Info info = Info(Generator::makeObjectInfoMap(Generator::makeObjects(10)), { {0, rank_0}, {1, rank_1} } );
   info.setSelectedPhase(2);
   EXPECT_THROW(info.getMaxVolume(), std::runtime_error);
+}
+
+TEST_F(InfoTest, test_get_max_volume) {
+  auto objects_15 = Generator::makeObjects(2, 1.5, 0);
+  auto objects_18 = Generator::makeObjects(2, 1.8, 2);
+  auto objects_20 = Generator::makeObjects(2, 2.0, 4);
+
+  auto objects_15_info = Generator::makeObjectInfoMap(objects_15);
+  auto objects_18_info = Generator::makeObjectInfoMap(objects_18);
+  auto objects_20_info = Generator::makeObjectInfoMap(objects_20);
+
+  // add some communications in phase 1
+  objects_15.at(0).addSentCommunications(2, 2.0);
+  // add some communications in phase 2
+  objects_18.at(2).addReceivedCommunications(0, 2.0);
+  objects_18.at(2).addSentCommunications(4, 3.6);
+  objects_20.at(4).addReceivedCommunications(2, 3.6);
+
+  Rank rank_0 = Rank(0, { { 0, PhaseWork(0, objects_15) }, { 1, PhaseWork(1, objects_20) } }, {});
+  Rank rank_1 = Rank(1, { { 0, PhaseWork(0, {}) },         { 1, PhaseWork(1, objects_18) } }, {});
+
+  auto objects_info = std::unordered_map<ElementIDType,ObjectInfo>();
+  objects_info.merge(objects_15_info);
+  objects_info.merge(objects_18_info);
+  objects_info.merge(objects_20_info);
+
+  Info info = Info(objects_info, { {0, rank_0}, {1, rank_1}} );
+
+  // case selected phase is not initialized.
+  // Initial value is memory value at time it is allocated (not allocated in constructor)
+  try {
+    info.getMaxVolume();
+  } catch(std::exception & e) {
+    fmt::print("Authorized exception (unitialized selected phase): {}\n", e.what());
+  }
+
+  info.setSelectedPhase(0);
+  EXPECT_EQ(info.getMaxVolume(), 2.0);
+
+  info.setSelectedPhase(1);
+  EXPECT_EQ(info.getMaxVolume(), 3.6);
+
+  // selected phase = all phases
+  info.setSelectedPhase(std::numeric_limits<PhaseType>().max());
+  EXPECT_EQ(info.getMaxVolume(), 3.6);
+}
+
+TEST_F(InfoTest, test_get_rank_qoi) {
+  auto objects_15 = Generator::makeObjects(2, 1.5, 0);
+  auto objects_18 = Generator::makeObjects(2, 1.8, 2);
+  auto objects_20 = Generator::makeObjects(2, 2.0, 4);
+
+  auto objects_15_info = Generator::makeObjectInfoMap(objects_15, true);
+  auto objects_18_info = Generator::makeObjectInfoMap(objects_18, false);
+  auto objects_20_info = Generator::makeObjectInfoMap(objects_20, true);
+
+  // add some communications in phase 1
+  objects_15.at(0).addSentCommunications(2, 2.0);
+  // add some communications in phase 2
+  objects_18.at(2).addReceivedCommunications(0, 1.5);
+  objects_18.at(2).addReceivedCommunications(0, 0.5);
+  objects_18.at(2).addSentCommunications(4, 3.6);
+  objects_20.at(4).addReceivedCommunications(2, 3.6);
+
+  Rank rank_0 = Rank(0, { { 0, PhaseWork(0, objects_15) }, { 1, PhaseWork(1, objects_20) } }, { {"attr1", 12}, {"attr2", "ab"} });
+  Rank rank_1 = Rank(1, { { 0, PhaseWork(0, {}) },         { 1, PhaseWork(1, objects_18) } }, { {"attr1", 13}, {"attr2", "cd"} });
+
+  auto objects_info = std::unordered_map<ElementIDType,ObjectInfo>();
+  objects_info.merge(objects_15_info);
+  objects_info.merge(objects_18_info);
+  objects_info.merge(objects_20_info);
+
+  Info info = Info(objects_info, { {0, rank_0}, {1, rank_1}} );
+
+  // Test getRankQOIGetter
+  auto qoi_list = std::vector<std::string>({"load", "received_volume", "sent_volume", "number_of_objects",
+                                           "number_of_migratable_objects", "migratable_load", "sentinel_load", "id",
+                                          "attr1", "attr2" });
+  for (auto const qoi: qoi_list) {
+    auto qoi_getter = info.getRankQOIGetter(qoi);
+
+    if (qoi == "id") {
+      ASSERT_EQ(qoi_getter(rank_0, 0), 0);
+      ASSERT_EQ(qoi_getter(rank_1, 0), 1);
+    } else if (qoi == "sent_volume") {
+      ASSERT_EQ(qoi_getter(rank_0, 0), 2.0);
+      ASSERT_EQ(qoi_getter(rank_1, 1), 3.6);
+    } else if (qoi == "received_volume") {
+      ASSERT_EQ(qoi_getter(rank_0, 0), 0.0);
+      ASSERT_EQ(qoi_getter(rank_1, 1), 2.0);
+    }
+  }
+
+  ASSERT_EQ(std::get<int>(info.getRankAttribute(rank_0, "attr1", 0)), 12.0);
+  ASSERT_EQ(std::get<int>(info.getRankAttribute(rank_1, "attr1", 0)), 13.0);
+
+  ASSERT_EQ(std::get<std::string>(info.getRankAttribute(rank_0, "attr2", 0)), "ab");
+  ASSERT_EQ(std::get<std::string>(info.getRankAttribute(rank_1, "attr2", 0)), "cd");
+
+  // Test getRankQOIAtPhase method
+  ASSERT_EQ(info.getRankQOIAtPhase(0, 0, "sent_volume"), 2.0);
+  ASSERT_EQ(info.getRankQOIAtPhase(0, 0, "received_volume"), 0.0);
+  ASSERT_EQ(info.getRankQOIAtPhase(1, 1, "received_volume"), 2.0);
+  ASSERT_EQ(info.getRankQOIAtPhase(0, 0, "number_of_objects"), 2.0);
+  ASSERT_EQ(info.getRankQOIAtPhase(1, 0, "number_of_objects"), 0.0);
+  ASSERT_EQ(info.getRankQOIAtPhase(0, 0, "number_of_migratable_objects"), 2.0);
+  ASSERT_EQ(info.getRankQOIAtPhase(0, 0, "migratable_load"), 3.0);
+  ASSERT_EQ(info.getRankQOIAtPhase(1, 1, "sentinel_load"), 3.6);
+  ASSERT_EQ(info.getRankQOIAtPhase(1, 0, "id"), 1.0);
+  ASSERT_EQ(info.getRankQOIAtPhase(0, 0, "attr1"), 12.0);
 }
 
 TEST_F(InfoTest, test_convert_qoi_variant_type_to_double_throws_runtime_error_for_string) {
