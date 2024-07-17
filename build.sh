@@ -45,6 +45,7 @@ echo -e $'\e[32m\nVT-TV Build script\e[0m'
 help() {
   cat <<EOF
   Highly configurable script to build vt-tv either for local build or CI build.
+  Provides also options to run tests and coverage.
   Usage: build.sh <[options]>
   Options:
           -b   --build          Set build type (DEBUG|RELEASE) ($BUILD_TYPE)
@@ -56,7 +57,7 @@ help() {
                --cc             The C compiler ($C_COMPILER)
                --cxxc           The C++ compiler ($CXX_COMPILER)
                --no-build       To be used with to run tests without re-building. Combine with --run-tests=1.
-               --run-tests      Run unit tests (and optionally coverage) ($RUN_TESTS)
+               --run-tests      Run unit tests (and build coverage report if coverage is enabled) ($RUN_TESTS)
                --vtk-dir        VTK build directory ($VTK_DIR)
                --build-dir      Build directory ($BUILD_DIR)
                --output-dir     Output directory for the coverage HTML report ($OUTPUT_DIR).
