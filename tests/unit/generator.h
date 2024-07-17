@@ -113,12 +113,13 @@ class Generator {
          * Make a map object info from an object map
          */
         static std::unordered_map<ElementIDType, ObjectInfo> makeObjectInfoMap (
-            const std::unordered_map<ElementIDType, ObjectWork> object_work_map
+            const std::unordered_map<ElementIDType, ObjectWork> object_work_map,
+            bool migratable = true
         ) {
             auto object_info_map = std::unordered_map<ElementIDType, ObjectInfo>();
             std::vector<size_t> idx;
             for (auto& it: object_work_map) {
-                ObjectInfo object_info = ObjectInfo(it.first, 0, true, idx);
+                ObjectInfo object_info = ObjectInfo(it.first, 0, migratable, idx);
                 object_info_map.insert(std::make_pair(it.first, object_info));
             }
             return object_info_map;
