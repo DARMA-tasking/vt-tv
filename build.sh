@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Old script for CI only was
-# set -ex
+set -ex
 
 # cmake -DCMAKE_BUILD_TYPE=Release \
 #     -DCMAKE_C_COMPILER=gcc-11 \
