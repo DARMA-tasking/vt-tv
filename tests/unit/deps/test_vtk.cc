@@ -66,8 +66,8 @@ namespace vt::tv::tests::unit::deps {
 class VtkTest :public ::testing::Test {
   virtual void SetUp() {
     // Disable this test because of gcc segfault at vtkWindowToImageFilter (memcpy)
-    GTEST_SKIP();
-    return;
+    // GTEST_SKIP();
+    // return;
 
     // Make the output directory for these tests
     std::filesystem::create_directory(fmt::format("{}/output", SRC_DIR));
@@ -102,7 +102,7 @@ TEST_F(VtkTest, test_vtk_screenshot_example) {
   renderWindow->SetAlphaBitPlanes(1); // enable usage of alpha channel
   renderWindow->SetWindowName("Screenshot");
 
-
+  actor->GetProperty()->LightingOff();
   renderer->AddActor(actor);
   renderer->SetBackground(colors->GetColor3d("MistyRose").GetData());
 
