@@ -173,7 +173,7 @@ if [[ "${RUN_TESTS}" == "ON" ]]; then
     #   Looks like there are more lines in the file: /home/thomas/repositories/vt-tv/lib/yaml-cpp/include/yaml-cpp/node/detail/node.h
     pushd OUTPUT_DIR
     lcov --capture --directory ${BUILD_DIR} --output-file lcov_vt-tv_test.info
-    lcov --remove lcov_vt-tv_test.info -o lcov_vt-tv_test_no_deps.info '*/lib/*' '/usr/include/*' '*/vtk/*' '*/tests/*'
+    lcov --remove lcov_vt-tv_test.info -o lcov_vt-tv_test_no_deps.info '*/lib/*' '/usr/include/*' '*/vtk/*' '*/vtk-build/*' '*/tests/*'
     lcov --summary lcov_vt-tv_test_no_deps.info
     if [[ "${COVERAGE_BUILD_HTML_REPORT}" == "ON" ]]; then
       genhtml --prefix ./src --ignore-errors source lcov_vt-tv_test_no_deps.info --legend --title "$(git rev-parse HEAD)" --output-directory=lcov_vt-tv_html
