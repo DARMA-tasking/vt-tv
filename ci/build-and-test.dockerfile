@@ -5,7 +5,13 @@ RUN mkdir -p /opt/build/vt-tv
 
 # build
 RUN chmod +x /opt/src/vt-tv/build.sh
-RUN /opt/src/vt-tv/build.sh --build-dir=/opt/build/vt-tv --vtk-dir=/opt/build/vtk-build --cc=gcc-11 --cxxc=g++-11
+RUN /opt/src/vt-tv/build.sh \
+    --build-dir=/opt/build/vt-tv \
+    --vtk-dir=/opt/build/vtk-build \
+    --cc=gcc-11 \
+    --cxxc=g++-11 \
+    --coverage \
+    --tests
 
 FROM build AS test
 
