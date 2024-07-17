@@ -22,14 +22,13 @@ echo -e $'\e[32m\nVT-TV Build script\e[0m'
 
 # # HELP FUNCTION
 help() { 
-  Options=$@
   cat <<EOF
   Build script for vt-tv.
   Usage: build.sh <[options]>
   Options:
-          -b   --build          Set build type (DEBUG|RELEASE|COVERAGE...) ($BUILD_TYPE)
+          -b   --build          Set build type (DEBUG|RELEASE) ($BUILD_TYPE)
           -t   --tests          Enable tests  ($TESTS_ENABLED)
-          -c   --coverage       Enable coverage  ($COVERAGE_ENABLED)
+          -c   --coverage       Enable code coverage  ($COVERAGE_ENABLED)
           -h   --help           Show this help text
                 -clean          Clean the output directory and cmake cache
 EOF
