@@ -18,6 +18,9 @@ file(
   "${PROJECT_EXAMPLE_DIR}/*.cc"
 )
 
+include(turn_on_warnings)
+turn_on_warnings(${VT_TV_LIBRARY})
+
 foreach(EXAMPLE_FULL ${PROJECT_EXAMPLES})
   GET_FILENAME_COMPONENT(
     EXAMPLE

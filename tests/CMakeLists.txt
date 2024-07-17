@@ -30,6 +30,9 @@ file(
   "${PROJECT_TEST_UNIT_DIR}/*.cc"
 )
 
+include(turn_on_warnings)
+turn_on_warnings(${VT_TV_LIBRARY})
+
 macro(vt_tv_link_target target has_mpi)
   target_include_directories(${target} PUBLIC ${PROJECT_TEST_UNIT_DIR})
   target_include_directories(${target} PRIVATE ${PROJECT_GTEST_INCLUDE_DIR})
