@@ -10,7 +10,7 @@ viz:
   rank_qoi: load
   object_qoi: shared_block_id
   save_meshes: true
-  save_pngs: false
+  save_pngs: true
   force_continuous_object_qoi: true
 
 output:
