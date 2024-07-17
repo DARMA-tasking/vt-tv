@@ -60,7 +60,7 @@ int main() {
   std::filesystem::path p = std::filesystem::path(SRC_DIR) / "tests/unit/lb_test_data/";
   std::string path = std::filesystem::absolute(p).string();
 
-  uint64_t n_ranks = 4;
+  NodeType n_ranks = 4;
 
   std::unique_ptr<Info> info = std::make_unique<Info>();
 

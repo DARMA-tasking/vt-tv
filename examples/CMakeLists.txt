@@ -18,6 +18,8 @@ file(
   "${PROJECT_EXAMPLE_DIR}/*.cc"
 )
 
+include(turn_on_warnings)
+
 foreach(EXAMPLE_FULL ${PROJECT_EXAMPLES})
   GET_FILENAME_COMPONENT(
     EXAMPLE
@@ -29,6 +31,8 @@ foreach(EXAMPLE_FULL ${PROJECT_EXAMPLES})
     ${EXAMPLE}
     ${PROJECT_EXAMPLE_DIR}/${EXAMPLE}.cc
   )
+
+  turn_on_warnings(${EXAMPLE})
 
   target_include_directories(${EXAMPLE} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/../src)
   target_include_directories(${EXAMPLE} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/../lib/CLI)

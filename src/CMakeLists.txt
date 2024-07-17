@@ -73,6 +73,9 @@ add_library(
 
 add_library(${VT_TV_LIBRARY_NS} ALIAS ${VT_TV_LIBRARY})
 
+include(turn_on_warnings)
+turn_on_warnings(${VT_TV_LIBRARY})
+
 target_link_libraries(
   ${VT_TV_LIBRARY} PUBLIC ${VTK_LIBRARIES}
 )

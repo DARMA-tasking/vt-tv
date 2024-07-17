@@ -211,10 +211,11 @@ private:
   std::unordered_map<SubphaseType, TimeType> subphase_loads_;
   // User-defined field---used to populate the memory block
   std::unordered_map<std::string, QOIVariantTypes> user_defined_;
-  /// QOIs to be visualized
+  // Object Communicator
+  ObjectCommunicator communicator_;
+  // QOIs to be visualized
   std::unordered_map<std::string, QOIVariantTypes> attributes_;
 
-  ObjectCommunicator communicator_;
 };
 
 } /* end namespace vt::tv */

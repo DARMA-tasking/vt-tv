@@ -48,6 +48,8 @@ set(
   ${PROJECT_TEST_UNIT_DIR}/main.cc
 )
 
+include(turn_on_warnings)
+
 foreach(TEST_FULL ${PROJECT_TEST_LIST})
   GET_FILENAME_COMPONENT(
     TEST
@@ -61,6 +63,8 @@ foreach(TEST_FULL ${PROJECT_TEST_LIST})
     ${TEST_HEADER_FILES}
     ${PROJECT_TEST_UNIT_DIR}/${TEST}.cc
   )
+
+  turn_on_warnings(${TEST})
 
   vt_tv_link_target(${TEST} 0)
 

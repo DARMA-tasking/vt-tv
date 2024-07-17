@@ -16,6 +16,11 @@ file(
 set(VT_TV_LIBRARY vt-tv CACHE INTERNAL "" FORCE)
 set(VT_TV_LIBRARY_NS vt::lib::vt-tv)
 
+set(
+  CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH}
+  "${CMAKE_CURRENT_SOURCE_DIR}/cmake/"
+)
+
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
@@ -29,6 +34,9 @@ message(STATUS "CMAKE_CXX_STANDARD: ${CMAKE_CXX_STANDARD}")
 
 option(VT_TV_PYTHON_BINDINGS_ENABLED "Build vt-tv with Python bindings" OFF)
 option(VT_TV_OPENMP_ENABLED "Build vt-tv with openMP support" ON)
+
+option(VT_TV_WERROR_ENABLED "Build vt-tv with warnings as errors" OFF)
+
 set(VT_TV_N_THREADS "2" CACHE STRING "Number of OpenMP threads to use")
 
 include(cmake/load_packages.cmake)
