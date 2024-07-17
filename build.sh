@@ -42,7 +42,7 @@ set -e
 echo -e $'\e[32m\nVT-TV Build script\e[0m'
 
 # # HELP FUNCTION
-help() { 
+help() {
   cat <<EOF
   Highly configurable script to build vt-tv either for local build or CI build.
   Usage: build.sh <[options]>
