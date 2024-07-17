@@ -23,6 +23,7 @@ lcov --remove lcov_vt-tv_test.info -o lcov_vt-tv_test_no_deps.info '*/lib/*' '/u
 lcov --list lcov_vt-tv_test_no_deps.info
 # add simple coverage artifact
 lcov --list lcov_vt-tv_test_no_deps.info > lcov-list-report.txt
+cp lcov_vt-tv_test_no_deps.info /tmp/artifacts/
 cp /opt/src/vt-tv/output/lcov-list-report.txt /tmp/artifacts/
 popd
 
