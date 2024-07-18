@@ -50,13 +50,13 @@ RUN apt-get update -y -q && \
   apt-get clean && \
   rm -rf /var/lib/apt/lists/*
 
-  # Sym links without version number
-RUN ln -s "$(which ${CC})"  $(which ${CC}  | cut -d- -f2)
-RUN ln -s "$(which ${CCX})" $(which ${CCX}  | cut -d- -f2)
-
 # Put in env for CMake
-ENV CC="$(which ${CC})"
-ENV CXX="$(which ${CXX})"
+RUN export CC="$(which ${CC})"
+RUN export CXX="$(which ${CXX})"
+
+# Sym links without version number
+RUN ln -s "$(which ${CC})"  "$(which ${CC}  | cut -d- -f2)"
+RUN ln -s "$(which ${CCX})" "$(which ${CCX}  | cut -d- -f2)"
 
 RUN if [[ -z "$PYTHON_BINDINGS" ]] ; then \
   # Setup python with conda
@@ -104,7 +104,7 @@ RUN cmake --build /opt/build/vtk-build -j$(nproc)
 RUN echo "Base creation success"
 
 # Build
-FROM base as build
+FROM base AS build
 
 COPY . /opt/src/vt-tv
 RUN mkdir -p /opt/build/vt-tv
