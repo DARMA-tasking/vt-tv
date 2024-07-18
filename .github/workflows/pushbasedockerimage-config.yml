@@ -51,4 +51,3 @@ jobs:
           file: ci/docker/make-base.dockerfile
           push: true
           tags: pierrpebay/${{ inputs.IMAGE_NAME }}:${{ inputs.IMAGE_TAG }}
-
