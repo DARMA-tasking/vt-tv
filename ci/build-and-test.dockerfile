@@ -1,6 +1,6 @@
 FROM pierrpebay/vt-tv:master AS build
 
-# setup lcov for coverage
+# setup virtual X11 for tests + lcov for coverage
 RUN apt-get update \
   && DEBIAN_FRONTEND="noninteractive" apt-get install -y \
     xvfb \
@@ -11,13 +11,9 @@ RUN mkdir -p /opt/build/vt-tv
 
 # build
 RUN chmod +x /opt/src/vt-tv/build.sh
-RUN /opt/src/vt-tv/build.sh \
-    --build-dir=/opt/build/vt-tv \
-    --vtk-dir=/opt/build/vtk-build \
-    --cc=gcc-11 \
-    --cxxc=g++-11 \
-    --coverage \
-    --tests
+RUN VT_TV_BUILD_TYPE=Release\
+    VT_TV_COVERAGE_ENABLED=1 \
+    ./build.sh
 
 FROM build AS test
 
