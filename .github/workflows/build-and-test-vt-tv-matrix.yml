@@ -11,9 +11,9 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        os: [ubuntu-22.04]
+        image:
+          - ubuntu22.04-gcc11-x64
         compiler: ['gcc-11']
-        arch: [amd64]
       fail-fast: false
     env:
       OUTPUT_DIR: '/tmp/out'
@@ -46,7 +46,7 @@ jobs:
           push: false
           tags: ${{ env.DOCKER_TAG }}
           context: .
-          file: ./ci/docker/${{ matrix.os }}-${{ matrix.compiler }}-${{ matrix.arch }}.dockerfile
+          file: ./ci/docker/${{ matrix.image }}.dockerfile
           outputs: type=local,dest=${{ env.OUTPUT_DIR }}
 
       - name: Upload Test Log Files
