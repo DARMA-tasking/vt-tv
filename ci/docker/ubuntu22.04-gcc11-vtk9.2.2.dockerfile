@@ -30,6 +30,7 @@ RUN apt-get update -y -q && \
   zlib1g-dev \
   m4 \
   gfortran-11 \
+  make \
   cmake-data \
   cmake \
   pkg-config \
