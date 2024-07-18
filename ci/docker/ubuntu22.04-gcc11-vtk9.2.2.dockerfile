@@ -1,6 +1,6 @@
 ARG BASE=ubuntu:22.04
 ARG CC=gcc-11
-ARG CXX==g++-11
+ARG CXX=g++-11
 ARG VTK_TAG=v9.2.2
 ARG VTK_DIR=/opt/build/vtk-build
 ARG PYTHON=3.8
