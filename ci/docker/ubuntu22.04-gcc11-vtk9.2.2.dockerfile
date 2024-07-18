@@ -1,14 +1,13 @@
 ARG BASE=ubuntu:22.04
-
-# Base image & requirements
-FROM ${BASE} AS base
-
 ARG CC=gcc-11
 ARG CXX==g++-11
 ARG VTK=9.2.2
 ARG VTK_DIR=/opt/build/vtk-build
 ARG PYTHON=3.8
 ARG PYTHON_BINDINGS=0
+
+# Base image & requirements
+FROM ${BASE} AS base
 
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -77,7 +76,7 @@ RUN if [[ -z "${PYTHON_BINDINGS}" ]] ; then \
 
 # Clone VTK source
 RUN mkdir -p /opt/src/vtk
-RUN git clone --recursive --branch ${VTK} https://gitlab.kitware.com/vtk/vtk.git /opt/src/vtk
+RUN git clone --recursive --branch v${VTK} https://gitlab.kitware.com/vtk/vtk.git /opt/src/vtk
 
 # Build VTK
 RUN mkdir -p ${VTK_DIR}
