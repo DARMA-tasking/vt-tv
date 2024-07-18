@@ -2,7 +2,9 @@ FROM pierrpebay/vt-tv:master AS build
 
 # setup lcov for coverage
 RUN apt-get update \
-  && apt-get install -y lcov
+  && DEBIAN_FRONTEND="noninteractive" apt-get install -y \
+    xvfb \
+    lcov
 
 COPY . /opt/src/vt-tv
 RUN mkdir -p /opt/build/vt-tv
