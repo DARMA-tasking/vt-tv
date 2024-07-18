@@ -17,8 +17,8 @@ function on_off() {
 # > Build variables
 # >> Path
 VTK_DIR="${VTK_DIR:-$PARENT_DIR/vtk/build}"
-C_COMPILER="${C_COMPILER:-$(which gcc || echo '')}"
-CXX_COMPILER="$(which g++ || echo '')"
+CC="${CC:-$(which gcc || echo '')}"
+CXX="${CXX:-$(which g++ || echo '')}"
 VT_TV_DIR="${VT_TV_DIR:-$CURRENT_DIR}"
 VT_TV_BUILD_DIR="${VT_TV_BUILD_DIR:-$PARENT_DIR/vt-tv/build}"
 VT_TV_OUTPUT_DIR="${VT_TV_OUTPUT_DIR:-CURRENT_DIR/output}"
@@ -53,8 +53,8 @@ if [[ "${VT_TV_RUN_TESTS_ONLY}" == "OFF" ]]; then
     -DCMAKE_VT_TV_BUILD_TYPE=${VT_TV_BUILD_TYPE} \
     -DVTK_DIR=${VTK_DIR} \
     \
-    -DCMAKE_C_COMPILER="${C_COMPILER}" \
-    -DCMAKE_CXX_COMPILER=${CXX_COMPILER} \
+    -DCMAKE_C_COMPILER="${CC}" \
+    -DCMAKE_CXX_COMPILER=${CXX} \
     \
     -DCMAKE_CXX_FLAGS="-Werror" \
     \

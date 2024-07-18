@@ -20,7 +20,7 @@ RUN VTK_DIR=/opt/build/vtk-build \
 FROM build AS test
 
 # test
-RUN bash /opt/src/vt-tv/ci/test.sh
+RUN bash /opt/src/vt-tv/test.sh
 
 FROM scratch AS export-stage
 COPY --from=test /tmp/artifacts /tmp/artifacts
