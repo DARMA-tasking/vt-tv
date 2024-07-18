@@ -1,6 +1,7 @@
 ARG OS=ubuntu
 ARG ARCH=amd64
 ARG DISTRO=22.04
+
 ARG CC=gcc-11
 ARG CXX==g++-11
 
@@ -8,7 +9,7 @@ ARG VTK_DIR=/opt/build/vtk-build
 ARG PYTHON=3.8
 ARG PYTHON_BINDINGS=0
 
-# Base
+# Base image & requirements
 FROM ${ARCH}/${OS}:${DISTRO} AS base
 
 ENV DEBIAN_FRONTEND=noninteractive
@@ -44,10 +45,9 @@ RUN apt-get update -y -q && \
   perl \
   curl \
   xvfb \
-  lcov \
-  \
+  lcov  \
+  && \
   apt-get clean && \
-  \
   rm -rf /var/lib/apt/lists/*
 
   # Sym links without version number
