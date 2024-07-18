@@ -8,7 +8,7 @@ on:
       # CONFIGURATION:
       #   type: choice
       #   description: The configuration to push
-      #   options: 
+      #   options:
       #     - ubuntu22.04-gcc11-vtk9.2.2
       BASE_IMAGE:
         default: "ubuntu:22.04"
