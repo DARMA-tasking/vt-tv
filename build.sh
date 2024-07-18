@@ -80,7 +80,7 @@ if [[ "${VT_TV_RUN_TESTS}" == "ON" ]]; then
 
   # Tests and coverage
   pushd ${VT_TV_BUILD_DIR}
-  if [[ "${COVERAGE_ENABLED}" == "ON" ]]; then
+  if [[ "${VT_TV_COVERAGE_ENABLED}" == "ON" ]]; then
     echo "> Running tests (with coverage)..."
     # Tests & Coverage
     ctest --test-dir ${BUILD_DIR} -T Test -T Coverage || true
@@ -90,7 +90,7 @@ if [[ "${VT_TV_RUN_TESTS}" == "ON" ]]; then
     #   Problem reading source file: /home/thomas/repositories/vt-tv/lib/yaml-cpp/include/yaml-cpp/node/detail/impl.h line:235  out total: 384
     #   Looks like there are more lines in the file: /home/thomas/repositories/vt-tv/lib/yaml-cpp/include/yaml-cpp/node/detail/node.h
     pushd VT_TV_OUTPUT_DIR
-    lcov --capture --directory ${BUILD_DIR} --output-file lcov_vt-tv_test.info
+    lcov --capture --directory ${VT_TV_BUILD_DIR} --output-file lcov_vt-tv_test.info
     lcov --remove lcov_vt-tv_test.info -o lcov_vt-tv_test_no_deps.info '*/lib/*' '/usr/include/*' '*/vtk/*' '*/vtk-build/*' '*/tests/*'
     lcov --summary lcov_vt-tv_test_no_deps.info
     if [[ "${VT_TV_COVERAGE_REPORT}" == "ON" ]]; then
