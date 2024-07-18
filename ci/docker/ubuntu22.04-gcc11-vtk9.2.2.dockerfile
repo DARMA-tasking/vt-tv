@@ -2,14 +2,15 @@ ARG BASE=ubuntu:22.04
 ARG CC=gcc-11
 ARG CXX=g++-11
 ARG VTK_TAG=v9.2.2
-ARG VTK_DIR=/opt/build/vtk-build
 ARG PYTHON=3.8
 
 # Base image & requirements
 FROM ${BASE} AS base
 
 ARG CC CXX VTK_TAG VTK_DIR PYTHON
+
 ENV DEBIAN_FRONTEND=noninteractive
+ENV VTK_DIR=/opt/build/vtk-build
 
 RUN apt-get update -y -q && \
   apt-get install -y -q --no-install-recommends \
@@ -93,14 +94,12 @@ RUN cmake \
   -DVTK_Group_Rendering:BOOL=OFF \
   -DBUILD_SHARED_LIBS:BOOL=ON \
   -S /opt/src/vtk -B ${VTK_DIR}
-RUN cmake --build ${VTK_DIR} -j\$(nproc)
+RUN cmake --build ${VTK_DIR} -j$(nproc)
 
 RUN echo "Base creation success"
 
 # Build
 FROM base AS build
-
-ARG VTK_DIR
 
 COPY . /opt/src/vt-tv
 RUN mkdir -p /opt/build/vt-tv
