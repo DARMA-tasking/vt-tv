@@ -51,12 +51,12 @@ RUN apt-get update -y -q && \
   rm -rf /var/lib/apt/lists/*
 
 # Put in env for CMake
-RUN export CC="$(which ${CC})"
-RUN export CXX="$(which ${CXX})"
+RUN export CC="\$(which ${CC})"
+RUN export CXX="\$(which ${CXX})"
 
 # Sym links without version number
-RUN ln -s "$(which ${CC})"  "$(which ${CC}  | cut -d- -f2)"
-RUN ln -s "$(which ${CCX})" "$(which ${CCX}  | cut -d- -f2)"
+RUN ln -s "\$(which ${CC})"  "\$(which ${CC} | cut -d- -f1)"
+RUN ln -s "\$(which ${CCX})" "\$(which ${CCX} | cut -d- -f1)"
 
 RUN if [[ -z "$PYTHON_BINDINGS" ]] ; then \
   # Setup python with conda
