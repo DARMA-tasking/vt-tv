@@ -60,7 +60,6 @@ namespace nlohmann
     static_assert(std::is_same_v<int, std::variant_alternative_t<0, VariantTypes>>);
     static_assert(std::is_same_v<double, std::variant_alternative_t<1, VariantTypes>>);
     static_assert(std::is_same_v<std::string, std::variant_alternative_t<2, VariantTypes>>);
-    static_assert(std::is_same_v<ElementIDType, std::variant_alternative_t<3, VariantTypes>>);
 
     static void to_json(json &j, const VariantTypes &value) {
       std::visit([&](auto const &arg)
@@ -70,12 +69,7 @@ namespace nlohmann
 
     static void from_json(const json &j, VariantTypes &value) {
       if (j.is_number_integer()) {
-        auto number = j.get<int64_t>();
-        if (number >= std::numeric_limits<int>::min() && number <= std::numeric_limits<int>::max()) {
-          value = static_cast<int>(number);
-        } else {
-          value = static_cast<ElementIDType>(number);
-        }
+        value = j.get<int>();
       } else if (j.is_number_float()) {
         value = j.get<double>();
       } else if (j.is_string()) {
