@@ -1,0 +1,80 @@
+name: Build and Test
+
+# Trigger the workflow on push or pull request
+on:
+  push:
+    branches:
+      - 32-vt-tv-improve-ci
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os: [ubuntu-22.04]
+        compiler: ['gcc-11']
+        arch: [amd64]
+      fail-fast: false      
+    env:
+      OUTPUT_DIR: '/tmp/out'
+    name: vt-tv build and test
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: CI Variables
+        id: vars
+        run: echo "DOCKER_TAG=$(echo ${{ github.ref }} | cut -d'/' -f3- | sed 's/[^a-z0-9_-]/__/gi')" >> $GITHUB_ENV
+
+      - name: Set up Docker Buildx
+        id: buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Inspect Builder
+        run: |
+          echo "Name:      ${{ steps.buildx.outputs.name }}"
+          echo "Endpoint:  ${{ steps.buildx.outputs.endpoint }}"
+          echo "Status:    ${{ steps.buildx.outputs.status }}"
+          echo "Flags:     ${{ steps.buildx.outputs.flags }}"
+          echo "Platforms: ${{ steps.buildx.outputs.platforms }}"
+          echo "DOCKER_TAG: ${{ env.DOCKER_TAG }}"
+
+      - name: Build the Docker Image; build and test vt-tv
+        id: docker_build
+        continue-on-error: true
+        uses: docker/build-push-action@v6
+        with:
+          push: false
+          tags: ${{ env.DOCKER_TAG }}
+          context: .
+          file: ./ci/docker/${{ matrix.os }}-${{ matrix.compiler }}-${{ matrix.arch }}.dockerfile
+          outputs: type=local,dest=${{ env.OUTPUT_DIR }}
+
+      - name: Upload Test Log Files
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: vt-tv-LastTestLogs
+          path: ${{ env.OUTPUT_DIR }}
+
+      - name: Coverage report
+        run: |
+          echo '## Coverage' >> $GITHUB_STEP_SUMMARY
+          echo '```shell' >> $GITHUB_STEP_SUMMARY
+          cat ${{ env.OUTPUT_DIR }}/tmp/artifacts/lcov-list-report.txt >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+
+      - name: Determine Job Failure or Success
+        run: |
+          echo "Success Flag with 0 pass and 1 fail:"
+          cat ${{ env.OUTPUT_DIR }}/tmp/artifacts/success_flag.txt
+          if [[  $(cat ${{ env.OUTPUT_DIR }}/tmp/artifacts/success_flag.txt) -eq 0 ]]; then exit 0; else exit 1; fi
+        shell: bash
+
+      - name: Report Test results
+        uses: phoenix-actions/test-reporting@v15
+        if: success() || failure()
+        with:
+          name: Tests report
+          path: ${{ env.OUTPUT_DIR }}/tmp/artifacts/junit-report.xml
+          reporter: java-junit
+          output-to: step-summary
