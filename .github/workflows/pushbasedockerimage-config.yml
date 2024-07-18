@@ -1,8 +1,15 @@
+#WIP
 name: Build dependencies and push base Docker Image to dockerhub (configure)
 
 on:
   workflow_dispatch:
     inputs:
+      # TODO(security): limit configurations as a list instead of multiple inputs
+      # CONFIGURATION:
+      #   type: choice
+      #   description: The configuration to push
+      #   options: 
+      #     - ubuntu22.04-gcc11-vtk9.2.2
       BASE_IMAGE:
         default: "ubuntu:22.04"
       CC:
