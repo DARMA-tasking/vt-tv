@@ -32,12 +32,6 @@ foreach(EXAMPLE_FULL ${PROJECT_EXAMPLES})
     ${PROJECT_EXAMPLE_DIR}/${EXAMPLE}.cc
   )
 
-  # Initialize VTK modules
-  vtk_module_autoinit(
-    TARGETS ${EXAMPLE}
-    MODULES ${VTK_LIBRARIES}
-  )
-
   turn_on_warnings(${EXAMPLE})
 
   target_include_directories(${EXAMPLE} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/../src)
