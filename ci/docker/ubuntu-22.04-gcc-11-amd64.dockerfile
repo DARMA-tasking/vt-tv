@@ -9,11 +9,14 @@ ARG PYTHON=3.8
 ARG PYTHON_BINDINGS=0
 
 # Base
-FROM ${ARCH}/${OS}:${DISTRO} as base
+FROM ${ARCH}/${OS}:${DISTRO} AS base
 
 ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update -y -q && \
+  apt-get install -y -q --no-install-recommends \
+  ${CC} \
+  ${CXX} \
   git \
   xz-utils \
   bzip2 \
@@ -28,8 +31,6 @@ RUN apt-get update -y -q && \
   zlib1g \
   zlib1g-dev \
   m4 \
-  ${C_COMPILER} \
-  ${CXX_COMPILER} \
   gfortran-11 \
   cmake-data \
   cmake \
@@ -118,13 +119,13 @@ RUN CMAKE_BINARY_DIR=/opt/build/vt-tv \
 RUN echo "VT-TV build success"
 
 # Unit tests
-FROM build as test
+FROM build AS test
 RUN ["chmod", "+x", "/opt/src/vt-tv/ci/test.sh"]
 RUN ["/bin/sh", "/opt/src/vt-tv/ci/test.sh"]
 RUN bash /opt/src/vt-tv/ci/docker/test.sh
 
 # Bindings tests
-FROM build as test-bindings
+FROM build AS test-bindings
 RUN ["chmod", "+x", "/opt/src/vt-tv/ci/test-bindings.sh"]
 RUN ["/bin/sh", "/opt/src/vt-tv/ci/test-bindings.sh"]
 
