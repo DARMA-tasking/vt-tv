@@ -42,7 +42,7 @@ RUN apt-get update -y -q && \
   mesa-common-dev \
   libosmesa6-dev \
   perl \
-  curl && \
+  curl \
   xvfb \
   lcov \
   \
@@ -132,3 +132,4 @@ RUN ["/bin/sh", "/opt/src/vt-tv/ci/test-bindings.sh"]
 # Artifacts
 FROM scratch AS artifacts
 COPY --from=test /tmp/artifacts /tmp/artifacts
+COPY --from=test-bindings /tmp/artifacts /tmp/artifacts
