@@ -49,8 +49,9 @@ RUN apt-get update -y -q && \
   rm -rf /var/lib/apt/lists/*
 
 # Put CC and CXX in env for CMake
-RUN export CC="\$(which ${CC})"
-RUN export CXX="\$(which ${CXX})"
+# Note: `export` is needed because command is run from another container
+ENV export CC="\$(which ${CC})"
+ENV export CXX="\$(which ${CXX})"
 
 # Setup python 3.8 with conda
 
@@ -81,8 +82,6 @@ RUN git clone --recursive --branch ${VTK_TAG} https://gitlab.kitware.com/vtk/vtk
 RUN mkdir -p ${VTK_DIR}
 WORKDIR ${VTK_DIR}
 RUN cmake \
-  -DCMAKE_C_COMPILER=\${CC} \
-  -DCMAKE_CXX_COMPILER=\${CXX} \
   -DCMAKE_BUILD_TYPE:STRING=Release \
   -DBUILD_TESTING:BOOL=OFF \
   -DVTK_OPENGL_HAS_OSMESA:BOOL=ON \
