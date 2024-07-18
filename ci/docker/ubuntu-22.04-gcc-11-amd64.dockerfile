@@ -1,16 +1,15 @@
-ARG OS=ubuntu
-ARG ARCH=amd64
-ARG DISTRO=22.04
+ARG BASE=ubuntu-22.04
 
 ARG CC=gcc-11
 ARG CXX==g++-11
 
+ARG VTK=9.2.2
 ARG VTK_DIR=/opt/build/vtk-build
 ARG PYTHON=3.8
 ARG PYTHON_BINDINGS=0
 
 # Base image & requirements
-FROM ${ARCH}/${OS}:${DISTRO} AS base
+FROM ${BASE} AS base
 
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -53,10 +52,6 @@ RUN apt-get update -y -q && \
 # Put in env for CMake
 RUN export CC="\$(which ${CC})"
 RUN export CXX="\$(which ${CXX})"
-
-# Sym links without version number
-RUN ln -s "\$(which ${CC})"  "\$(which ${CC} | cut -d- -f1)"
-RUN ln -s "\$(which ${CCX})" "\$(which ${CCX} | cut -d- -f1)"
 
 RUN if [[ -z "$PYTHON_BINDINGS" ]] ; then \
   # Setup python with conda
