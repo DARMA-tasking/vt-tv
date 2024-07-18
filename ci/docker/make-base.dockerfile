@@ -1,11 +1,14 @@
-ARG BASE=ubuntu:22.04
+# A common base docker file that can be built with some configurations
+
+# Arguments
+ARG BASE_IMAGE=ubuntu:22.04
 ARG CC=gcc-11
 ARG CXX=g++-11
 ARG VTK_TAG=v9.2.2
 ARG PYTHON=3.8
 
 # Base image & requirements
-FROM ${BASE} AS base
+FROM ${BASE_IMAGE} AS base
 
 ARG CC CXX VTK_TAG VTK_DIR PYTHON
 
@@ -98,33 +101,37 @@ RUN cmake --build ${VTK_DIR} -j$(nproc)
 
 RUN echo "Base creation success"
 
+# WIP Tests to be removed:
+  
 # Build
-FROM base AS build
+# FROM base AS build
 
-COPY . /opt/src/vt-tv
-RUN mkdir -p /opt/build/vt-tv
+# COPY . /opt/src/vt-tv
+# RUN mkdir -p /opt/build/vt-tv
 
-RUN chmod +x /opt/src/vt-tv/build.sh
-RUN CMAKE_BINARY_DIR=/opt/build/vt-tv \
-    VTK_DIR=${VTK_DIR} \
-    VT_TV_TESTS_ENABLED=ON \
-    VT_TV_COVERAGE_ENABLED=ON \
-    /opt/src/vt-tv/build.sh
+# RUN chmod +x /opt/src/vt-tv/build.sh
+# RUN CMAKE_BINARY_DIR=/opt/build/vt-tv \
+#     VTK_DIR=${VTK_DIR} \
+#     VT_TV_TESTS_ENABLED=ON \
+#     VT_TV_COVERAGE_ENABLED=ON \
+#     /opt/src/vt-tv/build.sh
 
-RUN echo "VT-TV build success"
+# RUN echo "VT-TV build success"
 
-# Unit tests
-FROM build AS test
-RUN ["chmod", "+x", "/opt/src/vt-tv/ci/test.sh"]
-RUN ["/bin/sh", "/opt/src/vt-tv/ci/test.sh"]
-RUN bash /opt/src/vt-tv/ci/docker/test.sh
+# # WIP: Test part
 
-# Bindings tests
-FROM build AS test-bindings
-RUN ["chmod", "+x", "/opt/src/vt-tv/ci/test-bindings.sh"]
-RUN ["/bin/sh", "/opt/src/vt-tv/ci/test-bindings.sh"]
+# # Unit tests
+# FROM build AS test
+# RUN ["chmod", "+x", "/opt/src/vt-tv/ci/test.sh"]
+# RUN ["/bin/sh", "/opt/src/vt-tv/ci/test.sh"]
+# RUN bash /opt/src/vt-tv/ci/docker/test.sh
 
-# Artifacts
-FROM scratch AS artifacts
-COPY --from=test /tmp/artifacts /tmp/artifacts
-COPY --from=test-bindings /tmp/artifacts /tmp/artifacts
+# # Bindings tests
+# FROM build AS test-bindings
+# RUN ["chmod", "+x", "/opt/src/vt-tv/ci/test-bindings.sh"]
+# RUN ["/bin/sh", "/opt/src/vt-tv/ci/test-bindings.sh"]
+
+# # Artifacts
+# FROM scratch AS artifacts
+# COPY --from=test /tmp/artifacts /tmp/artifacts
+# COPY --from=test-bindings /tmp/artifacts /tmp/artifacts
