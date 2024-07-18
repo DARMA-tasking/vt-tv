@@ -8,7 +8,7 @@ ENV VTK_DIR=/opt/build/vtk-build
 ENV CC=gcc-11
 ENV CXX=g++-11
 
-# setup virtual X11
+# setup virtual X11 for tests
 RUN apt-get update \
   && DEBIAN_FRONTEND="noninteractive" apt-get install -y \
       xvfb \
