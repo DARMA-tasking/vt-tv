@@ -68,8 +68,8 @@ RUN \
   \
   # Set the environment to deves on container run
   export CONDA_DEFAULT_ENV=deves \
-  export CONDA_PREFIX=/opt/conda/envs/$CONDA_DEFAULT_ENV \
-  export PATH=$PATH:$CONDA_PREFIX/bin \
+  export CONDA_PREFIX=/opt/conda/envs/\$CONDA_DEFAULT_ENV \
+  export PATH=\$PATH:\$CONDA_PREFIX/bin \
   export CONDA_AUTO_UPDATE_CONDA=false
 
 # Clone VTK source
