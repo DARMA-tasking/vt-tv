@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        configuration: [ubuntu-22.04-gcc-11]
+        configuration: [ubuntu22.04-gcc11-x64]
       fail-fast: false
     env:
       OUTPUT_DIR: '/tmp/out'
