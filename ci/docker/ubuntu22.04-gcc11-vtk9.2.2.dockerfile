@@ -49,8 +49,8 @@ RUN apt-get update -y -q && \
   rm -rf /var/lib/apt/lists/*
 
 # Put CC and CXX in env for CMake
-ENV CC="\$(which ${CC})"
-ENV CXX="\$(which ${CXX})"
+RUN export CC="\$(which ${CC})"
+RUN export CXX="\$(which ${CXX})"
 
 # Setup python 3.8 with conda
 
