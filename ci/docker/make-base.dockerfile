@@ -102,7 +102,7 @@ RUN cmake --build ${VTK_DIR} -j$(nproc)
 RUN echo "Base creation success"
 
 # WIP Tests to be removed:
-  
+
 # Build
 # FROM base AS build
 
