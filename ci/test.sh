@@ -2,6 +2,13 @@
 
 set -e
 
+export DISPLAY=:99.0
+
+# Start custom display with X virtual frame buffer
+Xvfb :99 -screen 0 1024x768x24 -nolisten tcp > /dev/null 2>&1 &
+
+sleep 1s
+
 pushd /opt/build/vt-tv
 mkdir -p /opt/src/vt-tv/output/
 success_flag=0
@@ -35,3 +42,8 @@ cp /opt/src/vt-tv/output/lcov-lines-total.txt /tmp/artifacts/
 popd
 
 popd
+
+# Clean and restore regular display
+pkill Xvfb
+rm -rf /tmp/.X11-unix/X99
+export DISPLAY=:0
