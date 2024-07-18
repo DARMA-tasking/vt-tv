@@ -65,7 +65,7 @@ namespace vt::tv::tests::unit::render {
  */
 class RenderTest :public ::testing::TestWithParam<std::string> {
 
-  virtual void SetUp() {
+  void SetUp() override {
     // Disable this test because of gcc segfault at vtkWindowToImageFilter (memcpy) if save png is true in config
     // GTEST_SKIP();
     // return;
@@ -140,11 +140,10 @@ TEST_P(RenderTest, test_render_from_config) {
       render.generate(font_size, win_size);
 
       // Verify that files are generated with 1 rank_mesh and 1 object mesh per rank
-      auto n_ranks = config["input"]["n_ranks"].as<int64_t>();
       std::string output_file_stem = config["output"]["file_stem"].as<std::string>();
 
       // Expect 1 output file per phase for both rank meshes and object meshes
-      for (int64_t i = 0; i<info.getNumPhases(); i++) {
+      for (uint64_t i = 0; i<info.getNumPhases(); i++) {
         ASSERT_TRUE(std::filesystem::exists(fmt::format("{}{}_rank_mesh_{}.vtp", output_dir, output_file_stem, i))) << fmt::format("{}{}_rank_mesh_{}.vtp", output_dir, output_file_stem, i);
         ASSERT_TRUE(std::filesystem::exists(fmt::format("{}{}_object_mesh_{}.vtp", output_dir, output_file_stem, i))) << fmt::format("{}{}_rank_mesh_{}.vtp", output_dir, output_file_stem, i);
       }
@@ -162,9 +161,9 @@ INSTANTIATE_TEST_SUITE_P(
         "ccm-example.yaml",
         "test-vt-tv.yaml"
     ),
-    [](const ::testing::TestParamInfo<std::string>& info) {
+    [](const ::testing::TestParamInfo<std::string>& in_info) {
       // test suffix as slug
-      auto suffix = std::regex_replace(info.param, std::regex("\\.yaml"), "");
+      auto suffix = std::regex_replace(in_info.param, std::regex("\\.yaml"), "");
       suffix = std::regex_replace(suffix, std::regex("-"), "_");
       return suffix;
     }

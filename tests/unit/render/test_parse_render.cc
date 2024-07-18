@@ -62,7 +62,8 @@ using ParseRender = vt::tv::utility::ParseRender;
  * Provides unit tests for the vt::tv::utility::ParseRender class to test with config file input
  */
 class ParseRenderTest :public ::testing::TestWithParam<std::string> {
-  virtual void SetUp() {
+
+  void SetUp() override {
     // Disable this test because of gcc segfault at vtkWindowToImageFilter (memcpy) if save png is true in config
     // GTEST_SKIP();
     // return;
@@ -91,9 +92,9 @@ INSTANTIATE_TEST_SUITE_P(
         "ccm-example.yaml",
         "test-vt-tv.yaml"
     ),
-    [](const ::testing::TestParamInfo<std::string>& info) {
+    [](const ::testing::TestParamInfo<std::string>& in_info) {
       // test suffix as slug
-      auto suffix = std::regex_replace(info.param, std::regex("\\.yaml"), "");
+      auto suffix = std::regex_replace(in_info.param, std::regex("\\.yaml"), "");
       suffix = std::regex_replace(suffix, std::regex("-"), "_");
       return suffix;
     }
