@@ -24,7 +24,9 @@ if (NOT TARGET brotli)
 endif()
 
 set(YAML_LIBRARY yaml-cpp)
-add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/lib/yaml-cpp)
+if(NOT TARGET ${YAML_LIBRARY})
+  add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/lib/yaml-cpp)
+endif()
 
 include(cmake/load_vtk_package.cmake)
 
