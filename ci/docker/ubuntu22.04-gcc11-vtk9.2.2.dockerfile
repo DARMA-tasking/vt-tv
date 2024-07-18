@@ -8,7 +8,6 @@ ARG CXX==g++-11
 ARG VTK_TAG=v9.2.2
 ARG VTK_DIR=/opt/build/vtk-build
 ARG PYTHON=3.8
-ARG PYTHON_BINDINGS=0
 
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -52,9 +51,8 @@ RUN apt-get update -y -q && \
 RUN export CC="\$(which ${CC})"
 RUN export CXX="\$(which ${CXX})"
 
-RUN if [[ -z "${PYTHON_BINDINGS}" ]] ; then \
-  # Setup python with conda
-  #
+# Setup python with conda
+RUN \
   # Download and install Miniconda
   curl -LO https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh && \
   bash Miniconda3-latest-Linux-x86_64.sh -b -p /opt/conda && \
@@ -72,8 +70,7 @@ RUN if [[ -z "${PYTHON_BINDINGS}" ]] ; then \
   export CONDA_DEFAULT_ENV=deves \
   export CONDA_PREFIX=/opt/conda/envs/$CONDA_DEFAULT_ENV \
   export PATH=$PATH:$CONDA_PREFIX/bin \
-  export CONDA_AUTO_UPDATE_CONDA=false \
-; fi
+  export CONDA_AUTO_UPDATE_CONDA=false
 
 # Clone VTK source
 RUN mkdir -p /opt/src/vtk
