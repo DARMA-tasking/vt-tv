@@ -51,7 +51,7 @@ RUN apt-get update -y -q && \
 RUN export CC="\$(which ${CC})"
 RUN export CXX="\$(which ${CXX})"
 
-RUN if [[ -z "$PYTHON_BINDINGS" ]] ; then \
+RUN if [[ -z "${PYTHON_BINDINGS}" ]] ; then \
   # Setup python with conda
   #
   # Download and install Miniconda
@@ -60,7 +60,7 @@ RUN if [[ -z "$PYTHON_BINDINGS" ]] ; then \
   rm Miniconda3-latest-Linux-x86_64.sh \
   \
   # Update PATH so that conda and the installed packages are usable
-  export PATH=/opt/conda/bin:$PATH \
+  export PATH=/opt/conda/bin:\$PATH \
   \
   # Create a new environment and install necessary packages
   RUN conda create -y -n deves python=${PYTHON} && \
@@ -71,7 +71,8 @@ RUN if [[ -z "$PYTHON_BINDINGS" ]] ; then \
   export CONDA_DEFAULT_ENV=deves \
   export CONDA_PREFIX=/opt/conda/envs/$CONDA_DEFAULT_ENV \
   export PATH=$PATH:$CONDA_PREFIX/bin \
-  export CONDA_AUTO_UPDATE_CONDA=false
+  export CONDA_AUTO_UPDATE_CONDA=false \
+fi
 
 # Clone VTK source
 RUN mkdir -p /opt/src/vtk
