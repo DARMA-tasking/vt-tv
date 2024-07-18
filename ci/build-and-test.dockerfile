@@ -1,5 +1,8 @@
 FROM pierrpebay/vt-tv:master AS build
 
+ENV CC=${which(gcc-11)} \
+  CXX=${which(g++-11)}
+
 # setup virtual X11 for tests + lcov for coverage
 RUN apt-get update \
   && DEBIAN_FRONTEND="noninteractive" apt-get install -y \
@@ -12,9 +15,9 @@ RUN mkdir -p /opt/build/vt-tv
 # build
 RUN chmod +x /opt/src/vt-tv/build.sh
 RUN VTK_DIR=/opt/build/vtk-build \
-    VT_TV_BUILD_TYPE=Release\
-    VT_TV_COVERAGE_ENABLED=1 \
+    VT_TV_BUILD_TYPE=Release \
     VT_TV_BUILD_DIR=/opt/build/vt-tv \
+    VT_TV_COVERAGE_ENABLED=ON \
     /opt/src/vt-tv/build.sh
 
 FROM build AS test
