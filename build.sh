@@ -3,7 +3,7 @@
 CURRENT_DIR="$(dirname -- "$(realpath -- "$0")")" # Current directory
 PARENT_DIR="$(dirname "$CURRENT_DIR")"
 
-# A function to convert 0,1,False etc strings to ON or OFF
+# A function to convert a value to ON or OFF
 function on_off() {
   case $1 in
     TRUE|true|True|ON|on|On|1|YES|yes|Yes|Y|y) echo "ON" ;;
