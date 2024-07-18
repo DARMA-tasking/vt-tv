@@ -1,12 +1,14 @@
 ARG BASE=ubuntu:22.04
-ARG CC=gcc-11
-ARG CXX==g++-11
-ARG VTK=9.2.2
-ARG PYTHON=3.8
-ARG PYTHON_BINDINGS=0
 
 # Base image & requirements
 FROM ${BASE} AS base
+
+ARG CC=gcc-11
+ARG CXX==g++-11
+ARG VTK=9.2.2
+ARG VTK_DIR=/opt/build/vtk-build
+ARG PYTHON=3.8
+ARG PYTHON_BINDINGS=0
 
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -46,7 +48,7 @@ RUN apt-get update -y -q && \
   apt-get clean && \
   rm -rf /var/lib/apt/lists/*
 
-# Put in env for CMake
+# Put CC and CXX in env for CMake
 RUN export CC="\$(which ${CC})"
 RUN export CXX="\$(which ${CXX})"
 
@@ -78,8 +80,8 @@ RUN mkdir -p /opt/src/vtk
 RUN git clone --recursive --branch ${VTK} https://gitlab.kitware.com/vtk/vtk.git /opt/src/vtk
 
 # Build VTK
-RUN mkdir -p /opt/build/vtk
-WORKDIR /opt/build/vtk
+RUN mkdir -p ${VTK_DIR}
+WORKDIR ${VTK_DIR}
 RUN cmake \
   -DCMAKE_BUILD_TYPE:STRING=Release \
   -DBUILD_TESTING:BOOL=OFF \
@@ -91,20 +93,22 @@ RUN cmake \
 	-DVTK_USE_SDL2:BOOL=OFF \
   -DVTK_Group_Rendering:BOOL=OFF \
   -DBUILD_SHARED_LIBS:BOOL=ON \
-  -S /opt/src/vtk -B /opt/build/vtk
-RUN cmake --build /opt/build/vtk -j$(nproc)
+  -S /opt/src/vtk -B ${VTK_DIR}
+RUN cmake --build ${VTK_DIR} -j$(nproc)
 
 RUN echo "Base creation success"
 
 # Build
 FROM base AS build
 
+ARG VTK_DIR
+
 COPY . /opt/src/vt-tv
 RUN mkdir -p /opt/build/vt-tv
 
 RUN chmod +x /opt/src/vt-tv/build.sh
 RUN CMAKE_BINARY_DIR=/opt/build/vt-tv \
-    VTK_DIR=/opt/build/vtk \
+    VTK_DIR=${VTK_DIR} \
     VT_TV_TESTS_ENABLED=ON \
     VT_TV_COVERAGE_ENABLED=ON \
     /opt/src/vt-tv/build.sh
