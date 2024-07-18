@@ -35,6 +35,8 @@ file(
   "*.h"
 )
 
+include(turn_on_warnings)
+
 # Macro to link vt-tv, gtest and gmock to a target
 macro(vt_tv_link_target target)
   target_include_directories(${target} PRIVATE
@@ -55,6 +57,8 @@ if (VT_TV_TESTS_ALL_IN_ONE)
     ${TEST_HEADER_FILES}
     ${TEST_SOURCE_FILES}
   )
+
+  turn_on_warnings(AllTests)
 
   # Initialize VTK modules
   vtk_module_autoinit(
@@ -83,6 +87,8 @@ else()
       ${TEST_HEADER_FILES}
       ${TEST_FILENAME}
     )
+
+    turn_on_warnings(${TEST})
 
     # Initialize VTK modules
     vtk_module_autoinit(
