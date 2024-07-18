@@ -100,8 +100,6 @@ RUN echo "Base creation success"
 # Build
 FROM base AS build
 
-ARG VTK_DIR
-
 COPY . /opt/src/vt-tv
 RUN mkdir -p /opt/build/vt-tv
 
