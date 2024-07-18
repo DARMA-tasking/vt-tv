@@ -1,13 +1,13 @@
 ARG BASE=ubuntu:22.04
-
-# Base image & requirements
-FROM ${BASE} AS base
-
 ARG CC=gcc-11
 ARG CXX==g++-11
 ARG VTK_TAG=v9.2.2
 ARG VTK_DIR=/opt/build/vtk-build
 ARG PYTHON=3.8
+
+# Base image & requirements
+FROM ${BASE} AS base
+ARG CC CXX VTK_TAG VTK_DIR PYTHON
 
 ENV DEBIAN_FRONTEND=noninteractive
 
