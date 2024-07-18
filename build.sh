@@ -66,7 +66,9 @@ help() {
 
   Examples:
           build.sh --tests=1 --coverage=1 --build=RELEASE --clean --run-tests
+            Build with tests and cioverage + run tests with coverage report
           build.sh --no-build --run-tests=1 --coverage=1
+            Runs tests without rebuilding
 EOF
   exit 1;
 }
