@@ -2,7 +2,6 @@ ARG BASE=ubuntu:22.04
 ARG CC=gcc-11
 ARG CXX==g++-11
 ARG VTK=9.2.2
-ARG VTK_DIR=/opt/build/vtk-build
 ARG PYTHON=3.8
 ARG PYTHON_BINDINGS=0
 
@@ -52,35 +51,35 @@ RUN export CC="\$(which ${CC})"
 RUN export CXX="\$(which ${CXX})"
 
 RUN if [[ -z "${PYTHON_BINDINGS}" ]] ; then \
-    # Setup python with conda
-    #
-    # Download and install Miniconda
-    curl -LO https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh && \
-    bash Miniconda3-latest-Linux-x86_64.sh -b -p /opt/conda && \
-    rm Miniconda3-latest-Linux-x86_64.sh \
-    \
-    # Update PATH so that conda and the installed packages are usable
-    export PATH=/opt/conda/bin:\$PATH \
-    \
-    # Create a new environment and install necessary packages
-    RUN conda create -y -n deves python=${PYTHON} && \
-    echo "source activate deves" > ~/.bashrc && \
-    /bin/bash -c ". /opt/conda/etc/profile.d/conda.sh && conda activate deves && pip install nanobind" \
-    \
-    # Set the environment to deves on container run
-    export CONDA_DEFAULT_ENV=deves \
-    export CONDA_PREFIX=/opt/conda/envs/$CONDA_DEFAULT_ENV \
-    export PATH=$PATH:$CONDA_PREFIX/bin \
-    export CONDA_AUTO_UPDATE_CONDA=false \
-  ; fi
+  # Setup python with conda
+  #
+  # Download and install Miniconda
+  curl -LO https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh && \
+  bash Miniconda3-latest-Linux-x86_64.sh -b -p /opt/conda && \
+  rm Miniconda3-latest-Linux-x86_64.sh \
+  \
+  # Update PATH so that conda and the installed packages are usable
+  export PATH=/opt/conda/bin:\$PATH \
+  \
+  # Create a new environment and install necessary packages
+  RUN conda create -y -n deves python=${PYTHON} && \
+  echo "source activate deves" > ~/.bashrc && \
+  /bin/bash -c ". /opt/conda/etc/profile.d/conda.sh && conda activate deves && pip install nanobind" \
+  \
+  # Set the environment to deves on container run
+  export CONDA_DEFAULT_ENV=deves \
+  export CONDA_PREFIX=/opt/conda/envs/$CONDA_DEFAULT_ENV \
+  export PATH=$PATH:$CONDA_PREFIX/bin \
+  export CONDA_AUTO_UPDATE_CONDA=false \
+; fi
 
 # Clone VTK source
 RUN mkdir -p /opt/src/vtk
 RUN git clone --recursive --branch ${VTK} https://gitlab.kitware.com/vtk/vtk.git /opt/src/vtk
 
 # Build VTK
-RUN mkdir -p ${VTK_DIR}
-WORKDIR ${VTK_DIR}
+RUN mkdir -p /opt/build/vtk
+WORKDIR /opt/build/vtk
 RUN cmake \
   -DCMAKE_BUILD_TYPE:STRING=Release \
   -DBUILD_TESTING:BOOL=OFF \
@@ -92,8 +91,8 @@ RUN cmake \
 	-DVTK_USE_SDL2:BOOL=OFF \
   -DVTK_Group_Rendering:BOOL=OFF \
   -DBUILD_SHARED_LIBS:BOOL=ON \
-  -S /opt/src/vtk -B ${VTK_DIR}
-RUN cmake --build /opt/build/vtk-build -j$(nproc)
+  -S /opt/src/vtk -B /opt/build/vtk
+RUN cmake --build /opt/build/vtk -j$(nproc)
 
 RUN echo "Base creation success"
 
@@ -105,7 +104,7 @@ RUN mkdir -p /opt/build/vt-tv
 
 RUN chmod +x /opt/src/vt-tv/build.sh
 RUN CMAKE_BINARY_DIR=/opt/build/vt-tv \
-    VTK_DIR=${VTK_DIR} \
+    VTK_DIR=/opt/build/vtk \
     VT_TV_TESTS_ENABLED=ON \
     VT_TV_COVERAGE_ENABLED=ON \
     /opt/src/vt-tv/build.sh
