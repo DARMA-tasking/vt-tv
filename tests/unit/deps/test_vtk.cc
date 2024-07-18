@@ -64,7 +64,8 @@ namespace vt::tv::tests::unit::deps {
  * Provides unit tests for the Vtk functions called from vt-tv
  */
 class VtkTest :public ::testing::Test {
-  virtual void SetUp() {
+
+  void SetUp() override {
     // This test is not testing vt-tv src.
     // That's why it is skipped. But it might be useful locally.
     GTEST_SKIP() << "Skipping VTK basic tests";

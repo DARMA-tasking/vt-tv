@@ -89,9 +89,9 @@ class Generator {
         /**
          * Make a map of new phases
          */
-        static const std::unordered_map<PhaseType, PhaseWork> makePhases(std::unordered_map<ElementIDType, ObjectWork> objects, const int num_phases = rand() % 10) {
+        static const std::unordered_map<PhaseType, PhaseWork> makePhases(std::unordered_map<ElementIDType, ObjectWork> objects, const uint64_t num_phases = rand() % 10) {
             auto phase_info_map = std::unordered_map<PhaseType, PhaseWork>();
-            for (PhaseType phase_id = 0; phase_id < num_phases; phase_id++) {
+            for (uint64_t phase_id = 0; phase_id < num_phases; phase_id++) {
                 phase_info_map.insert(std::make_pair(phase_id, makePhase(phase_id, objects)));
             }
             return phase_info_map;
@@ -100,7 +100,7 @@ class Generator {
         /**
          * Make a map of new ranks
          */
-        static const std::unordered_map<NodeType, Rank> makeRanks(std::unordered_map<ElementIDType, ObjectWork> objects, int num_ranks = rand() % 10, int num_phases = rand() % 10) {
+        static const std::unordered_map<NodeType, Rank> makeRanks(std::unordered_map<ElementIDType, ObjectWork> objects, int16_t num_ranks = rand() % 10, uint64_t num_phases = rand() % 10) {
             auto rank_map = std::unordered_map<NodeType, Rank>();
             for (NodeType rank_id = 0; rank_id < num_ranks; rank_id++) {
                 auto rank = Rank(rank_id, makePhases(objects, num_phases));
@@ -126,7 +126,7 @@ class Generator {
         }
 
         static std::unordered_map<std::string, QOIVariantTypes> makeQOIVariants (
-            int num = rand() % 10,
+            uint64_t num = rand() % 10,
             std::string key_prefix = "attr_",
             std::string value_suffix = "_value"
         ) {
@@ -140,7 +140,7 @@ class Generator {
         /**
          * Make an Info instance
          */
-        static const Info makeInfo(int num_objects = rand() % 100, int num_ranks = rand() % 10, int num_phases = 10) {
+        static const Info makeInfo(int num_objects = rand() % 100, int num_ranks = rand() % 10, uint64_t num_phases = 10) {
             auto objects = makeObjects(num_objects);
             auto ranks = makeRanks(objects, num_ranks, num_phases);
             return Info(makeObjectInfoMap(objects), ranks);
@@ -166,13 +166,13 @@ class Generator {
 
             Info info = Info();
 
-            #ifdef VT_TV_N_THREADS
-                const int threads = VT_TV_N_THREADS;
-            #else
-                const int threads = 2;
-            #endif
             #ifdef VT_TV_OPENMP_ENABLED
             #if VT_TV_OPENMP_ENABLED
+                #ifdef VT_TV_N_THREADS
+                const int threads = VT_TV_N_THREADS;
+                #else
+                const int threads = 2;
+                #endif // VT_TV_N_THREADS
                 omp_set_num_threads(threads);
                 fmt::print("vt-tv: Using {} threads\n", threads);
                 # pragma omp parallel for

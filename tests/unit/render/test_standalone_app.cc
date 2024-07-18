@@ -62,7 +62,8 @@ namespace vt::tv::tests::unit::render {
  * It is similar to the ParseRender tests except it runs as a separate process.
  */
 class StandaloneAppTest :public ::testing::TestWithParam<std::tuple<std::string, int>> {
-  virtual void SetUp() {
+
+  void SetUp() override {
     // This test is not testing vt-tv src.
     // That's why it is skipped. But it might be useful locally.
     GTEST_SKIP() << "Skipping standalone app tests";
@@ -138,9 +139,9 @@ INSTANTIATE_TEST_SUITE_P(
         std::make_tuple<std::string, int>("ccm-example.yaml", 1)
         // std::make_tuple<std::string, int>("test-vt-tv.yaml", 1)
     ),
-    [](const ::testing::TestParamInfo<std::tuple<std::string, int>>& info) {
+    [](const ::testing::TestParamInfo<std::tuple<std::string, int>>& in_info) {
       // test suffix as slug
-      auto suffix = std::regex_replace(std::get<0>(info.param), std::regex("\\.yaml"), "");
+      auto suffix = std::regex_replace(std::get<0>(in_info.param), std::regex("\\.yaml"), "");
       suffix = std::regex_replace(suffix, std::regex("-"), "_");
       return suffix;
     }
