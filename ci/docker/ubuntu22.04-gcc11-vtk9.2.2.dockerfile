@@ -1,13 +1,14 @@
 ARG BASE=ubuntu:22.04
+
+# Base image & requirements
+FROM ${BASE} AS base
+
 ARG CC=gcc-11
 ARG CXX==g++-11
 ARG VTK_TAG=v9.2.2
 ARG VTK_DIR=/opt/build/vtk-build
 ARG PYTHON=3.8
 ARG PYTHON_BINDINGS=0
-
-# Base image & requirements
-FROM ${BASE} AS base
 
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -99,6 +100,8 @@ RUN echo "Base creation success"
 
 # Build
 FROM base AS build
+
+ARG VTK_DIR
 
 COPY . /opt/src/vt-tv
 RUN mkdir -p /opt/build/vt-tv
