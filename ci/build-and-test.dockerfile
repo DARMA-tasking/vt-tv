@@ -11,9 +11,11 @@ RUN mkdir -p /opt/build/vt-tv
 
 # build
 RUN chmod +x /opt/src/vt-tv/build.sh
-RUN VT_TV_BUILD_TYPE=Release\
+RUN VTK_DIR=/opt/build/vtk-build \
+    VT_TV_BUILD_TYPE=Release\
     VT_TV_COVERAGE_ENABLED=1 \
-    ./build.sh
+    VT_TV_BUILD_DIR=/opt/build/vt-tv \
+    /opt/src/vt-tv/build.sh
 
 FROM build AS test
 
