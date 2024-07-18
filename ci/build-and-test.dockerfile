@@ -1,7 +1,7 @@
 FROM pierrpebay/vt-tv:master AS build
 
-ENV CC=${which(gcc-11)} \
-  CXX=${which(g++-11)}
+ENV CC=/usr/bin/gcc-11 \
+  CXX=/usr/bin/g++-11
 
 # setup virtual X11 for tests + lcov for coverage
 RUN apt-get update \
