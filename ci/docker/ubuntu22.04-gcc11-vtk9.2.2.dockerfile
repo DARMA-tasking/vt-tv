@@ -62,7 +62,7 @@ RUN curl -LO https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.
 ENV PATH="/opt/conda/bin:${PATH}"
 
 # Create a new environment and install necessary packages
-RUN conda create -y -n deves python={PYTHON} && \
+RUN conda create -y -n deves python=${PYTHON} && \
     echo "source activate deves" > ~/.bashrc && \
     /bin/bash -c ". /opt/conda/etc/profile.d/conda.sh && conda activate deves && pip install nanobind"
 
