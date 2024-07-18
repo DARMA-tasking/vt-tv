@@ -7,8 +7,8 @@ ARG PYTHON=3.8
 
 # Base image & requirements
 FROM ${BASE} AS base
-ARG CC CXX VTK_TAG VTK_DIR PYTHON
 
+ARG CC CXX VTK_TAG VTK_DIR PYTHON
 ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update -y -q && \
@@ -91,7 +91,7 @@ RUN cmake \
   -DVTK_Group_Rendering:BOOL=OFF \
   -DBUILD_SHARED_LIBS:BOOL=ON \
   -S /opt/src/vtk -B ${VTK_DIR}
-RUN cmake --build ${VTK_DIR} -j$(nproc)
+RUN cmake --build ${VTK_DIR} -j\$(nproc)
 
 RUN echo "Base creation success"
 
