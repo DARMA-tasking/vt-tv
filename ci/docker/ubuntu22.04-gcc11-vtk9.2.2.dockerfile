@@ -51,26 +51,26 @@ RUN apt-get update -y -q && \
 RUN export CC="\$(which ${CC})"
 RUN export CXX="\$(which ${CXX})"
 
-# Setup python with conda
-RUN \
-  # Download and install Miniconda
-  curl -LO https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh && \
-  bash Miniconda3-latest-Linux-x86_64.sh -b -p /opt/conda && \
-  rm Miniconda3-latest-Linux-x86_64.sh \
-  \
-  # Update PATH so that conda and the installed packages are usable
-  export PATH=/opt/conda/bin:\$PATH \
-  \
-  # Create a new environment and install necessary packages
-  RUN conda create -y -n deves python=${PYTHON} && \
-  echo "source activate deves" > ~/.bashrc && \
-  /bin/bash -c ". /opt/conda/etc/profile.d/conda.sh && conda activate deves && pip install nanobind" \
-  \
-  # Set the environment to deves on container run
-  export CONDA_DEFAULT_ENV=deves \
-  export CONDA_PREFIX=/opt/conda/envs/\$CONDA_DEFAULT_ENV \
-  export PATH=\$PATH:\$CONDA_PREFIX/bin \
-  export CONDA_AUTO_UPDATE_CONDA=false
+# Setup python 3.8 with conda
+
+# Download and install Miniconda
+RUN curl -LO https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh && \
+    bash Miniconda3-latest-Linux-x86_64.sh -b -p /opt/conda && \
+    rm Miniconda3-latest-Linux-x86_64.sh
+
+# Update PATH so that conda and the installed packages are usable
+ENV PATH="/opt/conda/bin:${PATH}"
+
+# Create a new environment and install necessary packages
+RUN conda create -y -n deves python={PYTHON} && \
+    echo "source activate deves" > ~/.bashrc && \
+    /bin/bash -c ". /opt/conda/etc/profile.d/conda.sh && conda activate deves && pip install nanobind"
+
+# Set the environment to deves on container run
+ENV CONDA_DEFAULT_ENV=deves
+ENV CONDA_PREFIX=/opt/conda/envs/$CONDA_DEFAULT_ENV
+ENV PATH=$PATH:$CONDA_PREFIX/bin
+ENV CONDA_AUTO_UPDATE_CONDA=false
 
 # Clone VTK source
 RUN mkdir -p /opt/src/vtk
