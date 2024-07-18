@@ -52,31 +52,31 @@ RUN export CC="\$(which ${CC})"
 RUN export CXX="\$(which ${CXX})"
 
 RUN if [[ -z "${PYTHON_BINDINGS}" ]] ; then \
-  # Setup python with conda
-  #
-  # Download and install Miniconda
-  curl -LO https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh && \
-  bash Miniconda3-latest-Linux-x86_64.sh -b -p /opt/conda && \
-  rm Miniconda3-latest-Linux-x86_64.sh \
-  \
-  # Update PATH so that conda and the installed packages are usable
-  export PATH=/opt/conda/bin:\$PATH \
-  \
-  # Create a new environment and install necessary packages
-  RUN conda create -y -n deves python=${PYTHON} && \
-  echo "source activate deves" > ~/.bashrc && \
-  /bin/bash -c ". /opt/conda/etc/profile.d/conda.sh && conda activate deves && pip install nanobind" \
-  \
-  # Set the environment to deves on container run
-  export CONDA_DEFAULT_ENV=deves \
-  export CONDA_PREFIX=/opt/conda/envs/$CONDA_DEFAULT_ENV \
-  export PATH=$PATH:$CONDA_PREFIX/bin \
-  export CONDA_AUTO_UPDATE_CONDA=false \
-fi
+    # Setup python with conda
+    #
+    # Download and install Miniconda
+    curl -LO https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh && \
+    bash Miniconda3-latest-Linux-x86_64.sh -b -p /opt/conda && \
+    rm Miniconda3-latest-Linux-x86_64.sh \
+    \
+    # Update PATH so that conda and the installed packages are usable
+    export PATH=/opt/conda/bin:\$PATH \
+    \
+    # Create a new environment and install necessary packages
+    RUN conda create -y -n deves python=${PYTHON} && \
+    echo "source activate deves" > ~/.bashrc && \
+    /bin/bash -c ". /opt/conda/etc/profile.d/conda.sh && conda activate deves && pip install nanobind" \
+    \
+    # Set the environment to deves on container run
+    export CONDA_DEFAULT_ENV=deves \
+    export CONDA_PREFIX=/opt/conda/envs/$CONDA_DEFAULT_ENV \
+    export PATH=$PATH:$CONDA_PREFIX/bin \
+    export CONDA_AUTO_UPDATE_CONDA=false \
+  ; fi
 
 # Clone VTK source
 RUN mkdir -p /opt/src/vtk
-RUN git clone --recursive --branch v9.2.2 https://gitlab.kitware.com/vtk/vtk.git /opt/src/vtk
+RUN git clone --recursive --branch ${VTK} https://gitlab.kitware.com/vtk/vtk.git /opt/src/vtk
 
 # Build VTK
 RUN mkdir -p ${VTK_DIR}
