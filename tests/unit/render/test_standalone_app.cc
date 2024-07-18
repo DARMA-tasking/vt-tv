@@ -63,6 +63,11 @@ namespace vt::tv::tests::unit::render {
  */
 class StandaloneAppTest :public ::testing::TestWithParam<std::tuple<std::string, int>> {
   virtual void SetUp() {
+    // This test is not testing vt-tv src.
+    // That's why it is skipped. But it might be useful locally.
+    GTEST_SKIP() << "Skipping standalone app tests";
+    return;
+
     // Make the output directory for these tests
     std::filesystem::create_directory(fmt::format("{}/output", SRC_DIR));
     std::filesystem::create_directory(fmt::format("{}/output/tests", SRC_DIR));
