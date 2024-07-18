@@ -80,6 +80,8 @@ RUN git clone --recursive --branch ${VTK_TAG} https://gitlab.kitware.com/vtk/vtk
 RUN mkdir -p ${VTK_DIR}
 WORKDIR ${VTK_DIR}
 RUN cmake \
+  -DCMAKE_C_COMPILER=\$CC \
+  -DCMAKE_CXX_COMPILER=\$CXX \
   -DCMAKE_BUILD_TYPE:STRING=Release \
   -DBUILD_TESTING:BOOL=OFF \
   -DVTK_OPENGL_HAS_OSMESA:BOOL=ON \
