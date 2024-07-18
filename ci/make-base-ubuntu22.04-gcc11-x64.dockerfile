@@ -61,12 +61,13 @@ ENV CONDA_AUTO_UPDATE_CONDA=false
 RUN mkdir -p /opt/src/vtk
 RUN git clone --recursive --branch v9.2.2 https://gitlab.kitware.com/vtk/vtk.git /opt/src/vtk
 
+ENV CC=gcc-11 \
+  CXX=g++-11
+
 # Build VTK
 RUN mkdir -p /opt/build/vtk-build
 WORKDIR /opt/build/vtk-build
 RUN cmake \
-  -DCMAKE_C_COMPILER=gcc-11 \
-  -DCMAKE_CXX_COMPILER=g++-11 \
   -DCMAKE_BUILD_TYPE:STRING=Release \
   -DBUILD_TESTING:BOOL=OFF \
   -DVTK_OPENGL_HAS_OSMESA:BOOL=ON \
