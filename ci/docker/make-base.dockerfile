@@ -55,8 +55,8 @@ RUN apt-get update -y -q && \
 
 # Put CC and CXX in env for CMake
 # Note: `export` is needed because command is run from another container
-ENV CC="$(which ${CC})"
-ENV CXX="$(which ${CXX})"
+ENV export CC="$(which ${CC})"
+ENV export CXX="$(which ${CXX})"
 
 # Setup python 3.8 with conda
 
