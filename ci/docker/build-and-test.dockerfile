@@ -10,15 +10,11 @@ RUN apt-get update && apt-get install -y \
 COPY . /opt/src/vt-tv
 RUN mkdir -p /opt/build/vt-tv
 
-# Load CC, CXX and VTK_DIR from env file in base image volume1
+# Load variables to bash (CC, CXX, VTK_DIR)
 VOLUME /vol1
-RUN set -a && source /vol1/.env && set +a
+RUN /bin/bash -c "set -a && source /vol1/.env && set +a"
 
 # Build
-RUN BUILD_CONFIG=${BASE_IMAGE}|cut -d: -f2'_-' read -r -a CONFIG <<< "${{ matrix.BUILD_CONFIG }}"
-ENV export CC="$(which $BUILD_CONFIG[0])"
-ENV export CXX="$(which ${CXX})"
-
 FROM base AS build
 RUN chmod +x /opt/src/vt-tv/build.sh
 RUN CMAKE_BINARY_DIR=/opt/build/vt-tv \
