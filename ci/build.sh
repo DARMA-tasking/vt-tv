@@ -1,5 +1,5 @@
-# Call root build script with specific path
-# and enable tests and coverage
+# Calls build script with CI configuration
+# (Specific path, enable tests and coverage)
 CMAKE_BINARY_DIR=/opt/build/vt-tv \
     VTK_DIR=/opt/build/vtk \
     VT_TV_TESTS_ENABLED=ON \
