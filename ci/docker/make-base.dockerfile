@@ -59,11 +59,11 @@ RUN apt-get update -y -q && \
 # ENV export CXX="$(which ${CXX})"
 
 # If ENV export ... not correctly passed to the ENV of the dependent image, try
-VOLUME /volume1
-RUN mkdir /volume1 && \
-  echo 'CC="$(which ${CC})"' >> /volume1/.env && \
-  echo 'CXX="$(which ${CXX})"' >> /volume1/.env && \
-  echo 'VTK_DIR="$VTK_DIR"' >> /volume1/.env && \
+RUN mkdir /vol1 && \
+  touch /vol1/.env && \
+  echo 'CC="$(which ${CC})"' >> /vol1/.env && \
+  echo 'CXX="$(which ${CXX})"' >> /vol1/.env && \
+  echo 'VTK_DIR="$VTK_DIR"' >> /vol1/.env && \
   # automatically export all variables
   set -a && \
   source .env && \
