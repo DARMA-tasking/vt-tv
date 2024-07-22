@@ -1,4 +1,5 @@
-# A common base docker file that can be built with some configurations
+# Docker instructions to build an image with some arguments to specify compilers, python and VTK versions.
+# @see .github/workflows/pushbasedockerimage.yml
 
 # Arguments
 ARG BASE_IMAGE=ubuntu:22.04

@@ -13,6 +13,10 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
+      matrix:
+        image:
+        - ubuntu_22.04-gcc_11-vtk_9.2.2-py_3.8
+        - ubuntu_22.04-clang_14-vtk_9.2.2-py_3.8
     env:
       OUTPUT_DIR: '/tmp/out'
     name: vt-tv build and test
@@ -47,32 +51,28 @@ jobs:
           file: ./ci/build-and-test.dockerfile
           outputs: type=local,dest=${{ env.OUTPUT_DIR }}
 
-      - name: Upload Test Log Files
+      - name: Upload artifacts
         uses: actions/upload-artifact@v4
         if: always()
         with:
           name: vt-tv-LastTestLogs
           path: ${{ env.OUTPUT_DIR }}
 
-      - name: Coverage report
+      - name: Unit tests
+        uses: phoenix-actions/test-reporting@v15
+        if: always() 
+        with:
+          name: Tests report
+          path: ${{ env.OUTPUT_DIR }}/tmp/artifacts/junit-report.xml
+          reporter: java-junit
+          output-to: step-summary
+
+      - name: Coverage
+        if: always() 
         run: |
           echo '## Coverage' >> $GITHUB_STEP_SUMMARY
           echo '```shell' >> $GITHUB_STEP_SUMMARY
           cat ${{ env.OUTPUT_DIR }}/tmp/artifacts/lcov-list-report.txt >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
 
-      - name: Determine Job Failure or Success
-        run: |
-          echo "Success Flag with 0 pass and 1 fail:"
-          cat ${{ env.OUTPUT_DIR }}/tmp/artifacts/success_flag.txt
-          if [[  $(cat ${{ env.OUTPUT_DIR }}/tmp/artifacts/success_flag.txt) -eq 0 ]]; then exit 0; else exit 1; fi
-        shell: bash
-
-      - name: Report Test results
-        uses: phoenix-actions/test-reporting@v15
-        if: success() || failure()
-        with:
-          name: Tests report
-          path: ${{ env.OUTPUT_DIR }}/tmp/artifacts/junit-report.xml
-          reporter: java-junit
-          output-to: step-summary
+      
