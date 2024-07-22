@@ -4,31 +4,24 @@ name: Build dependencies and push base Docker Image to dockerhub (configure)
 on:
   workflow_dispatch:
     inputs:
-      # TODO(security): limit configurations as a list instead of multiple inputs
-      # CONFIGURATION:
-      #   type: choice
-      #   description: The configuration to push
-      #   options:
-      #     - ubuntu22.04-gcc11-vtk9.2.2
-      BASE_IMAGE:
-        default: "ubuntu:22.04"
-      CC:
-        default: gcc-11
-      CXX:
-        default: g++-11
-      PYTHON:
-        description: The python version to use in the inner 'deves' conda environment
-        default: "3.8"
-      VTK_TAG:
-        description: The VTK tag to build
-        default: "v9.2.2"
+      BUILD_CONFIG:
+        type: choice
+        description: The configuration to build as a combination of os, compiler, vtk and python versions
+        options:
+        - ubuntu_22.04-gcc_11-vtk_9.2.2-py_38
+        - ubuntu_22.04-clang_11-vtk_9.2.2-py_38
+        default: ubuntu_22.04-gcc_11-vtk_9.2.2-py_38
       IMAGE_NAME:
         description: The docker image name
-        default: "ubuntu22.04-gcc11-vtk9.2.2"
+        default: "master"
       IMAGE_TAG:
         description: The docker image tag
-        default: latest
-
+        default: master-ubuntu_22.04-gcc_11-vtk_9.2.2-py_38      
+      DOCKERHUB_USERNAME:
+        description: The dockerhub user name
+      DOCKERHUB_TOKEN:
+        description: The dockerhub access token
+      
 jobs:
   push_to_registry:
     name: Push Docker image to Docker Hub
@@ -37,17 +30,40 @@ jobs:
       - name: Check out the repo
         uses: actions/checkout@v4
 
+      - name: Extract build configuration
+        run: |
+          IFS='_-' read -r -a CONFIG <<< "${{ inputs.BUILD_CONFIG }}"
+          echo "BASE_IMAGE=${CONFIG[0]}:${CONFIG[1]} >> $GITHUB_ENV
+          echo CC=${CONFIG[2]} >> $GITHUB_ENV
+          if [ CC -eq "gcc" ]; then
+            echo CXX=g++${CONFIG[3]} >> $GITHUB_ENV
+          elif [ CC -eq "clang" ]; then
+            echo CXX=clang++${CONFIG[3]} >> $GITHUB_ENV
+          else
+            exit 1
+          fi
+          echo "VTK_TAG=${CONFIG[5]} >> $GITHUB_ENV
+          echo "PYTHON=${CONFIG[5]} >> $GITHUB_ENV
+          
+      - name: Build configuration
+        run: |
+          echo "Base image: $BASE_IMAGE"
+          echo "C Compiler: $CC"
+          echo "CXX Compiler: $CXX"
+          echo "VTK Tag: $VTK_TAG"
+          echo "Python: $PYTHON"
+
       - name: Log in to Docker Hub
         uses: docker/login-action@v2
         with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          username: ${{ inputs.DOCKERHUB_USERNAME }}
+          password: ${{ inputs.DOCKERHUB_TOKEN }}
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v6
         with:
           context: .
-          build-args: BASE=${{ inputs.BASE_IMAGE }},VTK_TAG=${{ inputs.VTK_TAG }}
+          build-args: BASE=${{ env.BASE_IMAGE }},CC=${{ env.CC }},CXX=${{ env.CXX }},VTK_TAG=${{ env.VTK_TAG }},PYTHON=${{ env.PYTHON }}
           file: ci/docker/make-base.dockerfile
           push: true
-          tags: pierrpebay/${{ inputs.IMAGE_NAME }}:${{ inputs.IMAGE_TAG }}
+          tags: tlamonthezie/${{ inputs.IMAGE_NAME }}:${{ inputs.IMAGE_TAG }}
