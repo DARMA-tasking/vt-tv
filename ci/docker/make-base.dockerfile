@@ -14,7 +14,7 @@ FROM ${BASE_IMAGE} AS base
 ARG CC CXX VTK_VERSION VTK_DIR PYTHON_VERSION
 
 ENV DEBIAN_FRONTEND=noninteractive
-ENV VTK_DIR=/opt/build/vtk-build
+ENV VTK_DIR=/opt/build/vtk
 
 RUN apt-get update -y -q && \
   apt-get install -y -q --no-install-recommends \
@@ -53,10 +53,9 @@ RUN apt-get update -y -q && \
   apt-get clean && \
   rm -rf /var/lib/apt/lists/*
 
-# Put CC and CXX in env for CMake
-# Note: `export` is needed because command is run from another container
-ENV export CC="$(which ${CC})"
-ENV export CXX="$(which ${CXX})"
+
+RUN echo 'export CC="$(which ${CC})"' >> ~/.bashrc
+RUN echo 'export CXX="$(which ${CXX})"' >> ~/.bashrc
 
 # Setup python 3.8 with conda
 
