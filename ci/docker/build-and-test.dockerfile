@@ -24,13 +24,13 @@ RUN echo "VT-TV build success"
 # Unit tests
 FROM build AS test-cpp
 RUN ["chmod", "+x", "/opt/src/vt-tv/ci/test_cpp.sh"]
-RUN ["/bin/bash", "/opt/src/vt-tv/ci/test_cpp.sh"]
+RUN "/opt/src/vt-tv/ci/test_cpp.sh"
 RUN bash /opt/src/vt-tv/ci/docker/test.sh
 
 # Python tests (Builds VT-TV with Python bindings & test python package)
 FROM build AS test-python
 RUN ["chmod", "+x", "/opt/src/vt-tv/ci/test_python.sh"]
-RUN ["/bin/bash", "/opt/src/vt-tv/ci/test_python.sh"]
+RUN "/opt/src/vt-tv/ci/test_python.sh"
 
 # Artifacts
 FROM scratch AS artifacts
