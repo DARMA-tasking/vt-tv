@@ -9,6 +9,8 @@ Xvfb :99 -screen 0 1024x768x24 -nolisten tcp > /dev/null 2>&1 &
 
 sleep 1s
 
+TEST_RESULT=0
+
 # Activate conda environment
 . /opt/conda/etc/profile.d/conda.sh && conda activate deves
 
