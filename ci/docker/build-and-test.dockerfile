@@ -28,4 +28,4 @@ RUN ["/bin/sh", "/opt/src/vt-tv/ci/test_python.sh"]
 # Artifacts
 FROM scratch AS artifacts
 COPY --from=test /tmp/artifacts /tmp/artifacts
-COPY --from=test-bindings /tmp/artifacts /tmp/artifacts
+COPY --from=test-python /tmp/artifacts /tmp/artifacts
