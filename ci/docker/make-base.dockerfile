@@ -54,8 +54,8 @@ RUN apt-get update -y -q && \
   rm -rf /var/lib/apt/lists/*
 
 # Put CC and CXX in Docker ENV to propagate to images using this image as a base
-ENV CC="\$(which ${CC})"
-ENV CXX="\$(which ${CXX})"
+ENV CC="$(which ${CC})"
+ENV CXX="$(which ${CXX})"
 
 # # And also in shell env
 # RUN export CC="$(which ${CC})"
