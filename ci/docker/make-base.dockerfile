@@ -13,9 +13,10 @@ FROM ${BASE_IMAGE} AS base
 
 ARG CC CXX VTK_VERSION VTK_DIR PYTHON_VERSION
 
+ENV DEBIAN_FRONTEND=noninteractive
 ENV VTK_DIR=/opt/build/vtk-build
 
-RUN DEBIAN_FRONTEND=noninteractive apt-get update -y -q && \
+RUN apt-get update -y -q && \
   apt-get install -y -q --no-install-recommends \
   ${CC} \
   ${CXX} \
@@ -52,10 +53,14 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get update -y -q && \
   apt-get clean && \
   rm -rf /var/lib/apt/lists/*
 
-# Put CC and CXX in env for CMake
+# Put CC and CXX in Docker ENV
 # Note: `export` is needed because command is run from another container
 ENV CC="\$(which ${CC})"
 ENV CXX="\$(which ${CXX})"
+
+# And also in shell env
+RUN export CC=\$(which ${CC})
+RUN export CXX=\$(which ${CXX})
 
 # Setup python 3.8 with conda
 
