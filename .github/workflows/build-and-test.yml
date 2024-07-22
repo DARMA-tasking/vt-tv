@@ -50,7 +50,7 @@ jobs:
           context: .
           file: ./ci/docker/build-and-test.dockerfile
           build-args: |
-            BASE_IMAGE=${{ matrix.image }}
+            BASE_IMAGE=pierrpebay/vt-tv:${{ matrix.image }}
           outputs: type=local,dest=${{ env.OUTPUT_DIR }}
 
       - name: Upload artifacts
