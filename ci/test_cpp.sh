@@ -12,15 +12,15 @@ sleep 1s
 pushd /opt/build/vt-tv
 mkdir -p /opt/src/vt-tv/output/
 
-# run tests
-ctest --output-junit Testing/Temporary/junit-report.xml --output-on-failure
+# run tests (allow failure but generate report to analyze failures later in CI)
+ctest --output-junit Testing/Temporary/junit-report.xml --output-on-failure || true
 
 # collect test logs for exporting
 mkdir -p /tmp/artifacts/
 cp /opt/build/vt-tv/Testing/Temporary/LastTest.log /tmp/artifacts/
 cp /opt/build/vt-tv/Testing/Temporary/junit-report.xml /tmp/artifacts/
 ls /tmp/artifacts
-# Simply output the LastTest.log to screen
+# output LastTest.log to screen
 cat /opt/build/vt-tv/Testing/Temporary/LastTest.log
 
 # coverage reporting
