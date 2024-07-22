@@ -58,6 +58,13 @@ RUN apt-get update -y -q && \
 ENV export CC="\$(which ${CC})"
 ENV export CXX="\$(which ${CXX})"
 
+# Save environment variables as system variables
+# It will be used to build VT-TV
+RUN echo "export "CC"="$CC >> ~/.bashrc
+RUN echo "export "CXX"="$CXX >> ~/.bashrc
+RUN echo "export "VTK_DIR"="$VTK_DIR >> ~/.bashrc
+
+
 # Setup python 3.8 with conda
 
 # Download and install Miniconda
