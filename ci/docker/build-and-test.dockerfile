@@ -14,6 +14,9 @@ RUN mkdir -p /opt/build/vt-tv
 
 RUN chmod +x /opt/src/vt-tv/build.sh
 RUN CMAKE_BINARY_DIR=/opt/build/vt-tv \
+    CC="$CC" \
+    CXX="$CXX" \
+    VTK_DIR=/opt/build/vtk \
     VTK_DIR=/opt/build/vtk \
     VT_TV_TESTS_ENABLED=ON \
     VT_TV_COVERAGE_ENABLED=ON \
