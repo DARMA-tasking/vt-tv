@@ -59,15 +59,13 @@ RUN apt-get update -y -q && \
 # ENV export CXX="$(which ${CXX})"
 
 # If ENV export ... not correctly passed to the ENV of the dependent image, try
-RUN mkdir /vol1 && \
-  touch /vol1/.env && \
-  echo 'CC="$(which ${CC})"' >> /vol1/.env && \
-  echo 'CXX="$(which ${CXX})"' >> /vol1/.env && \
-  echo 'VTK_DIR="$VTK_DIR"' >> /vol1/.env && \
-  # automatically export all variables
-  set -a && \
-  source .env && \
-  set +a
+RUN mkdir /vol1
+RUN echo 'CC="$(which ${CC})"' >> /vol1/.env
+RUN echo 'CXX="$(which ${CXX})"' >> /vol1/.env
+RUN echo 'VTK_DIR="$VTK_DIR"' >> /vol1/.env
+
+# automatically export all variables
+RUN set -a && source /vol1/.env && set +a
 
 # Setup python 3.8 with conda
 
