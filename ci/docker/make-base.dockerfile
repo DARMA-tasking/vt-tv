@@ -53,16 +53,10 @@ RUN apt-get update -y -q && \
   apt-get clean && \
   rm -rf /var/lib/apt/lists/*
 
-# # Put CC and CXX in Docker ENV to propagate to images using this image as a base
-# ENV CC="$(which ${CC})"
-# ENV CXX="$(which ${CXX})"
-
-# # And also in shell env for VTK build using CMake
-# RUN export CC="$(which ${CC})"
-# RUN export CXX="$(which ${CXX})"
-
-RUN echo 'export CC="$(which ${CC})"' >> ~/.bashrc
-RUN echo 'export CXX="$(which ${CXX})"' >> ~/.bashrc
+# Put CC and CXX in env for CMake
+# Note: `export` is needed because command is run from another container
+ENV CC="$(which ${CC})"
+ENV CXX="$(which ${CXX})"
 
 # Setup python 3.8 with conda
 
