@@ -53,13 +53,16 @@ RUN apt-get update -y -q && \
   apt-get clean && \
   rm -rf /var/lib/apt/lists/*
 
-# Put CC and CXX in Docker ENV to propagate to images using this image as a base
-ENV CC="$(which ${CC})"
-ENV CXX="$(which ${CXX})"
+# # Put CC and CXX in Docker ENV to propagate to images using this image as a base
+# ENV CC="$(which ${CC})"
+# ENV CXX="$(which ${CXX})"
 
-# # And also in shell env
+# # And also in shell env for VTK build using CMake
 # RUN export CC="$(which ${CC})"
 # RUN export CXX="$(which ${CXX})"
+
+RUN echo 'export CC="$(which ${CC})"' >> ~/.bashrc
+RUN echo 'export CXX="$(which ${CXX})"' >> ~/.bashrc
 
 # Setup python 3.8 with conda
 
@@ -91,8 +94,6 @@ RUN mkdir -p ${VTK_DIR}
 WORKDIR ${VTK_DIR}
 RUN cmake \
   -DCMAKE_BUILD_TYPE:STRING=Release \
-  -DCMAKE_C_COMPILER="${CC}" \
-  -DCMAKE_CXX_COMPILER="${CXX}" \
   -DBUILD_TESTING:BOOL=OFF \
   -DVTK_OPENGL_HAS_OSMESA:BOOL=ON \
   -DVTK_DEFAULT_RENDER_WINDOW_OFFSCREEN:BOOL=ON \
