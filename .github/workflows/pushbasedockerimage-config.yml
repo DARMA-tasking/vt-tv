@@ -1,4 +1,4 @@
-name: Build dependencies and push base Docker Image (Configure)
+name: Build dependencies and push base Docker Image to dockerhub (v2)
 
 on:
   # TODO: change to workflow dispatch before merging and replace matrix usage by inputs usage in job
@@ -11,9 +11,9 @@ on:
   #       type: choice
   #       description: The configuration to build as a combination of os, compiler, vtk and python versions
   #       options:
-  #       - ubuntu_22.04-gcc_11-vtk_9.2.2-py_38
-  #       - ubuntu_22.04-clang_11-vtk_9.2.2-py_38
-  #       default: ubuntu_22.04-gcc_11-vtk_9.2.2-py_38
+  #       - ubuntu_22.04-gcc_11-vtk_9.2.2-py_3.8
+  #       - ubuntu_22.04-clang_11-vtk_9.2.2-py_3.8
+  #       default: ubuntu_22.04-gcc_11-vtk_9.2.2-py_3.8
 
 jobs:
   push_to_registry:
@@ -23,8 +23,8 @@ jobs:
     strategy:
       matrix:
         BUILD_CONFIG:
-        - ubuntu_22.04-gcc_11-vtk_9.2.2-py_38
-        - ubuntu_22.04-clang_14-vtk_9.2.2-py_38
+        - ubuntu_22.04-gcc_11-vtk_9.2.2-py_3.8
+        - ubuntu_22.04-clang_14-vtk_9.2.2-py_3.8
     steps:
       - name: Check out the repo
         uses: actions/checkout@v4

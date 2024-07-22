@@ -100,38 +100,3 @@ RUN cmake \
 RUN cmake --build ${VTK_DIR} -j$(nproc)
 
 RUN echo "Base creation success"
-
-# WIP Tests to be removed:
-
-# Build
-# FROM base AS build
-
-# COPY . /opt/src/vt-tv
-# RUN mkdir -p /opt/build/vt-tv
-
-# RUN chmod +x /opt/src/vt-tv/build.sh
-# RUN CMAKE_BINARY_DIR=/opt/build/vt-tv \
-#     VTK_DIR=${VTK_DIR} \
-#     VT_TV_TESTS_ENABLED=ON \
-#     VT_TV_COVERAGE_ENABLED=ON \
-#     /opt/src/vt-tv/build.sh
-
-# RUN echo "VT-TV build success"
-
-# # WIP: Test part
-
-# # Unit tests
-# FROM build AS test
-# RUN ["chmod", "+x", "/opt/src/vt-tv/ci/test.sh"]
-# RUN ["/bin/sh", "/opt/src/vt-tv/ci/test.sh"]
-# RUN bash /opt/src/vt-tv/ci/docker/test.sh
-
-# # Bindings tests
-# FROM build AS test-bindings
-# RUN ["chmod", "+x", "/opt/src/vt-tv/ci/test-bindings.sh"]
-# RUN ["/bin/sh", "/opt/src/vt-tv/ci/test-bindings.sh"]
-
-# # Artifacts
-# FROM scratch AS artifacts
-# COPY --from=test /tmp/artifacts /tmp/artifacts
-# COPY --from=test-bindings /tmp/artifacts /tmp/artifacts
