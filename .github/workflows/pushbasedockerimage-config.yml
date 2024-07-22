@@ -32,8 +32,7 @@ jobs:
           fi
           echo "VTK_TAG=${CONFIG[5]}" >> $GITHUB_ENV
           echo "PYTHON=${CONFIG[7]}" >> $GITHUB_ENV
-          echo "IMAGE_NAME=master" >> $GITHUB_ENV
-          echo "IMAGE_TAG=master-${{ matrix.BUILD_CONFIG }}" >> $GITHUB_ENV
+          echo "DOCKER_TAG=master-${{ matrix.BUILD_CONFIG }}" >> $GITHUB_ENV
 
       - name: Build configuration
         run: |
@@ -42,19 +41,13 @@ jobs:
           echo "CXX Compiler: $CXX"
           echo "VTK Tag: $VTK_TAG"
           echo "Python: $PYTHON"
-          echo "Docker image: $IMAGE_NAME:$IMAGE_TAG"
+          echo "Docker tag: $DOCKER_TAG"
 
       - name: Log in to Docker Hub
         uses: docker/login-action@v2
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-
-      - name: Extract metadata (tags, labels) for Docker
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: pierrpebay/vt-tv
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v6
@@ -63,5 +56,4 @@ jobs:
           build-args: BASE=${{ env.BASE_IMAGE }},CC=${{ env.CC }},CXX=${{ env.CXX }},VTK_TAG=${{ env.VTK_TAG }},PYTHON=${{ env.PYTHON }}
           file: ci/docker/make-base.dockerfile
           push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+          tags: pierrpebay/vt-t:${{ env.DOCKER_TAG }}
