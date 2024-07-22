@@ -14,7 +14,7 @@ FROM ${BASE_IMAGE} AS base
 ARG CC CXX VTK_VERSION VTK_DIR PYTHON_VERSION
 
 ENV DEBIAN_FRONTEND=noninteractive
-ENV VTK_DIR=/opt/build/vtk
+ENV VTK_DIR=/opt/build/vtk-build
 
 RUN apt-get update -y -q && \
   apt-get install -y -q --no-install-recommends \
@@ -53,9 +53,20 @@ RUN apt-get update -y -q && \
   apt-get clean && \
   rm -rf /var/lib/apt/lists/*
 
+# Put CC and CXX in env for CMake
+# Note: `export` is needed because command is run from another container
+# ENV export CC="$(which ${CC})"
+# ENV export CXX="$(which ${CXX})"
 
-RUN echo 'export CC="$(which ${CC})"' >> ~/.bashrc
-RUN echo 'export CXX="$(which ${CXX})"' >> ~/.bashrc
+# If ENV export ... not correctly passed to the ENV of the dependent image, try
+VOLUME /volume1
+RUN mkdir /volume1 && \
+  echo 'CC="$(which ${CC})"' >> /volume1/.env && \
+  echo 'CXX="$(which ${CXX})"' >> /volume1/.env && \
+  # automatically export all variables
+  set -a && \
+  source .env && \
+  set +a
 
 # Setup python 3.8 with conda
 
