@@ -54,7 +54,7 @@ if [[ "${VT_TV_RUN_TESTS_ONLY}" == "OFF" ]]; then
     -DVTK_DIR=${VTK_DIR} \
     \
     -DCMAKE_C_COMPILER="${CC}" \
-    -DCMAKE_CXX_COMPILER=${CXX} \
+    -DCMAKE_CXX_COMPILER="${CXX}" \
     \
     -DCMAKE_CXX_FLAGS="-Werror" \
     \
