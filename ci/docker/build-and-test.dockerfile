@@ -16,23 +16,9 @@ RUN /bin/bash -c "set -a && source /vol1/.env && set +a"
 
 # Build
 FROM base AS build
-RUN chmod +x /opt/src/vt-tv/build.sh
-RUN CMAKE_BINARY_DIR=/opt/build/vt-tv \
-    CC="$BUILD_CONFIG[2]-$BUILD_CONFIG[3]" \
-    CXX="$BUILD_CONFIG[4]${CXX}" \
-    VTK_DIR=/opt/build/vtk \
-    VTK_DIR=/opt/build/vtk \
-    VT_TV_TESTS_ENABLED=ON \
-    VT_TV_COVERAGE_ENABLED=ON \
-    /opt/src/vt-tv/build.sh
-
-RUN echo "VT-TV build success"
-
-# Unit tests
-FROM build AS test-cpp
-RUN ["chmod", "+x", "/opt/src/vt-tv/ci/test_cpp.sh"]
-RUN "/opt/src/vt-tv/ci/test_cpp.sh"
-RUN bash /opt/src/vt-tv/ci/docker/test.sh
+RUN ["chmod", "+x", "/opt/src/vt-tv/ci/build.sh"]
+RUN "/opt/src/vt-tv/ci/build.sh"
+RUN bash /opt/src/vt-tv/ci/docker/build.sh
 
 # Unit tests
 FROM build AS test-cpp
