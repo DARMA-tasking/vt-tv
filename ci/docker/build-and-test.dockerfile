@@ -17,12 +17,12 @@ RUN mkdir -p /opt/build/vt-tv
 # Bindings tests
 FROM build AS test-python
 RUN ["chmod", "+x", "/opt/src/vt-tv/ci/test_python.sh"]
-RUN ["/bin/sh", "/opt/src/vt-tv/ci/test_python.sh"]
+RUN ["/bin/bash", "/opt/src/vt-tv/ci/test_python.sh"]
 
 # Unit tests
 FROM build AS test-cpp
 RUN ["chmod", "+x", "/opt/src/vt-tv/ci/test_cpp.sh"]
-RUN ["/bin/sh", "/opt/src/vt-tv/ci/test_cpp.sh"]
+RUN ["/bin/bash", "/opt/src/vt-tv/ci/test_cpp.sh"]
 RUN bash /opt/src/vt-tv/ci/docker/test.sh
 
 # Artifacts
