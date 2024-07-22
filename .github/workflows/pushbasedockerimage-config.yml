@@ -22,18 +22,18 @@ jobs:
         run: |
           IFS='_-' read -r -a CONFIG <<< "${{ matrix.BUILD_CONFIG }}"
           echo "BASE_IMAGE=${CONFIG[0]}:${CONFIG[1]} >> $GITHUB_ENV
-          echo CC=${CONFIG[2]} >> $GITHUB_ENV
+          echo "CC=${CONFIG[2]}" >> $GITHUB_ENV
           if [[ "${CONFIG[2]}" == "gcc" ]]; then
-            echo CXX=g++-${CONFIG[3]} >> $GITHUB_ENV
+            echo "CXX=g++-${CONFIG[3]}" >> $GITHUB_ENV
           elif [[ "${CONFIG[2]}" == "clang" ]]; then
-            echo CXX=clang++-${CONFIG[3]} >> $GITHUB_ENV
+            echo "CXX=clang++-${CONFIG[3]}" >> $GITHUB_ENV
           else
             exit 1
           fi
           echo "VTK_TAG=${CONFIG[5]} >> $GITHUB_ENV
           echo "PYTHON=${CONFIG[7]} >> $GITHUB_ENV
-          echo IMAGE_NAME=master >> $GITHUB_ENV
-          echo IMAGE_TAG=master-$BUILD_CONFIG >> $GITHUB_ENV
+          echo "IMAGE_NAME=master" >> $GITHUB_ENV
+          echo "IMAGE_TAG=master-$BUILD_CONFIG" >> $GITHUB_ENV
 
       - name: Build configuration
         run: |
