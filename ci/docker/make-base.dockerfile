@@ -5,13 +5,13 @@
 ARG BASE_IMAGE=ubuntu:22.04
 ARG CC=gcc-11
 ARG CXX=g++-11
-ARG VTK_TAG=v9.2.2
-ARG PYTHON=3.8
+ARG VTK_VERSION=v9.2.2
+ARG PYTHON_VERSION=3.8
 
 # Base image & requirements
 FROM ${BASE_IMAGE} AS base
 
-ARG CC CXX VTK_TAG VTK_DIR PYTHON
+ARG CC CXX VTK_VERSION VTK_DIR PYTHON_VERSION
 
 ENV DEBIAN_FRONTEND=noninteractive
 ENV VTK_DIR=/opt/build/vtk-build
@@ -69,7 +69,7 @@ RUN curl -LO https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.
 ENV PATH="/opt/conda/bin:${PATH}"
 
 # Create a new environment and install necessary packages
-RUN conda create -y -n deves python=${PYTHON} && \
+RUN conda create -y -n deves python=${PYTHON_VERSION} && \
     echo "source activate deves" > ~/.bashrc && \
     /bin/bash -c ". /opt/conda/etc/profile.d/conda.sh && conda activate deves && pip install nanobind"
 
@@ -81,7 +81,7 @@ ENV CONDA_AUTO_UPDATE_CONDA=false
 
 # Clone VTK source
 RUN mkdir -p /opt/src/vtk
-RUN git clone --recursive --branch ${VTK_TAG} https://gitlab.kitware.com/vtk/vtk.git /opt/src/vtk
+RUN git clone --recursive --branch v${VTK_VERSION} https://gitlab.kitware.com/vtk/vtk.git /opt/src/vtk
 
 # Build VTK
 RUN mkdir -p ${VTK_DIR}
