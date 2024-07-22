@@ -11,6 +11,10 @@ COPY . /opt/src/vt-tv
 RUN mkdir -p /opt/build/vt-tv
 
 # Build
+
+ENV export CC="$(which ${CC})"
+ENV export CXX="$(which ${CXX})"
+
 RUN chmod +x /opt/src/vt-tv/build.sh
 RUN CMAKE_BINARY_DIR=/opt/build/vt-tv \
     VTK_DIR=${VTK_DIR} \
