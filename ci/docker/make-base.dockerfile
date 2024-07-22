@@ -63,6 +63,7 @@ VOLUME /volume1
 RUN mkdir /volume1 && \
   echo 'CC="$(which ${CC})"' >> /volume1/.env && \
   echo 'CXX="$(which ${CXX})"' >> /volume1/.env && \
+  echo 'VTK_DIR="$VTK_DIR"' >> /volume1/.env && \
   # automatically export all variables
   set -a && \
   source .env && \
