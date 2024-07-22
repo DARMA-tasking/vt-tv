@@ -1,4 +1,4 @@
-name: Build dependencies and push base Docker Image to dockerhub
+name: Build & Push base Docker Image to dockerhub
 
 on:
   # Push event. Useful for tests.
@@ -20,7 +20,7 @@ on:
 
 jobs:
   push_to_registry:
-    name: Docker Base Image
+    name: Build & Push
     runs-on: ubuntu-latest
     # Matrix for push event. To comment when using the dispatch event.
     strategy:
@@ -64,7 +64,7 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Build and push Docker image
+      - name: Build and push to Docker Hub
         uses: docker/build-push-action@v6
         with:
           context: .
