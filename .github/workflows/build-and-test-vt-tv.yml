@@ -60,7 +60,7 @@ jobs:
 
       - name: Unit tests
         uses: phoenix-actions/test-reporting@v15
-        if: always() 
+        if: always()
         with:
           name: Tests report
           path: ${{ env.OUTPUT_DIR }}/tmp/artifacts/junit-report.xml
@@ -68,11 +68,9 @@ jobs:
           output-to: step-summary
 
       - name: Coverage
-        if: always() 
+        if: always()
         run: |
           echo '## Coverage' >> $GITHUB_STEP_SUMMARY
           echo '```shell' >> $GITHUB_STEP_SUMMARY
           cat ${{ env.OUTPUT_DIR }}/tmp/artifacts/lcov-list-report.txt >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
-
-      
