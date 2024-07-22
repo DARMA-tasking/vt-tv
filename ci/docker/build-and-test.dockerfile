@@ -11,9 +11,8 @@ COPY . /opt/src/vt-tv
 RUN mkdir -p /opt/build/vt-tv
 
 # Load CC, CXX and VTK_DIR from env file in base image volume1
-RUN set -a && \
-  source /volume1/.env && \
-  set +a
+VOLUME /vol1
+RUN set -a && source /vol1/.env && set +a
 
 # Build
 RUN BUILD_CONFIG=${BASE_IMAGE}|cut -d: -f2'_-' read -r -a CONFIG <<< "${{ matrix.BUILD_CONFIG }}"
