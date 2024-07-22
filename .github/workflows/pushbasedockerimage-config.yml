@@ -23,9 +23,9 @@ jobs:
           IFS='_-' read -r -a CONFIG <<< "${{ matrix.BUILD_CONFIG }}"
           echo "BASE_IMAGE=${CONFIG[0]}:${CONFIG[1]} >> $GITHUB_ENV
           echo CC=${CONFIG[2]} >> $GITHUB_ENV
-          if [ CC -eq "gcc" ]; then
+          if [ $CC -eq "gcc" ]; then
             echo CXX=g++${CONFIG[3]} >> $GITHUB_ENV
-          elif [ CC -eq "clang" ]; then
+          elif [ $CC -eq "clang" ]; then
             echo CXX=clang++${CONFIG[3]} >> $GITHUB_ENV
           else
             exit 1
