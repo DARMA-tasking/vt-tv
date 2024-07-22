@@ -13,10 +13,9 @@ FROM ${BASE_IMAGE} AS base
 
 ARG CC CXX VTK_VERSION VTK_DIR PYTHON_VERSION
 
-ENV DEBIAN_FRONTEND=noninteractive
 ENV VTK_DIR=/opt/build/vtk-build
 
-RUN apt-get update -y -q && \
+RUN DEBIAN_FRONTEND=noninteractive apt-get update -y -q && \
   apt-get install -y -q --no-install-recommends \
   ${CC} \
   ${CXX} \
