@@ -57,9 +57,9 @@ RUN apt-get update -y -q && \
 ENV CC="\$(which ${CC})"
 ENV CXX="\$(which ${CXX})"
 
-# And also in shell env
-RUN export CC="\$(which ${CC})"
-RUN export CXX="\$(which ${CXX})"
+# # And also in shell env
+# RUN export CC="$(which ${CC})"
+# RUN export CXX="$(which ${CXX})"
 
 # Setup python 3.8 with conda
 
