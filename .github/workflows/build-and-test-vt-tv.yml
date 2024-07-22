@@ -49,6 +49,8 @@ jobs:
           tags: ${{ env.DOCKER_TAG }}
           context: .
           file: ./ci/build-and-test.dockerfile
+          build-args: |
+            BASE_IMAGE=${{ matrix.image }}
           outputs: type=local,dest=${{ env.OUTPUT_DIR }}
 
       - name: Upload artifacts
