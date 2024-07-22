@@ -30,8 +30,8 @@ jobs:
           else
             exit 1
           fi
-          echo "VTK_TAG=${CONFIG[5]} >> $GITHUB_ENV
-          echo "PYTHON=${CONFIG[7]} >> $GITHUB_ENV
+          echo "VTK_TAG=${CONFIG[5]}" >> $GITHUB_ENV
+          echo "PYTHON=${CONFIG[7]}" >> $GITHUB_ENV
           echo "IMAGE_NAME=master" >> $GITHUB_ENV
           echo "IMAGE_TAG=master-$BUILD_CONFIG" >> $GITHUB_ENV
 
