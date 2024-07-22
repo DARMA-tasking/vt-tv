@@ -1,10 +1,12 @@
-name: Build dependencies and push base Docker Image to dockerhub (v2)
+name: Build dependencies and push base Docker Image to dockerhub
 
 on:
-  # TODO: change to workflow dispatch before merging and replace matrix usage by inputs usage in job
+  # Push event. Useful for tests.
   push:
     branches:
     - 32-vt-tv-improve-ci
+
+  # Dispatch event (manually triggered)
   # workflow_dispatch:
   #   inputs:
   #     BUILD_CONFIG:
@@ -14,12 +16,13 @@ on:
   #       - ubuntu_22.04-gcc_11-vtk_9.2.2-py_3.8
   #       - ubuntu_22.04-clang_11-vtk_9.2.2-py_3.8
   #       default: ubuntu_22.04-gcc_11-vtk_9.2.2-py_3.8
+  # Note: in Extract build configuration stage please also changes { matrix.BUILD_CONFIG } to { inputs.BUILD_CONFIG }, and comment the matrix to disable.
 
 jobs:
   push_to_registry:
-    name: Push Docker image to Docker Hub
+    name: Docker Base Image
     runs-on: ubuntu-latest
-    # Temporary matrix for validation. To set on workflow_dispatch before merging branch
+    # Matrix for push event. To comment when using the dispatch event.
     strategy:
       matrix:
         BUILD_CONFIG:
@@ -30,6 +33,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Extract build configuration
+        # If workflow dispatch event replace `matrix.BUILD_CONFIG` by `inputs.BUILD_CONFIG`
         run: |
           IFS='_-' read -r -a CONFIG <<< "${{ matrix.BUILD_CONFIG }}"
           echo "BASE_IMAGE=${CONFIG[0]}:${CONFIG[1]}" >> $GITHUB_ENV
