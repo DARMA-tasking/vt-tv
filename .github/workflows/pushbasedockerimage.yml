@@ -41,8 +41,8 @@ jobs:
           else
             exit 1
           fi
-          echo "VTK_TAG=${CONFIG[5]}" >> $GITHUB_ENV
-          echo "PYTHON=${CONFIG[7]}" >> $GITHUB_ENV
+          echo "VTK_VERSION=${CONFIG[5]}" >> $GITHUB_ENV
+          echo "PYTHON_VERSION=${CONFIG[7]}" >> $GITHUB_ENV
           echo "DOCKER_TAG=${{ matrix.BUILD_CONFIG }}" >> $GITHUB_ENV
 
       - name: Build configuration
@@ -50,8 +50,8 @@ jobs:
           echo "Base image: $BASE_IMAGE"
           echo "C Compiler: $CC"
           echo "CXX Compiler: $CXX"
-          echo "VTK Tag: $VTK_TAG"
-          echo "Python: $PYTHON"
+          echo "VTK: $VTK_VERSION"
+          echo "Python: $PYTHON_VERSION"
           echo "Docker tag: $DOCKER_TAG"
 
       - name: Log in to Docker Hub
@@ -68,8 +68,8 @@ jobs:
             BASE_IMAGE=${{ env.BASE_IMAGE }}
             CC=${{ env.CC }}
             CXX=${{ env.CXX }}
-            VTK_TAG=${{ env.VTK_TAG }}
-            PYTHON=${{ env.PYTHON }}
+            VTK_VERSION=${{ env.VTK_VERSION }}
+            PYTHON_VERSION=${{ env.PYTHON_VERSION }}
           file: ci/docker/make-base.dockerfile
           push: true
           tags: pierrpebay/vt-tv:${{ env.DOCKER_TAG }}
