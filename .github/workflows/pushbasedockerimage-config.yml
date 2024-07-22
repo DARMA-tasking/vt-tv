@@ -64,7 +64,12 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: .
-          build-args: BASE=${{ env.BASE_IMAGE }},CC=${{ env.CC }},CXX=${{ env.CXX }},VTK_TAG=${{ env.VTK_TAG }},PYTHON=${{ env.PYTHON }}
+          build-args: |
+            BASE_IMAGE=${{ env.BASE_IMAGE }}
+            CC=${{ env.CC }}
+            CXX=${{ env.CXX }}
+            VTK_TAG=${{ env.VTK_TAG }}
+            PYTHON=${{ env.PYTHON }}
           file: ci/docker/make-base.dockerfile
           push: true
           tags: pierrpebay/vt-tv:${{ env.DOCKER_TAG }}
