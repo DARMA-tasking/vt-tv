@@ -32,7 +32,7 @@ jobs:
           fi
           echo "VTK_TAG=${CONFIG[5]}" >> $GITHUB_ENV
           echo "PYTHON=${CONFIG[7]}" >> $GITHUB_ENV
-          echo "DOCKER_TAG=master-${{ matrix.BUILD_CONFIG }}" >> $GITHUB_ENV
+          echo "DOCKER_TAG=${{ matrix.BUILD_CONFIG }}" >> $GITHUB_ENV
 
       - name: Build configuration
         run: |
