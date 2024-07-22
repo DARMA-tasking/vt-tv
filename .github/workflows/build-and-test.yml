@@ -1,4 +1,4 @@
-name: Build and Test Ubuntu 22.04 gcc 11 x64
+name: Build and Test
 
 # Trigger the workflow on push or pull request
 on:
@@ -48,7 +48,7 @@ jobs:
           push: false
           tags: ${{ env.DOCKER_TAG }}
           context: .
-          file: ./ci/build-and-test.dockerfile
+          file: ./ci/docker/build-and-test.dockerfile
           build-args: |
             BASE_IMAGE=${{ matrix.image }}
           outputs: type=local,dest=${{ env.OUTPUT_DIR }}
