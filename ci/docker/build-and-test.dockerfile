@@ -2,9 +2,6 @@ ARG BASE_IMAGE=pierrpebay/vt-tv:ubuntu_22.04-gcc_11-vtk_9.2.2-py_3.8
 
 FROM ${BASE_IMAGE} AS build
 
-# need some base image environment variables
-ENV VTK_DIR CC CXX
-
 # setup requirements for rendering tests (xvfb) + coverage report (lcov)
 RUN apt-get update && apt-get install -y \
     xvfb \
