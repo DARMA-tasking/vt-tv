@@ -64,8 +64,8 @@ RUN echo "CC=\$(which ${CC})" >> /vol1/.env
 RUN echo "CXX=\$(which ${CXX})" >> /vol1/.env
 RUN echo "VTK_DIR=$VTK_DIR" >> /vol1/.env
 
-# automatically export all variables
-RUN set -a && source /vol1/.env && set +a
+# Load variables to bash (CC, CXX, VTK_DIR)
+RUN /bin/bash -c "set -a && source /vol1/.env && set +a"
 
 # Setup python 3.8 with conda
 
