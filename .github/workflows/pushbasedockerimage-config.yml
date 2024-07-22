@@ -32,8 +32,8 @@ jobs:
           fi
           echo "VTK_TAG=${CONFIG[5]} >> $GITHUB_ENV
           echo "PYTHON=${CONFIG[7]} >> $GITHUB_ENV
-          echo IMAGE_NAME=master
-          echo IMAGE_TAG=master-$CONFIG
+          echo IMAGE_NAME=master >> $GITHUB_ENV
+          echo IMAGE_TAG=master-$CONFIG >> $GITHUB_ENV
 
       - name: Build configuration
         run: |
