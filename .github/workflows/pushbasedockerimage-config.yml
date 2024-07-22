@@ -13,7 +13,7 @@ jobs:
     strategy:
       matrix:
         # test token will be removed after the tests to use secrets again
-        BUILD_CONFIG: [ubuntu_22.04-gcc_11-vtk_9.2.2-py_38, ubuntu_22.04-clang_17-vtk_9.2.2-py_38]
+        BUILD_CONFIG: [ubuntu_22.04-gcc_11-vtk_9.2.2-py_38, ubuntu_22.04-clang_14-vtk_9.2.2-py_38]
     steps:
       - name: Check out the repo
         uses: actions/checkout@v4
@@ -24,16 +24,16 @@ jobs:
           echo "BASE_IMAGE=${CONFIG[0]}:${CONFIG[1]} >> $GITHUB_ENV
           echo CC=${CONFIG[2]} >> $GITHUB_ENV
           if [[ "${CONFIG[2]}" == "gcc" ]]; then
-            echo CXX=g++${CONFIG[3]} >> $GITHUB_ENV
+            echo CXX=g++-${CONFIG[3]} >> $GITHUB_ENV
           elif [[ "${CONFIG[2]}" == "clang" ]]; then
-            echo CXX=clang++${CONFIG[3]} >> $GITHUB_ENV
+            echo CXX=clang++-${CONFIG[3]} >> $GITHUB_ENV
           else
             exit 1
           fi
           echo "VTK_TAG=${CONFIG[5]} >> $GITHUB_ENV
           echo "PYTHON=${CONFIG[7]} >> $GITHUB_ENV
           echo IMAGE_NAME=master >> $GITHUB_ENV
-          echo IMAGE_TAG=master-$CONFIG >> $GITHUB_ENV
+          echo IMAGE_TAG=master-$BUILD_CONFIG >> $GITHUB_ENV
 
       - name: Build configuration
         run: |
