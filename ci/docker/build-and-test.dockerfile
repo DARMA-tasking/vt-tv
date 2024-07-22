@@ -1,6 +1,6 @@
 ARG BASE_IMAGE=pierrpebay/vt-tv:ubuntu_22.04-gcc_11-vtk_9.2.2-py_3.8
 
-FROM ${BASE_IMAGE} AS build
+FROM ${BASE_IMAGE} AS base
 
 # setup requirements for rendering tests (xvfb) + coverage report (lcov)
 RUN apt-get update && apt-get install -y \
@@ -10,12 +10,21 @@ RUN apt-get update && apt-get install -y \
 COPY . /opt/src/vt-tv
 RUN mkdir -p /opt/build/vt-tv
 
-# Build
+# Load CC, CXX and VTK_DIR from env file in base image volume1
+RUN set -a && \
+  source /volume1/.env && \
+  set +a
 
+# Build
+RUN BUILD_CONFIG=${BASE_IMAGE}|cut -d: -f2'_-' read -r -a CONFIG <<< "${{ matrix.BUILD_CONFIG }}"
+ENV export CC="$(which $BUILD_CONFIG[0])"
+ENV export CXX="$(which ${CXX})"
+
+FROM base AS build
 RUN chmod +x /opt/src/vt-tv/build.sh
 RUN CMAKE_BINARY_DIR=/opt/build/vt-tv \
-    CC="${CC}" \
-    CXX="${CXX}" \
+    CC="$BUILD_CONFIG[2]-$BUILD_CONFIG[3]" \
+    CXX="$BUILD_CONFIG[4]${CXX}" \
     VTK_DIR=/opt/build/vtk \
     VTK_DIR=/opt/build/vtk \
     VT_TV_TESTS_ENABLED=ON \
@@ -23,6 +32,12 @@ RUN CMAKE_BINARY_DIR=/opt/build/vt-tv \
     /opt/src/vt-tv/build.sh
 
 RUN echo "VT-TV build success"
+
+# Unit tests
+FROM build AS test-cpp
+RUN ["chmod", "+x", "/opt/src/vt-tv/ci/test_cpp.sh"]
+RUN "/opt/src/vt-tv/ci/test_cpp.sh"
+RUN bash /opt/src/vt-tv/ci/docker/test.sh
 
 # Unit tests
 FROM build AS test-cpp
