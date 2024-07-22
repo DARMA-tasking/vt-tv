@@ -16,12 +16,12 @@ on:
         default: "master"
       IMAGE_TAG:
         description: The docker image tag
-        default: master-ubuntu_22.04-gcc_11-vtk_9.2.2-py_38      
+        default: master-ubuntu_22.04-gcc_11-vtk_9.2.2-py_38
       DOCKERHUB_USERNAME:
         description: The dockerhub user name
       DOCKERHUB_TOKEN:
         description: The dockerhub access token
-      
+
 jobs:
   push_to_registry:
     name: Push Docker image to Docker Hub
@@ -43,8 +43,8 @@ jobs:
             exit 1
           fi
           echo "VTK_TAG=${CONFIG[5]} >> $GITHUB_ENV
-          echo "PYTHON=${CONFIG[5]} >> $GITHUB_ENV
-          
+          echo "PYTHON=${CONFIG[7]} >> $GITHUB_ENV
+
       - name: Build configuration
         run: |
           echo "Base image: $BASE_IMAGE"
