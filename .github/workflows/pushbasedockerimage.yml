@@ -1,4 +1,4 @@
-name: Build & Push base Docker Image to dockerhub
+name: Build & push base Docker image
 
 on:
   # Push event. Useful for tests.
