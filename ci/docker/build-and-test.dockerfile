@@ -14,6 +14,7 @@ COPY . /opt/src/vt-tv
 RUN mkdir -p /opt/build/vt-tv
 
 # Build
+FROM base AS build
 RUN /opt/src/vt-tv/ci/build.sh
 
 # Unit tests
