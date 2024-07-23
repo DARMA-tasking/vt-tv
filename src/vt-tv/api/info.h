@@ -157,9 +157,7 @@ struct Info {
    * \brief Converts a QOI from QOIVariantTypes to double
    */
   double convertQOIVariantTypeToDouble_(const QOIVariantTypes &variant) const {
-    if (std::holds_alternative<ElementIDType>(variant)) {
-      return static_cast<double>(std::get<ElementIDType>(variant));
-    } else if (std::holds_alternative<int>(variant)) {
+    if (std::holds_alternative<int>(variant)) {
       return static_cast<double>(std::get<int>(variant));
     } else if (std::holds_alternative<double>(variant)) {
       return std::get<double>(variant);
@@ -657,7 +655,7 @@ struct Info {
    * \return the id
    */
   QOIVariantTypes getObjectID(ObjectWork object) const {
-     return object.getID();
+     return static_cast<int>(object.getID());
   }
 
   /**
@@ -745,7 +743,7 @@ struct Info {
    *
    * \return the rank id
    */
-  QOIVariantTypes getRankID(Rank rank) const { return rank.getRankID(); }
+  QOIVariantTypes getRankID(Rank rank) const { return static_cast<int>(rank.getRankID()); }
 
  /**
    * \brief Get load of a given rank
@@ -801,7 +799,7 @@ struct Info {
    * \return the number of objects
    */
   QOIVariantTypes getRankNumObjects(Rank rank, PhaseType phase) const {
-    auto num_objects = rank.getNumObjects(phase);
+    auto num_objects = static_cast<int>(rank.getNumObjects(phase));
     return num_objects;
   }
 

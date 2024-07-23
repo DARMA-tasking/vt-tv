@@ -59,7 +59,7 @@ using TimeType = double;
 using CollectionObjGroupIDType = uint64_t;
 
 /// Possible QOIs types
-using QOIVariantTypes = std::variant<int, double, std::string, ElementIDType>;
+using QOIVariantTypes = std::variant<int, double, std::string>;
 
 } /* end namespace vt::tv */
 

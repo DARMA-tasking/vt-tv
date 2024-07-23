@@ -138,9 +138,6 @@ TEST_F(TestJSONReader, test_json_reader_metadata_attributes) {
 
   EXPECT_TRUE(rank_attributes.find("stringSample") != rank_attributes.end());
   EXPECT_EQ("abc", std::get<std::string>(rank_attributes.at("stringSample")));
-
-  EXPECT_TRUE(rank_attributes.find("elementIDSample") != rank_attributes.end());
-  EXPECT_EQ(30000000000, std::get<ElementIDType>(rank_attributes.at("elementIDSample")));
 }
 
 TEST_F(TestJSONReader, test_json_reader_object_info_attributes) {
@@ -167,9 +164,6 @@ TEST_F(TestJSONReader, test_json_reader_object_info_attributes) {
 
   EXPECT_TRUE(object_attributes.find("stringSample") != object_attributes.end());
   EXPECT_EQ("", std::get<std::string>(object_attributes.at("stringSample")));
-
-  EXPECT_TRUE(object_attributes.find("elementIDSample") != object_attributes.end());
-  EXPECT_EQ(50000000000, std::get<ElementIDType>(object_attributes.at("elementIDSample")));
 }
 
 TEST_F(TestJSONReader, test_json_reader_qoi_serializer) {
