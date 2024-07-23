@@ -14,8 +14,6 @@ ARG CXX=g++-11
 
 ENV DEBIAN_FRONTEND=noninteractive
 ENV VTK_DIR=/opt/build/vtk
-ENV CC=/usr/bin/$CC
-ENV CXX=/usr/bin/$CXX
 
 RUN apt-get update -y -q && \
   apt-get install -y -q --no-install-recommends \
@@ -53,6 +51,9 @@ RUN apt-get update -y -q && \
   && \
   apt-get clean && \
   rm -rf /var/lib/apt/lists/*
+
+ENV CC=/usr/bin/$CC
+ENV CXX=/usr/bin/$CXX
 
 # Setup python 3.8 with conda
 
