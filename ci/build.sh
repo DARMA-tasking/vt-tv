@@ -1,3 +1,7 @@
+#!/bin/bash
+
+# This script builds vt-tv for CI including tests and coverage
+
 set -ex
 
 # Calls build script with CI configuration
