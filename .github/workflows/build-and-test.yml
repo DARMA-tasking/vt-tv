@@ -65,7 +65,7 @@ jobs:
         if: always()
         with:
           name: Tests report
-          path: ${{ env.OUTPUT_DIR }}/tmp/artifacts//junit-report.xml
+          path: ${{ env.OUTPUT_DIR }}/tmp/artifacts/junit-report.xml
           reporter: java-junit
           output-to: step-summary
 
@@ -74,5 +74,5 @@ jobs:
         run: |
           echo '## Coverage' >> $GITHUB_STEP_SUMMARY
           echo '```shell' >> $GITHUB_STEP_SUMMARY
-          cat ${{ env.OUTPUT_DIR }}/tmp/artifacts//lcov-list-report.txt >> $GITHUB_STEP_SUMMARY
+          cat ${{ env.OUTPUT_DIR }}/tmp/artifacts/lcov-list-report.txt >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
