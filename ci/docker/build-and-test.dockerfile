@@ -1,6 +1,9 @@
 ARG BASE_IMAGE=pierrpebay/vt-tv:ubuntu_22.04-gcc_11-vtk_9.2.2-py_3.8
+ARG VT_TV_COVERAGE_ENABLED=OFF
 
 FROM ${BASE_IMAGE} AS base
+
+ENV VT_TV_COVERAGE_ENABLED=$VT_TV_COVERAGE_ENABLED
 
 # setup requirements for rendering tests (xvfb) + coverage report (lcov)
 RUN apt-get update && apt-get install -y \
@@ -11,8 +14,6 @@ COPY . /opt/src/vt-tv
 RUN mkdir -p /opt/build/vt-tv
 
 # Build
-FROM base AS build
-RUN bash -c 'if [[ "$CC" == "/usr/bin/gcc-11" ]]; then export VT_TV_COVERAGE_ENABLED=ON; fi'
 RUN /opt/src/vt-tv/ci/build.sh
 
 # Unit tests
