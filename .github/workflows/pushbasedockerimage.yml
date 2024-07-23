@@ -9,14 +9,14 @@ on:
   # Dispatch event (manually triggered)
   # workflow_dispatch:
   #   inputs:
-  #     BUILD_CONFIG:
+  #     image:
   #       type: choice
   #       description: The configuration to build as a combination of os, compiler, vtk and python versions
   #       options:
   #       - ubuntu_22.04-gcc_11-vtk_9.2.2-py_3.8
   #       - ubuntu_22.04-clang_11-vtk_9.2.2-py_3.8
   #       default: ubuntu_22.04-gcc_11-vtk_9.2.2-py_3.8
-  # Note: in Extract build configuration stage please also changes { matrix.BUILD_CONFIG } to { inputs.BUILD_CONFIG }, and comment the matrix to disable.
+  # Note: in Extract build configuration stage please also changes { matrix.image } to { inputs.image }, and comment the matrix to disable.
 
 jobs:
   push_to_registry:
@@ -25,17 +25,18 @@ jobs:
     # Matrix for push event. To comment when using the dispatch event.
     strategy:
       matrix:
-        BUILD_CONFIG:
+        image:
         - ubuntu_22.04-gcc_11-vtk_9.2.2-py_3.8
         - ubuntu_22.04-clang_14-vtk_9.2.2-py_3.8
+        - ubuntu_24.04-gcc_11-vtk_9.3.0-py_3.12
     steps:
       - name: Check out the repo
         uses: actions/checkout@v4
 
       - name: Extract build configuration
-        # If workflow dispatch event replace `matrix.BUILD_CONFIG` by `inputs.BUILD_CONFIG`
+        # If workflow dispatch event replace `matrix.image` by `inputs.image`
         run: |
-          IFS='_-' read -r -a CONFIG <<< "${{ matrix.BUILD_CONFIG }}"
+          IFS='_-' read -r -a CONFIG <<< "${{ matrix.image }}"
           echo "BASE_IMAGE=${CONFIG[0]}:${CONFIG[1]}" >> $GITHUB_ENV
           echo "CC=${CONFIG[2]}-${CONFIG[3]}" >> $GITHUB_ENV
           if [[ "${CONFIG[2]}" == "gcc" ]]; then
@@ -47,7 +48,7 @@ jobs:
           fi
           echo "VTK_VERSION=${CONFIG[5]}" >> $GITHUB_ENV
           echo "PYTHON_VERSION=${CONFIG[7]}" >> $GITHUB_ENV
-          echo "DOCKER_TAG=${{ matrix.BUILD_CONFIG }}" >> $GITHUB_ENV
+          echo "DOCKER_TAG=${{ matrix.image }}" >> $GITHUB_ENV
 
       - name: Build configuration
         run: |
