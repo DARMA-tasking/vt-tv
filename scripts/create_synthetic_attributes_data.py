@@ -4,9 +4,9 @@ import os
 
 def get_attributes_dict(id):
     attributes = {
-        "intAttribute": id,
         "doubleAttribute": float(id) * 3.14,
         "elementIDAttribute": id + 30000000000,
+        "intAttribute": id,
         "stringAttribute": f"id is {id}"
     }
     return attributes
