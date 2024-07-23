@@ -36,7 +36,6 @@ option(VT_TV_PYTHON_BINDINGS_ENABLED "Build vt-tv with Python bindings" OFF)
 option(VT_TV_OPENMP_ENABLED "Build vt-tv with openMP support" ON)
 option(VT_TV_TESTS_ENABLED "Build vt-tv with unit tests" ON)
 option(VT_TV_COVERAGE_ENABLED "Build vt-tv with coverage" OFF)
-
 option(VT_TV_WERROR_ENABLED "Build vt-tv with warnings as errors" OFF)
 
 set(VT_TV_N_THREADS "2" CACHE STRING "Number of OpenMP threads to use")
