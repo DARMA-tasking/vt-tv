@@ -18,7 +18,7 @@ jobs:
         - ubuntu_22.04-gcc_11-vtk_9.2.2-py_3.8
         - ubuntu_22.04-clang_14-vtk_9.2.2-py_3.8
     env:
-      OUTPUT_DIR: '/tmp/out'
+      OUTPUT_DIR: '/tmp/artifacts'
     name: vt-tv build and test
     steps:
       - uses: actions/checkout@v4
@@ -65,7 +65,7 @@ jobs:
         if: always()
         with:
           name: Tests report
-          path: ${{ env.OUTPUT_DIR }}/tmp/artifacts/junit-report.xml
+          path: ${{ env.OUTPUT_DIR }}/junit-report.xml
           reporter: java-junit
           output-to: step-summary
 
@@ -74,5 +74,5 @@ jobs:
         run: |
           echo '## Coverage' >> $GITHUB_STEP_SUMMARY
           echo '```shell' >> $GITHUB_STEP_SUMMARY
-          cat ${{ env.OUTPUT_DIR }}/tmp/artifacts/lcov-list-report.txt >> $GITHUB_STEP_SUMMARY
+          cat ${{ env.OUTPUT_DIR }}/lcov-list-report.txt >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY

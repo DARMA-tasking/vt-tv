@@ -19,9 +19,12 @@ ctest --output-junit Testing/Temporary/junit-report.xml --output-on-failure || t
 mkdir -p /tmp/artifacts/
 cp /opt/build/vt-tv/Testing/Temporary/LastTest.log /tmp/artifacts/
 cp /opt/build/vt-tv/Testing/Temporary/junit-report.xml /tmp/artifacts/
-ls /tmp/artifacts
 # output LastTest.log to screen
 cat /opt/build/vt-tv/Testing/Temporary/LastTest.log
+
+# output PNG images from the test_render tests
+cp /opt/src/vt-tv/output/test-render/test_vt_tv0.png /tmp/artifacts/
+cp /opt/src/vt-tv/output/test-render/ccm_example0.png /tmp/artifacts/
 
 # coverage reporting
 pushd /opt/src/vt-tv/output
@@ -38,6 +41,8 @@ LCOV_SUMMARY=$(lcov --summary lcov_vt-tv_test_no_deps.info)
 LCOV_TOTAL_LINES_COV=$(echo $LCOV_SUMMARY | grep -E -o 'lines......: ([0-9.]+)*' | grep -o -E '[0-9]+.[0-9]+')
 echo $LCOV_TOTAL_LINES_COV > lcov-lines-total.txt
 cp /opt/src/vt-tv/output/lcov-lines-total.txt /tmp/artifacts/
+
+ls /tmp/artifacts
 
 popd
 

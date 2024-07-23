@@ -77,8 +77,9 @@ class RenderTest :public ::testing::TestWithParam<std::string> {
 
   protected:
     Render createRender(YAML::Node config, Info info, std::string &output_dir) {
+      // change output directory to use specific one for these tests
+      output_dir = "output/test-render";
 
-      output_dir = config["output"]["directory"].as<std::string>();
       std::filesystem::path output_path(output_dir);
       if (output_path.is_relative()) {
         output_path = std::filesystem::path(SRC_DIR) / output_path;
