@@ -20,6 +20,8 @@ jobs:
     env:
       OUTPUT_DIR: '/tmp/artifacts'
       VT_TV_COVERAGE_ENABLED: ${{ matrix.image == 'ubuntu_22.04-gcc_11-vtk_9.2.2-py_3.8' && 'ON' || 'OFF' }}
+      VT_TV_TESTS_ENABLED: ${{ matrix.image == 'ubuntu_22.04-gcc_11-vtk_9.2.2-py_3.8' && 'ON' || 'OFF' }}
+      VT_TV_PYTHON_BINDINGS_ENABLED: ${{ matrix.image == 'ubuntu_22.04-gcc_11-vtk_9.2.2-py_3.8' && 'ON' || 'OFF' }}
     name: vt-tv build and test
     steps:
       - uses: actions/checkout@v4
@@ -52,7 +54,8 @@ jobs:
           file: ./ci/docker/build-and-test.dockerfile
           build-args: |
             BASE_IMAGE=pierrpebay/vt-tv:${{ matrix.image }}
-            VT_TV_COVERAGE_ENABLED=${{ env.VT_TV_COVERAGE_ENABLED }}
+            VT_TV_TESTS_ENABLED=${{ env.VT_TV_TESTS_ENABLED }}
+            VT_TV_COVERAGE_ENABLED=${{ env.VT_TV_COVERAGE_ENABLED }} 
           outputs: type=local,dest=${{ env.OUTPUT_DIR }}
 
       - name: Upload artifacts
@@ -63,8 +66,8 @@ jobs:
           path: ${{ env.OUTPUT_DIR }}
 
       - name: Unit tests
+        if: ${{ env.VT_TV_TESTS_ENABLED == 'ON' }}
         uses: phoenix-actions/test-reporting@v15
-        if: always()
         with:
           name: Tests report
           path: ${{ env.OUTPUT_DIR }}/tmp/artifacts/junit-report.xml
