@@ -14,17 +14,17 @@ mkdir -p /opt/src/vt-tv/output/
 
 # run tests (allow failure but generate report to analyze failures later in CI)
 ctest --output-junit Testing/Temporary/junit-report.xml --output-on-failure || true
-
-# collect test logs for exporting
 mkdir -p /tmp/artifacts/
+
+# add artifact: LastTest.log
 cp /opt/build/vt-tv/Testing/Temporary/LastTest.log /tmp/artifacts/ || true
 cp /opt/build/vt-tv/Testing/Temporary/junit-report.xml /tmp/artifacts/ || true
 # output LastTest.log to screen
 cat /opt/build/vt-tv/Testing/Temporary/LastTest.log
 
-# output PNG images from the test_render tests
-[ -f "/opt/src/vt-tv/output/test-render/test_vt_tv0.png" ] && cp "/opt/src/vt-tv/output/test-render/test_vt_tv0.png"  /tmp/artifacts/
-[ -f "/opt/src/vt-tv/output/test-render/ccm_example0.png" ] && cp "/opt/src/vt-tv/output/test-render/ccm_example0.png"  /tmp/artifacts/
+# add artifacts:  PNG images from the test_parse_render tests
+[ -f "/opt/src/vt-tv/output/tests/test_vt_tv0.png" ] && cp "/opt/src/vt-tv/output/tests/test_vt_tv0.png"  /tmp/artifacts/
+[ -f "/opt/src/vt-tv/output/tests/ccm_example0.png" ] && cp "/opt/src/vt-tv/output/tests/ccm_example0.png"  /tmp/artifacts/
 
 # coverage reporting
 if [[ $VT_TV_COVERAGE_ENABLED == "ON" ]]; then
@@ -34,10 +34,13 @@ if [[ $VT_TV_COVERAGE_ENABLED == "ON" ]]; then
     lcov --list lcov_vt-tv_test_no_deps.info
     # add simple coverage artifact
     lcov --list lcov_vt-tv_test_no_deps.info > lcov-list-report.txt
+
+    # add artifacts: coverage list
     cp lcov_vt-tv_test_no_deps.info /tmp/artifacts/
     cp /opt/src/vt-tv/output/lcov-list-report.txt /tmp/artifacts/
 
-    # extract total coverage (Lines) for later use in a badge in the CI
+    # add artifacts: coverage total (percentage / lines)
+    # might be useful for later badging
     LCOV_SUMMARY=$(lcov --summary lcov_vt-tv_test_no_deps.info)
     LCOV_TOTAL_LINES_COV=$(echo $LCOV_SUMMARY | grep -E -o 'lines......: ([0-9.]+)*' | grep -o -E '[0-9]+.[0-9]+')
     echo $LCOV_TOTAL_LINES_COV > lcov-lines-total.txt
