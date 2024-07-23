@@ -1,5 +1,6 @@
 ARG BASE_IMAGE=pierrpebay/vt-tv:ubuntu_22.04-gcc_11-vtk_9.2.2-py_3.8
 ARG VT_TV_COVERAGE_ENABLED=OFF
+ARG VT_TV_PYTHON_BINDINGS_ENABLED=ON
 
 FROM ${BASE_IMAGE} AS base
 
@@ -13,7 +14,7 @@ RUN mkdir -p /opt/build/vt-tv
 
 # Build
 FROM base AS build
-ARG VT_TV_COVERAGE_ENABLED
+ARG VT_TV_COVERAGE_ENABLED=OFF
 
 RUN VT_TV_COVERAGE_ENABLED=$VT_TV_COVERAGE_ENABLED bash /opt/src/vt-tv/ci/build.sh
 
@@ -25,7 +26,9 @@ RUN VT_TV_COVERAGE_ENABLED=$VT_TV_COVERAGE_ENABLED bash /opt/src/vt-tv/ci/test_c
 
 # Python tests (Builds VT-TV with Python bindings & test python package)
 FROM base AS test-python
-RUN bash /opt/src/vt-tv/ci/test_python.sh
+ARG VT_TV_PYTHON_BINDINGS_ENABLED=OFF
+
+RUN VT_TV_PYTHON_BINDINGS_ENABLED=$VT_TV_PYTHON_BINDINGS_ENABLED bash /opt/src/vt-tv/ci/test_python.sh
 
 # Artifacts
 FROM scratch AS artifacts
