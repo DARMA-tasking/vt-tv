@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 CURRENT_DIR="$(dirname -- "$(realpath -- "$0")")" # Current directory
 PARENT_DIR="$(dirname "$CURRENT_DIR")"
 
