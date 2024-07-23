@@ -17,7 +17,7 @@ jobs:
         image:
         - ubuntu_22.04-gcc_11-vtk_9.2.2-py_3.8
         - ubuntu_22.04-clang_14-vtk_9.2.2-py_3.8
-        - ubuntu_24.04-gcc_11-vtk_9.3.0-py_3.12
+        - ubuntu_24.04-gcc_14-vtk_9.3.0-py_3.12
     env:
       OUTPUT_DIR: '/tmp/artifacts'
       VT_TV_TESTS_ENABLED: 'ON' # Build & Test in all configurations
