@@ -11,12 +11,16 @@ COPY . /opt/src/vt-tv
 RUN mkdir -p /opt/build/vt-tv
 
 # Build
-FROM base as build
-RUN if [[ $CC == "gcc-11" ]]; \
-    then VT_TV_COVERAGE_ENABLED=ON; \ 
-    else VT_TV_COVERAGE_ENABLED=OFF; \
+FROM base AS build
+RUN if [[ $CC == "gcc-11" ]]; then \
+    VT_TV_COVERAGE_ENABLED=ON \ 
+    else VT_TV_COVERAGE_ENABLED=OFF \
     fi \
     /opt/src/vt-tv/ci/build.sh
+
+RUN export VT_TV_COVERAGE_ENABLED=OFF
+RUN if [[ $CC == "gcc-11" ]]; then VT_TV_COVERAGE_ENABLED=ON; fi
+RUN /opt/src/vt-tv/ci/build.sh
 
 # Unit tests
 FROM build AS test-cpp
