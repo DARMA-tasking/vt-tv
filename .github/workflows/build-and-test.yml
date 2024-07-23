@@ -70,7 +70,7 @@ jobs:
           output-to: step-summary
 
       - name: Coverage
-        if: always()
+        if: contains(${{matrix.image }}, "gcc_11")
         run: |
           echo '## Coverage' >> $GITHUB_STEP_SUMMARY
           echo '```shell' >> $GITHUB_STEP_SUMMARY
