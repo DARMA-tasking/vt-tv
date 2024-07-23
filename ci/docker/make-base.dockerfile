@@ -1,19 +1,21 @@
 # Docker instructions to build an image with some arguments to specify compilers, python and VTK versions.
 # @see .github/workflows/pushbasedockerimage.yml
 
-# Arguments
 ARG BASE_IMAGE=ubuntu:22.04
-ARG VTK_VERSION=v9.2.2
-ARG PYTHON_VERSION=3.8
 
 # Base image & requirements
 FROM ${BASE_IMAGE} AS base
 
-ARG VTK_VERSION PYTHON_VERSION
+# Arguments
+ARG VTK_VERSION=v9.2.2
+ARG PYTHON_VERSION=3.8
+ARG CC=gcc-11
+ARG CXX=g++-11
+
 ENV DEBIAN_FRONTEND=noninteractive
 ENV VTK_DIR=/opt/build/vtk
-ENV CC=gcc-11
-ENV CXX=g++-11
+ENV CC=/usr/bin/$CC
+ENV CXX=/usr/bin/$CXX
 
 RUN apt-get update -y -q && \
   apt-get install -y -q --no-install-recommends \
