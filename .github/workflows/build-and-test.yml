@@ -75,7 +75,7 @@ jobs:
           output-to: step-summary
 
       - name: Coverage summary
-        if: (success() || failure()) && ${{ env.VT_TV_COVERAGE_ENABLED == 'ON' }}
+        if: ${{ (success() || failure()) &&  env.VT_TV_COVERAGE_ENABLED == 'ON' }}
         run: |
           echo '## Coverage' >> $GITHUB_STEP_SUMMARY
           echo '```shell' >> $GITHUB_STEP_SUMMARY
