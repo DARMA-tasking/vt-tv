@@ -13,8 +13,6 @@ ARG CC=gcc-11
 ARG CXX=g++-11
 
 ENV DEBIAN_FRONTEND=noninteractive
-ENV VTK_DIR=/opt/build/vtk
-
 RUN apt-get update -y -q && \
   apt-get install -y -q --no-install-recommends \
   ${CC} \
@@ -52,8 +50,10 @@ RUN apt-get update -y -q && \
   apt-get clean && \
   rm -rf /var/lib/apt/lists/*
 
+# Share environment variables for use in images based on this.
 ENV CC=/usr/bin/$CC
 ENV CXX=/usr/bin/$CXX
+ENV VTK_DIR=/opt/build/vtk
 
 # Setup python 3.8 with conda
 
