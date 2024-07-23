@@ -27,7 +27,7 @@ cat /opt/build/vt-tv/Testing/Temporary/LastTest.log
 [ -f "/opt/src/vt-tv/output/test-render/ccm_example0.png" ] && cp "/opt/src/vt-tv/output/test-render/ccm_example0.png"  /tmp/artifacts/
 
 # coverage reporting
-if [[ $VT_TV_COVERAGE_ENABLED=="ON" ]]; then
+if [[ $VT_TV_COVERAGE_ENABLED == "ON" ]]; then
     pushd /opt/src/vt-tv/output
     lcov --capture --directory /opt/build/vt-tv --output-file lcov_vt-tv_test.info
     lcov --remove lcov_vt-tv_test.info -o lcov_vt-tv_test_no_deps.info '*/lib/*' '/usr/include/*' '*/vtk/*' '*/tests/*'
