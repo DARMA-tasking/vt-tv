@@ -14,7 +14,7 @@ def get_attributes_dict(id):
 project_dir = os.path.dirname(os.path.dirname(__file__))
 test_data_dir = os.path.join(project_dir, "tests", "data", "lb_test_data")
 
-output_dir = os.path.join(project_dir, "output", "synthetic_attributes")
+output_dir = os.path.join(project_dir, "tests", "data", "synthetic_attributes")
 os.makedirs(output_dir, exist_ok=True)
 
 # Loop through all ranks
