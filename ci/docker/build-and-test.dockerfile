@@ -14,16 +14,18 @@ RUN mkdir -p /opt/build/vt-tv
 # Build
 FROM base AS build
 ARG VT_TV_COVERAGE_ENABLED
-RUN VT_TV_COVERAGE_ENABLED=$VT_TV_COVERAGE_ENABLED /opt/src/vt-tv/ci/build.sh
+
+RUN VT_TV_COVERAGE_ENABLED=$VT_TV_COVERAGE_ENABLED bash /opt/src/vt-tv/ci/build.sh
 
 # Unit tests
 FROM build AS test-cpp
 ARG VT_TV_COVERAGE_ENABLED
-RUN VT_TV_COVERAGE_ENABLED=$VT_TV_COVERAGE_ENABLED /opt/src/vt-tv/ci/test_cpp.sh
+
+RUN VT_TV_COVERAGE_ENABLED=$VT_TV_COVERAGE_ENABLED bash /opt/src/vt-tv/ci/test_cpp.sh
 
 # Python tests (Builds VT-TV with Python bindings & test python package)
 FROM build AS test-python
-RUN "/opt/src/vt-tv/ci/test_python.sh"
+RUN bash /opt/src/vt-tv/ci/test_python.sh
 
 # Artifacts
 FROM scratch AS artifacts
