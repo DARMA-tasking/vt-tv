@@ -17,8 +17,8 @@ ctest --output-junit Testing/Temporary/junit-report.xml --output-on-failure || t
 
 # collect test logs for exporting
 mkdir -p /tmp/artifacts/
-cp /opt/build/vt-tv/Testing/Temporary/LastTest.log /tmp/artifacts/
-cp /opt/build/vt-tv/Testing/Temporary/junit-report.xml /tmp/artifacts/
+cp /opt/build/vt-tv/Testing/Temporary/LastTest.log /tmp/artifacts/ || true
+cp /opt/build/vt-tv/Testing/Temporary/junit-report.xml /tmp/artifacts/ || true
 # output LastTest.log to screen
 cat /opt/build/vt-tv/Testing/Temporary/LastTest.log
 
