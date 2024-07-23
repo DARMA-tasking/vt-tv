@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # This script is running tests
-# > setup as pip package (internally build VT-TV with Python binding) 
+# > setup as pip package (internally build VT-TV with Python binding)
 # > run tests
 
 

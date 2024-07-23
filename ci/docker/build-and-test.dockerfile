@@ -10,9 +10,6 @@ RUN apt-get update && apt-get install -y \
 COPY . /opt/src/vt-tv
 RUN mkdir -p /opt/build/vt-tv
 
-# Load variables to bash (CC, CXX, VTK_DIR)
-RUN bash -c "set -a && source /vol1/.env && set +a"
-
 # Build
 FROM base AS build
 RUN ["chmod", "+x", "/opt/src/vt-tv/ci/build.sh"]
