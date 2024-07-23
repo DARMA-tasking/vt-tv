@@ -1,15 +1,13 @@
 #!/bin/bash
 
+# This script is running tests
+# > setup as pip package (internally build VT-TV with Python binding) 
+# > run tests
+
+
 set -ex
 
 export DISPLAY=:99.0
-
-# Start custom display with X virtual frame buffer
-Xvfb :99 -screen 0 1024x768x24 -nolisten tcp > /dev/null 2>&1 &
-
-sleep 1s
-
-TEST_RESULT=0
 
 # Activate conda environment
 . /opt/conda/etc/profile.d/conda.sh && conda activate deves
@@ -18,7 +16,11 @@ TEST_RESULT=0
 pip install PyYAML
 pip install /opt/src/vt-tv
 
-# Test
+# Start custom display with X virtual frame buffer
+Xvfb :99 -screen 0 1024x768x24 -nolisten tcp > /dev/null 2>&1 &
+sleep 1s
+
+# Test (needs display)
 python /opt/src/vt-tv/tests/test_bindings.py
 
 # Clean and restore regular display
