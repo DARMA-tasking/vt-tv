@@ -3,18 +3,17 @@
 
 # Arguments
 ARG BASE_IMAGE=ubuntu:22.04
-ARG CC=gcc-11
-ARG CXX=g++-11
 ARG VTK_VERSION=v9.2.2
 ARG PYTHON_VERSION=3.8
 
 # Base image & requirements
 FROM ${BASE_IMAGE} AS base
 
-ARG CC CXX VTK_VERSION VTK_DIR PYTHON_VERSION
-
+ARG VTK_VERSION PYTHON_VERSION
 ENV DEBIAN_FRONTEND=noninteractive
-ENV VTK_DIR=/opt/build/vtk-build
+ENV VTK_DIR=/opt/build/vtk
+ENV CC=gcc-11
+ENV CXX=g++-11
 
 RUN apt-get update -y -q && \
   apt-get install -y -q --no-install-recommends \
@@ -52,22 +51,6 @@ RUN apt-get update -y -q && \
   && \
   apt-get clean && \
   rm -rf /var/lib/apt/lists/*
-
-# Put CC and CXX in env for CMake
-# Note: `export` is needed because command is run from another container
-# ENV export CC="$(which ${CC})"
-# ENV export CXX="$(which ${CXX})"
-
-# If ENV export ... not correctly passed to the ENV of the dependent image, try
-
-RUN mkdir /vol1
-RUN echo "CC=\$(which ${CC})" >> /vol1/.env
-RUN echo "CXX=\$(which ${CXX})" >> /vol1/.env
-RUN echo "VTK_DIR=$VTK_DIR" >> /vol1/.env
-VOLUME /vol1
-
-# Load variables to bash (CC, CXX, VTK_DIR)
-RUN /bin/bash -c "set -a && source /vol1/.env && set +a"
 
 # Setup python 3.8 with conda
 
