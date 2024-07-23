@@ -45,7 +45,7 @@ jobs:
 
       - name: Build the Docker Image; build and test vt-tv
         id: docker_build
-        continue-on-error: true
+        continue-on-error: false
         uses: docker/build-push-action@v6
         with:
           push: false
@@ -62,7 +62,7 @@ jobs:
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: vt-tv-Artifacts
+          name: vt-tv-Artifacts-${{ matrix.image }}
           path: ${{ env.OUTPUT_DIR }}
 
       - name: Unit tests
