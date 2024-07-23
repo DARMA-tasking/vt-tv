@@ -23,8 +23,8 @@ cp /opt/build/vt-tv/Testing/Temporary/junit-report.xml /tmp/artifacts/ || true
 cat /opt/build/vt-tv/Testing/Temporary/LastTest.log
 
 # output PNG images from the test_render tests
-cp /opt/src/vt-tv/output/test-render/test_vt_tv0.png /tmp/artifacts/
-cp /opt/src/vt-tv/output/test-render/ccm_example0.png /tmp/artifacts/
+[ -f "/opt/src/vt-tv/output/test-render/test_vt_tv0.png" ] && cp "/opt/src/vt-tv/output/test-render/test_vt_tv0.png"  /tmp/artifacts/
+[ -f "/opt/src/vt-tv/output/test-render/ccm_example0.png" ] && cp "/opt/src/vt-tv/output/test-render/ccm_example0.png"  /tmp/artifacts/
 
 # coverage reporting
 pushd /opt/src/vt-tv/output
