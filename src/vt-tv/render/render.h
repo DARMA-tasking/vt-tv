@@ -96,6 +96,7 @@
 #include <set>
 #include <array>
 #include <variant>
+#include <cmath>
 
 namespace vt { namespace tv {
 
@@ -128,9 +129,9 @@ private:
   std::string output_dir_;
   std::string output_file_stem_;
   double grid_resolution_ = 1.0;
-  bool save_meshes_;
-  bool save_pngs_;
-  PhaseType selected_phase_;
+  bool save_meshes_ = false;
+  bool save_pngs_ = false;
+  PhaseType selected_phase_ = std::numeric_limits<PhaseType>::max();
 
   // numeric parameters
   std::variant<std::pair<double, double>, std::set<std::variant<double,int>>> object_qoi_range_;
