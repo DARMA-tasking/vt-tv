@@ -21,7 +21,7 @@ CC="${CC:-$(which gcc || echo '')}"
 CXX="${CXX:-$(which g++ || echo '')}"
 VT_TV_DIR="${VT_TV_DIR:-$CURRENT_DIR}"
 VT_TV_BUILD_DIR="${VT_TV_BUILD_DIR:-$PARENT_DIR/vt-tv/build}"
-VT_TV_OUTPUT_DIR="${VT_TV_OUTPUT_DIR:-CURRENT_DIR/output}"
+VT_TV_OUTPUT_DIR="${VT_TV_OUTPUT_DIR:-$CURRENT_DIR/output}"
 # >> Build settings
 VT_TV_BUILD_TYPE=${VT_TV_BUILD_TYPE:-Release}
 VT_TV_CMAKE_JOBS=${VT_TV_CMAKE_JOBS:-$(nproc)}
@@ -77,9 +77,8 @@ if [[ "${VT_TV_RUN_TESTS_ONLY}" == "OFF" ]]; then
 fi # End build
 
 if [[ "${VT_TV_RUN_TESTS}" == "ON" ]]; then
-
+  pushd ${VT_TV_OUTPUT_DIR}
   # Tests and coverage
-  pushd ${VT_TV_BUILD_DIR}
   if [[ "${VT_TV_COVERAGE_ENABLED}" == "ON" ]]; then
     echo "> Running tests (with coverage)..."
     # Tests & Coverage
@@ -89,7 +88,7 @@ if [[ "${VT_TV_RUN_TESTS}" == "ON" ]]; then
     # Error(s) while accumulating results:
     #   Problem reading source file: /home/thomas/repositories/vt-tv/lib/yaml-cpp/include/yaml-cpp/node/detail/impl.h line:235  out total: 384
     #   Looks like there are more lines in the file: /home/thomas/repositories/vt-tv/lib/yaml-cpp/include/yaml-cpp/node/detail/node.h
-    pushd VT_TV_OUTPUT_DIR
+    
     lcov --capture --directory ${VT_TV_BUILD_DIR} --output-file lcov_vt-tv_test.info
     lcov --remove lcov_vt-tv_test.info -o lcov_vt-tv_test_no_deps.info '*/lib/*' '/usr/include/*' '*/vtk/*' '*/tests/*'
     lcov --summary lcov_vt-tv_test_no_deps.info
@@ -98,12 +97,10 @@ if [[ "${VT_TV_RUN_TESTS}" == "ON" ]]; then
     else
       lcov --list lcov_vt-tv_test_no_deps.info
     fi
-    popd
   else
     echo "> Running tests..."
     # Tests only
-    ctest -T Test
+    ctest --test-dir ${BUILD_DIR} -T Test || true
   fi
-
   popd
 fi
