@@ -167,4 +167,33 @@ INSTANTIATE_TEST_SUITE_P(
     }
 );
 
+TEST_F(RenderTest, test_render_construct_from_info) {
+  // old example2 now as a test
+  using namespace vt;
+  using namespace tv;
+  // Read JSON file and input data
+
+  std::filesystem::path p = std::filesystem::path(SRC_DIR) / "tests/data/lb_test_data/";
+  std::string path = std::filesystem::absolute(p).string();
+
+  NodeType n_ranks = 4;
+
+  std::unique_ptr<Info> info = std::make_unique<Info>();
+
+  for (NodeType rank = 0; rank < n_ranks; rank++) {
+    utility::JSONReader reader{rank};
+    reader.readFile(path + "/data." + std::to_string(rank) + ".json");
+    auto tmpInfo = reader.parse();
+    info->addInfo(tmpInfo->getObjectInfo(), tmpInfo->getRank(rank));
+  }
+
+  fmt::print("Num ranks={}\n", info->getNumRanks());
+
+  // Instantiate render
+  auto r = Render(*info);
+  r.generate();
+
+  SUCCEED();
+}
+
 } // end namespace vt::tv::tests::unit
