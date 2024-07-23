@@ -23,5 +23,5 @@ RUN bash "/opt/src/vt-tv/ci/test_python.sh"
 
 # Artifacts
 FROM scratch AS artifacts
-COPY --from=test-cpp /tmp/artifacts /test-cpp
-COPY --from=test-python /tmp/artifacts /test-python
+COPY --from=test-cpp /tmp/artifacts /
+COPY --from=test-python /tmp/artifacts /
