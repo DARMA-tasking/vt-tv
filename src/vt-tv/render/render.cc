@@ -63,7 +63,7 @@ Render::Render(Info in_info)
   grid_size_[2] = 1; // we assume 2D representation
 
   int sqrt_n_ranks = std::sqrt(n_ranks_);
-  if(sqrt_n_ranks * sqrt_n_ranks == n_ranks_) {
+  if(static_cast<uint64_t>(sqrt_n_ranks) == n_ranks_) {
     // n_ranks is a perfect square
     grid_size_[0] = sqrt_n_ranks;
     grid_size_[1] = sqrt_n_ranks;
