@@ -50,7 +50,7 @@ if [[ "${VT_TV_RUN_TESTS_ONLY}" == "OFF" ]]; then
 
   echo "> Building (CMake|${VT_TV_BUILD_TYPE})..."
   cmake -B "${VT_TV_BUILD_DIR}" \
-    -DCMAKE_VT_TV_BUILD_TYPE=${VT_TV_BUILD_TYPE} \
+    -DCMAKE_BUILD_TYPE:STRING=${VT_TV_BUILD_TYPE} \
     -DVTK_DIR=${VTK_DIR} \
     \
     -DCMAKE_C_COMPILER="${CC}" \
