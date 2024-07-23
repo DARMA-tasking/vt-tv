@@ -73,12 +73,13 @@ class RenderTest :public ::testing::TestWithParam<std::string> {
     // Make the output directory for these tests
     std::filesystem::create_directory(fmt::format("{}/output", SRC_DIR));
     std::filesystem::create_directory(fmt::format("{}/output/tests", SRC_DIR));
+    std::filesystem::create_directory(fmt::format("{}/output/test_render", SRC_DIR));
   }
 
   protected:
     Render createRender(YAML::Node config, Info info, std::string &output_dir) {
       // change output directory to use specific one for these tests
-      output_dir = "output/test-render";
+      output_dir = "output/test_render";
 
       std::filesystem::path output_path(output_dir);
       if (output_path.is_relative()) {
@@ -121,36 +122,33 @@ class RenderTest :public ::testing::TestWithParam<std::string> {
  * Test Render:generate correcty run the different configuration files
  */
 TEST_P(RenderTest, test_render_from_config) {
+  std::string const & config_file = GetParam();
+  YAML::Node config = YAML::LoadFile(fmt::format("{}/tests/config/{}", SRC_DIR, config_file));
+  Info info = Generator::loadInfoFromConfig(config);
 
-  // HeapLeakChecker heap_checker("test_render_from_config");
-  // {
-    std::string const & config_file = GetParam();
-    YAML::Node config = YAML::LoadFile(fmt::format("{}/tests/config/{}", SRC_DIR, config_file));
-    Info info = Generator::loadInfoFromConfig(config);
+  uint64_t win_size = 2000;
+  uint64_t font_size = 50;
 
-    uint64_t win_size = 2000;
-    uint64_t font_size = 50;
+  std::string output_dir;
+  if (config["viz"]["object_qoi"].as<std::string>() == "shared_block_id") {
+    // Temporary: this case must be removed as soon as the `shared_block_id` QOI becomes supported.
+    EXPECT_THROW(createRender(config, info, output_dir), std::runtime_error); // "Invalid Object QOI: shared_block_id"
+  } else {
+    Render render = createRender(config, info, output_dir);
+    // auto files = render.output_dir_ std::filesystem::
+    render.generate(font_size, win_size);
 
-    std::string output_dir;
-    if (config["viz"]["object_qoi"].as<std::string>() == "shared_block_id") {
-      // Temporary: this case must be removed as soon as the `shared_block_id` QOI becomes supported.
-      EXPECT_THROW(createRender(config, info, output_dir), std::runtime_error); // "Invalid Object QOI: shared_block_id"
-    } else {
-      Render render = createRender(config, info, output_dir);
-      // auto files = render.output_dir_ std::filesystem::
-      render.generate(font_size, win_size);
+    // Verify that files are generated with 1 rank_mesh and 1 object mesh per rank
+    std::string output_file_stem = config["output"]["file_stem"].as<std::string>();
 
-      // Verify that files are generated with 1 rank_mesh and 1 object mesh per rank
-      std::string output_file_stem = config["output"]["file_stem"].as<std::string>();
-
-      // Expect 1 output file per phase for both rank meshes and object meshes
-      for (uint64_t i = 0; i<info.getNumPhases(); i++) {
-        ASSERT_TRUE(std::filesystem::exists(fmt::format("{}{}_rank_mesh_{}.vtp", output_dir, output_file_stem, i))) << fmt::format("{}{}_rank_mesh_{}.vtp", output_dir, output_file_stem, i);
-        ASSERT_TRUE(std::filesystem::exists(fmt::format("{}{}_object_mesh_{}.vtp", output_dir, output_file_stem, i))) << fmt::format("{}{}_rank_mesh_{}.vtp", output_dir, output_file_stem, i);
-      }
-
-      // TODO: verify file content: is it needed ?
+    // Expect 1 output file per phase for both rank meshes and object meshes
+    for (uint64_t i = 0; i<info.getNumPhases(); i++) {
+      ASSERT_TRUE(std::filesystem::exists(fmt::format("{}{}_rank_mesh_{}.vtp", output_dir, output_file_stem, i))) << fmt::format("{}{}_rank_mesh_{}.vtp", output_dir, output_file_stem, i);
+      ASSERT_TRUE(std::filesystem::exists(fmt::format("{}{}_object_mesh_{}.vtp", output_dir, output_file_stem, i))) << fmt::format("{}{}_rank_mesh_{}.vtp", output_dir, output_file_stem, i);
     }
+
+    // ENHANCEMENT: verify file content: is it needed ?
+  }
 }
 
 /* Run with different configuration files */
