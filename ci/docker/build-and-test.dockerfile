@@ -17,13 +17,13 @@ RUN bash -c "set -a && source /vol1/.env && set +a"
 FROM base AS build
 RUN ["chmod", "+x", "/opt/src/vt-tv/ci/build.sh"]
 RUN "/opt/src/vt-tv/ci/build.sh"
-RUN bash /opt/src/vt-tv/ci/docker/build.sh
+RUN bash /opt/src/vt-tv/ci/build.sh
 
 # Unit tests
 FROM build AS test-cpp
 RUN ["chmod", "+x", "/opt/src/vt-tv/ci/test_cpp.sh"]
 RUN "/opt/src/vt-tv/ci/test_cpp.sh"
-RUN bash /opt/src/vt-tv/ci/docker/test.sh
+RUN bash /opt/src/vt-tv/ci/test_cpp.sh
 
 # Python tests (Builds VT-TV with Python bindings & test python package)
 FROM build AS test-python
