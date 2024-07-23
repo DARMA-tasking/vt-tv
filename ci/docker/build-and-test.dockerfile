@@ -24,7 +24,7 @@ ARG VT_TV_COVERAGE_ENABLED
 RUN VT_TV_COVERAGE_ENABLED=$VT_TV_COVERAGE_ENABLED bash /opt/src/vt-tv/ci/test_cpp.sh
 
 # Python tests (Builds VT-TV with Python bindings & test python package)
-FROM build AS test-python
+FROM base AS test-python
 RUN bash /opt/src/vt-tv/ci/test_python.sh
 
 # Artifacts
