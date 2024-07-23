@@ -3,8 +3,6 @@ ARG VT_TV_COVERAGE_ENABLED=OFF
 
 FROM ${BASE_IMAGE} AS base
 
-ENV VT_TV_COVERAGE_ENABLED=$VT_TV_COVERAGE_ENABLED
-
 # setup requirements for rendering tests (xvfb) + coverage report (lcov)
 RUN apt-get update && apt-get install -y \
     xvfb \
@@ -15,15 +13,17 @@ RUN mkdir -p /opt/build/vt-tv
 
 # Build
 FROM base AS build
-RUN /opt/src/vt-tv/ci/build.sh
+ARG VT_TV_COVERAGE_ENABLED
+RUN VT_TV_COVERAGE_ENABLED=$VT_TV_COVERAGE_ENABLED /opt/src/vt-tv/ci/build.sh
 
 # Unit tests
 FROM build AS test-cpp
-RUN bash /opt/src/vt-tv/ci/test_cpp.sh
+ARG VT_TV_COVERAGE_ENABLED
+RUN VT_TV_COVERAGE_ENABLED=$VT_TV_COVERAGE_ENABLED /opt/src/vt-tv/ci/test_cpp.sh
 
 # Python tests (Builds VT-TV with Python bindings & test python package)
 FROM build AS test-python
-RUN bash "/opt/src/vt-tv/ci/test_python.sh"
+RUN "/opt/src/vt-tv/ci/test_python.sh"
 
 # Artifacts
 FROM scratch AS artifacts
