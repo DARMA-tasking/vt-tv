@@ -136,21 +136,20 @@ TEST_P(RenderTest, test_render_from_config) {
     // Temporary: this case must be removed as soon as the `shared_block_id` QOI becomes supported.
     EXPECT_THROW(createRender(config, info, output_dir), std::runtime_error); // "Invalid Object QOI: shared_block_id"
   } else {
+    // Render
     Render render = createRender(config, info, output_dir);
-    // auto files = render.output_dir_ std::filesystem::
     render.generate(font_size, win_size);
 
-    // Verify that files are generated with 1 rank_mesh and 1 object mesh per rank
+    // Check: that number of generated mesh files (*.vtp) correspond to the number of phases
     std::string output_file_stem = config["output"]["file_stem"].as<std::string>();
-
-    // Expect 1 output file per phase for both rank meshes and object meshes
     for (uint64_t i = 0; i<info.getNumPhases(); i++) {
       ASSERT_TRUE(std::filesystem::exists(fmt::format("{}{}_rank_mesh_{}.vtp", output_dir, output_file_stem, i))) << fmt::format("{}{}_rank_mesh_{}.vtp", output_dir, output_file_stem, i);
       ASSERT_TRUE(std::filesystem::exists(fmt::format("{}{}_object_mesh_{}.vtp", output_dir, output_file_stem, i))) << fmt::format("{}{}_rank_mesh_{}.vtp", output_dir, output_file_stem, i);
     }
 
-    // Validate PNG (currently only the ccm_example)
-    if (config_file == "ccm_example") {
+    // Check: PNG output. Compare expected image and generated and validate that diff is under some tolerance
+    // (currently only the ccm_example)
+    if (config_file == "ccm-example.yaml") {
       auto cmd = fmt::format("{}/tests/test_image.sh", SRC_DIR);
       const auto [status, output] = Util::exec(cmd.c_str());
       // fmt::print("[          ] {}\n", output);
@@ -162,7 +161,8 @@ TEST_P(RenderTest, test_render_from_config) {
       }
     }
 
-    // Validate mesh files (*.vtp) ?
+    // Validate mesh files (*.vtp) content ?
+    // Is it needed
   }
 }
 
