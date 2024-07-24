@@ -113,7 +113,7 @@ class RenderTest :public ::testing::TestWithParam<std::string> {
         1.0,
         config["viz"]["save_meshes"].as<bool>(),
         // config["viz"]["save_pngs"]: Let PNG rendering to the ParseRenderTest test class.
-        false, 
+        false,
         std::numeric_limits<PhaseType>::max()
       );
     }
