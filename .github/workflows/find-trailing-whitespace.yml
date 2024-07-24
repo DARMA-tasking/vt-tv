@@ -10,4 +10,4 @@ jobs:
       - uses: actions/checkout@v4
       - uses: DARMA-tasking/find-trailing-whitespace@master
         with:
-          exclude: "sketches;lib;docs;*.png"
+          exclude: "sketches;lib;docs;ccm_example0.png"
