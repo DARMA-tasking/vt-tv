@@ -19,8 +19,7 @@ pushd $VT_TV_BUILD_DIR
 mkdir -p $VT_TV_OUTPUT_DIR
 
 # run tests (allow failure but generate report to analyze failures later in CI)
-# ctest --output-junit Testing/Temporary/junit-report.xml --output-on-failure || true  # run with ctest (old)
-"$VT_TV_BUILD_DIR/tests/unit/AllTests" --gtest_output="$VT_TV_TEST_REPORT"  || true  # run with gtest
+"$VT_TV_BUILD_DIR/tests/unit/AllTests" --gtest_output="$VT_TV_TEST_REPORT"  || true
 mkdir -p $VT_TV_ARTIFACTS_DIR
 
 # add artifact: LastTest.log

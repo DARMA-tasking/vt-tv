@@ -81,19 +81,12 @@ fi # End build
 
 if [[ "${VT_TV_RUN_TESTS}" == "ON" ]]; then
   pushd ${VT_TV_OUTPUT_DIR}
-  # Tests and coverage
+  # Tests
+  echo "> Running tests (coverage ${VT_TV_COVERAGE_ENABLED})..."
+  ${VT_TV_BUILD_DIR}/tests/unit/AllTests --gtest_brief --gtest_output="xml:gtest_report.xml" || true # run with gtest
+
+  # Coverage reports
   if [[ "${VT_TV_COVERAGE_ENABLED}" == "ON" ]]; then
-    echo "> Running tests (with coverage)..."
-    # Tests & Coverage
-    # ctest --test-dir ${VT_TV_BUILD_DIR} -T Test -T Coverage || true # run with ctest (old)
-    ${VT_TV_BUILD_DIR}/tests/unit/AllTests --gtest_brief --gtest_output="xml:gtest_report.xml" # run with gtest
-
-    #  || true to continue on error:
-    # Encoutered error with coverageis:
-    # Error(s) while accumulating results:
-    #   Problem reading source file: /home/thomas/repositories/vt-tv/lib/yaml-cpp/include/yaml-cpp/node/detail/impl.h line:235  out total: 384
-    #   Looks like there are more lines in the file: /home/thomas/repositories/vt-tv/lib/yaml-cpp/include/yaml-cpp/node/detail/node.h
-
     lcov --capture --directory ${VT_TV_BUILD_DIR} --output-file lcov_vt-tv_test.info
     lcov --remove lcov_vt-tv_test.info -o lcov_vt-tv_test_no_deps.info '*/lib/*' '/usr/include/*' '*/vtk/*' '*/tests/*'
     lcov --summary lcov_vt-tv_test_no_deps.info
@@ -102,11 +95,6 @@ if [[ "${VT_TV_RUN_TESTS}" == "ON" ]]; then
     else
       lcov --list lcov_vt-tv_test_no_deps.info
     fi
-  else
-    echo "> Running tests..."
-    # Tests only
-    # ctest --test-dir ${VT_TV_BUILD_DIR} -T Test || true  # run with ctest (old)
-    ${VT_TV_BUILD_DIR}/tests/unit/AllTests --gtest_brief --gtest_output="xml:gtest_report.xml" # run with gtest
   fi
   popd
 fi
