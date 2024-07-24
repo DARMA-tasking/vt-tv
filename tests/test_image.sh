@@ -6,7 +6,7 @@ CURRENT_DIR="$(dirname -- "$(realpath -- "$0")")" # Current directory
 
 ACTUAL=${ACTUAL:-/home/thomas/repositories/vt-tv/output/tests/ccm_example0.png}
 EXPECTED=${EXPECTED:-$CURRENT_DIR/expected/ccm_example0.png}
-TOLERANCE=${TOLERANCE:-5.0}
+TOLERANCE=${TOLERANCE:-1.0}
 
 if [ ! -f "$ACTUAL" ]; then
     >&2 echo "Image not found at "$ACTUAL
