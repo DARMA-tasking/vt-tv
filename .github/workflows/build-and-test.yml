@@ -79,7 +79,7 @@ jobs:
         if: ${{ env.VT_TV_TESTS_ENABLED == 'ON' }}
         run: |
           echo '## CCM Example output' >> $GITHUB_STEP_SUMMARY
-          if [ -f "${{ env.OUTPUT_DIR }}/tmp/artifacts/ccm_example0.png" ]; then 
+          if [ -f "${{ env.OUTPUT_DIR }}/tmp/artifacts/ccm_example0.png" ]; then
             echo '!'"[CCM Example]("$(cat "./output/tests/ccm_example0.png" | base64)")" >> $GITHUB_STEP_SUMMARY
           else
             echo 'Missing !' >> $GITHUB_STEP_SUMMARY
