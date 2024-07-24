@@ -13,11 +13,12 @@ pushd /opt/build/vt-tv
 mkdir -p /opt/src/vt-tv/output/
 
 # run tests (allow failure but generate report to analyze failures later in CI)
-ctest --output-junit Testing/Temporary/junit-report.xml --output-on-failure || true
+# ctest --output-junit Testing/Temporary/junit-report.xml --output-on-failure || true
+${VT_TV_BUILD_DIR}/tests/unit/AllTests --gtest_output="xml:/opt/build/vt-tv/Testing/Temporary/junit-report.xml"
 mkdir -p /tmp/artifacts/
 
 # add artifact: LastTest.log
-cp /opt/build/vt-tv/Testing/Temporary/LastTest.log /tmp/artifacts/ || true
+# cp /opt/build/vt-tv/Testing/Temporary/LastTest.log /tmp/artifacts/ || true
 cp /opt/build/vt-tv/Testing/Temporary/junit-report.xml /tmp/artifacts/ || true
 # output LastTest.log to screen
 cat /opt/build/vt-tv/Testing/Temporary/LastTest.log
