@@ -69,7 +69,7 @@ class Util {
             std::array<char, 128> buffer;
             std::string output;
             int status = 100;
-            
+
             FILE* pipe = popen(cmd, "r");
             if (!pipe) throw std::runtime_error("popen() failed!");
             try {
