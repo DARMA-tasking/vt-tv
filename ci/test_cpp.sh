@@ -14,7 +14,7 @@ mkdir -p /opt/src/vt-tv/output/
 
 # run tests (allow failure but generate report to analyze failures later in CI)
 # ctest --output-junit Testing/Temporary/junit-report.xml --output-on-failure || true
-/opt/build/vt-tv/tests/unit/AllTests --gtest_output="xml:/opt/build/vt-tv/Testing/Temporary/junit-report.xml"
+/opt/build/vt-tv/tests/unit/AllTests --gtest_output="xml:/opt/build/vt-tv/Testing/Temporary/junit-report.xml"  || true
 mkdir -p /tmp/artifacts/
 
 # add artifact: LastTest.log
