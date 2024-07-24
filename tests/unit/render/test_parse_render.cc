@@ -80,14 +80,14 @@ class ParseRenderTest :public ::testing::TestWithParam<std::string> {
  * Test ParseRender:parseAndRender correcty run the different configuration files
  */
 TEST_P(ParseRenderTest, test_render_from_config) {
-  std::string const & config_file = GetParam();    
+  std::string const & config_file = GetParam();
   auto parse_render = ParseRender(fmt::format("{}/tests/config/{}", SRC_DIR, config_file));
   ASSERT_NO_THROW(parse_render.parseAndRender());
 
   // Check: PNG output. Compare expected image and generated and validate that diff is under some tolerance
   // (currently only the ccm_example)
   if (config_file == "ccm-example.yaml") {
-    auto cmd = fmt::format("test_image.sh", SRC_DIR);
+    auto cmd = fmt::format("{}/tests/test_image.sh", SRC_DIR);
     const auto [status, output] = Util::exec(cmd.c_str());
     fmt::print("[          ] {}\n", output);
     ASSERT_EQ(status, EXIT_SUCCESS);
