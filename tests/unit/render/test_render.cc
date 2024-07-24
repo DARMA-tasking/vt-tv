@@ -57,6 +57,9 @@
 #include <regex>
 
 #include "../generator.h"
+#include "../util.h"
+
+using namespace vt::tv::tests::unit;
 
 namespace vt::tv::tests::unit::render {
 
@@ -194,6 +197,18 @@ TEST_F(RenderTest, test_render_construct_from_info) {
   r.generate();
 
   SUCCEED();
+}
+
+TEST_F(RenderTest, test_ccm_example_png_with_tolerance) {
+  auto cmd = fmt::format("{}/tests/test_image.sh", SRC_DIR);
+  const auto [status, output] = Util::exec(cmd.c_str());
+  // fmt::print("[          ] {}\n", output);
+  std::cout << "[          ] " << output << std::endl;
+  ASSERT_EQ(status, EXIT_SUCCESS);
+
+  if (status != EXIT_SUCCESS) {
+    std::cerr << "[          ] " << output << std::endl;
+  }
 }
 
 } // end namespace vt::tv::tests::unit
