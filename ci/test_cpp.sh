@@ -12,7 +12,7 @@ sleep 1s
 VT_TV_DIR=/opt/src
 VT_TV_OUTPUT_DIR=$VT_TV_DIR/output
 VT_TV_BUILD_DIR=/opt/build/vt-tv
-VT_TV_TEST_REPORT=/opt/build/vt-tv/Testing/Temporary/junit-report.xml
+VT_TV_TEST_REPORT=$VT_TV_BUILD_DIR/Testing/Temporary/junit-report.xml
 VT_TV_ARTIFACTS_DIR=/tmp/artifacts
 
 pushd $VT_TV_BUILD_DIR
