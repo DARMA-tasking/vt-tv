@@ -89,7 +89,7 @@ TEST_P(ParseRenderTest, test_render_from_config) {
   if (config_file == "ccm-example.yaml") {
     auto cmd = fmt::format("{}/tests/test_image.sh", SRC_DIR);
     const auto [status, output] = Util::exec(cmd.c_str());
-    fmt::print("[          ] {}\n", output);
+    fmt::print("Image test: {}\n", output);
     ASSERT_EQ(status, EXIT_SUCCESS);
   }
 }
