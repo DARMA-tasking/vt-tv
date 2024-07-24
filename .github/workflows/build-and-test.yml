@@ -75,30 +75,15 @@ jobs:
           reporter: java-junit
           output-to: step-summary
 
-      - name: CCM Example output to summary
-        if: ${{ (success() || failure()) &&  env.VT_TV_TESTS_ENABLED == 'ON' }}
-        run: |
-          echo '## CCM Example output' >> $GITHUB_STEP_SUMMARY
-          if [ -f "${{ env.OUTPUT_DIR }}/tmp/artifacts/ccm_example0.png" ]; then
-            echo '!'"[CCM Example](${{ env.OUTPUT_DIR }}/tmp/artifacts/ccm_example0.png)" >> $GITHUB_STEP_SUMMARY
-          else
-            echo 'Missing !' >> $GITHUB_STEP_SUMMARY
-          fi
-
-      # TODO: currently compare image with it self. Should add the expected image to the repo.
-      - name: Test CCM Output image diff
-        if: ${{ (success() || failure()) &&  env.VT_TV_TESTS_ENABLED == 'ON' }}
-        run: |
-          if [ ! -f "${{ env.OUTPUT_DIR }}/tmp/artifacts/ccm_example0.png" ]; then
-            exit 2
-          end
-
-          pip install imgcompare
-          DIFF=python -c 'import imgcompare; print(imgcompare.image_diff_percent("${{ env.OUTPUT_DIR }}/tmp/artifacts/ccm_example0.png", "${{ env.OUTPUT_DIR }}/tmp/artifacts/ccm_example0.png"));'
-          echo "Image diff is $DIFF"
-          if DIFF > 5.0; then
-            exit 2
-          end
+      # - name: CCM Example output to summary (does not work: print plain text)
+      #   if: ${{ (success() || failure()) &&  env.VT_TV_TESTS_ENABLED == 'ON' }}
+      #   run: |
+      #     echo '## CCM Example output' >> $GITHUB_STEP_SUMMARY
+      #     if [ -f "${{ env.OUTPUT_DIR }}/tmp/artifacts/ccm_example0.png" ]; then
+      #       echo '!'"[CCM Example](${{ env.OUTPUT_DIR }}/tmp/artifacts/ccm_example0.png)" >> $GITHUB_STEP_SUMMARY
+      #     else
+      #       echo 'Missing !' >> $GITHUB_STEP_SUMMARY
+      #     fi
 
       - name: Coverage summary
         if: ${{ (success() || failure()) &&  env.VT_TV_COVERAGE_ENABLED == 'ON' }}
