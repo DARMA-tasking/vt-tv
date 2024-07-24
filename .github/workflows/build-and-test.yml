@@ -92,15 +92,14 @@ jobs:
           if [ ! -f "${{ env.OUTPUT_DIR }}/tmp/artifacts/ccm_example0.png" ]; then
             exit 2
           end
-
           pip install imgcompare
           DIFF=python -c 'import imgcompare; print(imgcompare.image_diff_percent("${{ env.OUTPUT_DIR }}/tmp/artifacts/ccm_example0.png", "${{ env.OUTPUT_DIR }}/tmp/artifacts/ccm_example0.png"));' 
+          echo "Image diff is $DIFF"
           if DIFF > 5.0; then
             exit 2
           else
             exit 0
           end
-          echo "Image diff is $DIFF"
 
       - name: Coverage summary
         if: ${{ (success() || failure()) &&  env.VT_TV_COVERAGE_ENABLED == 'ON' }}
