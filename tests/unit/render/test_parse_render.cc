@@ -54,6 +54,8 @@
 #include <set>
 #include <regex>
 
+#include "../util.h"
+
 namespace vt::tv::tests::unit::render {
 
 using ParseRender = vt::tv::utility::ParseRender;
@@ -78,9 +80,18 @@ class ParseRenderTest :public ::testing::TestWithParam<std::string> {
  * Test ParseRender:parseAndRender correcty run the different configuration files
  */
 TEST_P(ParseRenderTest, test_render_from_config) {
-    std::string config_file = fmt::format("{}/tests/config/{}", SRC_DIR, GetParam());
-    auto parse_render = ParseRender(config_file);
-    parse_render.parseAndRender();
+  std::string const & config_file = GetParam();    
+  auto parse_render = ParseRender(fmt::format("{}/tests/config/{}", SRC_DIR, config_file));
+  ASSERT_NO_THROW(parse_render.parseAndRender());
+
+  // Check: PNG output. Compare expected image and generated and validate that diff is under some tolerance
+  // (currently only the ccm_example)
+  if (config_file == "ccm-example.yaml") {
+    auto cmd = fmt::format("test_image.sh", SRC_DIR);
+    const auto [status, output] = Util::exec(cmd.c_str());
+    fmt::print("[          ] {}\n", output);
+    ASSERT_EQ(status, EXIT_SUCCESS);
+  }
 }
 
 /* Run with different configuration files */

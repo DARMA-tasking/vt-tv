@@ -57,7 +57,6 @@
 #include <regex>
 
 #include "../generator.h"
-#include "../util.h"
 
 using namespace vt::tv::tests::unit;
 
@@ -113,8 +112,8 @@ class RenderTest :public ::testing::TestWithParam<std::string> {
         config["output"]["file_stem"].as<std::string>(),
         1.0,
         config["viz"]["save_meshes"].as<bool>(),
-        config["viz"]["save_pngs"].as<bool>(),
-        // config["viz"]["save_pngs"].as<bool>(),
+        // config["viz"]["save_pngs"]: Let PNG rendering to the ParseRenderTest test class.
+        false, 
         std::numeric_limits<PhaseType>::max()
       );
     }
@@ -145,20 +144,6 @@ TEST_P(RenderTest, test_render_from_config) {
     for (uint64_t i = 0; i<info.getNumPhases(); i++) {
       ASSERT_TRUE(std::filesystem::exists(fmt::format("{}{}_rank_mesh_{}.vtp", output_dir, output_file_stem, i))) << fmt::format("{}{}_rank_mesh_{}.vtp", output_dir, output_file_stem, i);
       ASSERT_TRUE(std::filesystem::exists(fmt::format("{}{}_object_mesh_{}.vtp", output_dir, output_file_stem, i))) << fmt::format("{}{}_rank_mesh_{}.vtp", output_dir, output_file_stem, i);
-    }
-
-    // Check: PNG output. Compare expected image and generated and validate that diff is under some tolerance
-    // (currently only the ccm_example)
-    if (config_file == "ccm-example.yaml") {
-      auto cmd = fmt::format("{}/tests/test_image.sh", SRC_DIR);
-      const auto [status, output] = Util::exec(cmd.c_str());
-      // fmt::print("[          ] {}\n", output);
-      std::cout << "[          ] " << output << std::endl;
-      ASSERT_EQ(status, EXIT_SUCCESS);
-
-      if (status != EXIT_SUCCESS) {
-        std::cerr << "[          ] " << output << std::endl;
-      }
     }
 
     // Validate mesh files (*.vtp) content ?
