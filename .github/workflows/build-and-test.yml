@@ -80,7 +80,7 @@ jobs:
         run: |
           echo '## CCM Example output' >> $GITHUB_STEP_SUMMARY
           if [ -f "${{ env.OUTPUT_DIR }}/tmp/artifacts/ccm_example0.png" ]; then
-            echo '!'"[CCM Example](data:image/png;base64,"$(cat "${{ env.OUTPUT_DIR }}/tmp/artifacts/ccm_example0.png" | base64)")" >> $GITHUB_STEP_SUMMARY
+            echo '!'"[CCM Example](${{ env.OUTPUT_DIR }}/tmp/artifacts/ccm_example0.png)" >> $GITHUB_STEP_SUMMARY
           else
             echo 'Missing !' >> $GITHUB_STEP_SUMMARY
           fi
