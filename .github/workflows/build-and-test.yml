@@ -93,7 +93,7 @@ jobs:
             exit 2
           end
           pip install imgcompare
-          DIFF=python -c 'import imgcompare; print(imgcompare.image_diff_percent("${{ env.OUTPUT_DIR }}/tmp/artifacts/ccm_example0.png", "${{ env.OUTPUT_DIR }}/tmp/artifacts/ccm_example0.png"));' 
+          DIFF=python -c 'import imgcompare; print(imgcompare.image_diff_percent("${{ env.OUTPUT_DIR }}/tmp/artifacts/ccm_example0.png", "${{ env.OUTPUT_DIR }}/tmp/artifacts/ccm_example0.png"));'
           echo "Image diff is $DIFF"
           if DIFF > 5.0; then
             exit 2
