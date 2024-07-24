@@ -54,8 +54,13 @@
 #include <variant>
 #include <set>
 #include <regex>
+#include <tuple>
+
+#include "../util.h"
 
 namespace vt::tv::tests::unit::render {
+
+using Util = vt::tv::tests::unit::Util;
 
 /**
  * Provides unit tests for the standalone vt-tv app.
@@ -73,20 +78,6 @@ class StandaloneAppTest :public ::testing::TestWithParam<std::tuple<std::string,
     std::filesystem::create_directory(fmt::format("{}/output", SRC_DIR));
     std::filesystem::create_directory(fmt::format("{}/output/tests", SRC_DIR));
   }
-
-  protected:
-    std::string exec(const char* cmd) {
-        std::array<char, 128> buffer;
-        std::string result;
-        std::unique_ptr<FILE, decltype(&pclose)> pipe(popen(cmd, "r"), pclose);
-        if (!pipe) {
-            throw std::runtime_error("popen() failed!");
-        }
-        while (fgets(buffer.data(), static_cast<int>(buffer.size()), pipe.get()) != nullptr) {
-            result += buffer.data();
-        }
-        return result;
-    }
 };
 
 /**
@@ -98,7 +89,7 @@ TEST_P(StandaloneAppTest, test_run) {
 
     // Run vt-tv_standalone process
     auto cmd = fmt::format("{}/apps/vt-tv_standalone --conf={}", BUILD_DIR, config_file);
-    auto output = exec(cmd.c_str());
+    const auto [status, output] = Util::exec(cmd.c_str());
     fmt::print(output);
 
     // Load config for some checks

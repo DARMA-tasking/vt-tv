@@ -85,7 +85,9 @@ if [[ "${VT_TV_RUN_TESTS}" == "ON" ]]; then
   if [[ "${VT_TV_COVERAGE_ENABLED}" == "ON" ]]; then
     echo "> Running tests (with coverage)..."
     # Tests & Coverage
-    ctest --test-dir ${BUILD_DIR} -T Test -T Coverage || true
+    # ctest --test-dir ${VT_TV_BUILD_DIR} -T Test -T Coverage || true
+    ${VT_TV_BUILD_DIR}/tests/unit/AllTests --gtest_brief --gtest_output="xml:gtest_report.xml"
+
     #  || true to continue on error:
     # Encoutered error with coverageis:
     # Error(s) while accumulating results:
@@ -103,7 +105,8 @@ if [[ "${VT_TV_RUN_TESTS}" == "ON" ]]; then
   else
     echo "> Running tests..."
     # Tests only
-    ctest --test-dir ${BUILD_DIR} -T Test || true
+    # ctest --test-dir ${VT_TV_BUILD_DIR} -T Test || true
+    ${VT_TV_BUILD_DIR}/tests/unit/AllTests --gtest_brief --gtest_output="xml:gtest_report.xml"
   fi
   popd
 fi
