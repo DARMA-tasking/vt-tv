@@ -3,8 +3,9 @@
 set -e
 
 CURRENT_DIR="$(dirname -- "$(realpath -- "$0")")" # Current directory
+PARENT_DIR="$(dirname "$CURRENT_DIR")"
 
-ACTUAL=${ACTUAL:-/home/thomas/repositories/vt-tv/output/tests/ccm_example0.png}
+ACTUAL=${ACTUAL:-$PARENT_DIR/output/tests/ccm_example0.png}
 EXPECTED=${EXPECTED:-$CURRENT_DIR/expected/ccm_example0.png}
 TOLERANCE=${TOLERANCE:-2.0}
 
