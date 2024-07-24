@@ -149,7 +149,20 @@ TEST_P(RenderTest, test_render_from_config) {
       ASSERT_TRUE(std::filesystem::exists(fmt::format("{}{}_object_mesh_{}.vtp", output_dir, output_file_stem, i))) << fmt::format("{}{}_rank_mesh_{}.vtp", output_dir, output_file_stem, i);
     }
 
-    // ENHANCEMENT: verify file content: is it needed ?
+    // Validate PNG (currently only the ccm_example)
+    if (config_file == "ccm_example") {
+      auto cmd = fmt::format("{}/tests/test_image.sh", SRC_DIR);
+      const auto [status, output] = Util::exec(cmd.c_str());
+      // fmt::print("[          ] {}\n", output);
+      std::cout << "[          ] " << output << std::endl;
+      ASSERT_EQ(status, EXIT_SUCCESS);
+
+      if (status != EXIT_SUCCESS) {
+        std::cerr << "[          ] " << output << std::endl;
+      }
+    }
+
+    // Validate mesh files (*.vtp) ?
   }
 }
 
@@ -197,18 +210,6 @@ TEST_F(RenderTest, test_render_construct_from_info) {
   r.generate();
 
   SUCCEED();
-}
-
-TEST_F(RenderTest, test_ccm_example_png_with_tolerance) {
-  auto cmd = fmt::format("{}/tests/test_image.sh", SRC_DIR);
-  const auto [status, output] = Util::exec(cmd.c_str());
-  // fmt::print("[          ] {}\n", output);
-  std::cout << "[          ] " << output << std::endl;
-  ASSERT_EQ(status, EXIT_SUCCESS);
-
-  if (status != EXIT_SUCCESS) {
-    std::cerr << "[          ] " << output << std::endl;
-  }
 }
 
 } // end namespace vt::tv::tests::unit
