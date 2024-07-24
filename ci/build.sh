@@ -5,7 +5,7 @@
 set -ex
 
 # Calls build script with CI configuration
-# (Specific path, enable tests and coverage)
+# (Specific path, enable tests and coverage, warnings as errors)
 bash -c "VT_TV_BUILD_DIR=/opt/build/vt-tv \
     VTK_DIR=/opt/build/vtk \
     VT_TV_TESTS_ENABLED=ON \
