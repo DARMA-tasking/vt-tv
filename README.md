@@ -56,7 +56,7 @@ _In future directions, we will assume  that the `vt-tv` build is in `${VTTV_BUIL
 `vt-tv` requires two inputs:
 
 1. One or more JSON data files
-2. A YAML configuration fil (which contains the path to the JSON data files)
+2. A YAML configuration file (which contains the path to the JSON data files)
 
 The basic call to `vt-tv` is:
 
