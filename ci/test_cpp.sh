@@ -12,18 +12,18 @@ sleep 1s
 VT_TV_DIR="/opt/src/vt-tv"
 VT_TV_OUTPUT_DIR="$VT_TV_DIR/output"
 VT_TV_BUILD_DIR="/opt/build/vt-tv"
-VT_TV_TEST_REPORT="$VT_TV_BUILD_DIR/Testing/Temporary/junit-report.xml"
+VT_TV_TEST_REPORT_PATH="$VT_TV_BUILD_DIR/Testing/Temporary/junit-report.xml"
 VT_TV_ARTIFACTS_DIR="/tmp/artifacts"
 
 pushd $VT_TV_BUILD_DIR
 mkdir -p $VT_TV_OUTPUT_DIR
 
 # run tests (allow failure but generate report to analyze failures later in CI)
-"$VT_TV_BUILD_DIR/tests/unit/AllTests" --gtest_output="xml:$VT_TV_TEST_REPORT"  || true
+"$VT_TV_BUILD_DIR/tests/unit/AllTests" --gtest_output="xml:$VT_TV_TEST_REPORT_PATH"  || true
 mkdir -p $VT_TV_ARTIFACTS_DIR
 
 # add artifact: unit tests report
-cp "$VT_TV_TEST_REPORT" $VT_TV_ARTIFACTS_DIR/ || true
+cp "$VT_TV_TEST_REPORT_PATH" $VT_TV_ARTIFACTS_DIR/ || true
 
 # add artifact: *.png generated images (by the ParseRenderTest class)
 [ -d "$VT_TV_OUTPUT_DIR/tests" ] && cp "$VT_TV_OUTPUT_DIR/tests/"*".png"  $VT_TV_ARTIFACTS_DIR/
