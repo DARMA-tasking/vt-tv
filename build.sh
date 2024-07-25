@@ -1,6 +1,7 @@
 #!/bin/bash
 
-# Description: This script enable to build vt-tv and/or run vt-tv unit tests
+# Description: This script enable to build vt-tv
+# It can also be used to run tests and coverage
 
 set -e
 
@@ -89,8 +90,8 @@ if [[ "$VT_TV_RUN_TESTS" == "ON" ]]; then
   pushd $VT_TV_OUTPUT_DIR
   # Tests
   echo "> Running tests (coverage $VT_TV_COVERAGE_ENABLED)..."
-  # run with gtest and 
-  "$VT_TV_BUILD_DIR/tests/unit/AllTests" --gtest_brief=1 --gtest_output="xml:$VT_TV_TEST_REPORT_PATH" || true
+  # Run GTest unit tests and display detail for failing tests
+  "$VT_TV_BUILD_DIR/tests/unit/AllTests" --gtest_output="xml:$VT_TV_TEST_REPORT_PATH" || true
 
   # Coverage reports
   if [[ "$VT_TV_COVERAGE_ENABLED" == "ON" ]]; then
