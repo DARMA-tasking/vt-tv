@@ -76,8 +76,6 @@ help() {
       -r   --tests-run=[bool]       Run unit tests (and build coverage report if coverage is enabled) (VT_TV_RUN_TESTS=$VT_TV_RUN_TESTS)
       -f   --tests-run-filter=[str]      Filter unit test to run. (VT_TV_RUN_TESTS_FILTER=$VT_TV_RUN_TESTS_FILTER)
 
-      
-
       -h   --help                   Show help and default option values.
 
   Examples:
@@ -92,10 +90,11 @@ help() {
         Build & Run tests:          build.sh --tests-run --coverage
         Build with coverage:        build.sh --coverage
         Build (debug):              build.sh --build-type=Debug
-        Run Test & coverage :       build.sh --build=0 --tests-run --coverage --coverage-report=output/lcov-report
+        Run Test & coverage:        build.sh --build=0 --tests-run --coverage --coverage-report=output/lcov-report
+        Coverage report only:       build.sh --build=0 --coverage-report=output/lcov-report
 
       Using both:
-        Build with coverage & run tests: VT_TV_COVERAGE=ON build.sh --run-tests
+        Build with coverage & run tests: VT_TV_COVERAGE=ON build.sh --tests-run
 EOF
   exit 1;
 }
@@ -206,7 +205,7 @@ if [[ "$VT_TV_RUN_TESTS" == "ON" ]]; then
     echo "Filtering Tests ($VT_TV_RUN_TESTS_FILTER)..."
     GTEST_OPTIONS="$GTEST_OPTIONS --gtest_filter=\"$VT_TV_RUN_TESTS_FILTER\""
   fi
-  
+
   gtest_cmd="\"$VT_TV_BUILD_DIR/tests/unit/AllTests\" $GTEST_OPTIONS"
   echo "Run GTest..."
   eval "$gtest_cmd" || true
