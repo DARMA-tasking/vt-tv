@@ -32,7 +32,7 @@ pushd $VT_TV_OUTPUT_DIR
 cp "junit-report.xml" $VT_TV_ARTIFACTS_DIR/ || true
 
 # > add some generated images artifacts
-[ -d "tests" ] && cp "tests/"*".png"  $VT_TV_ARTIFACTS_DIR/
+[ -d "tests" ] && cp "/opt/src/vt-tv/output/tests/"*".png"  $VT_TV_ARTIFACTS_DIR/
 
 if [[ $VT_TV_COVERAGE_ENABLED == "ON" ]]; then
     # > add `coverage --list` file artifact
