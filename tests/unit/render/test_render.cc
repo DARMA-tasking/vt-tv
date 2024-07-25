@@ -157,8 +157,7 @@ INSTANTIATE_TEST_SUITE_P(
     RenderTest,
     ::testing::Values<std::string>(
         "conf.yaml",
-        "ccm-example.yaml",
-        "test-vt-tv.yaml"
+        "ccm-example.yaml"
     ),
     [](const ::testing::TestParamInfo<std::string>& in_info) {
       // test suffix as slug

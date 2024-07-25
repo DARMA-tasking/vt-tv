@@ -36,7 +36,7 @@ class CMakeBuild(build_ext):
     if not vtk_dir:
       raise RuntimeError("Environment variable VTK_DIR is required")
 
-    jobs = os.environ.get('VTTV_CMAKE_JOBS', os.cpu_count())
+    jobs = os.environ.get('VT_TV_CMAKE_JOBS', os.cpu_count())
 
     n_threads = os.environ.get('VTTV_N_THREADS', 1)
     # check if n_threads is a valid integer
