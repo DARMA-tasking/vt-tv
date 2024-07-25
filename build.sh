@@ -67,7 +67,6 @@ help() {
       -r   --run-tests            Run unit tests (and build coverage report if coverage is enabled) (VT_TV_RUN_TESTS=$VT_TV_RUN_TESTS)
       -a   --tests-report[str]    Unit tests Junit report path (VT_TV_TEST_REPORT_PATH=$VT_TV_TEST_REPORT_PATH)
       -k   --vtk-dir=[str]        VTK build directory (VTK_DIR=$VTK_DIR)
-      
 
       -h   --help                 Show help and default option values.
 
