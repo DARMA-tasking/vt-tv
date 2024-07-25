@@ -28,14 +28,15 @@ VT_TV_OUTPUT_DIR="${VT_TV_OUTPUT_DIR:-$CURRENT_DIR/output}"
 VT_TV_BUILD_TYPE=${VT_TV_BUILD_TYPE:-Release}
 VT_TV_CMAKE_JOBS=${VT_TV_CMAKE_JOBS:-$(nproc)}
 VT_TV_TESTS_ENABLED=$(on_off ${VT_TV_TESTS_ENABLED:-ON})
+VT_TV_TEST_REPORT_PATH=$(:-"$VT_TV_OUTPUT_DIR/output/junit-report.xml")
 VT_TV_COVERAGE_ENABLED=$(on_off ${VT_TV_COVERAGE_ENABLED:-OFF})
-VT_TV_COVERAGE_REPORT=$(on_off ${VT_TV_COVERAGE_REPORT:-ON})
 VT_TV_CLEAN=$(on_off ${VT_TV_CLEAN:-ON})
 VT_TV_PYTHON_BINDINGS_ENABLED=$(on_off ${VT_TV_PYTHON_BINDINGS_ENABLED:-OFF})
 VT_TV_WERROR_ENABLED=$(on_off ${VT_TV_WERROR_ENABLED:-OFF})
 # >> Run tests settings
 VT_TV_RUN_TESTS=$(on_off ${VT_TV_RUN_TESTS:-OFF})
-VT_TV_RUN_TESTS_ONLY=$(on_off ${VT_TV_RUN_TESTS_ONLY:-OFF})
+VT_TV_RUN_TESTS_ONLY=$(on_off ${VT_TV_RUN_TESTS_ONLY:-OFF}) # do not build vt-tv already built)
+VT_TV_COVERAGE_HTML_REPORT=$(on_off ${VT_TV_COVERAGE_HTML_REPORT:-ON})
 
 echo "VT_TV_RUN_TESTS_ONLY="$VT_TV_RUN_TESTS_ONLY
 
@@ -65,7 +66,6 @@ if [[ "${VT_TV_RUN_TESTS_ONLY}" == "OFF" ]]; then
     -DVT_TV_TESTS_ENABLED=${VT_TV_TESTS_ENABLED} \
     -DVT_TV_COVERAGE_ENABLED=${VT_TV_COVERAGE_ENABLED} \
     \
-    -DVT_TV_TESTS_ALL_IN_ONE=${VT_TV_TESTS_ENABLED} \
     -DVT_TV_PYTHON_BINDINGS_ENABLED=${VT_TV_PYTHON_BINDINGS_ENABLED} \
     \
     -DPython_EXECUTABLE="$(which python)" \
@@ -83,17 +83,16 @@ if [[ "${VT_TV_RUN_TESTS}" == "ON" ]]; then
   pushd ${VT_TV_OUTPUT_DIR}
   # Tests
   echo "> Running tests (coverage ${VT_TV_COVERAGE_ENABLED})..."
-  ${VT_TV_BUILD_DIR}/tests/unit/AllTests --gtest_brief --gtest_output="xml:gtest_report.xml" || true # run with gtest
+  ${VT_TV_BUILD_DIR}/tests/unit/AllTests --gtest_brief --gtest_output="xml:$VT_TV_TEST_REPORT_PATH" || true # run with gtest
 
   # Coverage reports
   if [[ "${VT_TV_COVERAGE_ENABLED}" == "ON" ]]; then
     lcov --capture --directory ${VT_TV_BUILD_DIR} --output-file lcov_vt-tv_test.info
     lcov --remove lcov_vt-tv_test.info -o lcov_vt-tv_test_no_deps.info '*/lib/*' '/usr/include/*' '*/vtk/*' '*/tests/*'
     lcov --summary lcov_vt-tv_test_no_deps.info
-    if [[ "${VT_TV_COVERAGE_REPORT}" == "ON" ]]; then
+    lcov --list lcov_vt-tv_test_no_deps.info
+    if [[ "${VT_TV_COVERAGE_HTML_REPORT}" == "ON" ]]; then
       genhtml --prefix ./src --ignore-errors source lcov_vt-tv_test_no_deps.info --legend --title "$(git rev-parse HEAD)" --output-directory=lcov_vt-tv_html
-    else
-      lcov --list lcov_vt-tv_test_no_deps.info
     fi
   fi
   popd

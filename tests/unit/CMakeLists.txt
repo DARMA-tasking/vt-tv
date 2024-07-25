@@ -47,65 +47,20 @@ macro(vt_tv_link_target target)
   target_link_libraries(${target} PUBLIC ${VT_TV_LIBRARY})
 endmacro()
 
-option(VT_TV_TESTS_ALL_IN_ONE "Integrates all tests in a single build target named AllTests." OFF)
+add_executable(
+  AllTests
+  main.cc
+  ${TEST_HEADER_FILES}
+  ${TEST_SOURCE_FILES}
+)
 
-if (VT_TV_TESTS_ALL_IN_ONE)
+turn_on_warnings(AllTests)
 
-  add_executable(
-    AllTests
-    main.cc
-    ${TEST_HEADER_FILES}
-    ${TEST_SOURCE_FILES}
-  )
+# Initialize VTK modules
+vtk_module_autoinit(
+  TARGETS AllTests
+  MODULES ${VTK_LIBRARIES}
+)
 
-  turn_on_warnings(AllTests)
-
-  # Initialize VTK modules
-  vtk_module_autoinit(
-    TARGETS AllTests
-    MODULES ${VTK_LIBRARIES}
-  )
-
-  vt_tv_link_target(AllTests)
-  gtest_discover_tests(AllTests)
-
-else()
-
-  foreach(TEST_FILENAME ${TEST_SOURCE_FILES})
-
-    # Extract the test file base name to use as the CMake target name
-    GET_FILENAME_COMPONENT(
-      TEST
-      ${TEST_FILENAME}
-      NAME_WE
-    )
-
-    # Build test as an individual target
-    add_executable(
-      ${TEST}
-      ${TEST_FILENAME}
-      ${TEST_HEADER_FILES}
-      ${TEST_FILENAME}
-    )
-
-    turn_on_warnings(${TEST})
-
-    # Initialize VTK modules
-    vtk_module_autoinit(
-      TARGETS ${TEST}
-      MODULES ${VTK_LIBRARIES}
-    )
-
-    vt_tv_link_target(${TEST})
-
-    gtest_discover_tests(${TEST})
-
-  endforeach()
-
-endif()
-
-# ERROR (gcc): The vtkWindowToImageFilter class generated segfault when running a unit test that should generates PNG output through VTK.
-# --> SKIPPED TESTS: test_render, test_parse_render and test_vtk
-# add_compile_options(-g -ggdb)
-# A detailed report can be generated using valgrind utility. A valgrind report has already been added to #32 comment on GH.
-# `valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes --verbose --log-file=output/valgrind-report.txt ./build/tests/unit/test_vtk`
+vt_tv_link_target(AllTests)
+gtest_discover_tests(AllTests)

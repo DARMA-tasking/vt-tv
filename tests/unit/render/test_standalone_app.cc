@@ -128,7 +128,6 @@ INSTANTIATE_TEST_SUITE_P(
     ::testing::Values(
         // std::make_tuple<std::string, int>("conf.yaml", 8),
         std::make_tuple<std::string, int>("ccm-example.yaml", 1)
-        // std::make_tuple<std::string, int>("test-vt-tv.yaml", 1)
     ),
     [](const ::testing::TestParamInfo<std::tuple<std::string, int>>& in_info) {
       // test suffix as slug
