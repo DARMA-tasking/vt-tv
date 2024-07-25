@@ -8,7 +8,7 @@ export DISPLAY=:99.0
 Xvfb :99 -screen 0 1024x768x24 -nolisten tcp > /dev/null 2>&1 &
 sleep 1s
 
-VT_TV_OUTPUT_DIR=/opt/build/vtk/output
+VT_TV_OUTPUT_DIR=/var/vt-tv/output
 
 # call build script with options to only run tests without building
 # (in CI the docker image define the build and the test stages separately).

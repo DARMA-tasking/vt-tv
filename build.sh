@@ -82,19 +82,23 @@ if [[ "${VT_TV_BUILD}" == "ON" ]]; then
 fi # End build
 
 # Run tests
-if [[ "${VT_TV_RUN_TESTS}" == "ON" ]]; then
-  pushd ${VT_TV_OUTPUT_DIR}
+if [[ "$VT_TV_RUN_TESTS" == "ON" ]]; then
+
+  mkdir -p "$VT_TV_OUTPUT_DIR"
+
+  pushd $VT_TV_OUTPUT_DIR
   # Tests
-  echo "> Running tests (coverage ${VT_TV_COVERAGE_ENABLED})..."
-  ${VT_TV_BUILD_DIR}/tests/unit/AllTests --gtest_brief --gtest_output="xml:$VT_TV_TEST_REPORT_PATH" || true # run with gtest
+  echo "> Running tests (coverage $VT_TV_COVERAGE_ENABLED)..."
+  # run with gtest and 
+  "$VT_TV_BUILD_DIR/tests/unit/AllTests" --gtest_brief=1 --gtest_output="xml:$VT_TV_TEST_REPORT_PATH" || true
 
   # Coverage reports
-  if [[ "${VT_TV_COVERAGE_ENABLED}" == "ON" ]]; then
-    lcov --capture --directory ${VT_TV_BUILD_DIR} --output-file lcov_vt-tv_test.info
+  if [[ "$VT_TV_COVERAGE_ENABLED" == "ON" ]]; then
+    lcov --capture --directory $VT_TV_BUILD_DIR --output-file lcov_vt-tv_test.info
     lcov --remove lcov_vt-tv_test.info -o lcov_vt-tv_test_no_deps.info '*/lib/*' '/usr/include/*' '*/vtk/*' '*/tests/*'
     lcov --summary lcov_vt-tv_test_no_deps.info
     lcov --list lcov_vt-tv_test_no_deps.info
-    if [[ "${VT_TV_COVERAGE_HTML_REPORT}" == "ON" ]]; then
+    if [[ "$VT_TV_COVERAGE_HTML_REPORT" == "ON" ]]; then
       genhtml --prefix ./src --ignore-errors source lcov_vt-tv_test_no_deps.info --legend --title "$(git rev-parse HEAD)" --output-directory=lcov_vt-tv_html
     fi
   fi
