@@ -55,15 +55,19 @@ help() {
 
   Usage: <[environment variables]> build.sh <[options]>
   Options:
+      -c   --cc=[str]               The C compiler (CC=$CC)
+      -x   --cxx=[str]              The C++ compiler (CXX=$CXX)
+      -k   --vtk-dir=[str]          VTK build directory (VTK_DIR=$VTK_DIR)
+
       -b   --build=[bool]           Build vt-tv. Can be turned off for example to run tests without rebuilding. (VT_TV_BUILD=$VT_TV_BUILD)
       -d   --build-dir=[str]        Build directory (VT_TV_BUILD_DIR=$VT_TV_BUILD_DIR)
       -m   --build-type=[str]       Set the CMAKE_BUILD_TYPE value (Debug|Release|...) (VT_TV_BUILD_TYPE=$VT_TV_BUILD_TYPE)
       -y   --clean=[bool]           Clean the output directory and the CMake cache. (VT_TV_CLEAN=$VT_TV_CLEAN)
-      -c   --cc=[str]               The C compiler (CC=$CC)
-      -x   --cxx=[str]              The C++ compiler (CXX=$CXX)
       -p   --bindings               Build with Python bindings (VT_TV_PYTHON_BINDINGS_ENABLED=$VT_TV_PYTHON_BINDINGS_ENABLED)
+
       -g   --coverage               Build with coverage support or enable coverage output (VT_TV_COVERAGE_ENABLED=$VT_TV_COVERAGE_ENABLED)
       -z   --coverage-report=[str]  Target path to generate coverage HTML report files (VT_TV_COVERAGE_REPORT=$VT_TV_COVERAGE_REPORT). Empty for no report.
+
       -j   --jobs=[int]             Number of processors to build (VT_TV_CMAKE_JOBS=$VT_TV_CMAKE_JOBS)
       -o   --output-dir=[str]       Ooutput directory. Used to host lcov .info files. Also default to host junit report (VT_TV_OUTPUT_DIR=$VT_TV_OUTPUT_DIR).
                                       Note: vt-tv viz output files is defined in VT-TV configuration files and might be different.
@@ -71,7 +75,8 @@ help() {
       -a   --tests-report[str]      Unit tests Junit report path (VT_TV_TEST_REPORT=$VT_TV_TEST_REPORT). Empty for no report.
       -r   --tests-run=[bool]       Run unit tests (and build coverage report if coverage is enabled) (VT_TV_RUN_TESTS=$VT_TV_RUN_TESTS)
       -f   --tests-run-filter=[str]      Filter unit test to run. (VT_TV_RUN_TESTS_FILTER=$VT_TV_RUN_TESTS_FILTER)
-      -k   --vtk-dir=[str]          VTK build directory (VTK_DIR=$VTK_DIR)
+
+      
 
       -h   --help                   Show help and default option values.
 
@@ -146,7 +151,6 @@ echo CC=$CC
 echo CXX=$CXX
 echo VTK_DIR=$VTK_DIR
 
-
 # Build
 if [[ "${VT_TV_BUILD}" == "ON" ]]; then
   if [[ "${VT_TV_CLEAN}" == "ON" ]]; then
@@ -195,12 +199,19 @@ if [[ "$VT_TV_RUN_TESTS" == "ON" ]]; then
   # Run GTest unit tests and display detail for failing tests
   GTEST_OPTIONS=""
   if [ "$VT_TV_TEST_REPORT" != "" ]; then
+    echo "Generating JUnit report..."
     GTEST_OPTIONS="$GTEST_OPTIONS --gtest_output=\"xml:$VT_TV_TEST_REPORT\""
   fi
   if [ "$VT_TV_RUN_TESTS_FILTER" != "" ]; then
+    echo "Filtering Tests ($VT_TV_RUN_TESTS_FILTER)..."
     GTEST_OPTIONS="$GTEST_OPTIONS --gtest_filter=\"$VT_TV_RUN_TESTS_FILTER\""
   fi
-  "$VT_TV_BUILD_DIR/tests/unit/AllTests" $GTEST_OPTIONS || true
+  
+  gtest_cmd="\"$VT_TV_BUILD_DIR/tests/unit/AllTests\" $GTEST_OPTIONS"
+  echo "Run GTest..."
+  eval "$gtest_cmd" || true
+
+  echo "Tests done."
 
   popd
 fi
