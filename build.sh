@@ -47,33 +47,35 @@ VT_TV_COVERAGE_HTML_REPORT=$(on_off ${VT_TV_COVERAGE_HTML_REPORT:-OFF})
 # # HELP FUNCTION
 help() {
   cat <<EOF
-  A script to build vt-tv either for local build or CI build.
-  Provides also options to run tests and/or coverage.
-  Note: as an alternative to pass argument this is also possible to use the variables VTK_DIR, CC, CXX and VT_TV_* variables.
-  Usage: build.sh <[options]>
+  A script to build and test vt-tv.
+  Options can be passed as arguments or environment variables or both (VTK_DIR, CC, CXX and VT_TV_*).
+  Usage: <[environment variables]> build.sh <[options]>
   Options:
-          -d   --build-dir=[PATH]         Build directory \e[0;31mVT_TV_BUILD_DIR=$VT_TV_BUILD_DIR\e[0m
-          -b   --build-type=[TYPE]        Set build type (Debug|Release) (VT_TV_BUILD_TYPE=$VT_TV_BUILD_TYPE)
-          -y   --clean=[ON|OFF]           Clean the output directory and the CMake cache. (VT_TV_CLEAN=$VT_TV_CLEAN)
-          -c   --cc=[CC]                  The C compiler (CC=$CC)
-          -x   --cxx=[CXX]                The C++ compiler (CXX=$CXX)
-          -p   --enable-bindings          Build with Python bindings (PYTHON_BINDINGS_ENABLED=$PYTHON_BINDINGS_ENABLED)
-          -g   --enable-coverage          Enable code coverage (VT_TV_COVERAGE_ENABLED=$VT_TV_COVERAGE_ENABLED)
-          -t   --enable-tests             Enable tests (VT_TV_TESTS_ENABLED=$VT_TV_TESTS_ENABLED)
-          -j   --jobs=[NJOBS]             Number of processors to build (VT_TV_CMAKE_JOBS=$VT_TV_CMAKE_JOBS)
-          -n   --no-build                 To be used with to run tests without re-building. Combine with --run-tests=1.
-          -o   --output-dir=[OUT_DIR]     Output directory for the coverage HTML report (VT_TV_OUTPUT_DIR=$VT_TV_OUTPUT_DIR).
-                                          Note: VT-TV output directory is defined in VT-TV configuration file.
-                                            A relative path is resolved from the project directory.
-                                            This base output directory is not currently configurable for vt-tv output directory.
-          -r   --run-tests               Run unit tests (and build coverage report if coverage is enabled) (VT_TV_RUN_TESTS=$VT_TV_RUN_TESTS)
-          -k   --vtk-dir=[VTK_DIR]       VTK build directory (VTK_DIR=$VTK_DIR)
+      -d   --build-dir=[str]      Build directory (VT_TV_BUILD_DIR=$VT_TV_BUILD_DIR)
+      -b   --build-type=[str]     Set the CMAKE_BUILD_TYPE value (Debug|Release|...) (VT_TV_BUILD_TYPE=$VT_TV_BUILD_TYPE)
+      -y   --clean=[ON|OFF]       Clean the output directory and the CMake cache. (VT_TV_CLEAN=$VT_TV_CLEAN)
+      -c   --cc=[str]             The C compiler (CC=$CC)
+      -x   --cxx=[str]            The C++ compiler (CXX=$CXX)
+      -z   --coverage-html        Generates a coverage HTML report (VT_TV_COVERAGE_HTML_REPORT=$VT_TV_COVERAGE_HTML_REPORT). Require coverage enabled.
+      -p   --enable-bindings      Build with Python bindings (VT_TV_PYTHON_BINDINGS_ENABLED=$VT_TV_PYTHON_BINDINGS_ENABLED)
+      -g   --enable-coverage      Enable code coverage (VT_TV_COVERAGE_ENABLED=$VT_TV_COVERAGE_ENABLED)
+      -t   --enable-tests         Enable tests (VT_TV_TESTS_ENABLED=$VT_TV_TESTS_ENABLED)
+      -j   --jobs=[int]           Number of processors to build (VT_TV_CMAKE_JOBS=$VT_TV_CMAKE_JOBS)
+      -n   --no-build             To be used with to run tests without re-building. Combine with --run-tests=1.
+      -o   --output-dir=[str]     Output directory for tests and coverage reports (VT_TV_OUTPUT_DIR=$VT_TV_OUTPUT_DIR).
+                                    Note: VT-TV viz output files is defined in VT-TV configuration files and might be different.
+      -r   --run-tests            Run unit tests (and build coverage report if coverage is enabled) (VT_TV_RUN_TESTS=$VT_TV_RUN_TESTS)
+      -a   --tests-report[str]    Unit tests Junit report path (VT_TV_TEST_REPORT_PATH=$VT_TV_TEST_REPORT_PATH)
+      -k   --vtk-dir=[str]        VTK build directory (VTK_DIR=$VTK_DIR)
+      
 
-          -h   --help                    Show help and default argument values.
+      -h   --help                 Show help and default option values.
 
   Examples:
-          build.sh --run-tests --enable-coverage
-          build.sh --no-build --run-tests --coverage=1
+      Build & run tests:  build.sh --run-tests --enable-coverage
+      Build (coverage):   build.sh --enable-coverage
+      Build (debug):      build.sh --build-type=Debug
+      Test:               build.sh --no-build --run-tests --coverage=1
 EOF
   exit 1;
 }
@@ -93,6 +95,7 @@ while getopts btch-: OPT; do  # allow -b -t -c -h, and --long_attr=value"
     c | cc)               CC="$OPTARG" ;;
     x | cxx)              CXX="$OPTARG" ;;
     y | clean)            VT_TV_CLEAN=$(on_off $OPTARG) ;;
+    z | coverage-html)    VT_TV_COVERAGE_HTML_REPORT=ON ;;
     p | enable-bindings ) VT_TV_PYTHON_BINDINGS_ENABLED=ON ;;
     g | enable-coverage)  VT_TV_COVERAGE_ENABLED=$(on_off $OPTARG) ;;
     t | enable-tests)     VT_TV_TESTS_ENABLED=$(on_off $OPTARG) ;;
@@ -100,6 +103,7 @@ while getopts btch-: OPT; do  # allow -b -t -c -h, and --long_attr=value"
     n | no-build )        VT_TV_BUILD=OFF ;;
     o | output-dir )      VT_TV_OUTPUT_DIR=$(realpath "$OPTARG") ;;
     r | run-tests )       VT_TV_RUN_TESTS=ON ;;
+    a | tests-report)     VT_TV_TEST_REPORT_PATH=$(realpath "$OPTARG") ;;
     k | vtk-dir )         VTK_DIR=$(realpath "$OPTARG") ;;
     h | help )            help ;;
 
