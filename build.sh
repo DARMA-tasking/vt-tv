@@ -1,11 +1,13 @@
 #!/bin/bash
 
+# Description: This script enable to build vt-tv and/or run vt-tv unit tests
+
 set -e
 
 CURRENT_DIR="$(dirname -- "$(realpath -- "$0")")" # Current directory
 PARENT_DIR="$(dirname "$CURRENT_DIR")"
 
-# A function to convert a value to ON or OFF
+# A function to convert a value (1,0, Yes, no etc.) to ON or OFF
 function on_off() {
   case $1 in
     TRUE|true|True|ON|on|On|1|YES|yes|Yes|Y|y) echo "ON" ;;
@@ -25,6 +27,7 @@ VT_TV_DIR="${VT_TV_DIR:-$CURRENT_DIR}"
 VT_TV_BUILD_DIR="${VT_TV_BUILD_DIR:-$PARENT_DIR/vt-tv/build}"
 VT_TV_OUTPUT_DIR="${VT_TV_OUTPUT_DIR:-$CURRENT_DIR/output}"
 # >> Build settings
+VT_TV_BUILD=$(on_off ${VT_TV_NO_BUILD:-ON}) # option to turn off the build to only run tests
 VT_TV_BUILD_TYPE=${VT_TV_BUILD_TYPE:-Release}
 VT_TV_CMAKE_JOBS=${VT_TV_CMAKE_JOBS:-$(nproc)}
 VT_TV_TESTS_ENABLED=$(on_off ${VT_TV_TESTS_ENABLED:-ON})
@@ -35,12 +38,11 @@ VT_TV_PYTHON_BINDINGS_ENABLED=$(on_off ${VT_TV_PYTHON_BINDINGS_ENABLED:-OFF})
 VT_TV_WERROR_ENABLED=$(on_off ${VT_TV_WERROR_ENABLED:-OFF})
 # >> Run tests settings
 VT_TV_RUN_TESTS=$(on_off ${VT_TV_RUN_TESTS:-OFF})
-VT_TV_RUN_TESTS_ONLY=$(on_off ${VT_TV_RUN_TESTS_ONLY:-OFF}) # do not build vt-tv already built)
-VT_TV_COVERAGE_HTML_REPORT=$(on_off ${VT_TV_COVERAGE_HTML_REPORT:-ON})
 
-echo "VT_TV_RUN_TESTS_ONLY="$VT_TV_RUN_TESTS_ONLY
+VT_TV_COVERAGE_HTML_REPORT=$(on_off ${VT_TV_COVERAGE_HTML_REPORT:-OFF})
 
-if [[ "${VT_TV_RUN_TESTS_ONLY}" == "OFF" ]]; then
+# Build
+if [[ "${VT_TV_BUILD}" == "ON" ]]; then
   echo la
   if [[ "${VT_TV_CLEAN}" == "ON" ]]; then
     echo "> Cleaning"
@@ -79,6 +81,7 @@ if [[ "${VT_TV_RUN_TESTS_ONLY}" == "OFF" ]]; then
 
 fi # End build
 
+# Run tests
 if [[ "${VT_TV_RUN_TESTS}" == "ON" ]]; then
   pushd ${VT_TV_OUTPUT_DIR}
   # Tests
