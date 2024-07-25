@@ -8,6 +8,7 @@ set -e
 CURRENT_DIR="$(dirname -- "$(realpath -- "$0")")" # Current directory
 PARENT_DIR="$(dirname "$CURRENT_DIR")"
 
+
 # A function to convert a value (1,0, Yes, no etc.) to ON or OFF
 function on_off() {
   case $1 in
@@ -39,8 +40,77 @@ VT_TV_PYTHON_BINDINGS_ENABLED=$(on_off ${VT_TV_PYTHON_BINDINGS_ENABLED:-OFF})
 VT_TV_WERROR_ENABLED=$(on_off ${VT_TV_WERROR_ENABLED:-OFF})
 # >> Run tests settings
 VT_TV_RUN_TESTS=$(on_off ${VT_TV_RUN_TESTS:-OFF})
-
 VT_TV_COVERAGE_HTML_REPORT=$(on_off ${VT_TV_COVERAGE_HTML_REPORT:-OFF})
+
+# >> CLI args support
+
+# # HELP FUNCTION
+help() {
+  cat <<EOF
+  A script to build vt-tv either for local build or CI build.
+  Provides also options to run tests and/or coverage.
+  Note: as an alternative to pass argument this is also possible to use the variables VTK_DIR, CC, CXX and VT_TV_* variables.
+  Usage: build.sh <[options]>
+  Options:
+          -d   --build-dir=[PATH]         Build directory \e[0;31mVT_TV_BUILD_DIR=$VT_TV_BUILD_DIR\e[0m
+          -b   --build-type=[TYPE]        Set build type (Debug|Release) (VT_TV_BUILD_TYPE=$VT_TV_BUILD_TYPE)
+          -y   --clean=[ON|OFF]           Clean the output directory and the CMake cache. (VT_TV_CLEAN=$VT_TV_CLEAN)
+          -c   --cc=[CC]                  The C compiler (CC=$CC)
+          -x   --cxx=[CXX]                The C++ compiler (CXX=$CXX)
+          -p   --enable-bindings          Build with Python bindings (PYTHON_BINDINGS_ENABLED=$PYTHON_BINDINGS_ENABLED)
+          -g   --enable-coverage          Enable code coverage (VT_TV_COVERAGE_ENABLED=$VT_TV_COVERAGE_ENABLED)
+          -t   --enable-tests             Enable tests (VT_TV_TESTS_ENABLED=$VT_TV_TESTS_ENABLED)
+          -j   --jobs=[NJOBS]             Number of processors to build (VT_TV_CMAKE_JOBS=$VT_TV_CMAKE_JOBS)
+          -n   --no-build                 To be used with to run tests without re-building. Combine with --run-tests=1.
+          -o   --output-dir=[OUT_DIR]     Output directory for the coverage HTML report (VT_TV_OUTPUT_DIR=$VT_TV_OUTPUT_DIR).
+                                          Note: VT-TV output directory is defined in VT-TV configuration file.
+                                            A relative path is resolved from the project directory.
+                                            This base output directory is not currently configurable for vt-tv output directory.
+          -r   --run-tests               Run unit tests (and build coverage report if coverage is enabled) (VT_TV_RUN_TESTS=$VT_TV_RUN_TESTS)
+          -k   --vtk-dir=[VTK_DIR]       VTK build directory (VTK_DIR=$VTK_DIR)
+
+          -h   --help                    Show help and default argument values.
+
+  Examples:
+          build.sh --run-tests --enable-coverage
+          build.sh --no-build --run-tests --coverage=1
+EOF
+  exit 1;
+}
+
+while getopts btch-: OPT; do  # allow -b -t -c -h, and --long_attr=value"
+  # support long options: https://stackoverflow.com/a/28466267/519360
+  if [ "$OPT" = "-" ]; then   # long option: reformulate OPT and OPTARG
+    OPT="${OPTARG%%=*}"       # extract long option name
+    OPTARG="${OPTARG#"$OPT"}" # extract long option argument (may be empty)
+    OPTARG="${OPTARG#=}"      # if long option argument, remove assigning `=`
+  fi
+  # Note: for required ON/OFF arg with no default value:
+  # $(on_off $OPTARG) || $(echo "run-tests is required" >&2; exit 2)
+  case "$OPT" in
+    d | build-dir )       VT_TV_BUILD_DIR=$(realpath "$OPTARG") ;;
+    b | build-type)       VT_TV_BUILD_TYPE=$(on_off $OPTARG) ;;
+    c | cc)               CC="$OPTARG" ;;
+    x | cxx)              CXX="$OPTARG" ;;
+    y | clean)            VT_TV_CLEAN=$(on_off $OPTARG) ;;
+    p | enable-bindings ) VT_TV_PYTHON_BINDINGS_ENABLED=ON ;;
+    g | enable-coverage)  VT_TV_COVERAGE_ENABLED=$(on_off $OPTARG) ;;
+    t | enable-tests)     VT_TV_TESTS_ENABLED=$(on_off $OPTARG) ;;
+    j | jobs)             VT_TV_CMAKE_JOBS=$OPTARG ;;
+    n | no-build )        VT_TV_BUILD=OFF ;;
+    o | output-dir )      VT_TV_OUTPUT_DIR=$(realpath "$OPTARG") ;;
+    r | run-tests )       VT_TV_RUN_TESTS=ON ;;
+    k | vtk-dir )         VTK_DIR=$(realpath "$OPTARG") ;;
+    h | help )            help ;;
+
+    \? )           exit 2 ;;  # bad short option (error reported via getopts)
+    * )            echo "Illegal option --$OPT";  exit 2 ;; # bad long option
+  esac
+done
+shift $((OPTIND-1)) # remove parsed options and args from $@ list
+
+# !! CLI args support
+
 
 # Build
 if [[ "${VT_TV_BUILD}" == "ON" ]]; then
