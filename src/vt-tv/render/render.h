@@ -121,8 +121,8 @@ private:
 
   // Render input data
   Info info_;
-  uint64_t n_ranks_;
-  uint64_t n_phases_;
+  uint64_t n_ranks_ = 0;
+  uint64_t n_phases_ = 0;
   std::array<uint64_t, 3> grid_size_ = {1, 1, 1};
   double object_jitter_ = 0.5;
   std::set<uint64_t> rank_dims_;
