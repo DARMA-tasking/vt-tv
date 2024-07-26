@@ -84,6 +84,29 @@ class Util {
 
             return std::make_tuple(status, output);
     }
+
+    /**
+     * \brief Resolves a directory absolute path.
+     * \param[in] base_path Prepends "{base_path}/" to the path if path is relative
+     * \param[in] path The path as either a relative or an absolute path
+     * \param[in] add_trailing_sep Appends a trailing "/" char at the end of the path if not exist
+     */
+    static std::string resolveDir(std::string base_path, std::string path, bool add_trailing_sep = false) {
+        std::filesystem::path abs_path(path);
+        // If it's a relative path, prepend the base path
+        if (abs_path.is_relative()) {
+            abs_path = std::filesystem::path(base_path) / path;
+        }
+
+        auto abs_path_string = abs_path.string();
+        // append an extra / if needed
+        if (add_trailing_sep && !abs_path_string.empty() && abs_path_string.back() != '/') {
+            abs_path_string += '/';
+        }
+
+        return abs_path_string;
+    }
+
 };
 
 }
