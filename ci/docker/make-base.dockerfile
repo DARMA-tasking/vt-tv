@@ -11,6 +11,7 @@ ARG VTK_VERSION=v9.2.2
 ARG PYTHON_VERSION=3.8
 ARG CC=gcc-11
 ARG CXX=g++-11
+ARG GCOV=gcov-11
 
 ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update -y -q && \
@@ -53,6 +54,7 @@ RUN apt-get update -y -q && \
 # Share environment variables for use in images based on this.
 ENV CC=/usr/bin/$CC
 ENV CXX=/usr/bin/$CXX
+ENV GCOV=/usr/bin/$GCOV
 ENV VTK_DIR=/opt/build/vtk
 
 # Setup python 3.8 with conda
