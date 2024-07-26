@@ -23,7 +23,7 @@ jobs:
       OUTPUT_DIR: '/tmp/artifacts'
       VT_TV_TESTS_ENABLED: 'ON' # Build & Test in all configurations
       VT_TV_COVERAGE_ENABLED: ${{ matrix.image == 'ubuntu_22.04-gcc_12-vtk_9.3.0-py_3.8' && 'ON' || 'OFF' }}  # Coverage only with main test image
-      VT_TV_PYTHON_BINDINGS_ENABLED: ${{ matrix.image == 'ubuntu_22.04-gcc_12-vtk_9.3.0-py_3.8' && 'ON' || 'OFF' }} # Build & Test bindings only with main test image
+      VT_TV_PYTHON_BINDINGS_ENABLED: 'ON'
     name: vt-tv build and test
     steps:
       - uses: actions/checkout@v4
