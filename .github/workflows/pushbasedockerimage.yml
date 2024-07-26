@@ -2,9 +2,9 @@ name: Build & push base Docker image
 
 on:
   # Push event: Useful for testing new image build on CI
-  push:
-    branches:
-    - 32-vt-tv-improve-ci
+  # push:
+  #   branches:
+  #   - 32-vt-tv-improve-ci
 
   # Dispatch event (manually triggered)
   workflow_dispatch:
