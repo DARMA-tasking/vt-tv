@@ -2,8 +2,11 @@ ARG BASE_IMAGE=pierrpebay/vt-tv:ubuntu_22.04-gcc_11-vtk_9.2.2-py_3.8
 ARG VT_TV_TESTS_ENABLED=OFF
 ARG VT_TV_COVERAGE_ENABLED=OFF
 ARG VT_TV_PYTHON_BINDINGS_ENABLED=OFF
+ARG GCOV=gcov
 
 FROM ${BASE_IMAGE} AS base
+
+ENV GCOV=$GCOV
 
 # setup requirements for rendering tests (xvfb) + coverage report (lcov)
 RUN apt-get update && apt-get install -y \
