@@ -38,12 +38,12 @@ class CMakeBuild(build_ext):
 
     jobs = os.environ.get('VT_TV_CMAKE_JOBS', os.cpu_count())
 
-    n_threads = os.environ.get('VTTV_N_THREADS', 1)
+    n_threads = os.environ.get('VT_TV_N_THREADS', 1)
     # check if n_threads is a valid integer
     try:
       n_threads = int(n_threads)
     except ValueError:
-      raise RuntimeError("Environment variable VTTV_N_THREADS must be an integer")
+      raise RuntimeError("Environment variable VT_TV_N_THREADS must be an integer")
 
     cmake_args = ['-DCMAKE_LIBRARY_OUTPUT_DIRECTORY=' + extdir,
                   '-DPYTHON_EXECUTABLE=' + sys.executable,
