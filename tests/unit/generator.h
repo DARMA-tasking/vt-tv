@@ -53,8 +53,6 @@
 
 namespace vt::tv::tests::unit {
 
-using Util = vt::tv::tests::unit::Util;
-
 /**
  * Testing Helper class that provide useful static methods to be used by the different
  * unit tests classes related to the api to generate some data in memory.
