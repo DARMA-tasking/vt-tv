@@ -54,6 +54,7 @@
 #include <set>
 #include <regex>
 
+#include "../generator.h"
 #include "../util.h"
 
 namespace vt::tv::tests::unit::render {
@@ -79,6 +80,18 @@ TEST_P(ParseRenderTest, test_render_from_config_and_png_valid_if_ccm_ex) {
   std::string const & config_file = GetParam();
   auto parse_render = ParseRender(fmt::format("{}/tests/config/{}", SRC_DIR, config_file));
   ASSERT_NO_THROW(parse_render.parseAndRender());
+
+  YAML::Node config = YAML::LoadFile(fmt::format("{}/tests/config/{}", SRC_DIR, config_file));
+  Info info = Generator::loadInfoFromConfig(config);
+  std::string output_dir = Util::resolveDir(SRC_DIR, config["output"]["directory"].as<std::string>(), true);
+
+  // Check: that number of generated png files (*.png) correspond to the number of phases
+  std::string output_file_stem = config["output"]["file_stem"].as<std::string>();
+  for (uint64_t i = 0; i<info.getNumPhases(); i++) {
+    ASSERT_TRUE(
+      std::filesystem::exists(fmt::format("{}{}{}.vtp", output_dir, output_file_stem, i))
+    ) << fmt::format("Png image not generated at {}{}{}.vtp", output_dir, output_file_stem, i);
+  }
 
   // Check: PNG output. Compare expected image and generated and validate that diff is under some tolerance
   // (currently only the ccm_example)

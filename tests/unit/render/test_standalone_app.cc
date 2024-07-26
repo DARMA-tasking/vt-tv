@@ -60,8 +60,6 @@
 
 namespace vt::tv::tests::unit::render {
 
-using Util = vt::tv::tests::unit::Util;
-
 /**
  * Provides unit tests for the standalone vt-tv app.
  * It is similar to the ParseRender tests except it runs as a separate process.
@@ -94,18 +92,7 @@ TEST_P(StandaloneAppTest, test_run) {
 
     // Load config for some checks
     auto config = YAML::LoadFile(config_file);
-    std::string output_dir = config["output"]["directory"].as<std::string>();
-    std::filesystem::path output_path(output_dir);
-    // If it's a relative path, prepend the SRC_DIR
-    if (output_path.is_relative()) {
-      output_path = std::filesystem::path(SRC_DIR) / output_path;
-    }
-    output_dir = output_path.string();
-
-    // append / to avoid problems with file stems
-    if (!output_dir.empty() && output_dir.back() != '/') {
-      output_dir += '/';
-    }
+    std::string output_dir = Util::resolveDir(SRC_DIR, config["output"]["directory"].as<std::string>(), true);
     std::string output_file_stem = config["output"]["file_stem"].as<std::string>();
 
     if (config["viz"]["object_qoi"].as<std::string>() == "shared_block_id") {
@@ -114,8 +101,12 @@ TEST_P(StandaloneAppTest, test_run) {
     } else {
       // Expect 1 output file per phase for both rank meshes and object meshes
       for (int64_t i = 0; i<expected_phases; i++) {
-        ASSERT_TRUE(std::filesystem::exists(fmt::format("{}{}_rank_mesh_{}.vtp", output_dir, output_file_stem, i))) << fmt::format("{}{}_rank_mesh_{}.vtp", output_dir, output_file_stem, i);
-        ASSERT_TRUE(std::filesystem::exists(fmt::format("{}{}_object_mesh_{}.vtp", output_dir, output_file_stem, i))) << fmt::format("{}{}_rank_mesh_{}.vtp", output_dir, output_file_stem, i);
+        ASSERT_TRUE(
+          std::filesystem::exists(fmt::format("{}{}_rank_mesh_{}.vtp", output_dir, output_file_stem, i))
+        ) << fmt::format("Rank mesh not generated at {}{}_rank_mesh_{}.vtp", output_dir, output_file_stem, i);
+        ASSERT_TRUE(
+          std::filesystem::exists(fmt::format("{}{}_object_mesh_{}.vtp", output_dir, output_file_stem, i))
+        ) << fmt::format("Object mesh not generated at {}{}_object_mesh_{}.vtp", output_dir, output_file_stem, i);
       }
     }
 }

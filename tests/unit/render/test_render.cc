@@ -57,8 +57,7 @@
 #include <regex>
 
 #include "../generator.h"
-
-using namespace vt::tv::tests::unit;
+#include "../util.h"
 
 namespace vt::tv::tests::unit::render {
 
@@ -77,21 +76,10 @@ class RenderTest :public ::testing::TestWithParam<std::string> {
   protected:
     Render createRender(YAML::Node config, Info info, std::string &output_dir) {
       // change output directory to use specific one for these tests
-      output_dir = "output/tests/render";
-
-      std::filesystem::path output_path(output_dir);
-      if (output_path.is_relative()) {
-        output_path = std::filesystem::path(SRC_DIR) / output_path;
-      }
-      output_dir = output_path.string();
-
-      // append / to avoid problems with file stems
-      if (!output_dir.empty() && output_dir.back() != '/') {
-        output_dir += '/';
-      }
+      output_dir = Util::resolveDir(SRC_DIR, "output/tests/render", true);
 
       return Render(
-      {
+        {
           config["viz"]["rank_qoi"].as<std::string>(),
           "",
           config["viz"]["object_qoi"].as<std::string>()
@@ -136,10 +124,10 @@ TEST_P(RenderTest, test_render_from_config_no_png) {
   for (uint64_t i = 0; i<info.getNumPhases(); i++) {
     ASSERT_TRUE(
       std::filesystem::exists(fmt::format("{}{}_rank_mesh_{}.vtp", output_dir, output_file_stem, i))
-    ) << fmt::format("{}{}_rank_mesh_{}.vtp", output_dir, output_file_stem, i);
+    ) << fmt::format("Rank mesh not generated at {}{}_rank_mesh_{}.vtp", output_dir, output_file_stem, i);
     ASSERT_TRUE(
       std::filesystem::exists(fmt::format("{}{}_object_mesh_{}.vtp", output_dir, output_file_stem, i))
-    ) << fmt::format("{}{}_rank_mesh_{}.vtp", output_dir, output_file_stem, i);
+    ) << fmt::format("Object mesh not generated at {}{}_object_mesh_{}.vtp", output_dir, output_file_stem, i);
   }
 
   // Validate mesh files (*.vtp) content ?
