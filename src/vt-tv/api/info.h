@@ -247,9 +247,9 @@ struct Info {
         return convertQOIVariantTypeToDouble_(getObjectRankID(obj));
       };
     } else {
-      // Look in attributes (will throw an error if QOI doesn't exist)
+      // Look in attributes and user_defined (will throw an error if QOI doesn't exist)
       qoi_getter = [&](ObjectWork obj) {
-        return convertQOIVariantTypeToDouble_(getObjectAttribute(obj, object_qoi));
+        return convertQOIVariantTypeToDouble_(getObjectAttributeOrUserDefined(obj, object_qoi));
       };
     }
     return qoi_getter;
@@ -716,19 +716,23 @@ struct Info {
   }
 
   /**
-    * \brief Get the specified attribute of an object at a given phase
+    * \brief Get the specified attribute or user_defined QOI of an object at a given phase
     *
     * \param[in] object the current object
     *
-    * \return the requested attribute
+    * \return the requested attribute or user_defined QOI
     */
-  QOIVariantTypes getObjectAttribute(ObjectWork object, std::string object_qoi) const {
+  QOIVariantTypes getObjectAttributeOrUserDefined(ObjectWork object, std::string object_qoi) const {
     auto obj_attributes = object.getAttributes();
     if (obj_attributes.count(object_qoi) > 0) {
       return obj_attributes.at(object_qoi);
     } else {
-      throw std::runtime_error("Invalid Object QOI: " + object_qoi);
+      auto obj_user_defined = object.getUserDefined();
+      if (obj_user_defined.count(object_qoi) > 0) {
+        return obj_user_defined.at(object_qoi);
+      }
     }
+    throw std::runtime_error("Invalid Object QOI: " + object_qoi);
   }
 
   /* ---------------------------------------------------------- */
