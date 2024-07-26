@@ -51,7 +51,6 @@ help() {
   cat <<EOF
   A script to build and test vt-tv.
   Options can be passed as arguments or environment variables or both (VTK_DIR, CC, CXX and VT_TV_*).
-  By default build include tests but not coverage support. It can be modified uding the provided options.
 
   Usage: <[environment variables]> build.sh <[options]>
   Options:
