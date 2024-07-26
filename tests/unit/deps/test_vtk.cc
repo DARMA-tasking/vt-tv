@@ -41,10 +41,6 @@
 //@HEADER
 */
 
-#include <gtest/gtest.h>
-#include <filesystem>
-#include <fmt-vt/format.h>
-
 #include <vtkActor.h>
 #include <vtkNamedColors.h>
 #include <vtkNew.h>
@@ -57,6 +53,8 @@
 #include <vtkSphereSource.h>
 #include <vtkVersion.h>
 #include <vtkWindowToImageFilter.h>
+
+#include "../util.h"
 
 namespace vt::tv::tests::unit::deps {
 

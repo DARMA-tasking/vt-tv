@@ -41,20 +41,7 @@
 //@HEADER
 */
 
-#include <gtest/gtest.h>
-#include <gmock/gmock.h>
-
-#include <yaml-cpp/yaml.h>
-
 #include <vt-tv/utility/parse_render.h>
-
-#include <string>
-#include <filesystem>
-#include <iostream>
-#include <variant>
-#include <set>
-#include <regex>
-#include <tuple>
 
 #include "../util.h"
 
