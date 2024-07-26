@@ -75,7 +75,7 @@ class ParseRenderTest :public ::testing::TestWithParam<std::string> {
 /**
  * Test ParseRender:parseAndRender correcty run the different configuration files
  */
-TEST_P(ParseRenderTest, test_render_from_config) {
+TEST_P(ParseRenderTest, test_render_from_config_and_png_valid_if_ccm_ex) {
   std::string const & config_file = GetParam();
   auto parse_render = ParseRender(fmt::format("{}/tests/config/{}", SRC_DIR, config_file));
   ASSERT_NO_THROW(parse_render.parseAndRender());
@@ -83,7 +83,15 @@ TEST_P(ParseRenderTest, test_render_from_config) {
   // Check: PNG output. Compare expected image and generated and validate that diff is under some tolerance
   // (currently only the ccm_example)
   if (config_file == "ccm-example.yaml") {
-    auto cmd = fmt::format("{}/tests/test_image.sh", SRC_DIR);
+    std::vector<std::string> cmd_vars = {
+      fmt::format("ACTUAL={}/output/tests/ccm_example0.png", SRC_DIR),
+      fmt::format("EXPECTED={}/tests/expected/ccm_example0.png", SRC_DIR),
+      "TOLERANCE=2.0",
+    };
+    auto cmd = fmt::format("{} {}/tests/test_image.sh",
+      fmt::join(cmd_vars, " "),
+      SRC_DIR
+    );
     const auto [status, output] = Util::exec(cmd.c_str());
     fmt::print("Image test: {}\n", output);
     ASSERT_EQ(status, EXIT_SUCCESS) << output;
