@@ -64,7 +64,7 @@ struct InfoTestParam
 {
   public:
 
-  InfoTestParam(size_t in_num_objects, int16_t in_num_ranks, size_t in_num_phases):
+  InfoTestParam(uint64_t in_num_objects, int16_t in_num_ranks, size_t in_num_phases):
     num_objects(in_num_objects), num_ranks(in_num_ranks), num_phases(in_num_phases) {
   }
 
@@ -73,7 +73,7 @@ struct InfoTestParam
     return stream;
   }
 
-  const size_t num_objects;
+  const uint64_t num_objects;
   const int16_t num_ranks;
   const uint64_t num_phases;
 };
