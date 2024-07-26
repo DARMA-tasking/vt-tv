@@ -45,6 +45,13 @@ jobs:
           echo "Platforms: ${{ steps.buildx.outputs.platforms }}"
           echo "DOCKER_TAG: ${{ env.DOCKER_TAG }}"
 
+      - name: Extract configuration info
+        if: ${{ env.VT_TV_COVERAGE_ENABLED == 'ON' }}
+        # If workflow dispatch event replace `matrix.image` by `inputs.image`
+        run: |
+          IFS='_-' read -r -a CONFIG <<< "${{ matrix.image }}"
+          echo "GCOV=gcov-${CONFIG[3]}" >> $GITHUB_ENV
+
       - name: Build the Docker Image; build and test vt-tv
         id: docker_build
         continue-on-error: false
@@ -58,6 +65,7 @@ jobs:
             BASE_IMAGE=pierrpebay/vt-tv:${{ matrix.image }}
             VT_TV_TESTS_ENABLED=${{ env.VT_TV_TESTS_ENABLED }}
             VT_TV_COVERAGE_ENABLED=${{ env.VT_TV_COVERAGE_ENABLED }}
+            GCOV=${{ env.GCOV }}
           outputs: type=local,dest=${{ env.OUTPUT_DIR }}
 
       - name: Upload artifacts
