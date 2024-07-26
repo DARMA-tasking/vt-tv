@@ -31,7 +31,8 @@ pushd $VT_TV_OUTPUT_DIR
 # > add the unit tests report artifact
 cp "junit-report.xml" $VT_TV_ARTIFACTS_DIR/ || true
 
-# > add some generated images artifacts
+# > add mesh files and png artifacts
+[ -d "tests" ] && cp "/opt/src/vt-tv/output/tests/"*".vtp"  $VT_TV_ARTIFACTS_DIR/
 [ -d "tests" ] && cp "/opt/src/vt-tv/output/tests/"*".png"  $VT_TV_ARTIFACTS_DIR/
 
 if [[ $VT_TV_COVERAGE_ENABLED == "ON" ]]; then
