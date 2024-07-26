@@ -149,21 +149,8 @@ class Generator {
         static Info loadInfoFromConfig(YAML::Node config) {
             using JSONReader = ::vt::tv::utility::JSONReader;
 
-            std::string input_dir = config["input"]["directory"].as<std::string>();
-            std::filesystem::path input_path(input_dir);
-            // If it's a relative path, prepend the SRC_DIR
-            if (input_path.is_relative()) {
-                input_path = std::filesystem::path(SRC_DIR) / input_path;
-            }
-            input_dir = input_path.string();
-
+            std::string input_dir = Util::resolveDir(SRC_DIR, config["input"]["directory"].as<std::string>(), true);
             int64_t n_ranks = config["input"]["n_ranks"].as<int64_t>();
-
-            // append / to avoid problems with file stems
-            if (!input_dir.empty() && input_dir.back() != '/') {
-                input_dir += '/';
-            }
-
             Info info = Info();
 
             #ifdef VT_TV_OPENMP_ENABLED

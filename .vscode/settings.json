@@ -2,9 +2,7 @@
     "cmake.environment": {
         "VTK_DIR": "${workspaceFolder}/../vtk/build"
     },
-    "editor.wordWrap": "wordWrapColumn",
-    "editor.wordWrapColumn": 100,
-    "editor.rulers": [ 100 ],
+    "editor.rulers": [ 130 ],
     "files.associations": {
         "*.in": "cpp",
         "cctype": "cpp",
