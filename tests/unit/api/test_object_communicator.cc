@@ -41,16 +41,9 @@
 //@HEADER
 */
 
-#include <gtest/gtest.h>
-
 #include <vt-tv/api/object_communicator.h>
 
-#include <string>
-#include <filesystem>
-#include <iostream>
-#include <variant>
-#include <set>
-
+#include "../util.h"
 #include "basic_serializer.h"
 
 namespace vt::tv::tests::unit::api {
