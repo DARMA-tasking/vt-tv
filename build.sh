@@ -105,8 +105,6 @@ while getopts btch-: OPT; do  # allow -b -t -c -h, and --long_attr=value"
     OPTARG="${OPTARG#"$OPT"}" # extract long option argument (may be empty)
     OPTARG="${OPTARG#=}"      # if long option argument, remove assigning `=`
   fi
-  # Note: for required ON/OFF arg with no default value:
-  # $(on_off $OPTARG) || $(echo "run-tests is required" >&2; exit 2)
   case "$OPT" in
     b | build )           VT_TV_BUILD=$(on_off $OPTARG) ;;
     d | build-dir )       VT_TV_BUILD_DIR=$(realpath "$OPTARG") ;;
