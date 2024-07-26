@@ -61,6 +61,8 @@
 
 namespace vt::tv::tests::unit::render {
 
+using Util = vt::tv::tests::unit::Util;
+
 /**
  * Provides unit tests for the vt::tv::render::Render class to test with config file input
  */

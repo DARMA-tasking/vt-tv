@@ -60,6 +60,7 @@
 namespace vt::tv::tests::unit::render {
 
 using ParseRender = vt::tv::utility::ParseRender;
+using Util = vt::tv::tests::unit::Util;
 
 /**
  * Provides unit tests for the vt::tv::utility::ParseRender class to test with config file input
