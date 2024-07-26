@@ -117,7 +117,7 @@ class RenderTest :public ::testing::TestWithParam<std::string> {
 /**
  * Test Render:generate correcty run the different configuration files and generates mesh files (.vtp)
  */
-TEST_P(RenderTest, test_render_from_config) {
+TEST_P(RenderTest, test_render_from_config_no_png) {
   std::string const & config_file = GetParam();
   YAML::Node config = YAML::LoadFile(fmt::format("{}/tests/config/{}", SRC_DIR, config_file));
   Info info = Generator::loadInfoFromConfig(config);
