@@ -68,12 +68,12 @@ help() {
       -z   --coverage-report=[str]  Target path to generate coverage HTML report files (VT_TV_COVERAGE_REPORT=$VT_TV_COVERAGE_REPORT). Empty for no report.
 
       -j   --jobs=[int]             Number of processors to build (VT_TV_CMAKE_JOBS=$VT_TV_CMAKE_JOBS)
-      -o   --output-dir=[str]       Ooutput directory. Used to host lcov .info files. Also default to host junit report (VT_TV_OUTPUT_DIR=$VT_TV_OUTPUT_DIR).
+      -o   --output-dir=[str]       Output directory. Used to host lcov .info files. Also default to host junit report (VT_TV_OUTPUT_DIR=$VT_TV_OUTPUT_DIR).
                                       Note: vt-tv viz output files is defined in VT-TV configuration files and might be different.
       -t   --tests=[bool]           Build vt-tv tests (VT_TV_TESTS_ENABLED=$VT_TV_TESTS_ENABLED)
       -a   --tests-report[str]      Unit tests Junit report path (VT_TV_TEST_REPORT=$VT_TV_TEST_REPORT). Empty for no report.
       -r   --tests-run=[bool]       Run unit tests (and build coverage report if coverage is enabled) (VT_TV_RUN_TESTS=$VT_TV_RUN_TESTS)
-      -f   --tests-run-filter=[str]      Filter unit test to run. (VT_TV_RUN_TESTS_FILTER=$VT_TV_RUN_TESTS_FILTER)
+      -f   --tests-run-filter=[str] Filter unit test to run. (VT_TV_RUN_TESTS_FILTER=$VT_TV_RUN_TESTS_FILTER)
 
       -h   --help                   Show help and default option values.
 
