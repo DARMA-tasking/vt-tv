@@ -26,6 +26,7 @@ function on_off() {
 VTK_DIR="${VTK_DIR:-$PARENT_DIR/vtk/build}"
 CC="${CC:-$(which gcc || echo '')}"
 CXX="${CXX:-$(which g++ || echo '')}"
+GCOV="${GCOV:-gcov}"
 VT_TV_DIR="${VT_TV_DIR:-$CURRENT_DIR}"
 VT_TV_BUILD_DIR="${VT_TV_BUILD_DIR:-$PARENT_DIR/vt-tv/build}"
 VT_TV_OUTPUT_DIR="${VT_TV_OUTPUT_DIR:-$CURRENT_DIR/output}"
@@ -218,7 +219,7 @@ if [[ "$VT_TV_COVERAGE_ENABLED" == "ON" ]]; then
   pushd $VT_TV_OUTPUT_DIR
   # base coverage files
   echo "lcov capture:"
-  lcov --capture --directory $VT_TV_BUILD_DIR --output-file lcov_vt-tv_test.info
+  lcov --capture --directory $VT_TV_BUILD_DIR --output-file lcov_vt-tv_test.info --gcov-tool $GCOV
   lcov --remove lcov_vt-tv_test.info -o lcov_vt-tv_test_no_deps.info '*/lib/*' '/usr/include/*' '*/vtk/*' '*/tests/*'
   lcov --list lcov_vt-tv_test_no_deps.info
   # optional coverage html report
