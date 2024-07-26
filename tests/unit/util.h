@@ -41,17 +41,22 @@
 //@HEADER
 */
 
-#include <yaml-cpp/yaml.h>
+#if !defined INCLUDED_VT_TV_TESTS_UNIT_UTIL_H
+#define INCLUDED_VT_TV_TESTS_UNIT_UTIL_H
 
-#include <vt-tv/api/types.h>
-#include <vt-tv/api/rank.h>
-#include <vt-tv/api/object_work.h>
-#include <vt-tv/api/object_info.h>
-#include <vt-tv/api/info.h>
-
-#include <vt-tv/utility/json_reader.h>
-
+// common includes for any tests
 #include <string>
+#include <filesystem>
+#include <iostream>
+#include <variant>
+#include <set>
+#include <regex>
+#include <tuple>
+
+#include <fmt-vt/format.h>
+
+#include <gtest/gtest.h>
+#include <gmock/gmock.h>
 
 namespace vt::tv::tests::unit {
 
@@ -109,4 +114,6 @@ class Util {
 
 };
 
-}
+} /* end namespace vt::tv::tests::unit */
+
+#endif /*INCLUDED_VT_TV_TESTS_UNIT_UTIL_H*/

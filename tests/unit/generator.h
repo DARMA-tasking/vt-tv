@@ -41,6 +41,9 @@
 //@HEADER
 */
 
+#if !defined INCLUDED_VT_TV_TESTS_UNIT_GENERATOR_H
+#define INCLUDED_VT_TV_TESTS_UNIT_GENERATOR_H
+
 #include <vt-tv/api/info.h>
 #include <vt-tv/api/object_info.h>
 #include <vt-tv/api/object_work.h>
@@ -48,8 +51,6 @@
 #include <vt-tv/api/types.h>
 #include <vt-tv/utility/json_reader.h>
 #include <yaml-cpp/yaml.h>
-
-#include <string>
 
 #include "util.h"
 
@@ -185,4 +186,6 @@ class Generator {
   }
 };
 
-}  // namespace vt::tv::tests::unit
+} /* end namespace vt::tv::tests::unit */
+
+#endif /*INCLUDED_VT_TV_TESTS_UNIT_GENERATOR_H*/

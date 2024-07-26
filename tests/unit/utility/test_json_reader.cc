@@ -41,18 +41,11 @@
 //@HEADER
 */
 
-#include <gtest/gtest.h>
-
 #include <vt-tv/api/info.h>
 #include <vt-tv/utility/json_reader.h>
 #include <vt-tv/utility/qoi_serializer.h>
 
-#include <fmt-vt/format.h>
-
-#include <string>
-#include <filesystem>
-#include <iostream>
-#include <variant>
+#include "../util.h"
 
 namespace vt::tv::tests::unit::utility {
 

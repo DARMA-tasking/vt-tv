@@ -41,18 +41,10 @@
 //@HEADER
 */
 
-#include <fmt-vt/format.h>
-#include <gtest/gtest.h>
+
 #include <vt-tv/api/phase_work.h>
 
-#include <filesystem>
-#include <iostream>
-#include <numeric>
-#include <set>
-#include <string>
-#include <variant>
-#include <algorithm>
-
+#include "../util.h"
 #include "../generator.h"
 #include "basic_serializer.h"
 

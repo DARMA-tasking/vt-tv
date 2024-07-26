@@ -41,22 +41,11 @@
 //@HEADER
 */
 
-#include <gtest/gtest.h>
-#include <gmock/gmock.h>
-
 #include <vt-tv/api/info.h>
 #include <vt-tv/api/phase_work.h>
 
-#include <fmt-vt/format.h>
-
-#include <string>
-#include <filesystem>
-#include <iostream>
-#include <variant>
-#include <set>
-
+#include "../util.h"
 #include "../generator.h"
-
 
 namespace vt::tv::tests::unit::api {
 

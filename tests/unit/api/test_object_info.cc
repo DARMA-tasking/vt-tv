@@ -41,18 +41,9 @@
 //@HEADER
 */
 
-#include <gtest/gtest.h>
-#include <gmock/gmock.h>
-
 #include <vt-tv/api/object_info.h>
 
-#include <fmt-vt/format.h>
-
-#include <string>
-#include <filesystem>
-#include <iostream>
-#include <variant>
-#include <set>
+#include "../util.h"
 
 namespace vt::tv::tests::unit::api {
 

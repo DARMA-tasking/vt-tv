@@ -41,18 +41,12 @@
 //@HEADER
 */
 
-#include <gtest/gtest.h>
-
 #include <yaml-cpp/yaml.h>
 
 #include <vt-tv/render/render.h>
 #include <vt-tv/utility/json_reader.h>
 #include <vt-tv/utility/parse_render.h>
 
-#include <string>
-#include <filesystem>
-#include <iostream>
-#include <variant>
 #include <set>
 #include <regex>
 
