@@ -68,10 +68,6 @@ namespace vt::tv::tests::unit::render {
 class RenderTest :public ::testing::TestWithParam<std::string> {
 
   void SetUp() override {
-    // Disable this test because of gcc segfault at vtkWindowToImageFilter (memcpy) if save png is true in config
-    // GTEST_SKIP();
-    // return;
-
     // Make the output directory for these tests
     std::filesystem::create_directory(fmt::format("{}/output", SRC_DIR));
     std::filesystem::create_directory(fmt::format("{}/output/tests", SRC_DIR));
@@ -112,7 +108,6 @@ class RenderTest :public ::testing::TestWithParam<std::string> {
         config["output"]["file_stem"].as<std::string>(),
         1.0,
         config["viz"]["save_meshes"].as<bool>(),
-        // config["viz"]["save_pngs"]: Let PNG rendering to the ParseRenderTest test class.
         false,
         std::numeric_limits<PhaseType>::max()
       );
@@ -120,7 +115,7 @@ class RenderTest :public ::testing::TestWithParam<std::string> {
 };
 
 /**
- * Test Render:generate correcty run the different configuration files
+ * Test Render:generate correcty run the different configuration files and generates mesh files (.vtp)
  */
 TEST_P(RenderTest, test_render_from_config) {
   std::string const & config_file = GetParam();
@@ -139,8 +134,12 @@ TEST_P(RenderTest, test_render_from_config) {
   // Check: that number of generated mesh files (*.vtp) correspond to the number of phases
   std::string output_file_stem = config["output"]["file_stem"].as<std::string>();
   for (uint64_t i = 0; i<info.getNumPhases(); i++) {
-    ASSERT_TRUE(std::filesystem::exists(fmt::format("{}{}_rank_mesh_{}.vtp", output_dir, output_file_stem, i))) << fmt::format("{}{}_rank_mesh_{}.vtp", output_dir, output_file_stem, i);
-    ASSERT_TRUE(std::filesystem::exists(fmt::format("{}{}_object_mesh_{}.vtp", output_dir, output_file_stem, i))) << fmt::format("{}{}_rank_mesh_{}.vtp", output_dir, output_file_stem, i);
+    ASSERT_TRUE(
+      std::filesystem::exists(fmt::format("{}{}_rank_mesh_{}.vtp", output_dir, output_file_stem, i))
+    ) << fmt::format("{}{}_rank_mesh_{}.vtp", output_dir, output_file_stem, i);
+    ASSERT_TRUE(
+      std::filesystem::exists(fmt::format("{}{}_object_mesh_{}.vtp", output_dir, output_file_stem, i))
+    ) << fmt::format("{}{}_rank_mesh_{}.vtp", output_dir, output_file_stem, i);
   }
 
   // Validate mesh files (*.vtp) content ?
