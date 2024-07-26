@@ -2,7 +2,7 @@
 
 ### Running unit tests
 
-Unit tests are implemented using thhe [Google's C++ test framework](https://github.com/google/googletest).
+Unit tests are implemented using the [Google's C++ test framework](https://github.com/google/googletest).
 The tests source files are located under the `tests` directory as test_*.cpp.
 
 To build and test vt-tv use the `build.sh` script
