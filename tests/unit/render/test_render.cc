@@ -120,10 +120,10 @@ TEST_P(RenderTest, test_render_from_config_no_png) {
   for (uint64_t i = 0; i<info.getNumPhases(); i++) {
     ASSERT_TRUE(
       std::filesystem::exists(fmt::format("{}{}_rank_mesh_{}.vtp", output_dir, output_file_stem, i))
-    ) << fmt::format("Rank mesh not generated at {}{}_rank_mesh_{}.vtp", output_dir, output_file_stem, i);
+    ) << fmt::format("Error: rank mesh not generated at {}{}_rank_mesh_{}.vtp", output_dir, output_file_stem, i);
     ASSERT_TRUE(
       std::filesystem::exists(fmt::format("{}{}_object_mesh_{}.vtp", output_dir, output_file_stem, i))
-    ) << fmt::format("Object mesh not generated at {}{}_object_mesh_{}.vtp", output_dir, output_file_stem, i);
+    ) << fmt::format("Error: object mesh not generated at {}{}_object_mesh_{}.vtp", output_dir, output_file_stem, i);
   }
 
   // Validate mesh files (*.vtp) content ?

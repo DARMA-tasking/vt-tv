@@ -83,8 +83,8 @@ TEST_P(ParseRenderTest, test_render_from_config_and_png_valid_if_ccm_ex) {
   std::string output_file_stem = config["output"]["file_stem"].as<std::string>();
   for (uint64_t i = 0; i<info.getNumPhases(); i++) {
     ASSERT_TRUE(
-      std::filesystem::exists(fmt::format("{}{}{}.vtp", output_dir, output_file_stem, i))
-    ) << fmt::format("Png image not generated at {}{}{}.vtp", output_dir, output_file_stem, i);
+      std::filesystem::exists(fmt::format("{}{}{}.png", output_dir, output_file_stem, i))
+    ) << fmt::format("Error: PNG image not generated at {}{}{}.png", output_dir, output_file_stem, i);
   }
 
   // Check: PNG output. Compare expected image and generated and validate that diff is under some tolerance
@@ -101,7 +101,7 @@ TEST_P(ParseRenderTest, test_render_from_config_and_png_valid_if_ccm_ex) {
     );
     const auto [status, output] = Util::exec(cmd.c_str());
     fmt::print("Image test: {}\n", output);
-    ASSERT_EQ(status, EXIT_SUCCESS) << output;
+    ASSERT_EQ(status, EXIT_SUCCESS) << fmt::format("Error: {}", output);
   }
 }
 
