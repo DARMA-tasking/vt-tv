@@ -66,10 +66,6 @@ using ParseRender = vt::tv::utility::ParseRender;
 class ParseRenderTest :public ::testing::TestWithParam<std::string> {
 
   void SetUp() override {
-    // Disable this test because of gcc segfault at vtkWindowToImageFilter (memcpy) if save png is true in config
-    // GTEST_SKIP();
-    // return;
-
     // Make the output directory for these tests
     std::filesystem::create_directory(fmt::format("{}/output", SRC_DIR));
     std::filesystem::create_directory(fmt::format("{}/output/tests", SRC_DIR));
