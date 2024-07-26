@@ -131,24 +131,20 @@ TEST_P(RenderTest, test_render_from_config) {
   uint64_t font_size = 50;
 
   std::string output_dir;
-  if (config["viz"]["object_qoi"].as<std::string>() == "shared_block_id") {
-    // Temporary: this case must be removed as soon as the `shared_block_id` QOI becomes supported.
-    EXPECT_THROW(createRender(config, info, output_dir), std::runtime_error); // "Invalid Object QOI: shared_block_id"
-  } else {
-    // Render
-    Render render = createRender(config, info, output_dir);
-    render.generate(font_size, win_size);
 
-    // Check: that number of generated mesh files (*.vtp) correspond to the number of phases
-    std::string output_file_stem = config["output"]["file_stem"].as<std::string>();
-    for (uint64_t i = 0; i<info.getNumPhases(); i++) {
-      ASSERT_TRUE(std::filesystem::exists(fmt::format("{}{}_rank_mesh_{}.vtp", output_dir, output_file_stem, i))) << fmt::format("{}{}_rank_mesh_{}.vtp", output_dir, output_file_stem, i);
-      ASSERT_TRUE(std::filesystem::exists(fmt::format("{}{}_object_mesh_{}.vtp", output_dir, output_file_stem, i))) << fmt::format("{}{}_rank_mesh_{}.vtp", output_dir, output_file_stem, i);
-    }
+  // Render
+  Render render = createRender(config, info, output_dir);
+  render.generate(font_size, win_size);
 
-    // Validate mesh files (*.vtp) content ?
-    // Is it needed
+  // Check: that number of generated mesh files (*.vtp) correspond to the number of phases
+  std::string output_file_stem = config["output"]["file_stem"].as<std::string>();
+  for (uint64_t i = 0; i<info.getNumPhases(); i++) {
+    ASSERT_TRUE(std::filesystem::exists(fmt::format("{}{}_rank_mesh_{}.vtp", output_dir, output_file_stem, i))) << fmt::format("{}{}_rank_mesh_{}.vtp", output_dir, output_file_stem, i);
+    ASSERT_TRUE(std::filesystem::exists(fmt::format("{}{}_object_mesh_{}.vtp", output_dir, output_file_stem, i))) << fmt::format("{}{}_rank_mesh_{}.vtp", output_dir, output_file_stem, i);
   }
+
+  // Validate mesh files (*.vtp) content ?
+  // Is it needed
 }
 
 /* Run with different configuration files */
