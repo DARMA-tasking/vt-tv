@@ -51,9 +51,9 @@
 
 #include <string>
 
-namespace vt::tv::tests::unit {
+#include "util.h"
 
-using Util = vt::tv::tests::unit::Util;
+namespace vt::tv::tests::unit {
 
 /**
  * Testing Helper class that provide useful static methods to be used by the different
