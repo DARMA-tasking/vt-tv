@@ -21,7 +21,6 @@ bash -c "VTK_DIR=/opt/build/vtk \
     /opt/src/vt-tv/build.sh"
 
 # Add artifacts
-
 VT_TV_ARTIFACTS_DIR="/tmp/artifacts"
 mkdir -p $VT_TV_ARTIFACTS_DIR
 
@@ -32,8 +31,10 @@ pushd $VT_TV_OUTPUT_DIR
 cp "junit-report.xml" $VT_TV_ARTIFACTS_DIR/ || true
 
 # > add mesh files and png artifacts
-[ -d "tests" ] && cp "/opt/src/vt-tv/output/tests/"*".vtp"  $VT_TV_ARTIFACTS_DIR/
-[ -d "tests" ] && cp "/opt/src/vt-tv/output/tests/"*".png"  $VT_TV_ARTIFACTS_DIR/
+if [ -d "/opt/src/vt-tv/output/tests"]; then
+    cp "/opt/src/vt-tv/output/tests/"*".vtp"  $VT_TV_ARTIFACTS_DIR/
+    cp "/opt/src/vt-tv/output/tests/"*".png"  $VT_TV_ARTIFACTS_DIR/
+fi
 
 if [[ $VT_TV_COVERAGE_ENABLED == "ON" ]]; then
     # > add `coverage --list` file artifact
