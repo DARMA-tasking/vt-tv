@@ -1,23 +1,23 @@
 name: Build & push base Docker image
 
 on:
-  # Push event: Useful for testing new image build on CI
-  push:
-    branches:
-    - 32-vt-tv-improve-ci
+  # # Push event: Useful for testing new image build on CI
+  # push:
+  #   branches:
+  #   - 32-vt-tv-improve-ci
 
   # Dispatch event (manually triggered)
-  # workflow_dispatch:
-  #   inputs:
-  #     image:
-  #       type: choice
-  #       description: The configuration to build as a combination of os, compiler, vtk and python versions
-  #       options:
-  #       - ubuntu_22.04-gcc_11-vtk_9.2.2-py_3.8
-  #       - ubuntu_22.04-clang_11-vtk_9.2.2-py_3.8
-  #       - ubuntu_22.04-gcc_12-vtk_9.3.0-py_3.8
-  #       # - ubuntu_24.04-gcc_14-vtk_9.3.0-py_3.12 # FAILS
-  #       default: ubuntu_22.04-gcc_11-vtk_9.2.2-py_3.8
+  workflow_dispatch:
+    inputs:
+      image:
+        type: choice
+        description: The configuration to build as a combination of os, compiler, vtk and python versions
+        options:
+        - ubuntu_22.04-gcc_11-vtk_9.2.2-py_3.8
+        - ubuntu_22.04-clang_11-vtk_9.2.2-py_3.8
+        - ubuntu_22.04-gcc_12-vtk_9.3.0-py_3.8
+        # - ubuntu_24.04-gcc_14-vtk_9.3.0-py_3.12 # FAILS
+        default: ubuntu_22.04-gcc_12-vtk_9.3.0-py_3.8
 
 jobs:
   push_to_registry:
@@ -25,13 +25,13 @@ jobs:
     runs-on: ubuntu-latest
     # Please comment the matrix when using the dispatch event and use inputs instead.
     # Matrix for build tests on push event.
-    strategy:
-      matrix:
-        image:
-        - ubuntu_22.04-gcc_11-vtk_9.2.2-py_3.8
-        - ubuntu_22.04-clang_14-vtk_9.2.2-py_3.8
-        - ubuntu_22.04-gcc_12-vtk_9.3.0-py_3.8
-        # - ubuntu_24.04-gcc_11-vtk_9.3.1-py_3.12 # FAILS
+    # strategy:
+    #   matrix:
+    #     image:
+    #     - ubuntu_22.04-gcc_11-vtk_9.2.2-py_3.8
+    #     - ubuntu_22.04-clang_14-vtk_9.2.2-py_3.8
+    #     - ubuntu_22.04-gcc_12-vtk_9.3.0-py_3.8
+    #     # - ubuntu_24.04-gcc_11-vtk_9.3.1-py_3.12 # FAILS
     steps:
       - name: Check out the repo
         uses: actions/checkout@v4
@@ -39,7 +39,7 @@ jobs:
       - name: Extract build configuration
         # If workflow dispatch event replace `matrix.image` by `inputs.image`
         run: |
-          IFS='_-' read -r -a CONFIG <<< "${{ matrix.image }}"
+          IFS='_-' read -r -a CONFIG <<< "${{ inputs.image }}"
           echo "BASE_IMAGE=${CONFIG[0]}:${CONFIG[1]}" >> $GITHUB_ENV
           echo "CC=${CONFIG[2]}-${CONFIG[3]}" >> $GITHUB_ENV
           if [[ "${CONFIG[2]}" == "gcc" ]]; then
@@ -53,7 +53,7 @@ jobs:
           fi
           echo "VTK_VERSION=${CONFIG[5]}" >> $GITHUB_ENV
           echo "PYTHON_VERSION=${CONFIG[7]}" >> $GITHUB_ENV
-          echo "DOCKER_TAG=${{ matrix.image }}" >> $GITHUB_ENV
+          echo "DOCKER_TAG=${{ inputs.image }}" >> $GITHUB_ENV
 
       - name: Build configuration
         run: |
