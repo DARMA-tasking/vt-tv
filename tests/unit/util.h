@@ -123,6 +123,16 @@ class Util {
         ifs.close();
         return content;
     }
+
+    /**
+     * \brief Formats a nullable text for display
+     */
+    static std::string format(const char* data) {
+        if (data == nullptr) {
+            return "<nullptr>";
+        }
+        return fmt::format("{}", data);
+    }
 };
 
 } /* end namespace vt::tv::tests::unit */
