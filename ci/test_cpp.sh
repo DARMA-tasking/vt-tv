@@ -9,6 +9,7 @@ Xvfb :99 -screen 0 1024x768x24 -nolisten tcp > /dev/null 2>&1 &
 sleep 1s
 
 VT_TV_OUTPUT_DIR=/var/vt-tv/output
+VT_TV_TESTS_OUTPUT_DIR=/opt/src/vt-tv/output/tests
 
 # call build script with options to only run tests without building
 # (in CI the docker image define the build and the test stages separately).
@@ -31,9 +32,9 @@ pushd $VT_TV_OUTPUT_DIR
 cp "junit-report.xml" $VT_TV_ARTIFACTS_DIR/ || true
 
 # > add mesh files and png artifacts
-if [ -d "/opt/src/vt-tv/output/tests" ]; then
-    cp "/opt/src/vt-tv/output/tests/"*".vtp"  $VT_TV_ARTIFACTS_DIR/
-    cp "/opt/src/vt-tv/output/tests/"*".png"  $VT_TV_ARTIFACTS_DIR/
+if [ -d "$VT_TV_TESTS_OUTPUT_DIR" ]; then
+    cp "$VT_TV_TESTS_OUTPUT_DIR/"*".vtp"  $VT_TV_ARTIFACTS_DIR/
+    cp "$VT_TV_TESTS_OUTPUT_DIR/"*".png"  $VT_TV_ARTIFACTS_DIR/
 fi
 
 if [[ $VT_TV_COVERAGE_ENABLED == "ON" ]]; then
