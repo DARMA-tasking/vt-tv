@@ -71,6 +71,64 @@ class ParseRenderTest :public ::testing::TestWithParam<std::string> {
     std::filesystem::create_directory(fmt::format("{}/output", SRC_DIR));
     std::filesystem::create_directory(fmt::format("{}/output/tests", SRC_DIR));
   }
+
+protected:
+
+  void printVtkPolyData(vtkPolyData *poly) {
+    std::string points_str = "";
+    for(auto k=0; k < poly->GetNumberOfPoints(); ++k) {
+      double coords[3];
+      poly->GetPoint(k, coords);
+      points_str = fmt::format("{}    [{}] = [{}, {}, {}]\n", points_str, k, coords[0], coords[1], coords[2]);
+    }
+
+    fmt::print(
+      R"STR(
+> GetPointData()->GetNumberOfArrays() => {}
+> GetNumberOfPoints() => {}
+> GetBounds() => {}
+> GetLines()->GetData()->GetName() => {}
+> Points => [
+  {}
+  ]
+)STR",
+      poly->GetPointData()->GetNumberOfArrays(),
+      poly->GetNumberOfPoints(),
+      *poly->GetPoints()->GetBounds(),
+      poly->GetNumberOfPoints(),
+      Util::formatNullable(poly->GetLines()->GetData()->GetName()),
+      points_str
+    );
+  }
+
+  void assertPolyEquals(vtkPolyData *actual, vtkPolyData *expected) {
+    fmt::print("Actual vtkPolyData\n---------------\n");
+    printVtkPolyData(actual);
+    fmt::print("Expected vtkPolyData\n---------------\n");
+    printVtkPolyData(expected);
+
+    // Assertions required to test vt-tv meshaes
+    // Number of point data should be ranks
+    ASSERT_EQ(actual->GetPointData()->GetNumberOfArrays(), expected->GetPointData()->GetNumberOfArrays());
+
+    // Validate points
+    ASSERT_EQ(actual->GetNumberOfPoints(), expected->GetNumberOfPoints());
+    ASSERT_EQ(*actual->GetPoints()->GetBounds(), *expected->GetPoints()->GetBounds());
+    for(auto k=0; k < actual->GetNumberOfPoints(); ++k) {
+      double actualCoords[3];
+      double expectedCoords[3];
+      actual->GetPoint(k, actualCoords);
+      expected->GetPoint(k, expectedCoords);
+
+      ASSERT_EQ(actualCoords[0], expectedCoords[0]);
+      ASSERT_EQ(actualCoords[1], expectedCoords[1]);
+      ASSERT_EQ(actualCoords[2], expectedCoords[2]);
+    }
+
+    // Validate lines
+    ASSERT_EQ(actual->GetLines()->GetData()->GetName(), expected->GetLines()->GetData()->GetName());
+    // TODO: browse lines
+  }
 };
 
 /**
@@ -89,10 +147,17 @@ TEST_P(ParseRenderTest, test_parse_config_and_render_output) {
   // auto n_ranks = config["input"]["n_ranks"].as<int64_t>();
 
   for (uint64_t i = 0; i<info.getNumPhases(); i++) {
-    // 1. test files exist: rank mesh, object mesh, png
     auto rank_mesh_file = fmt::format("{}{}_rank_mesh_{}.vtp", output_dir, output_file_stem, i);
     auto object_mesh_file = fmt::format("{}{}_object_mesh_{}.vtp", output_dir, output_file_stem, i);
     auto png_file = fmt::format("{}{}{}.png", output_dir, output_file_stem, i);
+    auto expected_rank_mesh_file = fmt::format("{}/tests/expected/{}/{}_rank_mesh_{}.vtp",
+                                                SRC_DIR, output_file_stem, output_file_stem, i);
+    auto expected_object_mesh_file = fmt::format("{}/tests/expected/{}/{}_object_mesh_{}.vtp",
+                                                SRC_DIR, output_file_stem, output_file_stem, i);
+
+    fmt::format("----- Test phase {} -----", i);
+
+    // 1. test files exist: rank mesh, object mesh, png
     ASSERT_TRUE(
       std::filesystem::exists(rank_mesh_file)
     ) << fmt::format("Error: rank mesh not generated at {}", object_mesh_file);
@@ -104,6 +169,7 @@ TEST_P(ParseRenderTest, test_parse_config_and_render_output) {
     ) << fmt::format("Error: PNG image not generated at {}", png_file);
 
     // 2. test PNG with tolerance
+    fmt::print("-- Test PNG --\n");
     auto expected_png_file = fmt::format("{}/tests/expected/{}/{}{}.png", SRC_DIR, output_file_stem, output_file_stem, i);
     std::vector<std::string> cmd_vars = {
       fmt::format("ACTUAL={}", png_file),
@@ -115,93 +181,48 @@ TEST_P(ParseRenderTest, test_parse_config_and_render_output) {
       SRC_DIR
     );
     const auto [status, output] = Util::exec(cmd.c_str());
-    fmt::print("PNG diff: {}\n", output);
     ASSERT_EQ(status, EXIT_SUCCESS) << fmt::format("Error: {}", output);
 
     // TODO: testing mesh files cannot be a simple diff as below because each run generates some different data.
     //       The future test should test XML Nodes
     // 3. test vtp's file content
     // 3.1 rank mesh file
-    auto expected_rank_mesh_file = fmt::format("{}/tests/expected/{}/{}_rank_mesh_{}.vtp",
-                                                SRC_DIR, output_file_stem, output_file_stem, i);
+    fmt::print("-- Test rank mesh --\n");
+    
     // auto rank_mesh_content = Util::getFileContent(rank_mesh_file);
     // auto expected_rank_mesh_content = Util::getFileContent(expected_rank_mesh_file);
     // ASSERT_EQ(expected_rank_mesh_content, rank_mesh_content) << fmt::format("rank mesh file content differs from expected at phase {}", i);
 
-    vtkNew<vtkXMLPolyDataReader> reader;
-    reader->SetFileName(expected_rank_mesh_file.c_str());
-    reader->Update();
-    vtkPolyData *expected_rank_mesh = reader->GetOutput();
+    vtkNew<vtkXMLPolyDataReader> expected_rank_mesh_reader;
+    expected_rank_mesh_reader->SetFileName(expected_rank_mesh_file.c_str());
+    expected_rank_mesh_reader->Update();
+    vtkPolyData *expected_rank_mesh = expected_rank_mesh_reader->GetOutput();
 
-    vtkNew<vtkXMLPolyDataReader> reader2;
-    reader2->SetFileName(rank_mesh_file.c_str());
-    reader2->Update();
-    vtkPolyData *rank_mesh = reader2->GetOutput();
+    vtkNew<vtkXMLPolyDataReader> rank_mesh_reader;
+    rank_mesh_reader->SetFileName(rank_mesh_file.c_str());
+    rank_mesh_reader->Update();
+    vtkPolyData *rank_mesh = rank_mesh_reader->GetOutput();
 
-    std::string points_str = "";
-    for(auto k=0; k < rank_mesh->GetNumberOfPoints(); ++k) {
-      double coords[3];
-      rank_mesh->GetPoint(k, coords);
-      points_str = fmt::format("{}  points[{}] = [{}, {}, {}]\n", points_str, k, coords[0], coords[1], coords[2]);
-    }
-
-    fmt::print(
-      R"STR(
-Actual:
-> GetPointData()->GetNumberOfArrays() => {}
-> GetNumberOfPoints() => {}
-> GetBounds() => {}
-> GetLines()->GetData()->GetName() => {}
-> Points => [
-  {}
-  ]
-      )STR",
-      rank_mesh->GetPointData()->GetNumberOfArrays(),
-      rank_mesh->GetNumberOfPoints(),
-      *rank_mesh->GetPoints()->GetBounds(),
-      fmt::format("{:s}", Util::format(rank_mesh->GetLines()->GetData()->GetName())),
-      points_str
-    );
-
-    points_str = "";
-    for(auto k=0; k < expected_rank_mesh->GetNumberOfPoints(); ++k) {
-      double coords[3];
-      expected_rank_mesh->GetPoint(k, coords);
-      points_str = fmt::format("{}  points[{}] = [{}, {}, {}]\n", points_str, k, coords[0], coords[1], coords[2]);
-    }
-
-    fmt::print(
-      R"STR(
-Expected:
-> GetPointData()->GetNumberOfArrays() => {}
-> GetNumberOfPoints() => {}
-> GetBounds() => {}
-> GetLines()->GetData()->GetName() => {}
-> Points => [
-  {}
-  ]
-      )STR",
-      expected_rank_mesh->GetPointData()->GetNumberOfArrays(),
-      expected_rank_mesh->GetNumberOfPoints(),
-      *expected_rank_mesh->GetPoints()->GetBounds(),
-      fmt::format("{:s}", Util::format(expected_rank_mesh->GetLines()->GetData()->GetName())),
-      points_str
-    );
-
-    // Number of point data should be ranks
-    ASSERT_EQ(expected_rank_mesh->GetPointData()->GetNumberOfArrays(), rank_mesh->GetPointData()->GetNumberOfArrays());
-
-    // Validate objects
-    ASSERT_EQ(rank_mesh->GetNumberOfPoints(), expected_rank_mesh->GetNumberOfPoints());
-    ASSERT_EQ(*rank_mesh->GetPoints()->GetBounds(), *expected_rank_mesh->GetPoints()->GetBounds());
-    ASSERT_EQ(rank_mesh->GetLines()->GetData()->GetName(), expected_rank_mesh->GetLines()->GetData()->GetName());
+    this->assertPolyEquals(rank_mesh, expected_rank_mesh);
 
     // 3.2 object mesh file
-    auto expected_object_mesh_file = fmt::format("{}/tests/expected/{}/{}_object_mesh_{}.vtp",
-                                                SRC_DIR, output_file_stem, output_file_stem, i);
+    fmt::print("-- Test object mesh --\n");
+    
     // auto object_mesh_content = Util::getFileContent(object_mesh_file);
     // auto expected_object_mesh_content = Util::getFileContent(expected_object_mesh_file);
     // ASSERT_EQ(expected_object_mesh_content, object_mesh_content) << fmt::format("object mesh file content differs from expected at phase {}", i);
+
+    vtkNew<vtkXMLPolyDataReader> expected_object_mesh_reader;
+    expected_object_mesh_reader->SetFileName(expected_object_mesh_file.c_str());
+    expected_object_mesh_reader->Update();
+    vtkPolyData *expected_object_mesh = expected_object_mesh_reader->GetOutput();
+
+    vtkNew<vtkXMLPolyDataReader> object_mesh_reader;
+    object_mesh_reader->SetFileName(object_mesh_file.c_str());
+    object_mesh_reader->Update();
+    vtkPolyData *object_mesh = object_mesh_reader->GetOutput();
+
+    this->assertPolyEquals(object_mesh, expected_object_mesh);
 
     } // end phases loop
 }
