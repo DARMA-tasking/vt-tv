@@ -47,6 +47,7 @@
 // common includes for any tests
 #include <string>
 #include <filesystem>
+#include <fstream>
 #include <iostream>
 #include <variant>
 #include <set>
@@ -112,6 +113,13 @@ class Util {
         return abs_path_string;
     }
 
+    static std::string getFileContent(std::string filename) {
+        std::ifstream ifs(filename);
+        std::string content( (std::istreambuf_iterator<char>(ifs) ),
+                             (std::istreambuf_iterator<char>()    ) );
+        ifs.close();
+        return content;
+    }
 };
 
 } /* end namespace vt::tv::tests::unit */
