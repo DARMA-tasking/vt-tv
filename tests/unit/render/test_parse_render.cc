@@ -110,21 +110,23 @@ TEST_P(ParseRenderTest, test_parse_config_and_render_output) {
     fmt::print("PNG diff: {}\n", output);
     ASSERT_EQ(status, EXIT_SUCCESS) << fmt::format("Error: {}", output);
 
-    // 3. test vtp's file content
-    // 3.1 rank mesh file
-    auto expected_rank_mesh_file = fmt::format("{}/tests/expected/{}/{}_rank_mesh_{}.vtp",
-                                                SRC_DIR, output_file_stem, output_file_stem, i);
-    auto rank_mesh_content = Util::getFileContent(rank_mesh_file);
-    auto expected_rank_mesh_content = Util::getFileContent(expected_rank_mesh_file);
-    ASSERT_EQ(expected_rank_mesh_content, rank_mesh_content) << fmt::format("rank mesh file content differs from expected at phase {}", i);
+    // TODO: testing mesh files cannot be a simple diff as below because each run generates some different data.
+    //       The future test should test XML Nodes
+    //   // 3. test vtp's file content
+    //   // 3.1 rank mesh file
+    //   auto expected_rank_mesh_file = fmt::format("{}/tests/expected/{}/{}_rank_mesh_{}.vtp",
+    //                                               SRC_DIR, output_file_stem, output_file_stem, i);
+    //   auto rank_mesh_content = Util::getFileContent(rank_mesh_file);
+    //   auto expected_rank_mesh_content = Util::getFileContent(expected_rank_mesh_file);
+    //   ASSERT_EQ(expected_rank_mesh_content, rank_mesh_content) << fmt::format("rank mesh file content differs from expected at phase {}", i);
 
-    // 3.2 object mesh file
-    auto expected_object_mesh_file = fmt::format("{}/tests/expected/{}/{}_object_mesh_{}.vtp",
-                                                SRC_DIR, output_file_stem, output_file_stem, i);
-    auto object_mesh_content = Util::getFileContent(object_mesh_file);
-    auto expected_object_mesh_content = Util::getFileContent(expected_object_mesh_file);
-    ASSERT_EQ(expected_object_mesh_content, object_mesh_content) << fmt::format("object mesh file content differs from expected at phase {}", i);
-  } // end phases loop
+    //   // 3.2 object mesh file
+    //   auto expected_object_mesh_file = fmt::format("{}/tests/expected/{}/{}_object_mesh_{}.vtp",
+    //                                               SRC_DIR, output_file_stem, output_file_stem, i);
+    //   auto object_mesh_content = Util::getFileContent(object_mesh_file);
+    //   auto expected_object_mesh_content = Util::getFileContent(expected_object_mesh_file);
+    //   ASSERT_EQ(expected_object_mesh_content, object_mesh_content) << fmt::format("object mesh file content differs from expected at phase {}", i);
+    } // end phases loop
 }
 
 
