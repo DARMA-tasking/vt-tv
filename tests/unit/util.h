@@ -113,6 +113,9 @@ class Util {
         return abs_path_string;
     }
 
+    /**
+     * \brief Reads file content and returns it as a string
+     */
     static std::string getFileContent(std::string filename) {
         std::ifstream ifs(filename);
         std::string content( (std::istreambuf_iterator<char>(ifs) ),
