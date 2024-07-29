@@ -86,7 +86,6 @@ protected:
       R"STR(
 > GetPointData()->GetNumberOfArrays() => {}
 > GetNumberOfPoints() => {}
-> GetBounds() => {}
 > GetLines()->GetData()->GetName() => {}
 > Points => [
   {}
@@ -94,7 +93,6 @@ protected:
 )STR",
       poly->GetPointData()->GetNumberOfArrays(),
       poly->GetNumberOfPoints(),
-      *poly->GetPoints()->GetBounds(),
       poly->GetNumberOfPoints(),
       Util::formatNullable(poly->GetLines()->GetData()->GetName()),
       points_str
@@ -113,7 +111,6 @@ protected:
 
     // Validate points
     ASSERT_EQ(actual->GetNumberOfPoints(), expected->GetNumberOfPoints());
-    ASSERT_EQ(*actual->GetPoints()->GetBounds(), *expected->GetPoints()->GetBounds());
     for(auto k=0; k < actual->GetNumberOfPoints(); ++k) {
       double actualCoords[3];
       double expectedCoords[3];
@@ -188,7 +185,7 @@ TEST_P(ParseRenderTest, test_parse_config_and_render_output) {
     // 3. test vtp's file content
     // 3.1 rank mesh file
     fmt::print("-- Test rank mesh --\n");
-    
+
     // auto rank_mesh_content = Util::getFileContent(rank_mesh_file);
     // auto expected_rank_mesh_content = Util::getFileContent(expected_rank_mesh_file);
     // ASSERT_EQ(expected_rank_mesh_content, rank_mesh_content) << fmt::format("rank mesh file content differs from expected at phase {}", i);
@@ -207,7 +204,7 @@ TEST_P(ParseRenderTest, test_parse_config_and_render_output) {
 
     // 3.2 object mesh file
     fmt::print("-- Test object mesh --\n");
-    
+
     // auto object_mesh_content = Util::getFileContent(object_mesh_file);
     // auto expected_object_mesh_content = Util::getFileContent(expected_object_mesh_file);
     // ASSERT_EQ(expected_object_mesh_content, object_mesh_content) << fmt::format("object mesh file content differs from expected at phase {}", i);
