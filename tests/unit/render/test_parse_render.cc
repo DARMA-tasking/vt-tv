@@ -138,34 +138,55 @@ TEST_P(ParseRenderTest, test_parse_config_and_render_output) {
     reader2->Update();
     vtkPolyData *rank_mesh = reader2->GetOutput();
 
+    std::string points_str = "";
+    for(auto k=0; k < rank_mesh->GetNumberOfPoints(); ++k) {
+      double coords[3];
+      rank_mesh->GetPoint(k, coords);
+      points_str = fmt::format("{}  points[{}] = [{}, {}, {}]\n", points_str, k, coords[0], coords[1], coords[2]);
+    }
+
     fmt::print(
       R"STR(
-        Actual:
-        "> GetPointData()->GetNumberOfArrays() => {}
-        "> GetNumberOfPoints() => {}
-        "> GetBounds() => {}
-        "> GetLines()->GetData()->GetName() => {}
+Actual:
+> GetPointData()->GetNumberOfArrays() => {}
+> GetNumberOfPoints() => {}
+> GetBounds() => {}
+> GetLines()->GetData()->GetName() => {}
+> Points => [
+  {}
+  ]
       )STR",
       rank_mesh->GetPointData()->GetNumberOfArrays(),
       rank_mesh->GetNumberOfPoints(),
       *rank_mesh->GetPoints()->GetBounds(),
-      fmt::format("{:s}", Util::format(rank_mesh->GetLines()->GetData()->GetName()))
+      fmt::format("{:s}", Util::format(rank_mesh->GetLines()->GetData()->GetName())),
+      points_str
     );
+
+    points_str = "";
+    for(auto k=0; k < expected_rank_mesh->GetNumberOfPoints(); ++k) {
+      double coords[3];
+      expected_rank_mesh->GetPoint(k, coords);
+      points_str = fmt::format("{}  points[{}] = [{}, {}, {}]\n", points_str, k, coords[0], coords[1], coords[2]);
+    }
 
     fmt::print(
       R"STR(
-        Expected:
-        "> GetPointData()->GetNumberOfArrays() => {}
-        "> GetNumberOfPoints() => {}
-        "> GetBounds() => {}
-        "> GetLines()->GetData()->GetName() => {}
+Expected:
+> GetPointData()->GetNumberOfArrays() => {}
+> GetNumberOfPoints() => {}
+> GetBounds() => {}
+> GetLines()->GetData()->GetName() => {}
+> Points => [
+  {}
+  ]
       )STR",
       expected_rank_mesh->GetPointData()->GetNumberOfArrays(),
       expected_rank_mesh->GetNumberOfPoints(),
       *expected_rank_mesh->GetPoints()->GetBounds(),
-      fmt::format("{:s}", Util::format(expected_rank_mesh->GetLines()->GetData()->GetName()))
+      fmt::format("{:s}", Util::format(expected_rank_mesh->GetLines()->GetData()->GetName())),
+      points_str
     );
-
 
     // Number of point data should be ranks
     ASSERT_EQ(expected_rank_mesh->GetPointData()->GetNumberOfArrays(), rank_mesh->GetPointData()->GetNumberOfArrays());
