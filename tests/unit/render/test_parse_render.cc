@@ -81,7 +81,7 @@ TEST_P(ParseRenderTest, test_parse_config_and_render_output) {
 
   std::string output_file_stem = config["output"]["file_stem"].as<std::string>();
   for (uint64_t i = 0; i<info.getNumPhases(); i++) {
-    // 1. test file existence
+    // 1. test files exist: rank mesh, object mesh, png
     auto rank_mesh_file = fmt::format("{}{}_rank_mesh_{}.vtp", output_dir, output_file_stem, i);
     auto object_mesh_file = fmt::format("{}{}_object_mesh_{}.vtp", output_dir, output_file_stem, i);
     auto png_file = fmt::format("{}{}{}.png", output_dir, output_file_stem, i);
