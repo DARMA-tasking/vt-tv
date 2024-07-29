@@ -70,7 +70,7 @@ class ParseRenderTest :public ::testing::TestWithParam<std::string> {
 /**
  * Test ParseRender:parseAndRender correcty run the different configuration files
  */
-TEST_P(ParseRenderTest, test_render_from_config_and_png_valid_if_ccm_ex) {
+TEST_P(ParseRenderTest, test_parse_config_and_render_output) {
   std::string const & config_file = GetParam();
   auto parse_render = ParseRender(fmt::format("{}/tests/config/{}", SRC_DIR, config_file));
   ASSERT_NO_THROW(parse_render.parseAndRender());
@@ -79,20 +79,27 @@ TEST_P(ParseRenderTest, test_render_from_config_and_png_valid_if_ccm_ex) {
   Info info = Generator::loadInfoFromConfig(config);
   std::string output_dir = Util::resolveDir(SRC_DIR, config["output"]["directory"].as<std::string>(), true);
 
-  // Check: that number of generated png files (*.png) correspond to the number of phases
   std::string output_file_stem = config["output"]["file_stem"].as<std::string>();
   for (uint64_t i = 0; i<info.getNumPhases(); i++) {
+    // 1. test file existence
+    auto rank_mesh_file = fmt::format("{}{}_rank_mesh_{}.vtp", output_dir, output_file_stem, i);
+    auto object_mesh_file = fmt::format("{}{}_object_mesh_{}.vtp", output_dir, output_file_stem, i);
+    auto png_file = fmt::format("{}{}{}.png", output_dir, output_file_stem, i);
     ASSERT_TRUE(
-      std::filesystem::exists(fmt::format("{}{}{}.png", output_dir, output_file_stem, i))
-    ) << fmt::format("Error: PNG image not generated at {}{}{}.png", output_dir, output_file_stem, i);
-  }
+      std::filesystem::exists(rank_mesh_file)
+    ) << fmt::format("Error: rank mesh not generated at {}", object_mesh_file);
+    ASSERT_TRUE(
+      std::filesystem::exists(object_mesh_file)
+    ) << fmt::format("Error: object mesh not generated at {}", object_mesh_file);
+    ASSERT_TRUE(
+      std::filesystem::exists(png_file)
+    ) << fmt::format("Error: PNG image not generated at {}", png_file);
 
-  // Check: PNG output. Compare expected image and generated and validate that diff is under some tolerance
-  // (currently only the ccm_example)
-  if (config_file == "ccm-example.yaml") {
+    // 2. test PNG with tolerance
+    auto expected_png_file = fmt::format("{}/tests/expected/{}/{}{}.png", SRC_DIR, output_file_stem, output_file_stem, i);
     std::vector<std::string> cmd_vars = {
-      fmt::format("ACTUAL={}/output/tests/ccm_example0.png", SRC_DIR),
-      fmt::format("EXPECTED={}/tests/expected/ccm_example0.png", SRC_DIR),
+      fmt::format("ACTUAL={}", png_file),
+      fmt::format("EXPECTED={}", expected_png_file),
       "TOLERANCE=2.0",
     };
     auto cmd = fmt::format("{} {}/tests/test_image.sh",
@@ -100,10 +107,26 @@ TEST_P(ParseRenderTest, test_render_from_config_and_png_valid_if_ccm_ex) {
       SRC_DIR
     );
     const auto [status, output] = Util::exec(cmd.c_str());
-    fmt::print("Image test: {}\n", output);
+    fmt::print("PNG diff: {}\n", output);
     ASSERT_EQ(status, EXIT_SUCCESS) << fmt::format("Error: {}", output);
-  }
+
+    // 3. test vtp's file content
+    // 3.1 rank mesh file
+    auto expected_rank_mesh_file = fmt::format("{}/tests/expected/{}/{}_rank_mesh_{}.vtp",
+                                                SRC_DIR, output_file_stem, output_file_stem, i);
+    auto rank_mesh_content = Util::getFileContent(rank_mesh_file);
+    auto expected_rank_mesh_content = Util::getFileContent(expected_rank_mesh_file);
+    ASSERT_EQ(expected_rank_mesh_content, rank_mesh_content) << fmt::format("rank mesh file content differs from expected at phase {}", i);
+
+    // 3.2 object mesh file
+    auto expected_object_mesh_file = fmt::format("{}/tests/expected/{}/{}_object_mesh_{}.vtp",
+                                                SRC_DIR, output_file_stem, output_file_stem, i);
+    auto object_mesh_content = Util::getFileContent(object_mesh_file);
+    auto expected_object_mesh_content = Util::getFileContent(expected_object_mesh_file);
+    ASSERT_EQ(expected_object_mesh_content, object_mesh_content) << fmt::format("object mesh file content differs from expected at phase {}", i);
+  } // end phases loop
 }
+
 
 /* Run with different configuration files */
 INSTANTIATE_TEST_SUITE_P(

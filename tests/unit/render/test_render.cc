@@ -59,6 +59,7 @@ using Util = vt::tv::tests::unit::Util;
 
 /**
  * Provides unit tests for the vt::tv::render::Render class to test with config file input
+ * Note: PNG output is turned off for these tests.
  */
 class RenderTest :public ::testing::TestWithParam<std::string> {
 
@@ -118,16 +119,15 @@ TEST_P(RenderTest, test_render_from_config_no_png) {
   // Check: that number of generated mesh files (*.vtp) correspond to the number of phases
   std::string output_file_stem = config["output"]["file_stem"].as<std::string>();
   for (uint64_t i = 0; i<info.getNumPhases(); i++) {
+    auto rank_mesh_file = fmt::format("{}{}_rank_mesh_{}.vtp", output_dir, output_file_stem, i);
+    auto object_mesh_file = fmt::format("{}{}_object_mesh_{}.vtp", output_dir, output_file_stem, i);
     ASSERT_TRUE(
-      std::filesystem::exists(fmt::format("{}{}_rank_mesh_{}.vtp", output_dir, output_file_stem, i))
-    ) << fmt::format("Error: rank mesh not generated at {}{}_rank_mesh_{}.vtp", output_dir, output_file_stem, i);
+      std::filesystem::exists(rank_mesh_file)
+    ) << fmt::format("Error: rank mesh not generated at {}", object_mesh_file);
     ASSERT_TRUE(
-      std::filesystem::exists(fmt::format("{}{}_object_mesh_{}.vtp", output_dir, output_file_stem, i))
-    ) << fmt::format("Error: object mesh not generated at {}{}_object_mesh_{}.vtp", output_dir, output_file_stem, i);
+      std::filesystem::exists(object_mesh_file)
+    ) << fmt::format("Error: object mesh not generated at {}", object_mesh_file);
   }
-
-  // Validate mesh files (*.vtp) content ?
-  // Is it needed
 }
 
 /* Run with different configuration files */
