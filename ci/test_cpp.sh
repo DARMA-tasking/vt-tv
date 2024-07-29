@@ -31,7 +31,7 @@ pushd $VT_TV_OUTPUT_DIR
 cp "junit-report.xml" $VT_TV_ARTIFACTS_DIR/ || true
 
 # > add mesh files and png artifacts
-if [ -d "/opt/src/vt-tv/output/tests"]; then
+if [ -d "/opt/src/vt-tv/output/tests" ]; then
     cp "/opt/src/vt-tv/output/tests/"*".vtp"  $VT_TV_ARTIFACTS_DIR/
     cp "/opt/src/vt-tv/output/tests/"*".png"  $VT_TV_ARTIFACTS_DIR/
 fi
