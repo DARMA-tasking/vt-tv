@@ -125,9 +125,9 @@ class Util {
     }
 
     /**
-     * \brief Formats a nullable text for display
+     * \brief Formats a text with suport of null values
      */
-    static std::string format(const char* data) {
+    static std::string formatNullable(const char* data) {
         if (data == nullptr) {
             return "<nullptr>";
         }
