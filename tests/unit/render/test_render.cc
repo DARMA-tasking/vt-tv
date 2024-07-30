@@ -237,7 +237,7 @@ TEST_P(RenderTest, test_render_from_config_with_png) {
   Render render = createRender(config, info, output_dir);
   std::filesystem::create_directories(output_dir);
 
-  auto object_jitter_dims_file = fmt::format("{}{}", output_dir, config_file.substr(0, config_file.size()-5), "jitter_dims.csv");
+  auto object_jitter_dims_file = fmt::format("{}{}{}", output_dir, config_file.substr(0, config_file.size()-5), "jitter_dims.csv");
   if (std::filesystem::exists(object_jitter_dims_file)) {
     render.setJitterDims(loadJitterDims(object_jitter_dims_file));
   } else {
