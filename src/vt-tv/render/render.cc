@@ -104,7 +104,7 @@ Render::Render(Info in_info)
     int objectId, x, y, z;
     while (infile >> objectId >> x >> y >> z)
     {
-      std::array<double, 3> jitterDims = {x, y, z};
+      std::array<double, 3> jitterDims = {static_cast<double>(x), static_cast<double>(y), static_cast<double>(z)};
       jitter_dims_.insert(std::make_pair(objectId, jitterDims));
     }
   }
