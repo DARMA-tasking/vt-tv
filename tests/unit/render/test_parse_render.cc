@@ -77,32 +77,57 @@ protected:
   void printVtkPolyData(vtkPolyData *poly) {
     std::string points_str = "";
     for(auto k=0; k < poly->GetNumberOfPoints(); ++k) {
-      double coords[3];
-      poly->GetPoint(k, coords);
+      double* coords = poly->GetPoint(k);
       points_str = fmt::format("{}    [{}] = [{}, {}, {}]\n", points_str, k, coords[0], coords[1], coords[2]);
+    }
+
+    std::string point_array_str = "";
+    for(auto k=0; k < poly->GetPointData()->GetNumberOfArrays(); ++k) {
+      auto array_name = poly->GetPointData()->GetArrayName(k);
+      auto array = poly->GetPointData()->GetArray(array_name);
+
+      std::string components_str = "";
+      for (auto tupleIdx = 0; tupleIdx < array->GetNumberOfTuples(); ++tupleIdx) {
+        for (auto compIdx = 0; compIdx < array->GetNumberOfComponents(); ++compIdx) {
+          components_str = fmt::format("{}    [{}] = [TupleId={}, ComponentId={}, {}]\n", components_str, k, tupleIdx, compIdx);
+        }
+      }
+
+      point_array_str = fmt::format("{}    [{}] = { Name=\"{}\", Type={}, Size={}, Components={} }\n",
+        point_array_str,
+        k,
+        array_name,
+        array->GetArrayType(),
+        array->GetSize(),
+        components_str
+      );
     }
 
     fmt::print(
       R"STR(
-> GetPointData()->GetNumberOfArrays() => {}
-> GetNumberOfPoints() => {}
-> GetLines()->GetData()->GetName() => {}
+> PointData.NumberOfArrays => {}
+> NumberOfPoints => {}
+> Lines.Data.Name => {}
 > Points => [
   {}
   ]
+  PointData.Arrays() => [
+  {}
+  ]
 )STR",
+      
       poly->GetPointData()->GetNumberOfArrays(),
       poly->GetNumberOfPoints(),
-      poly->GetNumberOfPoints(),
       Util::formatNullable(poly->GetLines()->GetData()->GetName()),
-      points_str
+      points_str,
+      point_array_str
     );
   }
 
   void assertPolyEquals(vtkPolyData *actual, vtkPolyData *expected) {
-    fmt::print("Actual vtkPolyData\n---------------\n");
+    fmt::print("Actual vtkPolyData:\n");
     printVtkPolyData(actual);
-    fmt::print("Expected vtkPolyData\n---------------\n");
+    fmt::print("Expected vtkPolyData:\n");
     printVtkPolyData(expected);
 
     // Assertions required to test vt-tv meshaes
@@ -111,15 +136,16 @@ protected:
 
     // Validate points
     ASSERT_EQ(actual->GetNumberOfPoints(), expected->GetNumberOfPoints());
+
     for(auto k=0; k < actual->GetNumberOfPoints(); ++k) {
       double actualCoords[3];
       double expectedCoords[3];
       actual->GetPoint(k, actualCoords);
       expected->GetPoint(k, expectedCoords);
 
-      ASSERT_EQ(actualCoords[0], expectedCoords[0]);
-      ASSERT_EQ(actualCoords[1], expectedCoords[1]);
-      ASSERT_EQ(actualCoords[2], expectedCoords[2]);
+      ASSERT_EQ(actualCoords[0], expectedCoords[0]) << "Invalid point X coordinate at index " << k << "diff=" << (expectedCoords[0] - actualCoords[0]);
+      ASSERT_EQ(actualCoords[1], expectedCoords[1]) << "Invalid point Y coordinate at index " << k << "diff=" << (expectedCoords[1] - actualCoords[1]);
+      ASSERT_EQ(actualCoords[2], expectedCoords[2]) << "Invalid point Z coordinate at index " << k << "diff=" << (expectedCoords[2] - actualCoords[2]);
     }
 
     // Validate lines
@@ -152,7 +178,7 @@ TEST_P(ParseRenderTest, test_parse_config_and_render_output) {
     auto expected_object_mesh_file = fmt::format("{}/tests/expected/{}/{}_object_mesh_{}.vtp",
                                                 SRC_DIR, output_file_stem, output_file_stem, i);
 
-    fmt::format("----- Test phase {} -----", i);
+    fmt::print("----- Test phase {} -----\n", i);
 
     // 1. test files exist: rank mesh, object mesh, png
     ASSERT_TRUE(
@@ -220,6 +246,8 @@ TEST_P(ParseRenderTest, test_parse_config_and_render_output) {
     vtkPolyData *object_mesh = object_mesh_reader->GetOutput();
 
     this->assertPolyEquals(object_mesh, expected_object_mesh);
+
+    fmt::print("----- End Test phase {} -----\n", i);
 
     } // end phases loop
 }
