@@ -97,6 +97,7 @@
 #include <array>
 #include <variant>
 #include <cmath>
+#include <regex>
 
 namespace vt { namespace tv {
 
@@ -145,6 +146,11 @@ private:
 
   // Jitter per object
   std::unordered_map<ElementIDType, std::array<double, 3>> jitter_dims_;
+
+  /**
+   * \brief Function to initialize object dimensions using some randomness
+   */
+  void initJitterDims();
 
   /**
    * \brief Compute maximum value of object volumes.
@@ -298,6 +304,22 @@ public:
   );
 
   void generate(uint64_t font_size = 50, uint64_t win_size = 2000);
+
+#ifdef VT_TV_HAS_TESTS
+  /**
+   * \brief Function to get internal object jitter dimensions.
+   */
+  const std::unordered_map<ElementIDType, std::array<double, 3>> getJitterDims(){
+    return jitter_dims_;
+  }
+
+  /**
+   * \brief Function to set manually the internal object jitter dimensions.
+   */
+  void setJitterDims(std::unordered_map<ElementIDType, std::array<double, 3>> jitter_dims){
+    jitter_dims_ = jitter_dims;
+  }
+#endif
 };
 
 }} /* end namespace vt::tv */

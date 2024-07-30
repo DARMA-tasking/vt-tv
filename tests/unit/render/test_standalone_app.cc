@@ -60,8 +60,7 @@ class StandaloneAppTest :public ::testing::TestWithParam<std::tuple<std::string,
     return;
 
     // Make the output directory for these tests
-    std::filesystem::create_directory(fmt::format("{}/output", SRC_DIR));
-    std::filesystem::create_directory(fmt::format("{}/output/tests", SRC_DIR));
+    std::filesystem::create_directories(fmt::format("{}/output/tests", SRC_DIR));
   }
 };
 

@@ -45,7 +45,7 @@ macro(vt_tv_link_target target)
   )
   target_link_libraries(${target} PRIVATE GTest::gtest_main GTest::gmock_main)
   target_link_libraries(${target} PUBLIC ${VT_TV_LIBRARY})
-  target_compile_definitions(${target} PUBLIC VT_TV_HAS_TEST)
+  target_compile_definitions(${target} PUBLIC VT_TV_HAS_TESTS)
 endmacro()
 
 add_executable(
