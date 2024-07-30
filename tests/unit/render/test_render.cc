@@ -183,6 +183,7 @@ protected:
   }
 
   std::unordered_map<ElementIDType, std::array<double, 3>> loadJitterDims(std::string filename) {
+    fmt::print("Loading jitter dimensions from {}\n", filename);
     std::unordered_map<ElementIDType, std::array<double, 3>> jitter_dims;
     std::ifstream infile(filename);
     std::string line;
@@ -210,7 +211,8 @@ protected:
   }
 
   void saveJitterDims( std::unordered_map<ElementIDType, std::array<double, 3>> jitter_dims_, std::string filename) {
-    std::ofstream outfile(fmt::format("{}_{}", std::to_string(std::time(nullptr)), filename));
+    fmt::print("Saving jitter dimensions to {}\n", filename);
+    std::ofstream outfile(filename);
     for (auto const& [objectID, dims] : jitter_dims_) {
       outfile << fmt::format("{},{},{},{}\n", objectID, dims[0], dims[1], dims[2]);
     }
@@ -235,12 +237,10 @@ TEST_P(RenderTest, test_render_from_config_with_png) {
   Render render = createRender(config, info, output_dir);
   std::filesystem::create_directories(output_dir);
 
-  auto object_jitter_dims_file = fmt::format("{}{}", output_dir, "object_jitter_dims.csv");
+  auto object_jitter_dims_file = fmt::format("{}{}", output_dir, config_file.substr(0, config_file.size()-5), "jitter_dims.csv");
   if (std::filesystem::exists(object_jitter_dims_file)) {
-    fmt::print("Loading jitter dimensions from {}\n", object_jitter_dims_file);
     render.setJitterDims(loadJitterDims(object_jitter_dims_file));
   } else {
-    fmt::print("Saving jitter dimensions to {}\n", object_jitter_dims_file);
     saveJitterDims(render.getJitterDims(), object_jitter_dims_file);
   }
 
