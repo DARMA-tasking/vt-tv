@@ -154,10 +154,10 @@ protected:
   }
 
   void assertPolyEquals(vtkPolyData *actual, vtkPolyData *expected) {
-    fmt::print("Actual vtkPolyData:\n");
-    printVtkPolyData(actual);
-    fmt::print("Expected vtkPolyData:\n");
-    printVtkPolyData(expected);
+    // fmt::print("Actual vtkPolyData:\n");
+    // printVtkPolyData(actual);
+    // fmt::print("Expected vtkPolyData:\n");
+    // printVtkPolyData(expected);
 
     // Assertions required to test vt-tv meshaes
     // Number of point data should be ranks
@@ -237,10 +237,16 @@ TEST_P(RenderTest, test_render_from_config_with_png) {
 
   auto object_jitter_dims_file = fmt::format("{}/{}", output_dir, "object_jitter_dims.txt");
   if (std::filesystem::exists(object_jitter_dims_file)) {
+    fmt::print("Loading jitter dimensions from {}", object_jitter_dims_file);
     render.setJitterDims(loadJitterDims(object_jitter_dims_file));
+  } else {
+    fmt::print("Saving jitter dimensions to {}", object_jitter_dims_file);
+    saveJitterDims(render.getJitterDims(), object_jitter_dims_file);
   }
+
   render.generate(font_size, win_size);
-  saveJitterDims(render.getJitterDims(), object_jitter_dims_file);
+
+  
 
   // Check: that number of generated mesh files (*.vtp) correspond to the number of phases
   std::string output_file_stem = config["output"]["file_stem"].as<std::string>();
