@@ -93,14 +93,41 @@ Render::Render(Info in_info)
   // Initialize jitter
   std::srand(std::time(nullptr));
   auto const& allObjects = info_.getAllObjectIDs();
-  for (auto const& objectID : allObjects) {
-    std::array<double, 3> jitterDims;
-    for (uint64_t d = 0; d < 3; d++) {
-      if (auto f = this->rank_dims_.find(d); f != this->rank_dims_.end()) {
-        jitterDims[d] = ((double)std::rand()/RAND_MAX - 0.5) * object_jitter_;
-      } else jitterDims[d] = 0;
+
+  jitter_dims_ = {};
+
+#ifndef VT_TV_HAS_TESTS
+  // Load object jitter from file
+  if (std::getenv("VT_TV_OBJECT_JITTER_DIMS_FILE") != "") {
+    // to specify values from file
+    std::ifstream infile(std::getenv("VT_TV_OBJECT_JITTER_DIMS_FILE"));
+    int objectId, x, y, z;
+    while (infile >> objectId >> x >> y >> z)
+    {
+      std::array<double, 3> jitterDims = {x, y, z};
+      jitter_dims_.insert(std::make_pair(objectId, jitterDims));
     }
-    jitter_dims_.insert(std::make_pair(objectID, jitterDims));
+  }
+#endif
+
+  if (jitter_dims_.empty()) {
+    for (auto const& objectID : allObjects) {
+      auto jitterDims = getObjectJitterDims(objectID, object_jitter_, rank_dims_);
+      jitter_dims_.insert(std::make_pair(objectID, jitterDims));
+    }
+
+#ifndef VT_TV_HAS_TESTS
+  // Save object jitter to file
+  if (std::getenv("VT_TV_OBJECT_JITTER_DIMS_FILE") != "") {
+    // to specify values from file
+    std::ofstream outfile(std::getenv("VT_TV_OBJECT_JITTER_DIMS_FILE"));
+    int objectId, x, y, z;
+    for (auto const& objectID : allObjects) {
+      auto jitterDims = jitter_dims_.at(objectID);
+      outfile << objectId << x << y << z;
+    }
+  }
+#endif
   }
 
   object_qoi_range_ = this->computeObjectQoiRange_();
@@ -162,19 +189,29 @@ Render::Render(
   std::srand(std::time(nullptr));
   auto const& allObjects = info_.getAllObjectIDs();
   for (auto const& objectID : allObjects) {
-    std::array<double, 3> jitterDims;
-    for (uint64_t d = 0; d < 3; d++) {
-      if (auto f = this->rank_dims_.find(d); f != this->rank_dims_.end()) {
-        jitterDims[d] = ((double)std::rand()/RAND_MAX - 0.5) * object_jitter_;
-      } else jitterDims[d] = 0;
-    }
+    auto jitterDims = getObjectJitterDims(objectID, object_jitter_, rank_dims_);
     jitter_dims_.insert(std::make_pair(objectID, jitterDims));
   }
+#ifdef VT_TV_TESTS
+#endif
 
   object_qoi_range_ = this->computeObjectQoiRange_();
   rank_qoi_range_ = this->computeRankQoiRange_();
   object_volume_max_ = this->computeMaxObjectVolume_();
   object_load_max_ = this->info_.getMaxLoad();
+};
+
+/**
+ * \brief Function to initialize object dimensions using some randomness
+ */
+auto getObjectJitterDims(const ElementIDType &objectID, double object_jitter, std::set<uint64_t> rank_dims_) {
+  std::array<double, 3> jitterDims;
+  for (uint64_t d = 0; d < 3; d++) {
+    if (auto f = rank_dims_.find(d); f != rank_dims_.end()) {
+      jitterDims[d] = ((double)std::rand()/RAND_MAX - 0.5) *  object_jitter;
+    } else jitterDims[d] = 0;
+  }
+  return jitterDims;
 };
 
 double Render::computeMaxObjectVolume_() {
