@@ -84,4 +84,4 @@ jobs:
             PYTHON_VERSION=${{ env.PYTHON_VERSION }}
           file: ci/docker/make-base.dockerfile
           push: true
-          tags: pierrpebay/vt-tv:${{ env.DOCKER_TAG }}
+          tags: lifflander1/vt:${{ env.DOCKER_TAG }}
