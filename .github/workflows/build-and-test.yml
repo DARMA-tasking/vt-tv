@@ -55,7 +55,7 @@ jobs:
           context: .
           file: ./ci/docker/build-and-test.dockerfile
           build-args: |
-            BASE_IMAGE=pierrpebay/vt-tv:${{ matrix.image }}
+            BASE_IMAGE=lifflander1/vt:${{ matrix.image }}
             VT_TV_TESTS_ENABLED=${{ env.VT_TV_TESTS_ENABLED }}
             VT_TV_COVERAGE_ENABLED=${{ env.VT_TV_COVERAGE_ENABLED }}
           outputs: type=local,dest=${{ env.OUTPUT_DIR }}
