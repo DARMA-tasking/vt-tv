@@ -232,24 +232,23 @@ TEST_P(RenderTest, test_render_from_config_with_png) {
   uint64_t font_size = 50;
 
   std::string output_dir;
+  std::string output_file_stem = config["output"]["file_stem"].as<std::string>();
 
   // Render
   Render render = createRender(config, info, output_dir);
   std::filesystem::create_directories(output_dir);
 
-  auto object_jitter_dims_file = fmt::format("{}{}{}", output_dir, config_file.substr(0, config_file.size()-5), "jitter_dims.csv");
-  if (std::filesystem::exists(object_jitter_dims_file)) {
-    render.setJitterDims(loadJitterDims(object_jitter_dims_file));
+  auto object_jitter_dims_file_in = fmt::format("{}/tests/expected/{}/{}_{}", SRC_DIR, output_file_stem, output_file_stem, "jitter_dims.csv");
+  auto object_jitter_dims_file_out = fmt::format("{}{}_{}", output_dir, output_file_stem, "jitter_dims.csv");
+  if (std::filesystem::exists(object_jitter_dims_file_in)) {
+    render.setJitterDims(loadJitterDims(object_jitter_dims_file_in));
   } else {
-    saveJitterDims(render.getJitterDims(), object_jitter_dims_file);
+    saveJitterDims(render.getJitterDims(), object_jitter_dims_file_out);
   }
 
   render.generate(font_size, win_size);
 
-  
-
   // Check: that number of generated mesh files (*.vtp) correspond to the number of phases
-  std::string output_file_stem = config["output"]["file_stem"].as<std::string>();
   for (uint64_t i = 0; i<info.getNumPhases(); i++) {
     auto rank_mesh_file = fmt::format("{}{}_rank_mesh_{}.vtp", output_dir, output_file_stem, i);
     auto object_mesh_file = fmt::format("{}{}_object_mesh_{}.vtp", output_dir, output_file_stem, i);
