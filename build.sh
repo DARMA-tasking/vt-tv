@@ -121,7 +121,7 @@ while getopts btch-: OPT; do  # allow -b -t -c -h, and --long_attr=value"
     t | tests)            VT_TV_TESTS_ENABLED=$(on_off $OPTARG) ;;
     a | tests-report)     VT_TV_TEST_REPORT=$(realpath -q "$OPTARG") ;;
     r | tests-run )       VT_TV_RUN_TESTS=$(on_off $OPTARG) ;;
-    f | tests-run-filter) VT_TV_RUN_TESTS_FILTER=$VT_TV_RUN_TESTS_FILTER ;;
+    f | tests-run-filter) VT_TV_RUN_TESTS_FILTER="$OPTARG" ;;
     k | vtk-dir )         VTK_DIR=$(realpath "$OPTARG") ;;
     h | help )            help ;;
 
@@ -142,6 +142,7 @@ echo VT_TV_PYTHON_BINDINGS_ENABLED=$VT_TV_PYTHON_BINDINGS_ENABLED
 echo VT_TV_RUN_TESTS=$VT_TV_RUN_TESTS
 echo VT_TV_TESTS_ENABLED=$VT_TV_TESTS_ENABLED
 echo VT_TV_TEST_REPORT=$VT_TV_TEST_REPORT
+echo VT_TV_RUN_TESTS_FILTER=$VT_TV_RUN_TESTS_FILTER
 echo VT_TV_COVERAGE_ENABLED=$VT_TV_COVERAGE_ENABLED
 echo VT_TV_COVERAGE_REPORT=$VT_TV_COVERAGE_REPORT
 echo CC=$CC
