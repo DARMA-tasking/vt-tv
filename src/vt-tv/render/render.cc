@@ -105,9 +105,6 @@ Render::Render(Info in_info)
   }
 
   // Initialize jitter
-  std::srand(std::time(nullptr));
-  auto const& allObjects = info_.getAllObjectIDs();
-
   initJitterDims();
 
   object_qoi_range_ = this->computeObjectQoiRange_();
