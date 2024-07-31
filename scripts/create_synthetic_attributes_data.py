@@ -39,6 +39,7 @@ for rank_id in range(num_ranks):
     output_file = os.path.join(output_dir, f"data.{rank_id}.json")
     with open(output_file, "w") as out_json:
         json.dump(json_data, out_json)
+        out_json.write("\n")
 
     # Write out the compressed json
     compressed_output_file = os.path.join(output_dir, f"data.{rank_id}.json.br")
