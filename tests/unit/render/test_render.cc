@@ -242,9 +242,8 @@ TEST_P(RenderTest, test_render_from_config_with_png) {
   auto object_jitter_dims_file_out = fmt::format("{}{}_{}", output_dir, output_file_stem, "jitter_dims.csv");
   if (std::filesystem::exists(object_jitter_dims_file_in)) {
     render.setJitterDims(loadJitterDims(object_jitter_dims_file_in));
-  } else {
-    saveJitterDims(render.getJitterDims(), object_jitter_dims_file_out);
   }
+  saveJitterDims(render.getJitterDims(), object_jitter_dims_file_out);
 
   render.generate(font_size, win_size);
 
