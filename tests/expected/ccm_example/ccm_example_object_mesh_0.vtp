@@ -10,7 +10,7 @@
         <DataArray type="Float64" Name="bytes" format="appended" RangeMin="10000"                RangeMax="35000"                offset="84"                  />
       </CellData>
       <Points>
-        <DataArray type="Float32" Name="Points" NumberOfComponents="3" format="appended" RangeMin="0.11671635509"        RangeMax="0.91873401403"        offset="140"                 />
+        <DataArray type="Float32" Name="Points" NumberOfComponents="3" format="appended" RangeMin="0.2087507695"         RangeMax="0.91566228867"        offset="140"                 />
       </Points>
       <Verts>
         <DataArray type="Int64" Name="connectivity" format="appended" RangeMin=""                     RangeMax=""                     offset="200"                 />
@@ -31,6 +31,6 @@
     </Piece>
   </PolyData>
   <AppendedData encoding="base64">
-   _AQAAAACAAAAYAAAAEgAAAA==eJxjYAADBwjFA6VFHAAHeADhAQAAAACAAAABAAAACQAAAA==eJx7AAAA4QDhAQAAAACAAAAYAAAAGAAAAA==eJxjYACCrBsOIIqh4zCEFn/oAAAtYwRGAQAAAACAAAAkAAAAGgAAAA==eJw7eN5kHwMU/OF4bwtjqxtl28PYAJM9BbY=AAAAAACAAAAAAAAAAAAAAACAAAAAAAAAAQAAAACAAAAwAAAAFAAAAA==eJxjYIAARgZUwIQmDuMDAACoAAc=AQAAAACAAAAYAAAAEAAAAA==eJxjYoAAFijNBqUBALgADQ==AAAAAACAAAAAAAAAAAAAAACAAAAAAAAAAAAAAACAAAAAAAAAAAAAAACAAAAAAAAA
+   _AQAAAACAAAAYAAAAEgAAAA==eJxjYAADBwjFA6VFHAAHeADhAQAAAACAAAABAAAACQAAAA==eJx7AAAA4QDhAQAAAACAAAAYAAAAGAAAAA==eJxjYACCrBsOIIqh4zCEFn/oAAAtYwRGAQAAAACAAAAkAAAAGgAAAA==eJxjmxm2jwEKDh8KtYOxb2Rk2cPYAH7eBbU=AAAAAACAAAAAAAAAAAAAAACAAAAAAAAAAQAAAACAAAAwAAAAFAAAAA==eJxjYIAARgZUwIQmDuMDAACoAAc=AQAAAACAAAAYAAAAEAAAAA==eJxjYoAAFijNBqUBALgADQ==AAAAAACAAAAAAAAAAAAAAACAAAAAAAAAAAAAAACAAAAAAAAAAAAAAACAAAAAAAAA
   </AppendedData>
 </VTKFile>
