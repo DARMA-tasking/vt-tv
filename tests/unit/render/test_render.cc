@@ -111,26 +111,26 @@ protected:
     }
 
     std::string point_array_str = "";
-    // for(auto k=0; k < poly->GetPointData()->GetNumberOfArrays(); ++k) {
-    //   auto array_name = poly->GetPointData()->GetArrayName(k);
-    //   auto array = poly->GetPointData()->GetArray(array_name);
+    for(auto k=0; k < poly->GetPointData()->GetNumberOfArrays(); ++k) {
+      auto array_name = poly->GetPointData()->GetArrayName(k);
+      auto array = poly->GetPointData()->GetArray(array_name);
 
-    //   std::string components_str = "";
-    //   for (auto tupleIdx = 0; tupleIdx < array->GetNumberOfTuples(); ++tupleIdx) {
-    //     for (auto compIdx = 0; compIdx < array->GetNumberOfComponents(); ++compIdx) {
-    //       components_str = fmt::format("{}    [{}] = [TupleId={}, ComponentId={}, {}]\n", components_str, k, tupleIdx, compIdx);
-    //     }
-    //   }
+      std::string components_str = "";
+      for (auto tupleIdx = 0; tupleIdx < array->GetNumberOfTuples(); ++tupleIdx) {
+        for (auto compIdx = 0; compIdx < array->GetNumberOfComponents(); ++compIdx) {
+          components_str = fmt::format("{}    [{}] = [TupleId={}, ComponentId={}, {}]\n", components_str, k, tupleIdx, compIdx);
+        }
+      }
 
-    //   point_array_str = fmt::format("{}    [{}] = [Name=\"{}\", Type={}, Size={}, Components={}]\n",
-    //     point_array_str,
-    //     k,
-    //     array_name,
-    //     array->GetArrayType(),
-    //     array->GetSize(),
-    //     components_str
-    //   );
-    // }
+      point_array_str = fmt::format("{}    [{}] = [Name=\"{}\", Type={}, Size={}, Components={}]\n",
+        point_array_str,
+        k,
+        array_name,
+        array->GetArrayType(),
+        array->GetSize(),
+        components_str
+      );
+    }
 
     fmt::print(
       R"STR(
@@ -144,7 +144,6 @@ protected:
   {}
   ]
 )STR",
-      
       poly->GetPointData()->GetNumberOfArrays(),
       poly->GetNumberOfPoints(),
       Util::formatNullable(poly->GetLines()->GetData()->GetName()),
@@ -155,9 +154,9 @@ protected:
 
   void assertPolyEquals(vtkPolyData *actual, vtkPolyData *expected) {
     // fmt::print("Actual vtkPolyData:\n");
-    // printVtkPolyData(actual);
+    printVtkPolyData(actual);
     // fmt::print("Expected vtkPolyData:\n");
-    // printVtkPolyData(expected);
+    printVtkPolyData(expected);
 
     // Assertions required to test vt-tv meshaes
     // Number of point data should be ranks
@@ -202,7 +201,6 @@ protected:
         stod(rec.at(2)),
         stod(rec.at(3))
       };
-      fmt::print("Add jitter dims for object {}: {}, {}, {}...\n", objectID, jitterDims[0], jitterDims[1], jitterDims[2]);
       jitter_dims.insert(std::make_pair(objectID, jitterDims));
     }
     infile.close();
@@ -270,7 +268,7 @@ TEST_P(RenderTest, test_render_from_config_with_png) {
     ) << fmt::format("Error: PNG image not generated at {}", png_file);
 
     // 2. test PNG with tolerance
-    fmt::print("----- Testing png file -----\n");
+    fmt::print("Testing png file\n");
     auto expected_png_file = fmt::format("{}/tests/expected/{}/{}{}.png", SRC_DIR, output_file_stem, output_file_stem, i);
     std::vector<std::string> cmd_vars = {
       fmt::format("ACTUAL={}", png_file),
@@ -284,17 +282,19 @@ TEST_P(RenderTest, test_render_from_config_with_png) {
     const auto [status, output] = Util::exec(cmd.c_str());
     fmt::print(output);
     ASSERT_EQ(status, EXIT_SUCCESS) << output;
-    
+
     // TODO: testing mesh files cannot be a simple diff as below because each run generates some different data.
     //       The future test should test XML Nodes
     // 3. test vtp's file content
     // 3.1 rank mesh file
-    fmt::print("----- Testing ranks mesh .vtp file -----\n");
+    fmt::print("Testing rank mesh .vtp file\n");
 
-    // auto rank_mesh_content = Util::getFileContent(rank_mesh_file);
-    // auto expected_rank_mesh_content = Util::getFileContent(expected_rank_mesh_file);
-    // ASSERT_EQ(expected_rank_mesh_content, rank_mesh_content) << fmt::format("rank mesh file content differs from expected at phase {}", i);
+    // 3.1.1 Compare raw vtp files
+    auto rank_mesh_content = Util::getFileContent(rank_mesh_file);
+    auto expected_rank_mesh_content = Util::getFileContent(expected_rank_mesh_file);
+    ASSERT_EQ(expected_rank_mesh_content, rank_mesh_content) << fmt::format("rank mesh file content differs from expected at phase {}", i);
 
+    // 3.1.2 Compare polydata using vtkXMLPolyDataReader
     vtkNew<vtkXMLPolyDataReader> expected_rank_mesh_reader;
     expected_rank_mesh_reader->SetFileName(expected_rank_mesh_file.c_str());
     expected_rank_mesh_reader->Update();
@@ -308,12 +308,14 @@ TEST_P(RenderTest, test_render_from_config_with_png) {
     this->assertPolyEquals(rank_mesh, expected_rank_mesh);
 
     // 3.2 object mesh file
-    fmt::print("----- Testing object mesh .vtp file -----\n");
+    fmt::print("Testing object mesh .vtp file\n");
 
-    // auto object_mesh_content = Util::getFileContent(object_mesh_file);
-    // auto expected_object_mesh_content = Util::getFileContent(expected_object_mesh_file);
-    // ASSERT_EQ(expected_object_mesh_content, object_mesh_content) << fmt::format("object mesh file content differs from expected at phase {}", i);
+    // 3.2.1 Compare raw vtp files
+    auto object_mesh_content = Util::getFileContent(object_mesh_file);
+    auto expected_object_mesh_content = Util::getFileContent(expected_object_mesh_file);
+    ASSERT_EQ(expected_object_mesh_content, object_mesh_content) << fmt::format("object mesh file content differs from expected at phase {}", i);
 
+    // 3.2.2 Compare polydata using vtkXMLPolyDataReader
     vtkNew<vtkXMLPolyDataReader> expected_object_mesh_reader;
     expected_object_mesh_reader->SetFileName(expected_object_mesh_file.c_str());
     expected_object_mesh_reader->Update();
