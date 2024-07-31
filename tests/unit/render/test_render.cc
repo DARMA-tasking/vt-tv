@@ -258,7 +258,7 @@ TEST_P(RenderTest, test_render_from_config_with_png) {
     auto expected_object_mesh_file = fmt::format("{}/tests/expected/{}/{}_object_mesh_{}.vtp",
                                                 SRC_DIR, output_file_stem, output_file_stem, i);
 
-    fmt::print("----- Test phase {} -----\n", i);
+    fmt::print("----- Testing phase {} -----\n", i);
     // 1. test files exist: rank mesh, object mesh, png
     ASSERT_TRUE(
       std::filesystem::exists(rank_mesh_file)
@@ -271,7 +271,7 @@ TEST_P(RenderTest, test_render_from_config_with_png) {
     ) << fmt::format("Error: PNG image not generated at {}", png_file);
 
     // 2. test PNG with tolerance
-    fmt::print("-- Test PNG --\n");
+    fmt::print("----- Testing png file -----\n");
     auto expected_png_file = fmt::format("{}/tests/expected/{}/{}{}.png", SRC_DIR, output_file_stem, output_file_stem, i);
     std::vector<std::string> cmd_vars = {
       fmt::format("ACTUAL={}", png_file),
@@ -283,13 +283,14 @@ TEST_P(RenderTest, test_render_from_config_with_png) {
       SRC_DIR
     );
     const auto [status, output] = Util::exec(cmd.c_str());
-    ASSERT_EQ(status, EXIT_SUCCESS) << fmt::format("Error: {}", output);
-
+    fmt::print(output);
+    ASSERT_EQ(status, EXIT_SUCCESS) << output;
+    
     // TODO: testing mesh files cannot be a simple diff as below because each run generates some different data.
     //       The future test should test XML Nodes
     // 3. test vtp's file content
     // 3.1 rank mesh file
-    fmt::print("-- Test rank mesh --\n");
+    fmt::print("----- Testing ranks mesh .vtp file -----\n");
 
     // auto rank_mesh_content = Util::getFileContent(rank_mesh_file);
     // auto expected_rank_mesh_content = Util::getFileContent(expected_rank_mesh_file);
@@ -308,7 +309,7 @@ TEST_P(RenderTest, test_render_from_config_with_png) {
     this->assertPolyEquals(rank_mesh, expected_rank_mesh);
 
     // 3.2 object mesh file
-    fmt::print("-- Test object mesh --\n");
+    fmt::print("----- Testing object mesh .vtp file -----\n");
 
     // auto object_mesh_content = Util::getFileContent(object_mesh_file);
     // auto expected_object_mesh_content = Util::getFileContent(expected_object_mesh_file);
@@ -326,7 +327,7 @@ TEST_P(RenderTest, test_render_from_config_with_png) {
 
     this->assertPolyEquals(object_mesh, expected_object_mesh);
 
-    fmt::print("----- End Test phase {} -----\n", i);
+    fmt::print("----- Finished testing phase {} -----\n", i);
   }
 }
 
@@ -352,7 +353,7 @@ TEST_F(RenderTest, test_render_construct_from_info) {
   using namespace tv;
   // Read JSON file and input data
 
-  std::filesystem::path p = std::filesystem::path(SRC_DIR) / "tests/data/lb_test_data/";
+  std::filesystem::path p = std::filesystem::path(SRC_DIR) / "data/lb_test_data/";
   std::string path = std::filesystem::absolute(p).string();
 
   NodeType n_ranks = 4;
