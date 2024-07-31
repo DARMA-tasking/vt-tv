@@ -76,15 +76,15 @@ jobs:
           reporter: java-junit
           output-to: step-summary
 
-      # - name: CCM Example output to summary (does not work: print plain text)
-      #   if: ${{ (success() || failure()) &&  env.VT_TV_TESTS_ENABLED == 'ON' }}
-      #   run: |
-      #     echo '## CCM Example output' >> $GITHUB_STEP_SUMMARY
-      #     if [ -f "${{ env.OUTPUT_DIR }}/tmp/artifacts/ccm_example0.png" ]; then
-      #       echo '!'"[CCM Example](${{ env.OUTPUT_DIR }}/tmp/artifacts/ccm_example0.png)" >> $GITHUB_STEP_SUMMARY
-      #     else
-      #       echo 'Missing !' >> $GITHUB_STEP_SUMMARY
-      #     fi
+      - name: CCM Example output to summary
+        if: ${{ (success() || failure()) && env.VT_TV_TESTS_ENABLED == 'ON' }}
+        run: |
+          echo '## CCM Example output' >> $GITHUB_STEP_SUMMARY
+          if [ -f "${{ env.OUTPUT_DIR }}/tmp/artifacts/ccm_example0.png" ]; then
+            echo '!'"[CCM Example](${{ env.OUTPUT_DIR }}/tmp/artifacts/ccm_example0.png)" >> $GITHUB_STEP_SUMMARY
+          else
+            echo 'Missing !' >> $GITHUB_STEP_SUMMARY
+          fi
 
       - name: Coverage summary
         if: ${{ (success() || failure()) &&  env.VT_TV_COVERAGE_ENABLED == 'ON' }}
