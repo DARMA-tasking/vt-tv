@@ -1,27 +1,31 @@
+"""Add synthetic attributes to lb_test_data and output to data/synthetic_attributes"""
+
 import json
-import brotli
 import os
 
+import brotli
+
 def get_attributes_dict(id):
-    attributes = {
+    """Creates some attributes list"""
+
+    return {
         "doubleAttribute": float(id) * 3.14,
         "elementIDAttribute": id + 30000000000,
         "intAttribute": id,
         "stringAttribute": f"id is {id}"
     }
-    return attributes
 
 project_dir = os.path.dirname(os.path.dirname(__file__))
-test_data_dir = os.path.join(project_dir, "tests", "data", "lb_test_data")
+test_data_dir = os.path.join(project_dir, "data", "lb_test_data")
 
-output_dir = os.path.join(project_dir, "tests", "data", "synthetic_attributes")
+output_dir = os.path.join(project_dir, "data", "synthetic_attributes")
 os.makedirs(output_dir, exist_ok=True)
 
 # Loop through all ranks
-num_ranks = 4
-for rank_id in range(num_ranks):
+NUM_RANKS = 4
+for rank_id in range(NUM_RANKS):
     json_file = os.path.join(test_data_dir, f"data.{rank_id}.json")
-    with open(json_file) as f:
+    with open(json_file, encoding="utf-8") as f:
         json_data = json.load(f)
 
     # Add rank attributes
@@ -37,7 +41,7 @@ for rank_id in range(num_ranks):
 
     # Write out json
     output_file = os.path.join(output_dir, f"data.{rank_id}.json")
-    with open(output_file, "w") as out_json:
+    with open(output_file, "w", encoding="utf-8") as out_json:
         json.dump(json_data, out_json)
         out_json.write("\n")
 

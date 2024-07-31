@@ -18,8 +18,10 @@ pip install imgcompare --quiet 2>/dev/null
 
 DIFF=$(printf "%.2f" $(python -c 'import imgcompare; print(imgcompare.image_diff_percent("'$ACTUAL'", "'$EXPECTED'"));'))
 if { echo $TOLERANCE ; echo $DIFF ; } | sort -n -c 2>/dev/null; then
-    echo "Image diff = $DIFF%. Tolerance is $TOLERANCE"
+    echo "Image diff = $DIFF%. Tolerance = $TOLERANCE. FAILED"
     exit 2
+else
+    echo "Image diff = $DIFF%. Tolerance = $TOLERANCE. OK"
 fi
 
 exit 0
