@@ -23,7 +23,7 @@ jobs:
       VT_TV_TESTS_ENABLED: 'ON' # Build & Test in all configurations
       VT_TV_COVERAGE_ENABLED: ${{ matrix.image == 'ubuntu_22.04-gcc_12-vtk_9.3.0-py_3.8' && 'ON' || 'OFF' }}  # Coverage only with main test image
       VT_TV_PYTHON_BINDINGS_ENABLED: 'ON'
-      DOCKER_REPOSITORY: pierrpebay/vt-tv # lifflander1/vt 
+      DOCKER_REPOSITORY: lifflander1/vt
     name: vt-tv build and test
     steps:
       - uses: actions/checkout@v4
@@ -55,7 +55,7 @@ jobs:
           context: .
           file: ./ci/docker/build-and-test.dockerfile
           build-args: |
-            BASE_IMAGE=${{ env.DOCKER_REPOSITORY }}:${{ matrix.image }} 
+            BASE_IMAGE=${{ env.DOCKER_REPOSITORY }}:${{ matrix.image }}
             VT_TV_TESTS_ENABLED=${{ env.VT_TV_TESTS_ENABLED }}
             VT_TV_COVERAGE_ENABLED=${{ env.VT_TV_COVERAGE_ENABLED }}
           outputs: type=local,dest=${{ env.OUTPUT_DIR }}

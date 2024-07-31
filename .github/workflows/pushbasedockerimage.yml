@@ -22,6 +22,8 @@ jobs:
   push_to_registry:
     name: Build & Push
     runs-on: ubuntu-latest
+    env:
+      DOCKER_REPOSITORY: lifflander1/vt
     steps:
       - name: Check out the repo
         uses: actions/checkout@v4
@@ -74,4 +76,4 @@ jobs:
             PYTHON_VERSION=${{ env.PYTHON_VERSION }}
           file: ci/docker/make-base.dockerfile
           push: true
-          tags: lifflander1/vt:${{ env.DOCKER_TAG }}
+          tags: "${{ env.DOCKER_REPOSITORY }}:${{ env.DOCKER_TAG }}"
