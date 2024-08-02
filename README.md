@@ -7,7 +7,8 @@
 
 ## Overview
 
-Specifically, the task visualizer takes in JSON files that describe work as a series of phases and subphases that contain 1) tasks for each rank, 2) communications, and 3) other user-defined fields (such as memory usage).
+Specifically, the task visualizer takes in JSON files that describe work as a series of phases and subphases
+that contain 1) tasks for each rank, 2) communications, and 3) other user-defined fields (such as memory usage).
 
 Using this input data, the task visualizer produces Exodus meshes to
 describe the ranks and objects over time, which can be visualized
@@ -40,17 +41,25 @@ _In future directions, we will assume that the `vt-tv` source is located in `${V
 <details>
 <summary><h3><code>vt-tv</code> Standalone</h3></summary>
 
-### 1. Install
+### 1. Build
 
-A sample build script is provided in `dev-build.sh` (you will need to update the paths).
+For the simplest build, run from `${VTTV_SOURCE_DIR}`:
 
-For an interactive build (recommended), run from the `vt-tv` directory:
+```
+mkdir build && cd build
+cmake -D VTK_DIR=/path/to/vtk/build ..
+make
+```
+
+Alternatively, for an interactive build, run from `${VTTV_SOURCE_DIR}`:
 
 ```bash
 ./build.sh
 ```
 
 _In future directions, we will assume  that the `vt-tv` build is in `${VTTV_BUILD_DIR}`._
+
+---
 
 ### 2. Usage
 
@@ -65,9 +74,9 @@ The basic call to `vt-tv` is:
 ${VTTV_BUILD_DIR}/apps/vt_standalone -c path/to/config
 ```
 
-**Important**: the `path/to/config` argument should be relative to `${VTTV_SOURCE_DIR}` (see example below).
+_**IMPORTANT:** The_ `path/to/config` _argument should be relative to_ `${VTTV_SOURCE_DIR}` _(see example below)._
 
-### YAML Input
+#### YAML Input
 
 A sample YAML configuration file can be found in `${VTTV_SOURCE_DIR}/config/conf.yaml`. To use it, run
 
@@ -75,12 +84,13 @@ A sample YAML configuration file can be found in `${VTTV_SOURCE_DIR}/config/conf
 ${VTTV_BUILD_DIR}/apps/vt_standalone -c config/conf.yaml
 ```
 
-### JSON Data Files
+#### JSON Data Files
 
 Sample JSON data files are provided in `${VTTV_SOURCE_DIR}/tests/unit/lb_test_data`.
 
-Information regarding the JSON format can be found [in vt's
-documentation](https://darma-tasking.github.io/docs/html/node-lb-data.html); the JSON schema validator is located [here](https://github.com/DARMA-tasking/vt/blob/develop/scripts/JSON_data_files_validator.py).
+Information regarding the JSON format can be found in vt's [documentation](https://darma-tasking.github.io/docs/html/node-lb-data.html); the JSON schema validator is located in the vt [repo](https://github.com/DARMA-tasking/vt/blob/develop/scripts/JSON_data_files_validator.py).
+
+Additionally, DARMA-tasking's Load Balancing Analysis Framework (LBAF) provides a Python script ([lbsJSONDataFilesMaker.py](https://github.com/DARMA-tasking/LB-analysis-framework/blob/develop/src/lbaf/Utils/lbsJSONDataFilesMaker.py)) that may be used to generate JSON data files.
 
 
 </details>
@@ -115,10 +125,12 @@ export VT_TV_CMAKE_JOBS=8
 Then install the binded `vt-tv` Python module with:
 
 ```bash
-pip install <path/to/vt-tv/source>
+pip install ${VTTV_SOURCE_DIR}
 ```
 
 _Note: Behind the scenes, the usual `cmake` and `make` commands are run. Depending on your system, this can cause the install process to be lengthy as it will be compiling the entire `vt-tv` library._
+
+---
 
 ### 2. Usage
 
