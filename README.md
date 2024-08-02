@@ -270,8 +270,8 @@ Users should interact mainly with the overarching `Info` class, which contains f
 For example, an instance of `Info` holds getters to all object and rank QOI (including user_defined attributes):
 
 ```cpp
-auto rank_qoi = getRankQOIAtPhase(rank_id, phase_id, qoi_string);
-auto obj_qoi = getObjectQoi(obj_id, phase_id, qoi_string);
+auto rank_qoi = info.getRankQOIAtPhase(rank_id, phase_id, qoi_string);
+auto obj_qoi = info.getObjectQoi(obj_id, phase_id, qoi_string);
 ```
 where the `qoi_string` is the name of the desired QOI, like "load" or "id". This string can also be a user-defined attribute, as described above.
 
