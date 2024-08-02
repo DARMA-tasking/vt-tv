@@ -43,8 +43,6 @@
 
 #include <gtest/gtest.h>
 
-#include "test_harness.h"
-
 extern "C" {
 void __ubsan_on_report() {
    FAIL() << "Encountered an undefined behavior sanitizer error";
@@ -60,7 +58,6 @@ int main(int argc, char **argv) {
 
   int ret = 0;
   {
-    vt::tv::tests::unit::TestHarness::store_cmdline_args(argc, argv);
     ret = RUN_ALL_TESTS();
   }
 

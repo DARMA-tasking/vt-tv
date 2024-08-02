@@ -96,6 +96,8 @@
 #include <set>
 #include <array>
 #include <variant>
+#include <cmath>
+#include <regex>
 
 namespace vt { namespace tv {
 
@@ -120,17 +122,17 @@ private:
 
   // Render input data
   Info info_;
-  uint64_t n_ranks_;
-  uint64_t n_phases_;
+  uint64_t n_ranks_ = 0;
+  uint64_t n_phases_ = 0;
   std::array<uint64_t, 3> grid_size_ = {1, 1, 1};
   double object_jitter_ = 0.5;
   std::set<uint64_t> rank_dims_;
   std::string output_dir_;
   std::string output_file_stem_;
   double grid_resolution_ = 1.0;
-  bool save_meshes_;
-  bool save_pngs_;
-  PhaseType selected_phase_;
+  bool save_meshes_ = false;
+  bool save_pngs_ = false;
+  PhaseType selected_phase_ = std::numeric_limits<PhaseType>::max();
 
   // numeric parameters
   std::variant<std::pair<double, double>, std::set<std::variant<double,int>>> object_qoi_range_;
@@ -144,6 +146,11 @@ private:
 
   // Jitter per object
   std::unordered_map<ElementIDType, std::array<double, 3>> jitter_dims_;
+
+  /**
+   * \brief Function to initialize object dimensions using some randomness
+   */
+  void initJitterDims();
 
   /**
    * \brief Compute maximum value of object volumes.
@@ -297,6 +304,22 @@ public:
   );
 
   void generate(uint64_t font_size = 50, uint64_t win_size = 2000);
+
+#ifdef VT_TV_HAS_TESTS
+  /**
+   * \brief Function to get internal object jitter dimensions.
+   */
+  const std::unordered_map<ElementIDType, std::array<double, 3>> getJitterDims(){
+    return jitter_dims_;
+  }
+
+  /**
+   * \brief Function to set manually the internal object jitter dimensions.
+   */
+  void setJitterDims(std::unordered_map<ElementIDType, std::array<double, 3>> jitter_dims){
+    jitter_dims_ = jitter_dims;
+  }
+#endif
 };
 
 }} /* end namespace vt::tv */

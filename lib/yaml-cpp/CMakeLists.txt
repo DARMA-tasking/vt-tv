@@ -79,7 +79,7 @@ set_property(TARGET yaml-cpp
     CXX_STANDARD_REQUIRED ON)
 
 target_include_directories(yaml-cpp
-  PUBLIC
+  SYSTEM PUBLIC
     $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
   PRIVATE
