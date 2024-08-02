@@ -257,4 +257,39 @@ In the YAML configuration file passed to `vt-tv`, they may specify any of these 
 
 </details>
 
+### 2. General Structure
+
+`vt-tv` is designed according to the following sketch:
+
+![UML Diagram](./docs/vt-tv-uml.png)
+
+#### 1. Navigating the Hierarchy
+
+Users should interact mainly with the overarching `Info` class, which contains functions that drill down the hierarchy to get the desired information.
+
+For example, an instance of `Info` holds getters to all object and rank QOI (including user_defined attributes):
+
+```cpp
+auto rank_qoi = getRankQOIAtPhase(rank_id, phase_id, qoi_string);
+auto obj_qoi = getObjectQoi(obj_id, phase_id, qoi_string);
+```
+where the `qoi_string` is the name of the desired QOI, like "load" or "id". This string can also be a user-defined attribute, as described above.
+
+#### 2. ObjectInfo vs. ObjectWork
+
+There are two classes that hold object data: `ObjectInfo` and `ObjectWork`.
+
+`ObjectInfo` holds information about a given object across all ranks and phases. This includes:
+- the object's ID
+- the object's home rank (where it originated)
+- whether the object is migratable or sentinel (stays on the same rank)
+
+`ObjectWork` holds information that may change as an object moves ranks or changes phase, such as:
+- the object's load
+- the object's attributes
+- the object's communications
+
+> [!TIP]
+> As discussed above, users should use the getters present in `Info` rather than directly calling these classes.
+
 [^1]: All natively-supported QOI for ranks and objects are in [`src/vt-tv/api/info.h`](https://github.com/DARMA-tasking/vt-tv/blob/master/src/vt-tv/api/info.h).
