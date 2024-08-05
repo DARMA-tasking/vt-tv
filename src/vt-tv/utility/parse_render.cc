@@ -126,35 +126,44 @@ void ParseRender::parseAndRender(PhaseType phase_id, std::unique_ptr<Info> info)
 
     double object_jitter = config["viz"]["object_jitter"].as<double>();
 
-    std::string output_dir = config["output"]["directory"].as<std::string>();
-    std::filesystem::path output_path(output_dir);
+    std::string output_dir;
+    std::filesystem::path output_path;
+    std::string output_file_stem;
+    uint64_t win_size;
+    uint64_t font_size;
 
-    // If it's a relative path, prepend the SRC_DIR
-    if (output_path.is_relative()) {
-      output_path = std::filesystem::path(SRC_DIR) / output_path;
-    }
-    output_dir = output_path.string();
+    if (save_meshes || save_pngs) {
+      output_dir = config["output"]["directory"].as<std::string>();
+      output_path = output_dir;
 
-    // append / to avoid problems with file stems
-    if (!output_dir.empty() && output_dir.back() != '/') {
-      output_dir += '/';
-    }
+      // If it's a relative path, prepend the SRC_DIR
+      if (output_path.is_relative()) {
+        output_path = std::filesystem::path(SRC_DIR) / output_path;
+      }
+      output_dir = output_path.string();
 
-    std::string output_file_stem = config["output"]["file_stem"].as<std::string>();
+      // append / to avoid problems with file stems
+      if (!output_dir.empty() && output_dir.back() != '/') {
+        output_dir += '/';
+      }
 
+      output_file_stem = config["output"]["file_stem"].as<std::string>();
 
-    fmt::print("Num ranks={}\n", info->getNumRanks());
+      fmt::print("Num ranks={}\n", info->getNumRanks());
 
-    uint64_t win_size = 2000;
-    if (config["output"]["window_size"]) {
-      win_size = config["output"]["window_size"].as<uint64_t>();
-    }
+      win_size = 2000;
+      if (config["output"]["window_size"]) {
+        win_size = config["output"]["window_size"].as<uint64_t>();
+      }
 
-    // Use automatic font size if not defined by user
-    // 0.025 is the factor of the window size determined to be ideal for the font size
-    uint64_t font_size = 0.025 * win_size;
-    if (config["output"]["font_size"]) {
-      font_size = config["output"]["font_size"].as<uint64_t>();
+      // Use automatic font size if not defined by user
+      // 0.025 is the factor of the window size determined to be ideal for the font size
+      font_size = 0.025 * win_size;
+      if (config["output"]["font_size"]) {
+        font_size = config["output"]["font_size"].as<uint64_t>();
+      }
+    } else {
+      std::cout << fmt::print("Warning: save_pngs and save_meshes are both False (no visualization will be generated).")
     }
 
     // Instantiate render
@@ -162,7 +171,10 @@ void ParseRender::parseAndRender(PhaseType phase_id, std::unique_ptr<Info> info)
       qoi_request, continuous_object_qoi, *std::move(info), grid_size, object_jitter,
       output_dir, output_file_stem, 1.0, save_meshes, save_pngs, phase_id
     );
-    r.generate(font_size, win_size);
+
+    if (save_meshes || save_pngs) {
+      r.generate(font_size, win_size);
+    }
 
   } catch (std::exception const& e) {
     std::cout << "Error reading the configuration file: " << e.what() << std::endl;
