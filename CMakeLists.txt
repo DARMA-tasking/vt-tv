@@ -24,9 +24,6 @@ set(
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# add -fPIC to all targets
-set(CMAKE_POSITION_INDEPENDENT_CODE ON)
-
 if(NOT CMAKE_CXX_STANDARD)
   set(CMAKE_CXX_STANDARD 17 CACHE STRING "The C++ standard to use")
 endif()
@@ -34,6 +31,11 @@ message(STATUS "CMAKE_CXX_STANDARD: ${CMAKE_CXX_STANDARD}")
 
 option(VT_TV_PYTHON_BINDINGS_ENABLED "Build vt-tv with Python bindings" OFF)
 option(VT_TV_OPENMP_ENABLED "Build vt-tv with openMP support" ON)
+
+# add -fPIC to all targets (if building with nanobind)
+if(VT_TV_PYTHON_BINDINGS_ENABLED)
+  set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+endif()
 
 option(VT_TV_WERROR_ENABLED "Build vt-tv with warnings as errors" OFF)
 
