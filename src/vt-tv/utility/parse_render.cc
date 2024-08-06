@@ -129,8 +129,10 @@ void ParseRender::parseAndRender(PhaseType phase_id, std::unique_ptr<Info> info)
     std::string output_dir;
     std::filesystem::path output_path;
     std::string output_file_stem;
-    uint64_t win_size;
-    uint64_t font_size;
+    uint64_t win_size = 2000;
+    // Use automatic font size if not defined by user
+    // 0.025 is the factor of the window size determined to be ideal for the font size
+    uint64_t font_size = 0.025 * win_size;
 
     if (save_meshes || save_pngs) {
       output_dir = config["output"]["directory"].as<std::string>();
@@ -151,14 +153,12 @@ void ParseRender::parseAndRender(PhaseType phase_id, std::unique_ptr<Info> info)
 
       fmt::print("Num ranks={}\n", info->getNumRanks());
 
-      win_size = 2000;
       if (config["output"]["window_size"]) {
         win_size = config["output"]["window_size"].as<uint64_t>();
+        // Update font_size with new win_size
+        font_size = 0.025 * win_size;
       }
 
-      // Use automatic font size if not defined by user
-      // 0.025 is the factor of the window size determined to be ideal for the font size
-      font_size = 0.025 * win_size;
       if (config["output"]["font_size"]) {
         font_size = config["output"]["font_size"].as<uint64_t>();
       }
