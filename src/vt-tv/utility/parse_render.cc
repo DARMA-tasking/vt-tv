@@ -163,8 +163,8 @@ void ParseRender::parseAndRender(PhaseType phase_id, std::unique_ptr<Info> info)
         font_size = config["output"]["font_size"].as<uint64_t>();
       }
     } else {
-        fmt::print("Warning: save_pngs and save_meshes are both False "
-                   "(no visualization will be generated).");
+      fmt::print("Warning: save_pngs and save_meshes are both False "
+                 "(no visualization will be generated).\n");
     }
 
     // Instantiate render
