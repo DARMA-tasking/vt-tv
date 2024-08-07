@@ -51,36 +51,6 @@ struct ObjectCommunicator {
   { }
 
   /**
-   * \brief Summarize one-way communicator properties and check for errors.
-   *
-   * \param[in] direction the direction to summarize edges
-   */
-  std::vector<double> summarizeUnidirectional(std::string direction) const {
-    // Initialize list of volumes
-    std::vector<double> volumes;
-
-    // Iterate over one-way communications
-    std::multimap<ElementIDType, double> communications;
-    if(direction == "to") {
-      communications = this->sent_;
-    } else {
-      communications = this->received_;
-    }
-
-    // for (const auto& [key, value] : communications) {
-    //   sanity check
-    //   if(key->get_id() == this->object_id_) {
-    //     throw nb::index_error(
-    //       "object " + this->object_id_ +
-    //       " cannot send communication to itself.");
-    //   }
-    //   volumes.push_back(value);
-    // }
-
-    return volumes;
-  }
-
-  /**
    * \brief Get the id of object for this communicator
    *
    * \return id
@@ -125,19 +95,6 @@ struct ObjectCommunicator {
     }
 
     return results;
-  }
-
-  /**
-   * \brief Summarize communicator properties and check for errors.
-   */
-  std::pair<std::vector<double>, std::vector<double>> summarize() const {
-    // Summarize sent communications
-    std::vector<double> w_sent = this->summarizeUnidirectional("to");
-
-    // Summarize received communications
-    std::vector<double> w_recv = this->summarizeUnidirectional("from");
-
-    return std::make_pair(w_sent, w_recv);
   }
 
   /**
