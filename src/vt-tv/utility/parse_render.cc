@@ -109,52 +109,62 @@ void ParseRender::parseAndRender(PhaseType phase_id, std::unique_ptr<Info> info)
     }
 
     std::array<std::string, 3> qoi_request = {
-      config["viz"]["rank_qoi"].as<std::string>(),
+      config["viz"]["rank_qoi"].as<std::string>("load"),
       "",
-      config["viz"]["object_qoi"].as<std::string>()
+      config["viz"]["object_qoi"].as<std::string>("load")
     };
 
-    bool save_meshes = config["viz"]["save_meshes"].as<bool>();
-    bool save_pngs = config["viz"]["save_pngs"].as<bool>();
-    bool continuous_object_qoi = config["viz"]["force_continuous_object_qoi"].as<bool>();
+    bool save_meshes = config["viz"]["save_meshes"].as<bool>(true);
+    bool save_pngs = config["viz"]["save_pngs"].as<bool>(true);
+    bool continuous_object_qoi = config["viz"]["force_continuous_object_qoi"].as<bool>(true);
 
     std::array<uint64_t, 3> grid_size = {
       config["viz"]["x_ranks"].as<uint64_t>(),
       config["viz"]["y_ranks"].as<uint64_t>(),
-      config["viz"]["z_ranks"].as<uint64_t>()
+      config["viz"]["z_ranks"].as<uint64_t>(1)
     };
 
-    double object_jitter = config["viz"]["object_jitter"].as<double>();
+    double object_jitter = config["viz"]["object_jitter"].as<double>(0.5);
 
-    std::string output_dir = config["output"]["directory"].as<std::string>();
-    std::filesystem::path output_path(output_dir);
-
-    // If it's a relative path, prepend the SRC_DIR
-    if (output_path.is_relative()) {
-      output_path = std::filesystem::path(SRC_DIR) / output_path;
-    }
-    output_dir = output_path.string();
-
-    // append / to avoid problems with file stems
-    if (!output_dir.empty() && output_dir.back() != '/') {
-      output_dir += '/';
-    }
-
-    std::string output_file_stem = config["output"]["file_stem"].as<std::string>();
-
-
-    fmt::print("Num ranks={}\n", info->getNumRanks());
-
+    std::string output_dir;
+    std::filesystem::path output_path;
+    std::string output_file_stem;
     uint64_t win_size = 2000;
-    if (config["output"]["window_size"]) {
-      win_size = config["output"]["window_size"].as<uint64_t>();
-    }
-
     // Use automatic font size if not defined by user
     // 0.025 is the factor of the window size determined to be ideal for the font size
     uint64_t font_size = 0.025 * win_size;
-    if (config["output"]["font_size"]) {
-      font_size = config["output"]["font_size"].as<uint64_t>();
+
+    if (save_meshes || save_pngs) {
+      output_dir = config["output"]["directory"].as<std::string>("output");
+      output_path = output_dir;
+
+      // If it's a relative path, prepend the SRC_DIR
+      if (output_path.is_relative()) {
+        output_path = std::filesystem::path(SRC_DIR) / output_path;
+      }
+      output_dir = output_path.string();
+
+      // append / to avoid problems with file stems
+      if (!output_dir.empty() && output_dir.back() != '/') {
+        output_dir += '/';
+      }
+
+      output_file_stem = config["output"]["file_stem"].as<std::string>("vttv");
+
+      fmt::print("Num ranks={}\n", info->getNumRanks());
+
+      if (config["output"]["window_size"]) {
+        win_size = config["output"]["window_size"].as<uint64_t>(2000);
+        // Update font_size with new win_size
+        font_size = 0.025 * win_size;
+      }
+
+      if (config["output"]["font_size"]) {
+        font_size = config["output"]["font_size"].as<uint64_t>();
+      }
+    } else {
+      fmt::print("Warning: save_pngs and save_meshes are both False "
+                 "(no visualization will be generated).\n");
     }
 
     // Instantiate render
@@ -162,7 +172,10 @@ void ParseRender::parseAndRender(PhaseType phase_id, std::unique_ptr<Info> info)
       qoi_request, continuous_object_qoi, *std::move(info), grid_size, object_jitter,
       output_dir, output_file_stem, 1.0, save_meshes, save_pngs, phase_id
     );
-    r.generate(font_size, win_size);
+
+    if (save_meshes || save_pngs) {
+      r.generate(font_size, win_size);
+    }
 
   } catch (std::exception const& e) {
     std::cout << "Error reading the configuration file: " << e.what() << std::endl;
