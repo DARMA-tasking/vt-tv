@@ -115,28 +115,6 @@ TEST_F(ObjectCommunicatorTest, test_initial_state) {
   EXPECT_EQ(comm_1.getTotalSentVolume(), 50.0);
 }
 
-/**
- * Test ObjectCommunicator initial state
- */
-TEST_F(ObjectCommunicatorTest, test_summarize_communications_count_empty_communicator) {
-  // std::make_pair(w_sent, w_recv);
-  auto summary = comm_0.summarize();
-  EXPECT_EQ(summary.first.size(), 0);
-  EXPECT_EQ(summary.second.size(), 0);
-}
-
-/**
- * Test ObjectCommunicator initial state
- */
-TEST_F(ObjectCommunicatorTest, test_summarize_communications_count) {
-  GTEST_SKIP() << "ObjectCommunicator::summarize seems in WIP and is never called";
-
-  // std::make_pair(w_sent, w_recv);
-  auto summary = comm_0.summarize();
-  EXPECT_EQ(summary.first.size(), 3);
-  EXPECT_EQ(summary.second.size(), 2);
-}
-
 TEST_F(ObjectCommunicatorTest, test_serialization) {
   BasicSerializer<std::variant<ElementIDType,std::multimap<ElementIDType, double>>> s = BasicSerializer<std::variant<ElementIDType,std::multimap<ElementIDType, double>>>();
 
