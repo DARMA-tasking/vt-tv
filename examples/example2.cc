@@ -44,7 +44,7 @@
 #include <vt-tv/api/info.h>
 #include <vt-tv/utility/json_reader.h>
 
-#include <fmt-vt/format.h>
+#include INCLUDE_FMT_FORMAT
 
 #include "../tests/unit/cmake_config.h"
 

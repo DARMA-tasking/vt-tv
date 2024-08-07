@@ -41,7 +41,7 @@
 //@HEADER
 */
 
-#include <fmt-vt/format.h>
+#include INCLUDE_FMT_FORMAT
 #include <yaml-cpp/yaml.h>
 
 void printRecur(typename YAML::Node node, int tabs) {

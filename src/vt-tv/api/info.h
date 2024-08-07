@@ -48,7 +48,7 @@
 #include "vt-tv/api/rank.h"
 #include "vt-tv/api/object_info.h"
 
-#include <fmt-vt/format.h>
+#include INCLUDE_FMT_FORMAT
 
 #include <unordered_map>
 #include <cassert>
