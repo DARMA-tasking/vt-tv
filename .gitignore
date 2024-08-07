@@ -1,4 +1,5 @@
 .*~undo-tree~
+.vscode/
 
 # Items generated at build time
 /build
