@@ -33,6 +33,17 @@ option(VT_TV_PYTHON_BINDINGS_ENABLED "Build vt-tv with Python bindings" OFF)
 option(VT_TV_OPENMP_ENABLED "Build vt-tv with openMP support" ON)
 option(VT_TV_TESTS_ENABLED "Build vt-tv with unit tests" ON)
 option(VT_TV_COVERAGE_ENABLED "Build vt-tv with coverage" OFF)
+option(VT_TV_EXTERNAL_FMT "Build vt-tv with an external fmt library" ON)
+
+if(VT_TV_EXTERNAL_FMT)
+  set(FMT_INCLUDE_NAME fmt)
+else()
+  set(FMT_INCLUDE_NAME fmt-vt-tv)
+endif()
+
+add_definitions(-DINCLUDE_FMT_CORE=<${FMT_INCLUDE_NAME}/core.h>)
+add_definitions(-DINCLUDE_FMT_FORMAT=<${FMT_INCLUDE_NAME}/format.h>)
+add_definitions(-DINCLUDE_FMT_OSTREAM=<${FMT_INCLUDE_NAME}/ostream.h>)
 
 # add -fPIC to all targets (if building with nanobind)
 if(VT_TV_PYTHON_BINDINGS_ENABLED)

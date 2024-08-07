@@ -84,9 +84,15 @@ target_link_libraries(
   ${VT_TV_LIBRARY} PUBLIC ${JSON_LIBRARY}
 )
 
-target_link_libraries(
-  ${VT_TV_LIBRARY} PUBLIC ${FMT_LIBRARY}
-)
+if(${VT_TV_EXTERNAL_FMT})
+  target_link_libraries(
+    ${VT_TV_LIBRARY} PUBLIC fmt::fmt
+  )
+else()
+  target_link_libraries(
+    ${VT_TV_LIBRARY} PUBLIC ${FMT_LIBRARY}
+  )
+endif()
 
 target_link_libraries(
   ${VT_TV_LIBRARY} PUBLIC ${BROTLI_LIBRARY}
@@ -125,17 +131,18 @@ install(
   COMPONENT                 runtime
 )
 
-install(TARGETS ${FMT_LIBRARY} EXPORT ${VT_TV_LIBRARY})
-install(TARGETS ${JSON_LIBRARY} EXPORT ${VT_TV_LIBRARY})
-install(TARGETS ${BROTLI_LIBRARY} EXPORT ${VT_TV_LIBRARY})
-install(TARGETS ${YAML_LIBRARY} EXPORT ${VT_TV_LIBRARY})
+set(LIBRARIES_TO_INSTALL ${JSON_LIBRARY} ${BROTLI_LIBRARY} ${YAML_LIBRARY})
+
+if(NOT VT_TV_EXTERNAL_FMT)
+  list(APPEND LIBRARIES_TO_INSTALL ${FMT_LIBRARY})
+endif()
+
+foreach(LIBRARY ${LIBRARIES_TO_INSTALL})
+  install(TARGETS ${LIBRARY} EXPORT ${VT_TV_LIBRARY})
+endforeach()
 
 export(
-  TARGETS                   ${VT_TV_LIBRARY}
-                            ${FMT_LIBRARY}
-                            ${JSON_LIBRARY}
-                            ${BROTLI_LIBRARY}
-                            ${YAML_LIBRARY}
-  FILE                      "vtTVTargets.cmake"
-  NAMESPACE                 vt::lib::
+  TARGETS ${VT_TV_LIBRARY} ${LIBRARIES_TO_INSTALL}
+  FILE "vtTVTargets.cmake"
+  NAMESPACE vt::lib::
 )

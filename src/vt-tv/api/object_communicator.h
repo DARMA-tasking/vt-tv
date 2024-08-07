@@ -52,7 +52,7 @@
 #include <utility>
 
 #include "vt-tv/api/types.h"
-#include <fmt-vt/format.h>
+#include INCLUDE_FMT_FORMAT
 
 namespace vt::tv {
 

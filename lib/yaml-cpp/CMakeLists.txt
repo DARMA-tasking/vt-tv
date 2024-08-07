@@ -122,6 +122,7 @@ if (NOT DEFINED CMAKE_DEBUG_POSTFIX)
 endif()
 
 set_target_properties(yaml-cpp PROPERTIES
+  OUTPUT_NAME yaml-cpp-vt-tv
   VERSION "${PROJECT_VERSION}"
   SOVERSION "${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}"
   PROJECT_LABEL "yaml-cpp ${yaml-cpp-label-postfix}"

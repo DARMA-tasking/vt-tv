@@ -48,8 +48,8 @@
 #include "vt-tv/utility/qoi_serializer.h"
 
 #include <nlohmann/json.hpp>
-#include <fmt-vt/core.h>
-#include <fmt-vt/format.h>
+#include INCLUDE_FMT_CORE
+#include INCLUDE_FMT_FORMAT
 
 #include <fstream>
 

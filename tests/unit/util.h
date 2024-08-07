@@ -54,7 +54,7 @@
 #include <regex>
 #include <tuple>
 
-#include <fmt-vt/format.h>
+#include INCLUDE_FMT_FORMAT
 
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
