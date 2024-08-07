@@ -34,10 +34,10 @@ Finally, you must have a (<ins>C++</ins>) [VTK](https://vtk.org/) build availabl
 
 ### Building
 
-To build the python bindings, you must specify in the `VTTV_VTK_DIR` environment variable the path to the VTK build directory:
+To build the python bindings, you must specify in the `VTK_DIR` environment variable the path to the VTK build directory:
 
 ```bash
-export VTTV_VTK_DIR=/path/to/vtk/build
+export VTK_DIR=/path/to/vtk/build
 ```
 
 
@@ -48,10 +48,10 @@ pip install <path/to/vt-tv/source>
 ```
 **Optional**
 
-To specify the number of parallel jobs to use during the build, you can set the `VTTV_J` environment variable:
+To specify the number of parallel jobs to use during the build, you can set the `VT_TV_CMAKE_JOBS` environment variable:
 
 ```bash
-export VTTV_J=8
+export VT_TV_CMAKE_JOBS=8
 ```
 
 > [!NOTE]

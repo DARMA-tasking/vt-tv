@@ -136,10 +136,13 @@ struct Info {
    * \return The number of phases
    */
   uint64_t getNumPhases() const {
-    uint64_t n_phases = this->ranks_.at(0).getNumPhases();
-    for (NodeType rank_id = 1; rank_id < static_cast<NodeType>(this->ranks_.size()); rank_id++) {
-      if (ranks_.at(rank_id).getNumPhases() != n_phases) {
-        throw std::runtime_error("Number of phases must be consistent across ranks");
+    uint64_t n_phases = 0;
+    if (this->ranks_.size() > 0) {
+      n_phases = this->ranks_.at(0).getNumPhases();
+      for (NodeType rank_id = 1; rank_id < static_cast<NodeType>(this->ranks_.size()); rank_id++) {
+        if (ranks_.at(rank_id).getNumPhases() != n_phases) {
+          throw std::runtime_error("Number of phases must be consistent across ranks");
+        }
       }
     }
     return n_phases;
@@ -902,7 +905,7 @@ private:
   std::unordered_map<NodeType, Rank> ranks_;
 
   /// The current phase (or indication to use all phases)
-  PhaseType selected_phase_;
+  PhaseType selected_phase_ = std::numeric_limits<PhaseType>::max();
 };
 
 } /* end namespace vt::tv */

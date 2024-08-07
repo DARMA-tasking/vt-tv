@@ -96,6 +96,7 @@
 #include <set>
 #include <array>
 #include <variant>
+#include <cmath>
 
 namespace vt { namespace tv {
 
@@ -120,17 +121,17 @@ private:
 
   // Render input data
   Info info_;
-  uint64_t n_ranks_;
-  uint64_t n_phases_;
+  uint64_t n_ranks_ = 0;
+  uint64_t n_phases_ = 0;
   std::array<uint64_t, 3> grid_size_ = {1, 1, 1};
   double object_jitter_ = 0.5;
   std::set<uint64_t> rank_dims_;
   std::string output_dir_;
   std::string output_file_stem_;
   double grid_resolution_ = 1.0;
-  bool save_meshes_;
-  bool save_pngs_;
-  PhaseType selected_phase_;
+  bool save_meshes_ = false;
+  bool save_pngs_ = false;
+  PhaseType selected_phase_ = std::numeric_limits<PhaseType>::max();
 
   // numeric parameters
   std::variant<std::pair<double, double>, std::set<std::variant<double,int>>> object_qoi_range_;

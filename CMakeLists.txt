@@ -31,6 +31,8 @@ message(STATUS "CMAKE_CXX_STANDARD: ${CMAKE_CXX_STANDARD}")
 
 option(VT_TV_PYTHON_BINDINGS_ENABLED "Build vt-tv with Python bindings" OFF)
 option(VT_TV_OPENMP_ENABLED "Build vt-tv with openMP support" ON)
+option(VT_TV_TESTS_ENABLED "Build vt-tv with unit tests" ON)
+option(VT_TV_COVERAGE_ENABLED "Build vt-tv with coverage" OFF)
 
 # add -fPIC to all targets (if building with nanobind)
 if(VT_TV_PYTHON_BINDINGS_ENABLED)
@@ -49,6 +51,8 @@ endif()
 
 add_definitions(-DVT_TV_N_THREADS=${VT_TV_N_THREADS})
 add_definitions(-DVT_TV_OPENMP_ENABLED=${VT_TV_OPENMP_ENABLED})
+add_compile_definitions(SRC_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
+add_compile_definitions(BUILD_DIR="${CMAKE_BINARY_DIR}")
 
 add_custom_target(vt_tv_examples)
 add_custom_target(vt_tv_tests)
@@ -61,22 +65,29 @@ set(PROJECT_EXAMPLE_DIR  ${CMAKE_CURRENT_SOURCE_DIR}/examples)
 set(PROJECT_APP_DIR      ${CMAKE_CURRENT_SOURCE_DIR}/apps)
 set(PROJECT_BINDINGS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/bindings)
 
-include(CTest)
-
 add_subdirectory(src)
 add_subdirectory(examples)
-add_subdirectory(tests)
+
 add_subdirectory(apps)
 add_subdirectory(bindings)
+
+include(CTest) #adds option BUILD_TESTING (default ON)
+
+message(STATUS "VT_TV_COVERAGE_ENABLED: ${VT_TV_COVERAGE_ENABLED}")
+if (VT_TV_COVERAGE_ENABLED)
+  add_compile_options(-fprofile-arcs -ftest-coverage -O0)
+  add_link_options(-lgcov --coverage)
+endif()
+
+message(STATUS "VT_TV_TESTS_ENABLED: ${VT_TV_TESTS_ENABLED}")
+if (BUILD_TESTING AND VT_TV_TESTS_ENABLED)
+  set(CTEST_SOURCE_DIRECTORY ${SOURCE_DIR}/src)
+  add_subdirectory(tests)
+endif()
 
 configure_file(
   cmake/vtTVConfig.cmake.in
   "${PROJECT_BINARY_DIR}/vtTVConfig.cmake" @ONLY
-)
-
-configure_file(
-  ${PROJECT_BASE_DIR}/cmake/cmake_config.h.in
-  ${PROJECT_BASE_DIR}/tests/unit/cmake_config.h @ONLY
 )
 
 install(
