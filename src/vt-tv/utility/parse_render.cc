@@ -109,22 +109,22 @@ void ParseRender::parseAndRender(PhaseType phase_id, std::unique_ptr<Info> info)
     }
 
     std::array<std::string, 3> qoi_request = {
-      config["viz"]["rank_qoi"].as<std::string>(),
+      config["viz"]["rank_qoi"].as<std::string>("load"),
       "",
-      config["viz"]["object_qoi"].as<std::string>()
+      config["viz"]["object_qoi"].as<std::string>("load")
     };
 
-    bool save_meshes = config["viz"]["save_meshes"].as<bool>();
-    bool save_pngs = config["viz"]["save_pngs"].as<bool>();
-    bool continuous_object_qoi = config["viz"]["force_continuous_object_qoi"].as<bool>();
+    bool save_meshes = config["viz"]["save_meshes"].as<bool>(true);
+    bool save_pngs = config["viz"]["save_pngs"].as<bool>(true);
+    bool continuous_object_qoi = config["viz"]["force_continuous_object_qoi"].as<bool>(true);
 
     std::array<uint64_t, 3> grid_size = {
       config["viz"]["x_ranks"].as<uint64_t>(),
       config["viz"]["y_ranks"].as<uint64_t>(),
-      config["viz"]["z_ranks"].as<uint64_t>()
+      config["viz"]["z_ranks"].as<uint64_t>(1)
     };
 
-    double object_jitter = config["viz"]["object_jitter"].as<double>();
+    double object_jitter = config["viz"]["object_jitter"].as<double>(0.5);
 
     std::string output_dir;
     std::filesystem::path output_path;
@@ -135,7 +135,7 @@ void ParseRender::parseAndRender(PhaseType phase_id, std::unique_ptr<Info> info)
     uint64_t font_size = 0.025 * win_size;
 
     if (save_meshes || save_pngs) {
-      output_dir = config["output"]["directory"].as<std::string>();
+      output_dir = config["output"]["directory"].as<std::string>("output");
       output_path = output_dir;
 
       // If it's a relative path, prepend the SRC_DIR
@@ -149,12 +149,12 @@ void ParseRender::parseAndRender(PhaseType phase_id, std::unique_ptr<Info> info)
         output_dir += '/';
       }
 
-      output_file_stem = config["output"]["file_stem"].as<std::string>();
+      output_file_stem = config["output"]["file_stem"].as<std::string>("vttv");
 
       fmt::print("Num ranks={}\n", info->getNumRanks());
 
       if (config["output"]["window_size"]) {
-        win_size = config["output"]["window_size"].as<uint64_t>();
+        win_size = config["output"]["window_size"].as<uint64_t>(2000);
         // Update font_size with new win_size
         font_size = 0.025 * win_size;
       }
