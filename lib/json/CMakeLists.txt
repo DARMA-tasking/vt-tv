@@ -79,8 +79,6 @@ target_include_directories(
     $<INSTALL_INTERFACE:include>
 )
 
-set_target_properties(${NLOHMANN_JSON_TARGET_NAME} PROPERTIES OUTPUT_NAME ${NLOHMANN_JSON_TARGET_NAME}-vt-tv)
-
 ## add debug view definition file for msvc (natvis)
 if (MSVC)
     set(NLOHMANN_ADD_NATVIS TRUE)
