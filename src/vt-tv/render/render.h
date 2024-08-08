@@ -83,7 +83,7 @@
 #include "vt-tv/api/rank.h"
 #include "vt-tv/api/info.h"
 
-#include <fmt-vt/format.h>
+#include INCLUDE_FMT_FORMAT
 #include <ostream>
 #include <cmath>
 #include <algorithm>

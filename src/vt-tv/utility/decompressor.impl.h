@@ -48,7 +48,7 @@
 
 #include <cassert>
 
-#include <fmt-vt/format.h>
+#include INCLUDE_FMT_FORMAT
 
 namespace vt::tv::utility {
 

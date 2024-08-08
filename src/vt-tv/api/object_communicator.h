@@ -8,9 +8,10 @@
 #include <unordered_set>
 #include <vector>
 #include <utility>
+#include <algorithm>
 
 #include "vt-tv/api/types.h"
-#include <fmt-vt/format.h>
+#include INCLUDE_FMT_FORMAT
 
 namespace vt::tv {
 

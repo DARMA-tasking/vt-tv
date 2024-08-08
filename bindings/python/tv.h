@@ -46,7 +46,7 @@
 
 #include <string>
 
-#include <fmt-vt/format.h>
+#include INCLUDE_FMT_FORMAT
 #include "vt-tv/render/render.h"
 #include "vt-tv/api/types.h"
 #include "vt-tv/api/info.h"

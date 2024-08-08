@@ -47,7 +47,7 @@
 #include <vt-tv/utility/parse_render.h>
 #include "../tests/unit/cmake_config.h"
 
-#include <fmt-vt/format.h>
+#include INCLUDE_FMT_FORMAT
 #include <CLI/CLI11.hpp>
 
 int main(int argc, char** argv) {

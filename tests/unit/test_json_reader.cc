@@ -48,7 +48,7 @@
 #include <vt-tv/utility/json_reader.h>
 #include "vt-tv/utility/qoi_serializer.h"
 
-#include <fmt-vt/format.h>
+#include INCLUDE_FMT_FORMAT
 
 #include "cmake_config.h"
 
