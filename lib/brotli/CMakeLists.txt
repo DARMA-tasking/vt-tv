@@ -186,7 +186,6 @@ foreach(lib IN LISTS BROTLI_SHARED_LIBS)
 endforeach()
 
 foreach(lib IN LISTS BROTLI_SHARED_LIBS BROTLI_STATIC_LIBS)
-  set_target_properties (${lib} PROPERTIES OUTPUT_NAME ${lib}-vt-tv)
   target_include_directories(
     ${lib}
     INTERFACE
