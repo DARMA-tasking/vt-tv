@@ -2,10 +2,10 @@
 //@HEADER
 // *****************************************************************************
 //
-//                                 types.h
+//                                   types.h
 //             DARMA/vt-tv => Virtual Transport -- Task Visualizer
 //
-// Copyright 2019 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2019-2024 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
