@@ -117,7 +117,7 @@ TEST_F(JSONReaderTest, test_json_reader_1) {
 
 TEST_F(JSONReaderTest, test_json_reader_metadata_attributes) {
   std::filesystem::path p =
-    std::filesystem::path(SRC_DIR) / "data/lb_test_data";
+    std::filesystem::path(SRC_DIR) / "data/reader_test_data";
   std::string path = std::filesystem::absolute(p).string();
 
   NodeType rank = 0;

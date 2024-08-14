@@ -33,6 +33,7 @@ option(VT_TV_PYTHON_BINDINGS_ENABLED "Build vt-tv with Python bindings" OFF)
 option(VT_TV_OPENMP_ENABLED "Build vt-tv with openMP support" ON)
 option(VT_TV_TESTS_ENABLED "Build vt-tv with unit tests" ON)
 option(VT_TV_COVERAGE_ENABLED "Build vt-tv with coverage" OFF)
+set(VT_TV_N_THREADS "2" CACHE STRING "Number of OpenMP threads to use")
 
 # add -fPIC to all targets (if building with nanobind)
 if(VT_TV_PYTHON_BINDINGS_ENABLED)
@@ -41,8 +42,6 @@ endif()
 
 option(VT_TV_WERROR_ENABLED "Build vt-tv with warnings as errors" OFF)
 
-set(VT_TV_N_THREADS "2" CACHE STRING "Number of OpenMP threads to use")
-
 include(cmake/load_packages.cmake)
 
 if(APPLE)
@@ -50,9 +49,13 @@ if(APPLE)
 endif()
 
 add_definitions(-DVT_TV_N_THREADS=${VT_TV_N_THREADS})
-add_definitions(-DVT_TV_OPENMP_ENABLED=${VT_TV_OPENMP_ENABLED})
 add_compile_definitions(SRC_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
 add_compile_definitions(BUILD_DIR="${CMAKE_BINARY_DIR}")
+if(VT_TV_OPENMP_ENABLED)
+  add_definitions(-DVT_TV_OPENMP_ENABLED=1)
+else()
+  add_definitions(-DVT_TV_OPENMP_ENABLED=0)
+endif()
 
 add_custom_target(vt_tv_examples)
 if (VT_TV_TESTS_ENABLED)

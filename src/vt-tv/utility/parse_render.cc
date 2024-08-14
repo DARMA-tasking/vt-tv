@@ -60,9 +60,6 @@ void ParseRender::parseAndRender(
       std::string input_dir = config["input"]["directory"].as<std::string>();
       std::filesystem::path input_path(input_dir);
 
-      // Allow user to point to specific files (e.g. json.br)
-      std::string file_suffix = config["input"]["suffix"].as<std::string>("json");
-
       // If it's a relative path, prepend the SRC_DIR
       if (input_path.is_relative()) {
         input_path = std::filesystem::path(SRC_DIR) / input_path;
@@ -81,32 +78,43 @@ void ParseRender::parseAndRender(
       std::filesystem::path p = input_dir;
       std::string path = std::filesystem::absolute(p).string();
 
+      // Collect all file paths into a vector
+      std::vector<std::filesystem::path> data_files;
+      for (const auto& entry : std::filesystem::directory_iterator(input_dir)) {
+        data_files.push_back(entry.path());
+      }
+
       info = std::make_unique<Info>();
 
-#ifdef VT_TV_OPENMP_ENABLED
 #if VT_TV_OPENMP_ENABLED
-#ifdef VT_TV_N_THREADS
       const int threads = VT_TV_N_THREADS;
-#else
-      const int threads = 2;
-#endif // VT_TV_N_THREADS
       omp_set_num_threads(threads);
       fmt::print("vt-tv: Using {} threads\n", threads);
 #pragma omp parallel for
-#endif
 #endif // VT_TV_OPENMP_ENABLED
-      for (int64_t rank = 0; rank < n_ranks; rank++) {
+
+      for (uint64_t i = 0; i < data_files.size(); i++) {
+        auto filepath = data_files[i].string();
+        auto filename = data_files[i].filename().string();
+
+        int64_t rank;
+        auto first_dot = filename.find(".");
+        auto next_dot = filename.find(".", first_dot + 1);
+
+        rank =
+          std::stoll(filename.substr(first_dot + 1, next_dot - first_dot - 1));
+
         fmt::print("Reading file for rank {}\n", rank);
         utility::JSONReader reader{static_cast<NodeType>(rank)};
-        reader.readFile(input_dir + "data." + std::to_string(rank) + "." + file_suffix);
+        reader.readFile(filepath);
         auto tmpInfo = reader.parse();
-#ifdef VT_TV_OPENMP_ENABLED
 #if VT_TV_OPENMP_ENABLED
 #pragma omp critical
 #endif
-#endif
         { info->addInfo(tmpInfo->getObjectInfo(), tmpInfo->getRank(rank)); }
       }
+      assert(info->getNumRanks() == static_cast<std::size_t>(n_ranks));
+      fmt::print("Num ranks={}\n", info->getNumRanks());
     }
 
     std::array<std::string, 3> qoi_request = {
@@ -150,8 +158,6 @@ void ParseRender::parseAndRender(
       }
 
       output_file_stem = config["output"]["file_stem"].as<std::string>("vttv");
-
-      fmt::print("Num ranks={}\n", info->getNumRanks());
 
       if (config["output"]["window_size"]) {
         win_size = config["output"]["window_size"].as<uint64_t>(2000);
