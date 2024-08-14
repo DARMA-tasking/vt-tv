@@ -214,36 +214,38 @@ std::unique_ptr<Info> JSONReader::parse() {
         }
       }
 
-      auto communications = phase["communications"];
-      if (communications.is_array()) {
-        for (auto const& comm : communications) {
-          auto type = comm["type"];
-          if (type == "SendRecv") {
-            auto bytes = comm["bytes"];
-            auto messages = comm["messages"];
+      if (phase.count("communications") > 0) {
+        auto communications = phase["communications"];
+        if (communications.is_array()) {
+          for (auto const& comm : communications) {
+            auto type = comm["type"];
+            if (type == "SendRecv") {
+              auto bytes = comm["bytes"];
+              auto messages = comm["messages"];
 
-            auto from = comm["from"];
-            auto to = comm["to"];
+              auto from = comm["from"];
+              auto to = comm["to"];
 
-            ElementIDType from_id = from["id"];
-            ElementIDType to_id = to["id"];
+              ElementIDType from_id = from["id"];
+              ElementIDType to_id = to["id"];
 
-            assert(bytes.is_number());
-            // assert(from.is_number());
-            // assert(to.is_number());
+              assert(bytes.is_number());
+              // assert(from.is_number());
+              // assert(to.is_number());
 
-            // fmt::print(" From: {}, to: {}\n", from_id, to_id);
+              // fmt::print(" From: {}, to: {}\n", from_id, to_id);
 
-            // Object on this rank sent data
-            auto from_it = objects.find(from_id);
-            if (from_it != objects.end()) {
-              from_it->second.addSentCommunications(to_id, bytes);
-            } else {
-              auto to_it = objects.find(to_id);
-              if (to_it != objects.end()) {
-                to_it->second.addReceivedCommunications(from_id, bytes);
+              // Object on this rank sent data
+              auto from_it = objects.find(from_id);
+              if (from_it != objects.end()) {
+                from_it->second.addSentCommunications(to_id, bytes);
               } else {
-                fmt::print("Warning: Communication {} -> {}: neither sender nor recipient was found in objects.\n", from_id, to_id);
+                auto to_it = objects.find(to_id);
+                if (to_it != objects.end()) {
+                  to_it->second.addReceivedCommunications(from_id, bytes);
+                } else {
+                  fmt::print("Warning: Communication {} -> {}: neither sender nor recipient was found in objects.\n", from_id, to_id);
+                }
               }
             }
           }
