@@ -60,6 +60,9 @@ void ParseRender::parseAndRender(
       std::string input_dir = config["input"]["directory"].as<std::string>();
       std::filesystem::path input_path(input_dir);
 
+      // Allow user to point to specific files (e.g. json.br)
+      std::string file_suffix = config["input"]["suffix"].as<std::string>("json");
+
       // If it's a relative path, prepend the SRC_DIR
       if (input_path.is_relative()) {
         input_path = std::filesystem::path(SRC_DIR) / input_path;
@@ -95,7 +98,7 @@ void ParseRender::parseAndRender(
       for (int64_t rank = 0; rank < n_ranks; rank++) {
         fmt::print("Reading file for rank {}\n", rank);
         utility::JSONReader reader{static_cast<NodeType>(rank)};
-        reader.readFile(input_dir + "data." + std::to_string(rank) + ".json");
+        reader.readFile(input_dir + "data." + std::to_string(rank) + "." + file_suffix);
         auto tmpInfo = reader.parse();
 #ifdef VT_TV_OPENMP_ENABLED
 #if VT_TV_OPENMP_ENABLED
