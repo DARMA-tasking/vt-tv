@@ -1,6 +1,5 @@
 Images are built in the CI
 
-You might 
 To build image locally here is an example call using available build arguments:
 
 For the base image
@@ -11,4 +10,3 @@ Then for the build& Test image
 ```shell
 docker build -t vttv-build:latest --build-arg BASE_IMAGE="vttv:latest" --build-arg VT_TV_TESTS_ENABLED=ON --build-arg VT_TV_COVERAGE_ENABLED=OFF --build-arg VT_TV_PYTHON_BINDINGS_ENABLED=ON -f build-and-test.dockerfile .
 ```
-
