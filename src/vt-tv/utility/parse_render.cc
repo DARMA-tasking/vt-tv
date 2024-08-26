@@ -110,8 +110,10 @@ void ParseRender::parseAndRender(
 #endif
         { info->addInfo(tmpInfo->getObjectInfo(), tmpInfo->getRank(rank)); }
       }
-      int64_t n_ranks = config["input"]["n_ranks"].as<int64_t>(); // signed for omp parallel for
-      assert(info->getNumRanks() == static_cast<std::size_t>(n_ranks));
+      std::size_t n_ranks = config["input"]["n_ranks"].as<std::size_t>();
+      if (info->getNumRanks() != n_ranks) {
+        throw std::runtime_error("Number of ranks does not match expected value.");
+      }
       fmt::print("Num ranks={}\n", info->getNumRanks());
     }
 
