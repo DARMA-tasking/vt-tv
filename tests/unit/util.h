@@ -54,6 +54,10 @@
 #include <regex>
 #include <tuple>
 
+#if VT_TV_OPENMP_ENABLED
+#include <omp.h>
+#endif
+
 #include <fmt-vt/format.h>
 
 #include <gtest/gtest.h>
