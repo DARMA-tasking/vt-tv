@@ -4,17 +4,17 @@ import os
 
 def get_attributes_dict(id):
     attributes = {
-        "intAttribute": id,
         "doubleAttribute": float(id) * 3.14,
         "elementIDAttribute": id + 30000000000,
+        "intAttribute": id,
         "stringAttribute": f"id is {id}"
     }
     return attributes
 
 project_dir = os.path.dirname(os.path.dirname(__file__))
-test_data_dir = os.path.join(project_dir, "tests", "unit", "lb_test_data")
+test_data_dir = os.path.join(project_dir, "tests", "data", "lb_test_data")
 
-output_dir = os.path.join(project_dir, "tests", "unit", "synthetic_attributes")
+output_dir = os.path.join(project_dir, "tests", "data", "synthetic_attributes")
 os.makedirs(output_dir, exist_ok=True)
 
 # Loop through all ranks
@@ -39,6 +39,7 @@ for rank_id in range(num_ranks):
     output_file = os.path.join(output_dir, f"data.{rank_id}.json")
     with open(output_file, "w") as out_json:
         json.dump(json_data, out_json)
+        out_json.write("\n")
 
     # Write out the compressed json
     compressed_output_file = os.path.join(output_dir, f"data.{rank_id}.json.br")

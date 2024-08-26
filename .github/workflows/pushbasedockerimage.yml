@@ -1,32 +1,73 @@
-name: Build dependencies and push base Docker Image to dockerhub
+name: Build & push base Docker image
 
-on: workflow_dispatch
+on:
+  workflow_dispatch:
+    inputs:
+      image:
+        type: choice
+        description: The configuration to build as a combination of os, compiler, vtk and python versions
+        options:
+        - ubuntu_22.04-gcc_11-vtk_9.2.2-py_3.8
+        - ubuntu_22.04-clang_11-vtk_9.2.2-py_3.8
+        - ubuntu_22.04-gcc_12-vtk_9.3.0-py_3.8
+        default: ubuntu_22.04-gcc_12-vtk_9.3.0-py_3.8
 
 jobs:
   push_to_registry:
-    name: Push Docker image to Docker Hub
+    name: Build & Push
     runs-on: ubuntu-latest
+    env:
+      DOCKER_REPOSITORY: lifflander1/vt
     steps:
       - name: Check out the repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
+
+      - name: Extract build configuration
+        # If workflow dispatch event replace `matrix.image` by `inputs.image`
+        run: |
+          IFS='_-' read -r -a CONFIG <<< "${{ inputs.image }}"
+          echo "BASE_IMAGE=${CONFIG[0]}:${CONFIG[1]}" >> $GITHUB_ENV
+          echo "CC=${CONFIG[2]}-${CONFIG[3]}" >> $GITHUB_ENV
+          if [[ "${CONFIG[2]}" == "gcc" ]]; then
+            echo "CXX=g++-${CONFIG[3]}" >> $GITHUB_ENV
+            echo "GCOV=gcov-${CONFIG[3]}" >> $GITHUB_ENV
+          elif [[ "${CONFIG[2]}" == "clang" ]]; then
+            echo "CXX=clang++-${CONFIG[3]}" >> $GITHUB_ENV
+            echo "GCOV=gcov" >> $GITHUB_ENV
+          else
+            exit 1
+          fi
+          echo "VTK_VERSION=${CONFIG[5]}" >> $GITHUB_ENV
+          echo "PYTHON_VERSION=${CONFIG[7]}" >> $GITHUB_ENV
+          echo "DOCKER_TAG=${{ inputs.image }}" >> $GITHUB_ENV
+
+      - name: Build configuration
+        run: |
+          echo "Base image: $BASE_IMAGE"
+          echo "C Compiler: $CC"
+          echo "CXX Compiler: $CXX"
+          echo "GCOV: $GCOV"
+          echo "VTK: $VTK_VERSION"
+          echo "Python: $PYTHON_VERSION"
+          echo "Docker tag: $DOCKER_TAG"
 
       - name: Log in to Docker Hub
-        uses: docker/login-action@v2
+        uses: docker/login-action@v3
         with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_TOKEN }}
 
-      - name: Extract metadata (tags, labels) for Docker
-        id: meta
-        uses: docker/metadata-action@v4
-        with:
-          images: pierrpebay/vt-tv
-
-      - name: Build and push Docker image
-        uses: docker/build-push-action@v4
+      - name: Build and push to Docker Hub
+        uses: docker/build-push-action@v6
         with:
           context: .
-          file: ci/make-base-ubuntu22.04-gcc11-x64.dockerfile
+          build-args: |
+            BASE_IMAGE=${{ env.BASE_IMAGE }}
+            CC=${{ env.CC }}
+            CXX=${{ env.CXX }}
+            GCOV=${{ env.GCOV }}
+            VTK_VERSION=${{ env.VTK_VERSION }}
+            PYTHON_VERSION=${{ env.PYTHON_VERSION }}
+          file: ci/docker/make-base.dockerfile
           push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+          tags: "${{ env.DOCKER_REPOSITORY }}:${{ env.DOCKER_TAG }}"

@@ -5,7 +5,7 @@
 //                                   main.cc
 //             DARMA/vt-tv => Virtual Transport -- Task Visualizer
 //
-// Copyright 2019 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2019-2024 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -43,8 +43,6 @@
 
 #include <gtest/gtest.h>
 
-#include "test_harness.h"
-
 extern "C" {
 void __ubsan_on_report() {
    FAIL() << "Encountered an undefined behavior sanitizer error";
@@ -60,7 +58,6 @@ int main(int argc, char **argv) {
 
   int ret = 0;
   {
-    vt::tv::tests::unit::TestHarness::store_cmdline_args(argc, argv);
     ret = RUN_ALL_TESTS();
   }
 

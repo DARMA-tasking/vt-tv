@@ -1,5 +1,5 @@
 input:
-  directory: tests/unit/lb_test_data
+  directory: tests/data/lb_test_data
   n_ranks: 4
 
 viz:
@@ -10,9 +10,9 @@ viz:
   rank_qoi: load
   object_qoi: load
   save_meshes: true
-  save_pngs: false
+  save_pngs: true
   force_continuous_object_qoi: true
 
 output:
-  directory: output
-  file_stem: test
+  directory: output/tests
+  file_stem: default

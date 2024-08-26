@@ -2,10 +2,10 @@
 //@HEADER
 // *****************************************************************************
 //
-//                                 render.cc
+//                                  render.cc
 //             DARMA/vt-tv => Virtual Transport -- Task Visualizer
 //
-// Copyright 2019 National Technology & Engineering Solutions of Sandia, LLC
+// Copyright 2019-2024 National Technology & Engineering Solutions of Sandia, LLC
 // (NTESS). Under the terms of Contract DE-NA0003525 with NTESS, the U.S.
 // Government retains certain rights in this software.
 //
@@ -62,7 +62,7 @@ Render::Render(Info in_info)
   // Generically set rank grid dimensions according to the total number of ranks
   grid_size_[2] = 1; // we assume 2D representation
 
-  int sqrt_n_ranks = std::sqrt(n_ranks_);
+  uint64_t sqrt_n_ranks = static_cast<uint64_t>(std::sqrt(static_cast<double>(n_ranks_)));
   if(sqrt_n_ranks * sqrt_n_ranks == n_ranks_) {
     // n_ranks is a perfect square
     grid_size_[0] = sqrt_n_ranks;

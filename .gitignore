@@ -1,1 +1,8 @@
 .*~undo-tree~
+.vscode/
+
+# Items generated at build time
+/build
+/python-build
+output
+Testing
