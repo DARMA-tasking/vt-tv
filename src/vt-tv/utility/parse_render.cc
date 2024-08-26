@@ -71,9 +71,6 @@ void ParseRender::parseAndRender(
         input_dir += '/';
       }
 
-      int64_t n_ranks =
-        config["input"]["n_ranks"].as<int64_t>(); // signed for omp parallel for
-
       // Read JSON file and input data
       std::filesystem::path p = input_dir;
       std::string path = std::filesystem::absolute(p).string();
@@ -113,6 +110,7 @@ void ParseRender::parseAndRender(
 #endif
         { info->addInfo(tmpInfo->getObjectInfo(), tmpInfo->getRank(rank)); }
       }
+      int64_t n_ranks = config["input"]["n_ranks"].as<int64_t>(); // signed for omp parallel for
       assert(info->getNumRanks() == static_cast<std::size_t>(n_ranks));
       fmt::print("Num ranks={}\n", info->getNumRanks());
     }
