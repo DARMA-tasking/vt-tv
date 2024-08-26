@@ -24,6 +24,8 @@ function on_off() {
 # > Build variables
 # >> Path
 VTK_DIR="${VTK_DIR:-$PARENT_DIR/vtk/build}"
+fmt_DIR="${fmt_DIR:-''}"
+fmt_ROOT="${fmt_ROOT:-''}"
 CC="${CC:-$(which gcc || echo '')}"
 CXX="${CXX:-$(which g++ || echo '')}"
 GCOV="${GCOV:-gcov}"
@@ -41,6 +43,7 @@ VT_TV_CLEAN=$(on_off ${VT_TV_CLEAN:-ON})
 VT_TV_PYTHON_BINDINGS_ENABLED=$(on_off ${VT_TV_PYTHON_BINDINGS_ENABLED:-OFF})
 VT_TV_WERROR_ENABLED=$(on_off ${VT_TV_WERROR_ENABLED:-OFF})
 VT_TV_XVFB_ENABLED=$(on_off ${VT_TV_XVFB_ENABLED:-OFF})
+VT_TV_EXTERNAL_FMT=$(on_off ${VT_TV_EXTERNAL_FMT:-OFF})
 # >> Run tests settings
 VT_TV_RUN_TESTS=$(on_off ${VT_TV_RUN_TESTS:-OFF})
 VT_TV_RUN_TESTS_FILTER=${VT_TV_RUN_TESTS_FILTER:-""}
@@ -154,6 +157,7 @@ echo CC=$CC
 echo CXX=$CXX
 echo GCOV=$GCOV
 echo VTK_DIR=$VTK_DIR
+echo VT_TV_EXTERNAL_FMT=$VT_TV_EXTERNAL_FMT
 
 # Build
 if [[ "${VT_TV_BUILD}" == "ON" ]]; then
@@ -185,6 +189,10 @@ if [[ "${VT_TV_BUILD}" == "ON" ]]; then
     \
     -DPython_EXECUTABLE="$(which python)" \
     -DPython_INCLUDE_DIRS=$(python -c "import sysconfig; print(sysconfig.get_path('include'))") \
+    \
+    -DVT_TV_EXTERNAL_FMT=${VT_TV_EXTERNAL_FMT} \
+    -Dfmt_DIR=${fmt_DIR} \
+    -Dfmt_ROOT=${fmt_ROOT} \
     \
     "${VT_TV_DIR}"
 
