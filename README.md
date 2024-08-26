@@ -1,4 +1,4 @@
-[![Build and Test Ubuntu 22.04 gcc 11 x64](https://github.com/DARMA-tasking/vt-tv/actions/workflows/build-and-test-vt-tv.yml/badge.svg)](https://github.com/DARMA-tasking/vt-tv/actions/workflows/build-and-test-vt-tv.yml)
+[![Build and Test](https://github.com/DARMA-tasking/vt-tv/actions/workflows/build-and-test.yml/badge.svg)](https://github.com/DARMA-tasking/vt-tv/actions/workflows/build-and-test.yml)
 
 # tv => task visualizer
 
