@@ -27,7 +27,33 @@ jobs:
 
       - name: Install requirements
         run: |
-          brew update && brew install glew mesa mesa-glu
+          brew update && brew install \
+            mesa \
+            mesa-glu \
+            boost \
+            double-conversion \
+            eigen \
+            gl2ps \
+            glew \
+            libaec \
+            hdf5 \
+            jsoncpp \
+            libogg \
+            netcdf \
+            pugixml \
+            assimp \
+            dbus \
+            hunspell \
+            jasper \
+            libb2 \
+            libmng \
+            md4c \
+            webp \
+            qt \
+            pyqt \
+            libvorbis \
+            theora \
+            utf8cpp
 
       # Once it is ok activate cache
       # - name: Cache VTK Build
