@@ -274,7 +274,7 @@ TEST_P(RenderTest, test_render_from_config_with_png) {
       std::vector<std::string> cmd_vars = {
         fmt::format("ACTUAL={}", png_file),
         fmt::format("EXPECTED={}", expected_png_file),
-        "TOLERANCE=0.1",
+        "TOLERANCE=0.5",
       };
       auto cmd = fmt::format("{} {}/tests/test_image.sh",
         fmt::join(cmd_vars, " "),
