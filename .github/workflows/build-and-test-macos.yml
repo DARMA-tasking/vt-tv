@@ -34,7 +34,7 @@ jobs:
 
       - name: Install VTK
         run: |
-          mkdir -p /opt/src/vtk
+          sudo mkdir -p /opt/src/vtk
           git clone --recursive --branch v${{ matrix.vtk_version }} https://gitlab.kitware.com/vtk/vtk.git /opt/src/vtk
 
           export CC=${{ matrix.compiler[0] }}
@@ -42,7 +42,7 @@ jobs:
           export GCOV=gcov-11
           export VTK_DIR=${{ env.VTK_DIR }}
 
-          mkdir -p ${VTK_DIR}
+          sudo mkdir -p ${VTK_DIR}
           cd ${VTK_DIR}
 
           cmake \
