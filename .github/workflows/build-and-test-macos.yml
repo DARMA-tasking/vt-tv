@@ -25,6 +25,10 @@ jobs:
         id: vars
         run: echo "DOCKER_TAG=$(echo ${{ github.ref }} | cut -d'/' -f3- | sed 's/[^a-z0-9_-]/__/gi')" >> $GITHUB_ENV
 
+      - name: Install requirements
+        run: |
+          brew install mesa mesa-glu
+
       # Once it is ok activate cache
       # - name: Cache VTK Build
       #   uses: actions/cache@v3
@@ -33,7 +37,8 @@ jobs:
       #     key: ${{ matrix.os }}-vtk-build-${{ matrix.vtk_version }}
 
       - name: Install VTK
-        run: |
+        # TODO only if not cached
+        run: |         
           sudo mkdir -p /opt/src/vtk
           sudo git clone --recursive --branch v${{ matrix.vtk_version }} https://gitlab.kitware.com/vtk/vtk.git /opt/src/vtk
 
