@@ -118,7 +118,7 @@ protected:
       std::string components_str = "";
       for (auto tupleIdx = 0; tupleIdx < array->GetNumberOfTuples(); ++tupleIdx) {
         for (auto compIdx = 0; compIdx < array->GetNumberOfComponents(); ++compIdx) {
-          components_str = fmt::format("{}    [{}] = [TupleId={}, ComponentId={}, {}]\n", components_str, k, tupleIdx, compIdx);
+          components_str = fmt::format("{}    [{}] = [TupleId={}, ComponentId={}]\n", components_str, k, tupleIdx, compIdx);
         }
       }
 
