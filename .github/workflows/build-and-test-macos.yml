@@ -27,7 +27,7 @@ jobs:
 
       - name: Install requirements
         run: |
-          brew update && brew install glew mesa mesa-glu
+          brew update && brew install zlib glew mesa mesa-glu
 
       # Once it is ok activate cache
       # - name: Cache VTK Build
