@@ -35,7 +35,7 @@ jobs:
       - name: Install VTK
         run: |
           sudo mkdir -p /opt/src/vtk
-          git clone --recursive --branch v${{ matrix.vtk_version }} https://gitlab.kitware.com/vtk/vtk.git /opt/src/vtk
+          sudo git clone --recursive --branch v${{ matrix.vtk_version }} https://gitlab.kitware.com/vtk/vtk.git /opt/src/vtk
 
           export CC=${{ matrix.compiler[0] }}
           export CXX=${{ matrix.compiler[1] }}
@@ -45,7 +45,7 @@ jobs:
           sudo mkdir -p ${VTK_DIR}
           cd ${VTK_DIR}
 
-          cmake \
+          sudo cmake \
             -DCMAKE_BUILD_TYPE:STRING=Release \
             -DBUILD_TESTING:BOOL=OFF \
             -DVTK_OPENGL_HAS_OSMESA:BOOL=ON \
@@ -57,7 +57,7 @@ jobs:
             -DVTK_Group_Rendering:BOOL=OFF \
             -DBUILD_SHARED_LIBS:BOOL=ON \
             -S /opt/src/vtk -B ${VTK_DIR}
-          cmake --build ${VTK_DIR} -j$(nproc)
+          sudo cmake --build ${VTK_DIR} -j$(nproc)
 
 
             
