@@ -47,8 +47,6 @@ jobs:
           export GCOV=${{ matrix.compiler[2] }}
           export VTK_DIR=${{ env.VTK_DIR }}
 
-          xcode-select --install
-
           sudo mkdir -p ${VTK_DIR}
           cd ${VTK_DIR}
           sudo cmake \
