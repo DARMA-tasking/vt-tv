@@ -7,7 +7,7 @@ PARENT_DIR="$(dirname "$CURRENT_DIR")"
 
 ACTUAL=${ACTUAL:-$PARENT_DIR/output/tests/ccm_example0.png}
 EXPECTED=${EXPECTED:-$CURRENT_DIR/expected/ccm_example0.png}
-TOLERANCE=${TOLERANCE:-2.0}
+TOLERANCE=${TOLERANCE:-0.1}
 
 if [ ! -f "$ACTUAL" ]; then
     echo "Image not found at "$ACTUAL
