@@ -268,7 +268,7 @@ TEST_P(RenderTest, test_render_from_config_with_png) {
     ) << fmt::format("Error: PNG image not generated at {}", png_file);
 
     // 2. test PNG with tolerance
-    fmt::print("Testing png file {}\n", std::filesystem::path(png_file).filename());
+    fmt::print("Testing png file {}\n", std::filesystem::path(png_file).filename().c_str());
     if (std::filesystem::exists(png_file)) {
       auto expected_png_file = fmt::format("{}/tests/expected/{}/{}{}.png", SRC_DIR, output_file_stem, output_file_stem, i);
       std::vector<std::string> cmd_vars = {
@@ -284,14 +284,12 @@ TEST_P(RenderTest, test_render_from_config_with_png) {
       fmt::print(output);
       ASSERT_EQ(status, EXIT_SUCCESS) << output;
     } else {
-      ADD_FAILURE() << fmt::format("Unable to test png file as it has not been generated");
+      ADD_FAILURE() << "Cannot test png file (not generated)";
     }
 
-    // TODO: testing mesh files cannot be a simple diff as below because each run generates some different data.
-    //       The future test should test XML Nodes
     // 3. test vtp's file content
     // 3.1 rank mesh file
-    fmt::print("Testing rank mesh file {}\n", std::filesystem::path(rank_mesh_file).filename());
+    fmt::print("Testing rank mesh file {}\n", std::filesystem::path(rank_mesh_file).filename().c_str());
     if (std::filesystem::exists(rank_mesh_file)) {
       // 3.1.1 Compare raw vtp files
       auto rank_mesh_content = Util::getFileContent(rank_mesh_file);
@@ -311,11 +309,11 @@ TEST_P(RenderTest, test_render_from_config_with_png) {
 
       this->assertPolyEquals(rank_mesh, expected_rank_mesh);
     } else {
-      ADD_FAILURE() << fmt::format("Cannot test rank mesh file (not generated)");
+      ADD_FAILURE() << "Cannot test rank mesh file (not generated)";
     }
 
     // 3.2 object mesh file
-    fmt::print("Testing object mesh file {}\n", std::filesystem::path(object_mesh_file).filename());
+    fmt::print("Testing object mesh file {}\n", std::filesystem::path(object_mesh_file).filename().c_str());
     if (std::filesystem::exists(object_mesh_file)) {
       // 3.2.1 Compare raw vtp files
       auto object_mesh_content = Util::getFileContent(object_mesh_file);
@@ -335,7 +333,7 @@ TEST_P(RenderTest, test_render_from_config_with_png) {
 
       this->assertPolyEquals(object_mesh, expected_object_mesh);
     } else {
-      ADD_FAILURE() << fmt::format("Cannot test object mesh file (not generated)");
+      ADD_FAILURE() << "Cannot test object mesh file (not generated)";
     }
 
     fmt::print("----- Finished testing phase {} -----\n", i);
