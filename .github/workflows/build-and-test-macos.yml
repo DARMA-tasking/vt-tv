@@ -28,6 +28,7 @@ jobs:
       - name: Install requirements
         run: |
           brew update && brew install \
+            lzip \
             mesa \
             mesa-glu \
             boost \
