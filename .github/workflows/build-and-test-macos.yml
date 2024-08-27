@@ -27,7 +27,7 @@ jobs:
 
       - name: Install requirements
         run: |
-          brew update && brew install zlib glew mesa mesa-glu
+          brew update && brew install glew mesa mesa-glu
 
       # Once it is ok activate cache
       # - name: Cache VTK Build
@@ -37,7 +37,7 @@ jobs:
       #     key: ${{ matrix.os }}-vtk-build-${{ matrix.vtk_version }}
 
       - name: Build VTK
-        # TODO only if not cached
+        # TODO only if not cached, setting compiler does not work (AppleClang used)
         run: |         
           sudo mkdir -p /opt/src/vtk
           sudo git clone --recursive --branch v${{ matrix.vtk_version }} https://gitlab.kitware.com/vtk/vtk.git /opt/src/vtk
