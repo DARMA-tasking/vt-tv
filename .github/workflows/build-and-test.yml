@@ -5,7 +5,6 @@ on:
   push:
     branches:
       - master
-      - 95-improve-ci-rendering-tests # TODO: REMOVE ONCE PR CREATED
   pull_request:
     types: [opened, reopened, synchronize, converted_to_draft, ready_for_review]
 

@@ -97,7 +97,6 @@
 #include <array>
 #include <variant>
 #include <cmath>
-#include <regex>
 
 namespace vt { namespace tv {
 

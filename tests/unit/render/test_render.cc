@@ -69,12 +69,6 @@ using Util = vt::tv::tests::unit::Util;
  */
 class RenderTest :public ::testing::TestWithParam<std::string> {
 
-  void SetUp() override {
-    // Make the output directory for these tests
-    // std::filesystem::create_directory(fmt::format("{}/output", SRC_DIR));
-    // std::filesystem::create_directory(fmt::format("{}/output/tests", SRC_DIR));
-  }
-
 protected:
   Render createRender(YAML::Node config, Info info, std::string &output_dir) {
     // change output directory to use specific one for these tests
