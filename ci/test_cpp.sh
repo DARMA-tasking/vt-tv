@@ -30,7 +30,6 @@ cp "junit-report.xml" $VT_TV_ARTIFACTS_DIR/ || true
 if [ -d "$VT_TV_TESTS_OUTPUT_DIR" ]; then
     cp "$VT_TV_TESTS_OUTPUT_DIR/"*".vtp"  $VT_TV_ARTIFACTS_DIR/
     cp "$VT_TV_TESTS_OUTPUT_DIR/"*".png"  $VT_TV_ARTIFACTS_DIR/
-    cp "$VT_TV_TESTS_OUTPUT_DIR/"*".csv"  $VT_TV_ARTIFACTS_DIR/
 fi
 
 if [[ $VT_TV_COVERAGE_ENABLED == "ON" ]]; then

@@ -87,7 +87,7 @@ protected:
         config["viz"]["y_ranks"].as<uint64_t>(),
         config["viz"]["z_ranks"].as<uint64_t>()
       },
-      config["viz"]["object_jitter"].as<double>(),
+      0.0,
       output_dir,
       config["output"]["file_stem"].as<std::string>(),
       1.0,
@@ -174,42 +174,6 @@ protected:
     ASSERT_EQ(actual->GetLines()->GetData()->GetName(), expected->GetLines()->GetData()->GetName());
     // TODO: browse lines
   }
-
-  std::unordered_map<ElementIDType, std::array<double, 3>> loadJitterDims(std::string filename) {
-    fmt::print("Loading jitter dimensions from {}\n", filename);
-    std::unordered_map<ElementIDType, std::array<double, 3>> jitter_dims;
-    std::ifstream infile(filename);
-    std::string line;
-    std::regex regex("\\,");
-    while (std::getline(infile, line)) {
-      if (line == "") {
-        continue;
-      }
-      std::vector<std::string> rec(
-        std::sregex_token_iterator(line.begin(), line.end(), regex, -1),
-        std::sregex_token_iterator()
-      );
-      ElementIDType objectID = stoul(rec.at(0));
-      std::array<double, 3> jitterDims = {
-        stod(rec.at(1)),
-        stod(rec.at(2)),
-        stod(rec.at(3))
-      };
-      jitter_dims.insert(std::make_pair(objectID, jitterDims));
-    }
-    infile.close();
-
-    return jitter_dims;
-  }
-
-  void saveJitterDims( std::unordered_map<ElementIDType, std::array<double, 3>> jitter_dims_, std::string filename) {
-    fmt::print("Saving jitter dimensions to {}\n", filename);
-    std::ofstream outfile(filename);
-    for (auto const& [objectID, dims] : jitter_dims_) {
-      outfile << fmt::format("{},{},{},{}\n", objectID, dims[0], dims[1], dims[2]);
-    }
-    outfile.close();
-  }
 };
 
 /**
@@ -229,13 +193,6 @@ TEST_P(RenderTest, test_render_from_config_with_png) {
   // Render
   Render render = createRender(config, info, output_dir);
   std::filesystem::create_directories(output_dir);
-
-  auto object_jitter_dims_file_in = fmt::format("{}/tests/expected/{}/{}_{}", SRC_DIR, output_file_stem, output_file_stem, "jitter_dims.csv");
-  auto object_jitter_dims_file_out = fmt::format("{}{}_{}", output_dir, output_file_stem, "jitter_dims.csv");
-  if (std::filesystem::exists(object_jitter_dims_file_in)) {
-    render.setJitterDims(loadJitterDims(object_jitter_dims_file_in));
-  }
-  saveJitterDims(render.getJitterDims(), object_jitter_dims_file_out);
 
   render.generate(font_size, win_size);
 

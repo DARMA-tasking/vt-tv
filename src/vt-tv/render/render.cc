@@ -51,20 +51,6 @@
 
 namespace vt { namespace tv {
 
-void Render::initJitterDims() {
-  std::srand(std::time(nullptr));
-  auto const& allObjects = info_.getAllObjectIDs();
-  for (auto const& objectID : allObjects) {
-    std::array<double, 3> jitterDims;
-    for (uint64_t d = 0; d < 3; d++) {
-      if (auto f = rank_dims_.find(d); f != rank_dims_.end()) {
-        jitterDims[d] = ((double)std::rand()/RAND_MAX - 0.5) *  object_jitter_;
-      } else jitterDims[d] = 0;
-    }
-    jitter_dims_.insert(std::make_pair(objectID, jitterDims));
-  }
-};
-
 Render::Render(Info in_info)
 : info_(in_info) // std:move ?
 , n_ranks_(in_info.getNumRanks())
@@ -105,7 +91,17 @@ Render::Render(Info in_info)
   }
 
   // Initialize jitter
-  initJitterDims();
+  std::srand(std::time(nullptr));
+  auto const& allObjects = info_.getAllObjectIDs();
+  for (auto const& objectID : allObjects) {
+    std::array<double, 3> jitterDims;
+    for (uint64_t d = 0; d < 3; d++) {
+      if (auto f = this->rank_dims_.find(d); f != this->rank_dims_.end()) {
+        jitterDims[d] = ((double)std::rand()/RAND_MAX - 0.5) * object_jitter_;
+      } else jitterDims[d] = 0;
+    }
+    jitter_dims_.insert(std::make_pair(objectID, jitterDims));
+  }
 
   object_qoi_range_ = this->computeObjectQoiRange_();
   rank_qoi_range_ = this->computeRankQoiRange_();
@@ -163,7 +159,17 @@ Render::Render(
   }
 
   // Initialize jitter
-  initJitterDims();
+  std::srand(std::time(nullptr));
+  auto const& allObjects = info_.getAllObjectIDs();
+  for (auto const& objectID : allObjects) {
+    std::array<double, 3> jitterDims;
+    for (uint64_t d = 0; d < 3; d++) {
+      if (auto f = this->rank_dims_.find(d); f != this->rank_dims_.end()) {
+        jitterDims[d] = ((double)std::rand()/RAND_MAX - 0.5) * object_jitter_;
+      } else jitterDims[d] = 0;
+    }
+    jitter_dims_.insert(std::make_pair(objectID, jitterDims));
+  }
 
   object_qoi_range_ = this->computeObjectQoiRange_();
   rank_qoi_range_ = this->computeRankQoiRange_();
