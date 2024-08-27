@@ -1,4 +1,4 @@
-#! /bin/sh
+#!/bin/bash
 
 GTEST_BRANCHTAG=release-1.12.1 # next is v1.14.0
 
