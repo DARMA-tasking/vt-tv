@@ -81,49 +81,49 @@ class VtkTest :public ::testing::Test {
 TEST_F(VtkTest, test_vtk_screenshot_example) {
   vtkNew<vtkNamedColors> colors;
 
-  vtkNew<vtkSphereSource> sphereSource;
-  sphereSource->SetCenter(0.0, 0.0, 0.0);
-  sphereSource->SetRadius(5.0);
-  sphereSource->SetPhiResolution(30);
-  sphereSource->SetThetaResolution(30);
-  sphereSource->Update();
+  vtkNew<vtkSphereSource> sphere_source;
+  sphere_source->SetCenter(0.0, 0.0, 0.0);
+  sphere_source->SetRadius(5.0);
+  sphere_source->SetPhiResolution(30);
+  sphere_source->SetThetaResolution(30);
+  sphere_source->Update();
 
   // Visualize
   vtkNew<vtkPolyDataMapper> mapper;
-  mapper->SetInputConnection(sphereSource->GetOutputPort());
+  mapper->SetInputConnection(sphere_source->GetOutputPort());
 
   vtkNew<vtkActor> actor;
   actor->SetMapper(mapper);
   actor->GetProperty()->SetColor(colors->GetColor3d("IndianRed").GetData());
 
   vtkNew<vtkRenderer> renderer;
-  vtkNew<vtkRenderWindow> renderWindow;
-  renderWindow->AddRenderer(renderer);
-  renderWindow->SetAlphaBitPlanes(1); // enable usage of alpha channel
-  renderWindow->SetWindowName("Screenshot");
+  vtkNew<vtkRenderWindow> render_window;
+  render_window->AddRenderer(renderer);
+  render_window->SetAlphaBitPlanes(1); // enable usage of alpha channel
+  render_window->SetWindowName("Screenshot");
 
   actor->GetProperty()->LightingOff();
   renderer->AddActor(actor);
   renderer->SetBackground(colors->GetColor3d("MistyRose").GetData());
 
-  renderWindow->Render();
+  render_window->Render();
 
   // Screenshot
-  vtkNew<vtkWindowToImageFilter> windowToImageFilter;
-  windowToImageFilter->SetInput(renderWindow);
+  vtkNew<vtkWindowToImageFilter> w2i;
+  w2i->SetInput(render_window);
 #if VTK_MAJOR_VERSION >= 8 || VTK_MAJOR_VERSION == 8 && VTK_MINOR_VERSION >= 90
-  windowToImageFilter->SetScale(2); // image quality
+  w2i->SetScale(2); // image quality
 #else
-  windowToImageFilter->SetMagnification(2); // image quality
+  w2i->SetMagnification(2); // image quality
 #endif
-  windowToImageFilter->SetInputBufferTypeToRGBA(); // also record the alpha
+  w2i->SetInputBufferTypeToRGBA(); // also record the alpha
                                                    // (transparency) channel
-  windowToImageFilter->ReadFrontBufferOff();       // read from the back buffer
-  windowToImageFilter->Update();
+  w2i->ReadFrontBufferOff();       // read from the back buffer
+  w2i->Update();
 
   vtkNew<vtkPNGWriter> writer;
   writer->SetFileName(fmt::format("{}/output/tests/vtk_example_screenshot.png", SRC_DIR).c_str());
-  writer->SetInputConnection(windowToImageFilter->GetOutputPort());
+  writer->SetInputConnection(w2i->GetOutputPort());
 }
 
 } // end namespace vt::tv::tests::unit
