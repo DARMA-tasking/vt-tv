@@ -256,7 +256,7 @@ TEST_P(RenderTest, test_render_from_config_with_png) {
                                                 SRC_DIR, output_file_stem, output_file_stem, i);
 
     fmt::print("----- Testing phase {} -----\n", i);
-    // 1. test files exist: rank mesh, object mesh, png
+    // 1. test expected output files existence for phase: rank mesh, object mesh, png
     ASSERT_TRUE(
       std::filesystem::exists(rank_mesh_file)
     ) << fmt::format("Error: rank mesh not generated at {}", object_mesh_file);
@@ -268,65 +268,75 @@ TEST_P(RenderTest, test_render_from_config_with_png) {
     ) << fmt::format("Error: PNG image not generated at {}", png_file);
 
     // 2. test PNG with tolerance
-    fmt::print("Testing png file\n");
-    auto expected_png_file = fmt::format("{}/tests/expected/{}/{}{}.png", SRC_DIR, output_file_stem, output_file_stem, i);
-    std::vector<std::string> cmd_vars = {
-      fmt::format("ACTUAL={}", png_file),
-      fmt::format("EXPECTED={}", expected_png_file),
-      "TOLERANCE=0.1",
-    };
-    auto cmd = fmt::format("{} {}/tests/test_image.sh",
-      fmt::join(cmd_vars, " "),
-      SRC_DIR
-    );
-    const auto [status, output] = Util::exec(cmd.c_str());
-    fmt::print(output);
-    ASSERT_EQ(status, EXIT_SUCCESS) << output;
+    fmt::print("Testing png file {}\n", std::filesystem::path(png_file).filename());
+    if (std::filesystem::exists(png_file)) {  
+      auto expected_png_file = fmt::format("{}/tests/expected/{}/{}{}.png", SRC_DIR, output_file_stem, output_file_stem, i);
+      std::vector<std::string> cmd_vars = {
+        fmt::format("ACTUAL={}", png_file),
+        fmt::format("EXPECTED={}", expected_png_file),
+        "TOLERANCE=0.1",
+      };
+      auto cmd = fmt::format("{} {}/tests/test_image.sh",
+        fmt::join(cmd_vars, " "),
+        SRC_DIR
+      );
+      const auto [status, output] = Util::exec(cmd.c_str());
+      fmt::print(output);
+      ASSERT_EQ(status, EXIT_SUCCESS) << output;
+    } else {
+      ADD_FAILURE() << fmt::format("Unable to test png file as it has not been generated");
+    }
 
     // TODO: testing mesh files cannot be a simple diff as below because each run generates some different data.
     //       The future test should test XML Nodes
     // 3. test vtp's file content
     // 3.1 rank mesh file
-    fmt::print("Testing rank mesh .vtp file\n");
+    fmt::print("Testing rank mesh file {}\n", std::filesystem::path(rank_mesh_file).filename());
+    if (std::filesystem::exists(rank_mesh_file)) {
+      // 3.1.1 Compare raw vtp files
+      auto rank_mesh_content = Util::getFileContent(rank_mesh_file);
+      auto expected_rank_mesh_content = Util::getFileContent(expected_rank_mesh_file);
+      ASSERT_EQ(expected_rank_mesh_content, rank_mesh_content) << fmt::format("rank mesh file content differs from expected at phase {}", i);
 
-    // 3.1.1 Compare raw vtp files
-    auto rank_mesh_content = Util::getFileContent(rank_mesh_file);
-    auto expected_rank_mesh_content = Util::getFileContent(expected_rank_mesh_file);
-    ASSERT_EQ(expected_rank_mesh_content, rank_mesh_content) << fmt::format("rank mesh file content differs from expected at phase {}", i);
+      // 3.1.2 Compare polydata using vtkXMLPolyDataReader
+      vtkNew<vtkXMLPolyDataReader> expected_rank_mesh_reader;
+      expected_rank_mesh_reader->SetFileName(expected_rank_mesh_file.c_str());
+      expected_rank_mesh_reader->Update();
+      vtkPolyData *expected_rank_mesh = expected_rank_mesh_reader->GetOutput();
 
-    // 3.1.2 Compare polydata using vtkXMLPolyDataReader
-    vtkNew<vtkXMLPolyDataReader> expected_rank_mesh_reader;
-    expected_rank_mesh_reader->SetFileName(expected_rank_mesh_file.c_str());
-    expected_rank_mesh_reader->Update();
-    vtkPolyData *expected_rank_mesh = expected_rank_mesh_reader->GetOutput();
+      vtkNew<vtkXMLPolyDataReader> rank_mesh_reader;
+      rank_mesh_reader->SetFileName(rank_mesh_file.c_str());
+      rank_mesh_reader->Update();
+      vtkPolyData *rank_mesh = rank_mesh_reader->GetOutput();
 
-    vtkNew<vtkXMLPolyDataReader> rank_mesh_reader;
-    rank_mesh_reader->SetFileName(rank_mesh_file.c_str());
-    rank_mesh_reader->Update();
-    vtkPolyData *rank_mesh = rank_mesh_reader->GetOutput();
-
-    this->assertPolyEquals(rank_mesh, expected_rank_mesh);
+      this->assertPolyEquals(rank_mesh, expected_rank_mesh);
+    } else {
+      ADD_FAILURE() << fmt::format("Cannot test rank mesh file (not generated)");
+    }
 
     // 3.2 object mesh file
-    fmt::print("Testing object mesh .vtp file\n");
+    fmt::print("Testing object mesh file {}\n", std::filesystem::path(object_mesh_file).filename());
+    if (std::filesystem::exists(object_mesh_file)) {
+      // 3.2.1 Compare raw vtp files
+      auto object_mesh_content = Util::getFileContent(object_mesh_file);
+      auto expected_object_mesh_content = Util::getFileContent(expected_object_mesh_file);
+      ASSERT_EQ(expected_object_mesh_content, object_mesh_content) << fmt::format("object mesh file content differs from expected at phase {}", i);
 
-    // 3.2.1 Compare raw vtp files
-    auto object_mesh_content = Util::getFileContent(object_mesh_file);
-    auto expected_object_mesh_content = Util::getFileContent(expected_object_mesh_file);
-    ASSERT_EQ(expected_object_mesh_content, object_mesh_content) << fmt::format("object mesh file content differs from expected at phase {}", i);
+      // 3.2.2 Compare polydata using vtkXMLPolyDataReader
+      vtkNew<vtkXMLPolyDataReader> expected_object_mesh_reader;
+      expected_object_mesh_reader->SetFileName(expected_object_mesh_file.c_str());
+      expected_object_mesh_reader->Update();
+      vtkPolyData *expected_object_mesh = expected_object_mesh_reader->GetOutput();
 
-    // 3.2.2 Compare polydata using vtkXMLPolyDataReader
-    vtkNew<vtkXMLPolyDataReader> expected_object_mesh_reader;
-    expected_object_mesh_reader->SetFileName(expected_object_mesh_file.c_str());
-    expected_object_mesh_reader->Update();
-    vtkPolyData *expected_object_mesh = expected_object_mesh_reader->GetOutput();
+      vtkNew<vtkXMLPolyDataReader> object_mesh_reader;
+      object_mesh_reader->SetFileName(object_mesh_file.c_str());
+      object_mesh_reader->Update();
+      vtkPolyData *object_mesh = object_mesh_reader->GetOutput();
 
-    vtkNew<vtkXMLPolyDataReader> object_mesh_reader;
-    object_mesh_reader->SetFileName(object_mesh_file.c_str());
-    object_mesh_reader->Update();
-    vtkPolyData *object_mesh = object_mesh_reader->GetOutput();
-
-    this->assertPolyEquals(object_mesh, expected_object_mesh);
+      this->assertPolyEquals(object_mesh, expected_object_mesh);
+    } else {
+      ADD_FAILURE() << fmt::format("Cannot test object mesh file (not generated)");
+    }
 
     fmt::print("----- Finished testing phase {} -----\n", i);
   }
