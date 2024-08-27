@@ -269,7 +269,7 @@ TEST_P(RenderTest, test_render_from_config_with_png) {
 
     // 2. test PNG with tolerance
     fmt::print("Testing png file {}\n", std::filesystem::path(png_file).filename());
-    if (std::filesystem::exists(png_file)) {  
+    if (std::filesystem::exists(png_file)) {
       auto expected_png_file = fmt::format("{}/tests/expected/{}/{}{}.png", SRC_DIR, output_file_stem, output_file_stem, i);
       std::vector<std::string> cmd_vars = {
         fmt::format("ACTUAL={}", png_file),
