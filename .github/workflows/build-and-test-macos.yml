@@ -1,0 +1,63 @@
+name: Build and Test
+
+# Trigger the workflow on push or pull request
+on:
+  push:
+    branches:
+      - 97-add-more-environments-to-test-in-ci
+
+jobs:
+  build: 
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ macos-latest ]
+        vtk_version: [ 9.3.1 ]
+        compiler: [ [gcc-12, g++-12] ]
+    runs-on: ${{ matrix.os }}
+    name: vt-tv build and test
+    env:
+        VTK_DIR: /opt/build/vtk
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: CI Variables
+        id: vars
+        run: echo "DOCKER_TAG=$(echo ${{ github.ref }} | cut -d'/' -f3- | sed 's/[^a-z0-9_-]/__/gi')" >> $GITHUB_ENV
+
+      # Once it is ok activate cache
+      # - name: Cache VTK Build
+      #   uses: actions/cache@v3
+      #   with:
+      #     path: /opt/build/vtk
+      #     key: ${{ matrix.os }}-vtk-build-${{ matrix.vtk_version }}
+
+      - name: Install VTK
+        run: |
+          mkdir /opt/src/vtk
+          git clone --recursive --branch v${{ matrix.vtk_version }} https://gitlab.kitware.com/vtk/vtk.git /opt/src/vtk
+
+          export CC=${{ matrix.compiler[0] }}
+          export CXX=${{ matrix.compiler[1] }}
+          export GCOV=gcov-11
+          export VTK_DIR=${{ env.VTK_DIR }}
+
+          mkdir -p ${VTK_DIR}
+          cd ${VTK_DIR}
+
+          cmake \
+            -DCMAKE_BUILD_TYPE:STRING=Release \
+            -DBUILD_TESTING:BOOL=OFF \
+            -DVTK_OPENGL_HAS_OSMESA:BOOL=ON \
+            -DVTK_DEFAULT_RENDER_WINDOW_OFFSCREEN:BOOL=ON \
+            -DVTK_USE_X:BOOL=OFF \
+            -DVTK_USE_WIN32_OPENGL:BOOL=OFF \
+            -DVTK_USE_COCOA:BOOL=OFF \
+            -DVTK_USE_SDL2:BOOL=OFF \
+            -DVTK_Group_Rendering:BOOL=OFF \
+            -DBUILD_SHARED_LIBS:BOOL=ON \
+            -S /opt/src/vtk -B ${VTK_DIR}
+          cmake --build ${VTK_DIR} -j$(nproc)
+
+
+            
