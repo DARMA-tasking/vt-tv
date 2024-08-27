@@ -34,7 +34,7 @@ jobs:
 
       - name: Install VTK
         run: |
-          mkdir /opt/src/vtk
+          mkdir -p /opt/src/vtk
           git clone --recursive --branch v${{ matrix.vtk_version }} https://gitlab.kitware.com/vtk/vtk.git /opt/src/vtk
 
           export CC=${{ matrix.compiler[0] }}
