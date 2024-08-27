@@ -281,7 +281,7 @@ TEST_P(RenderTest, test_render_from_config_with_png) {
         SRC_DIR
       );
       const auto [status, output] = Util::exec(cmd.c_str());
-      fmt::print(output);
+      cout << output;
       ASSERT_EQ(status, EXIT_SUCCESS) << output;
     } else {
       ADD_FAILURE() << "Cannot test png file (not generated)";
