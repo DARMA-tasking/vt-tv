@@ -61,4 +61,4 @@ jobs:
             -DVTK_Group_Rendering:BOOL=OFF \
             -DBUILD_SHARED_LIBS:BOOL=ON \
             -S /opt/src/vtk -B ${VTK_DIR}
-          sudo cmake --build ${VTK_DIR} -j$(nproc)           
+          sudo cmake --build ${VTK_DIR} -j$(sysctl -n hw.logicalcpu)           
