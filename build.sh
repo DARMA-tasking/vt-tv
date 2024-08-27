@@ -224,6 +224,7 @@ if [[ "$VT_TV_RUN_TESTS" == "ON" ]]; then
   if [[ "$VT_TV_RUN_TESTS" == "ON" ]]; then
     pkill Xvfb
     export DISPLAY=$CURRENT_DISPLAY
+    rm -rf /tmp/.X11-unix/X99
   fi
 
   echo "Tests done."
