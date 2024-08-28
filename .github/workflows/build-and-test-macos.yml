@@ -80,6 +80,9 @@ jobs:
           cd ${{ github.workspace }}
           chmod +x ./ci/build.sh
 
+          sudo mkdir -p ${{ env.VT_TV_BUILD_DIR }}
+          sudo chown -R $(whoami) ${{ env.VT_TV_BUILD_DIR }}
+
           VTK_DIR=${{ env.VTK_BUILD_DIR }} \
           CC="${{ env.CC }}" \
           CXX="${{ env.CXX }}" \
