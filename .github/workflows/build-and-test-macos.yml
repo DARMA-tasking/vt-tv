@@ -7,7 +7,7 @@ on:
       - 97-add-more-environments-to-test-in-ci
 
 jobs:
-  build: 
+  build:
     strategy:
       fail-fast: false
       matrix:
@@ -72,37 +72,37 @@ jobs:
             -DVTK_USE_SDL2:BOOL=OFF \
             -DVTK_Group_Rendering:BOOL=OFF \
             -DBUILD_SHARED_LIBS:BOOL=ON \
-            -S /opt/src/vtk -B ${{ env.VTK_BUILD_DIR }}
+            -S ${{ env.VTK_SRC_DIR }} -B ${{ env.VTK_BUILD_DIR }}
           cmake --build ${{ env.VTK_BUILD_DIR }} -j$(nproc)
 
-      # - name: Build
-      #   run: |
-      #     cd ${{ github.workspace }}
-      #     chmod +x ./ci/build.sh
- 
-      #     VTK_DIR=${{ env.VTK_BUILD_DIR }} \
-      #     CC="${{ env.CC }}" \
-      #     CXX="${{ env.CXX }}" \
-      #     VT_TV_BUILD_DIR=${{ env.VT_TV_BUILD_DIR }} \
-      #     VT_TV_TESTS_ENABLED=${{ env.VT_TV_TESTS_ENABLED }} \
-      #     VT_TV_COVERAGE_ENABLED=${{ env.VT_TV_COVERAGE_ENABLED }} \
-      #     GCOV=${{ matrix.host.gcov }}
-      #     VT_TV_PYTHON_BINDINGS_ENABLED=OFF \
-      #     VT_TV_WERROR_ENABLED=ON \
-      #     ./build.sh
+      - name: Build
+        run: |
+          cd ${{ github.workspace }}
+          chmod +x ./ci/build.sh
 
-      # - name: Test
-      #   run: |
-      #     cd ${{ github.workspace }}
-      #     sudo \
-      #       VT_TV_BUILD=OFF \
-      #       VT_TV_RUN_TESTS=ON \
-      #       VT_TV_BUILD_DIR=${{ env.VT_TV_BUILD_DIR }}
-      #       ./build.sh
+          VTK_DIR=${{ env.VTK_BUILD_DIR }} \
+          CC="${{ env.CC }}" \
+          CXX="${{ env.CXX }}" \
+          VT_TV_BUILD_DIR=${{ env.VT_TV_BUILD_DIR }} \
+          VT_TV_TESTS_ENABLED=${{ env.VT_TV_TESTS_ENABLED }} \
+          VT_TV_COVERAGE_ENABLED=${{ env.VT_TV_COVERAGE_ENABLED }} \
+          GCOV=${{ matrix.host.gcov }}
+          VT_TV_PYTHON_BINDINGS_ENABLED=OFF \
+          VT_TV_WERROR_ENABLED=ON \
+          ./build.sh
+
+      - name: Test
+        run: |
+          cd ${{ github.workspace }}
+          sudo \
+            VT_TV_BUILD=OFF \
+            VT_TV_RUN_TESTS=ON \
+            VT_TV_BUILD_DIR=${{ env.VT_TV_BUILD_DIR }}
+            ./build.sh
 
       # - name: Build and Test Python bindings
       #   run: |
-      #     # TODO: add conda
+      #     # TODO: install conda for macos
       #     # Activate conda environment
       #     # . /opt/conda/etc/profile.d/conda.sh && conda activate deves
       #     # Build
@@ -111,51 +111,51 @@ jobs:
       #     # Test
       #     # python ./tests/test_bindings.py
 
-      # - name: Collect artifacts
-      #   run: |
-      #     # Add artifacts
-      #     mkdir -p ${{ env.VT_TV_ARTIFACTS_DIR }}
+      - name: Collect artifacts
+        run: |
+          # Add artifacts
+          mkdir -p ${{ env.VT_TV_ARTIFACTS_DIR }}
 
-      #     # > go to output directory
-      #     pushd ${{ env.VT_TV_OUTPUT_DIR }}
+          # > go to output directory
+          pushd ${{ env.VT_TV_OUTPUT_DIR }}
 
-      #     # > add the unit tests report artifact
-      #     cp "junit-report.xml" ${{ env.VT_TV_ARTIFACTS_DIR }}/ || true
+          # > add the unit tests report artifact
+          cp "junit-report.xml" ${{ env.VT_TV_ARTIFACTS_DIR }}/ || true
 
-      #     # > add mesh files and png artifacts
-      #     if [ -d "${{ env.VT_TV_OUTPUT_DIR }}" ]; then
-      #         cp "${{ env.VT_TV_OUTPUT_DIR }}/"*".vtp"  ${{ env.VT_TV_ARTIFACTS_DIR }}/
-      #         cp "${{ env.VT_TV_OUTPUT_DIR }}/"*".png"  ${{ env.VT_TV_ARTIFACTS_DIR }}/
-      #     fi
+          # > add mesh files and png artifacts
+          if [ -d "${{ env.VT_TV_OUTPUT_DIR }}" ]; then
+              cp "${{ env.VT_TV_OUTPUT_DIR }}/"*".vtp"  ${{ env.VT_TV_ARTIFACTS_DIR }}/
+              cp "${{ env.VT_TV_OUTPUT_DIR }}/"*".png"  ${{ env.VT_TV_ARTIFACTS_DIR }}/
+          fi
 
-      #     if [[ "${{ env.VT_TV_COVERAGE_ENABLED }}" == "ON" ]]; then
-      #         # > add `coverage --list` file artifact
-      #         lcov --list lcov_vt-tv_test_no_deps.info > ${{ env.VT_TV_ARTIFACTS_DIR }}/lcov-list-report.txt
+          if [[ "${{ env.VT_TV_COVERAGE_ENABLED }}" == "ON" ]]; then
+              # > add `coverage --list` file artifact
+              lcov --list lcov_vt-tv_test_no_deps.info > ${{ env.VT_TV_ARTIFACTS_DIR }}/lcov-list-report.txt
 
-      #         # > add total lines coverage file artifact (percentage of lines covered)
-      #         # might be useful for generating later a badge in ci
-      #         LCOV_SUMMARY=$(lcov --summary lcov_vt-tv_test_no_deps.info)
-      #         LCOV_TOTAL_LINES_COV=$(echo $LCOV_SUMMARY | grep -E -o 'lines......: ([0-9.]+)*' | grep -o -E '[0-9]+.[0-9]+')
-      #         echo $LCOV_TOTAL_LINES_COV > lcov-lines-total.txt
-      #         cp lcov-lines-total.txt ${{ env.VT_TV_ARTIFACTS_DIR }}/
-      #     fi
-      #     popd
+              # > add total lines coverage file artifact (percentage of lines covered)
+              # might be useful for generating later a badge in ci
+              LCOV_SUMMARY=$(lcov --summary lcov_vt-tv_test_no_deps.info)
+              LCOV_TOTAL_LINES_COV=$(echo $LCOV_SUMMARY | grep -E -o 'lines......: ([0-9.]+)*' | grep -o -E '[0-9]+.[0-9]+')
+              echo $LCOV_TOTAL_LINES_COV > lcov-lines-total.txt
+              cp lcov-lines-total.txt ${{ env.VT_TV_ARTIFACTS_DIR }}/
+          fi
+          popd
 
-      #     # list artifacts dir content
-      #     ls ${{ env.VT_TV_ARTIFACTS_DIR }}
+          # list artifacts dir content
+          ls ${{ env.VT_TV_ARTIFACTS_DIR }}
 
-      # - name: Unit tests
-      #   if: ${{ env.VT_TV_TESTS_ENABLED == 'ON' }}
-      #   uses: phoenix-actions/test-reporting@v15
-      #   with:
-      #     name: Tests report
-      #     path: ${{ env.VT_TV_ARTIFACTS_DIR }}/junit-report.xml
-      #     reporter: java-junit
-      #     output-to: step-summary
+      - name: Unit tests
+        if: ${{ env.VT_TV_TESTS_ENABLED == 'ON' }}
+        uses: phoenix-actions/test-reporting@v15
+        with:
+          name: Tests report
+          path: ${{ env.VT_TV_ARTIFACTS_DIR }}/junit-report.xml
+          reporter: java-junit
+          output-to: step-summary
 
-      # - name: Upload artifacts
-      #   uses: actions/upload-artifact@v4
-      #   if: always()
-      #   with:
-      #     name: vt-tv-artifacts
-      #     path: ${{ env.VT_TV_ARTIFACTS_DIR }}
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: vt-tv-artifacts
+          path: ${{ env.VT_TV_ARTIFACTS_DIR }}
