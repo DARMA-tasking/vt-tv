@@ -73,7 +73,7 @@ public:
 /**
  * Provides unit tests for the vt::tv::api::Info class
  */
-class InfoTest : public ::testing::TestWithParam<InfoTestParam> { };
+struct InfoTest : public ::testing::TestWithParam<InfoTestParam> { };
 
 /**
  * Test Info:getNumRanks returns same number of ranks as defined in the sample

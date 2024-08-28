@@ -49,7 +49,7 @@ namespace vt::tv::tests::unit::api {
  * items to the inner map. This is useful to test api calls to serialization methods.
  */
 template <typename TSerializable>
-class BasicSerializer {
+struct BasicSerializer {
 public:
   void operator|(const TSerializable& item) {
     items[n] = item;

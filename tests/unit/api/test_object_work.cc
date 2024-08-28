@@ -51,7 +51,7 @@ namespace vt::tv::tests::unit::api {
 /**
  * Provides unit tests for the vt::tv::api::ObjectWork class
  */
-class ObjectWorkTest : public ::testing::Test {
+struct ObjectWorkTest : public ::testing::Test {
 public:
   ObjectWork object_0 = ObjectWork(
     12, 10.0, {{3, 12.0}}, Generator::makeQOIVariants(3, "user_", "_value"),

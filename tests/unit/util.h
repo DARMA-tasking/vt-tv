@@ -64,10 +64,11 @@ namespace vt::tv::tests::unit {
 /**
  * Utility methods
  */
-class Util {
+struct Util {
 public:
   /**
    * \brief Execute a command on the underlying system and returns exit code and output
+   *
    * \throws {@link std::runtime_error} if an error occurs while opening the process
    */
   static std::tuple<int, std::string> exec(const char* cmd) {
@@ -94,9 +95,12 @@ public:
 
   /**
    * \brief Resolves a directory absolute path.
+   *
    * \param[in] base_path Prepends "{base_path}/" to the path if path is relative
    * \param[in] path The path as either a relative or an absolute path
    * \param[in] add_trailing_sep Appends a trailing "/" char at the end of the path if not exist
+   * 
+   * \return the absolute path to the directory
    */
   static std::string resolveDir(
     std::string base_path, std::string path, bool add_trailing_sep = false) {

@@ -51,7 +51,7 @@ namespace vt::tv::tests::unit::api {
 /**
  * Provides unit tests for the vt::tv::api::ObjectCommunicator class
  */
-class ObjectCommunicatorTest : public ::testing::Test {
+struct ObjectCommunicatorTest : public ::testing::Test {
 public:
   ObjectCommunicator comm_0 = ObjectCommunicator(0);
 

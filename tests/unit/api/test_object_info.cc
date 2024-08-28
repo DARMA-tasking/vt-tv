@@ -50,7 +50,7 @@ namespace vt::tv::tests::unit::api {
 /**
  * Provides unit tests for the vt::tv::api::ObjectInfo class
  */
-class ObjectInfoTest : public ::testing::Test {
+struct ObjectInfoTest : public ::testing::Test {
 public:
   ObjectInfo object_0 = ObjectInfo(
     6,     // id

@@ -64,7 +64,7 @@ using Util = vt::tv::tests::unit::Util;
 /**
  * Provides unit tests for the vt::tv::utility::ParseRender class to test with config file input
  */
-class ParseRenderTest : public ::testing::TestWithParam<std::string> {
+struct ParseRenderTest : public ::testing::TestWithParam<std::string> {
   void SetUp() override {
     // Make the output directory for these tests
     std::filesystem::create_directory(fmt::format("{}/output", SRC_DIR));

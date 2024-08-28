@@ -54,7 +54,7 @@ using ObjectWorkMap = std::unordered_map<ElementIDType, ObjectWork>;
 /**
  * Provides unit tests for the vt::tv::api::PhaseWork class
  */
-class PhaseWorkTest : public ::testing::Test {
+struct PhaseWorkTest : public ::testing::Test {
 public:
   PhaseWorkTest() {
     objects_0 = Generator::makeObjects(10);

@@ -51,7 +51,7 @@ namespace vt::tv::tests::unit::render {
  * Provides unit tests for the standalone vt-tv app.
  * It is similar to the ParseRender tests except it runs as a separate process.
  */
-class StandaloneAppTest
+struct StandaloneAppTest
   : public ::testing::TestWithParam<std::tuple<std::string, int>> {
   void SetUp() override {
     // This test is not testing vt-tv src.

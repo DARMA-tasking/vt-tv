@@ -50,7 +50,7 @@ namespace vt::tv::tests::unit::api {
 /**
  * Provides unit tests for the vt::tv::api::Rank class
  */
-class RankTest : public ::testing::Test {
+struct RankTest : public ::testing::Test {
 public:
   // 6 objects with 2.0 load
   std::unordered_map<ElementIDType, ObjectWork> objects =
