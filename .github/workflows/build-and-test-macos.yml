@@ -29,6 +29,7 @@ jobs:
         VT_TV_ARTIFACTS_DIR: /tmp/artifacts
         CC: ~
         CXX: ~
+        GCOV: ~
     steps:
       - uses: actions/checkout@v4
 
@@ -41,6 +42,7 @@ jobs:
         run: |
           echo "CC=$(which ${{ matrix.host.compiler.cc }})" >> $GITHUB_ENV
           echo "CXX=$(which ${{ matrix.host.compiler.cxx }})" >> $GITHUB_ENV
+          echo "GCOV=$(which ${{ matrix.host.gcov }})" >> $GITHUB_ENV
 
       - name: Install dependencies
         run: |
@@ -90,7 +92,7 @@ jobs:
           VT_TV_CLEAN=OFF \
           VT_TV_TESTS_ENABLED=${{ env.VT_TV_TESTS_ENABLED }} \
           VT_TV_COVERAGE_ENABLED=${{ env.VT_TV_COVERAGE_ENABLED }} \
-          GCOV=${{ matrix.host.gcov }} \
+          GCOV=${{ env.GCOV }} \
           VT_TV_PYTHON_BINDINGS_ENABLED=OFF \
           VT_TV_WERROR_ENABLED=ON \
           ./build.sh
