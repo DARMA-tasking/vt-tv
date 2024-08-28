@@ -13,7 +13,9 @@ jobs:
       matrix:
         os: [ macos-latest ]
         vtk_version: [ 9.3.1 ]
-        compiler: [ [gcc-12, g++-12, gcov-12] ]
+        compiler: [ 
+          [gcc-12, g++-12, gcov-12]
+        ]
     runs-on: ${{ matrix.os }}
     name: vt-tv build and test
     env:
@@ -28,7 +30,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          brew install xquartz --cask
+          brew update && brew install core-utils lcov xquartz --cask
 
       - name: Set up cache
         id: vtk-cache
