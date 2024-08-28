@@ -55,9 +55,5 @@ void __asan_on_error() {
 
 int main(int argc, char** argv) {
   ::testing::InitGoogleTest(&argc, argv);
-
-  int ret = 0;
-  { ret = RUN_ALL_TESTS(); }
-
-  return ret;
+  return RUN_ALL_TESTS();;
 }
