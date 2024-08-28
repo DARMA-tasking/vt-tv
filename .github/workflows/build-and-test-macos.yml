@@ -12,8 +12,8 @@ jobs:
       fail-fast: false
       matrix:
         host: [
-          { os: macos-14, compiler: { name: clang14, cc: clang, cxx: clang++ }, gcov: gcov },
-          { os: macos-14, compiler: { name: clang14, cc: gcc-12, cxx: g++-12 }, gcov: gcov-12 }
+          { os: macos-latest, compiler: { name: clang, cc: clang, cxx: clang++ }, gcov: gcov },
+          { os: macos-latest, compiler: { name: gcc12, cc: gcc-12, cxx: g++-12 }, gcov: gcov-12 }
         ]
         vtk_version: [ 9.3.1 ]
     runs-on: ${{ matrix.host.os }}
@@ -27,12 +27,10 @@ jobs:
         VT_TV_COVERAGE_ENABLED: "ON"
         VT_TV_OUTPUT_DIR: /var/vt-tv/output
         VT_TV_ARTIFACTS_DIR: /tmp/artifacts
+        CC: ~
+        CXX: ~
     steps:
       - uses: actions/checkout@v4
-
-      - name: Install dependencies
-        run: |
-          brew update && brew install coreutils lcov && brew install xquartz --cask
 
       - name: Set folder permissions
         run: |
@@ -41,8 +39,12 @@ jobs:
 
       - name: Set environment variables
         run: |
-          export CC=${{ matrix.host.compiler.cc }}
-          export CXX=${{ matrix.host.compiler.cxx }}
+          echo "CC=$(which ${{ matrix.host.compiler.cc }})" >> $GITHUB_ENV
+          echo "CXX=$(which ${{ matrix.host.compiler.cc }})" >> $GITHUB_ENV
+      
+      - name: Install dependencies
+        run: |
+          brew update && brew install coreutils lcov && brew install xquartz --cask
 
       - name: Load VTK from cache
         id: vtk-cache
@@ -60,6 +62,8 @@ jobs:
           cd ${{ env.VTK_SRC_DIR }}
           cmake \
             -DCMAKE_BUILD_TYPE:STRING=Release \
+            -DCMAKE_C_COMPILER="${{ env.CC }}" \
+            -DCMAKE_CXX_COMPILER="${{ env.CXX }}" \
             -DBUILD_TESTING:BOOL=OFF \
             -DVTK_OPENGL_HAS_OSMESA:BOOL=OFF \
             -DVTK_DEFAULT_RENDER_WINDOW_OFFSCREEN:BOOL=OFF \
@@ -77,6 +81,8 @@ jobs:
       #     chmod +x ./ci/build.sh
  
       #     VTK_DIR=${{ env.VTK_BUILD_DIR }} \
+      #     CC="${{ env.CC }}" \
+      #     CXX="${{ env.CXX }}" \
       #     VT_TV_BUILD_DIR=${{ env.VT_TV_BUILD_DIR }} \
       #     VT_TV_TESTS_ENABLED=${{ env.VT_TV_TESTS_ENABLED }} \
       #     VT_TV_COVERAGE_ENABLED=${{ env.VT_TV_COVERAGE_ENABLED }} \
