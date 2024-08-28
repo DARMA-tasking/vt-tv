@@ -98,7 +98,7 @@
 #include <variant>
 #include <cmath>
 
-namespace vt { namespace tv {
+namespace vt::tv {
 
 /**
  * \struct Render
@@ -284,6 +284,6 @@ public:
   void generate(uint64_t font_size = 50, uint64_t win_size = 2000);
 };
 
-}} /* end namespace vt::tv */
+} /* end namespace vt::tv */
 
 #endif /*INCLUDED_VT_TV_RENDER_RENDER_H*/

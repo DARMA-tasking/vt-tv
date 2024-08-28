@@ -49,7 +49,7 @@
 
 // using namespace nb::literals;
 
-namespace vt { namespace tv {
+namespace vt::tv {
 
 Render::Render(Info in_info)
   : info_(in_info) // std:move ?
@@ -1068,4 +1068,4 @@ void Render::generate(uint64_t font_size, uint64_t win_size) {
   }
 }
 
-}} // namespace vt::tv
+} // namespace vt::tv
