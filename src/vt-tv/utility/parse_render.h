@@ -53,7 +53,7 @@
 
 #ifdef VT_TV_OPENMP_ENABLED
 #if VT_TV_OPENMP_ENABLED
-  #include <omp.h>
+#include <omp.h>
 #endif
 #endif
 namespace vt::tv::utility {
@@ -64,15 +64,12 @@ namespace vt::tv::utility {
  * \brief Parse YAML file and render based on configuration
  */
 struct ParseRender {
-
   /**
    * \brief Construct the class
    *
    * \param[in] in_filename the yaml file name to read
    */
-  ParseRender(std::string const& in_filename)
-    : filename_(in_filename)
-  { }
+  ParseRender(std::string const& in_filename) : filename_(in_filename) { }
 
   /**
    * \brief Parse yaml file and render
@@ -84,8 +81,7 @@ struct ParseRender {
    */
   void parseAndRender(
     PhaseType phase_id = std::numeric_limits<PhaseType>::max(),
-    std::unique_ptr<Info> info = nullptr
-  );
+    std::unique_ptr<Info> info = nullptr);
 
 private:
   std::string filename_;

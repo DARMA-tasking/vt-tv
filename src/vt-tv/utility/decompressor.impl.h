@@ -55,8 +55,7 @@ namespace vt::tv::utility {
 template <typename Readable>
 Decompressor<Readable>::Decompressor(Readable in_r, std::size_t buf_len_)
   : r_(std::move(in_r)),
-    in_buf_len_(buf_len_)
-{
+    in_buf_len_(buf_len_) {
   // for now, use the default allocator
   dec_ = BrotliDecoderCreateInstance(nullptr, nullptr, nullptr);
   if (!dec_) {
@@ -83,8 +82,7 @@ Decompressor<Readable>::~Decompressor() {
 
 template <typename Readable>
 std::size_t Decompressor<Readable>::read(
-  uint8_t* output_buffer, std::size_t bytes_to_output
-) {
+  uint8_t* output_buffer, std::size_t bytes_to_output) {
   uint8_t* next_out = output_buffer;
   std::size_t avail_out = bytes_to_output;
 
@@ -96,42 +94,41 @@ std::size_t Decompressor<Readable>::read(
   // While we have input data and room to output decompressed data...
   while (avail_out > 0 and not success) {
     BrotliDecoderResult res = BrotliDecoderDecompressStream(
-      dec_, &avail_in_, &next_in_, &avail_out, &next_out, nullptr
-    );
+      dec_, &avail_in_, &next_in_, &avail_out, &next_out, nullptr);
     switch (res) {
-    case BROTLI_DECODER_RESULT_NEEDS_MORE_INPUT:
-    {
+    case BROTLI_DECODER_RESULT_NEEDS_MORE_INPUT: {
       // We need to read more to continue decoding
-      assert(avail_in_ == 0 && "Brotli asked for more input even though we still had some.");
+      assert(
+        avail_in_ == 0 &&
+        "Brotli asked for more input even though we still had some.");
       bool const has_more_input = getMoreInput();
       if (not has_more_input) {
-        assert(false && "Brotli asked for more input but the file terminated early.");
+        assert(
+          false &&
+          "Brotli asked for more input but the file terminated early.");
       }
       break;
     }
-    case BROTLI_DECODER_RESULT_NEEDS_MORE_OUTPUT:
-    {
+    case BROTLI_DECODER_RESULT_NEEDS_MORE_OUTPUT: {
       // this is an expected condition
       assert(
-        avail_out == 0 && "Brotli asked for more output even though we still had some."
-      );
+        avail_out == 0 &&
+        "Brotli asked for more output even though we still had some.");
       break;
     }
-    case BROTLI_DECODER_RESULT_SUCCESS:
-    {
+    case BROTLI_DECODER_RESULT_SUCCESS: {
       if (avail_in_ != 0 or getMoreInput()) {
-        assert(false && "Brotli terminated early before reading the whole file!");
+        assert(
+          false && "Brotli terminated early before reading the whole file!");
       }
       success = true;
       break;
     }
-    case BROTLI_DECODER_RESULT_ERROR:
-    {
+    case BROTLI_DECODER_RESULT_ERROR: {
       // we have hit an unknown error, print the code and corresponding message!
       auto error_code = BrotliDecoderGetErrorCode(dec_);
       auto error_str = fmt::format(
-        "code={}, msg={}\n", error_code, BrotliDecoderErrorString(error_code)
-      );
+        "code={}, msg={}\n", error_code, BrotliDecoderErrorString(error_code));
       fmt::print(error_str);
       assert(false);
       break;

@@ -46,12 +46,12 @@
 #include "vt-tv/render/render.h"
 #include "vt-tv/api/info.h"
 
-
 #include <filesystem>
 
 namespace vt::tv::utility {
 
-void ParseRender::parseAndRender(PhaseType phase_id, std::unique_ptr<Info> info) {
+void ParseRender::parseAndRender(
+  PhaseType phase_id, std::unique_ptr<Info> info) {
   try {
     // Load the yaml file
     YAML::Node config = YAML::LoadFile(filename_);
@@ -71,7 +71,8 @@ void ParseRender::parseAndRender(PhaseType phase_id, std::unique_ptr<Info> info)
         input_dir += '/';
       }
 
-      int64_t n_ranks = config["input"]["n_ranks"].as<int64_t>(); // signed for omp parallel for
+      int64_t n_ranks =
+        config["input"]["n_ranks"].as<int64_t>(); // signed for omp parallel for
 
       // Read JSON file and input data
       std::filesystem::path p = input_dir;
@@ -79,49 +80,45 @@ void ParseRender::parseAndRender(PhaseType phase_id, std::unique_ptr<Info> info)
 
       info = std::make_unique<Info>();
 
-      #ifdef VT_TV_OPENMP_ENABLED
-      #if VT_TV_OPENMP_ENABLED
-        #ifdef VT_TV_N_THREADS
-        const int threads = VT_TV_N_THREADS;
-        #else
-        const int threads = 2;
-        #endif // VT_TV_N_THREADS
-        omp_set_num_threads(threads);
-        fmt::print("vt-tv: Using {} threads\n", threads);
-        # pragma omp parallel for
-      #endif
-      #endif // VT_TV_OPENMP_ENABLED
-        for (int64_t rank = 0; rank < n_ranks; rank++) {
-          fmt::print("Reading file for rank {}\n", rank);
-          utility::JSONReader reader{static_cast<NodeType>(rank)};
-          reader.readFile(input_dir + "data." + std::to_string(rank) + ".json");
-          auto tmpInfo = reader.parse();
-          #ifdef VT_TV_OPENMP_ENABLED
-          #if VT_TV_OPENMP_ENABLED
-            #pragma omp critical
-          #endif
-          #endif
-          {
-          info->addInfo(tmpInfo->getObjectInfo(), tmpInfo->getRank(rank));
-          }
-        }
+#ifdef VT_TV_OPENMP_ENABLED
+#if VT_TV_OPENMP_ENABLED
+#ifdef VT_TV_N_THREADS
+      const int threads = VT_TV_N_THREADS;
+#else
+      const int threads = 2;
+#endif // VT_TV_N_THREADS
+      omp_set_num_threads(threads);
+      fmt::print("vt-tv: Using {} threads\n", threads);
+#pragma omp parallel for
+#endif
+#endif // VT_TV_OPENMP_ENABLED
+      for (int64_t rank = 0; rank < n_ranks; rank++) {
+        fmt::print("Reading file for rank {}\n", rank);
+        utility::JSONReader reader{static_cast<NodeType>(rank)};
+        reader.readFile(input_dir + "data." + std::to_string(rank) + ".json");
+        auto tmpInfo = reader.parse();
+#ifdef VT_TV_OPENMP_ENABLED
+#if VT_TV_OPENMP_ENABLED
+#pragma omp critical
+#endif
+#endif
+        { info->addInfo(tmpInfo->getObjectInfo(), tmpInfo->getRank(rank)); }
+      }
     }
 
     std::array<std::string, 3> qoi_request = {
-      config["viz"]["rank_qoi"].as<std::string>("load"),
-      "",
-      config["viz"]["object_qoi"].as<std::string>("load")
-    };
+      config["viz"]["rank_qoi"].as<std::string>("load"), "",
+      config["viz"]["object_qoi"].as<std::string>("load")};
 
     bool save_meshes = config["viz"]["save_meshes"].as<bool>(true);
     bool save_pngs = config["viz"]["save_pngs"].as<bool>(true);
-    bool continuous_object_qoi = config["viz"]["force_continuous_object_qoi"].as<bool>(true);
+    bool continuous_object_qoi =
+      config["viz"]["force_continuous_object_qoi"].as<bool>(true);
 
     std::array<uint64_t, 3> grid_size = {
       config["viz"]["x_ranks"].as<uint64_t>(),
       config["viz"]["y_ranks"].as<uint64_t>(),
-      config["viz"]["z_ranks"].as<uint64_t>(1)
-    };
+      config["viz"]["z_ranks"].as<uint64_t>(1)};
 
     double object_jitter = config["viz"]["object_jitter"].as<double>(0.5);
 
@@ -168,16 +165,17 @@ void ParseRender::parseAndRender(PhaseType phase_id, std::unique_ptr<Info> info)
 
     // Instantiate render
     Render r(
-      qoi_request, continuous_object_qoi, *std::move(info), grid_size, object_jitter,
-      output_dir, output_file_stem, 1.0, save_meshes, save_pngs, phase_id
-    );
+      qoi_request, continuous_object_qoi, *std::move(info), grid_size,
+      object_jitter, output_dir, output_file_stem, 1.0, save_meshes, save_pngs,
+      phase_id);
 
     if (save_meshes || save_pngs) {
       r.generate(font_size, win_size);
     }
 
   } catch (std::exception const& e) {
-    std::cout << "Error reading the configuration file: " << e.what() << std::endl;
+    std::cout << "Error reading the configuration file: " << e.what()
+              << std::endl;
   }
 }
 

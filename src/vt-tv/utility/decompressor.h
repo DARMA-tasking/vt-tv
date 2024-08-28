@@ -61,7 +61,6 @@ namespace vt::tv::utility {
  */
 template <typename Readable>
 struct Decompressor : DecompressorBase {
-
   /**
    * \brief Construct the decompressor
    *
@@ -80,7 +79,8 @@ struct Decompressor : DecompressorBase {
    *
    * \return how many bytes it actually read into the buffer
    */
-  std::size_t read(uint8_t* output_buffer, std::size_t bytes_to_output) override;
+  std::size_t
+  read(uint8_t* output_buffer, std::size_t bytes_to_output) override;
 
   /**
    * \brief Whether we are done with decompressing the file
@@ -99,11 +99,11 @@ protected:
 
 private:
   Readable r_;
-  BrotliDecoderState* dec_ = nullptr;  /**< Underlying decoder state */
-  std::size_t in_buf_len_ = 0;         /**< Input buffer max length (chunk) */
-  std::unique_ptr<uint8_t[]> buf_in_;  /**< Temporary input buffer to read */
-  uint8_t const* next_in_ = nullptr;   /**< Next input pointer */
-  std::size_t avail_in_ = 0;           /**< Available length of input data */
+  BrotliDecoderState* dec_ = nullptr; /**< Underlying decoder state */
+  std::size_t in_buf_len_ = 0;        /**< Input buffer max length (chunk) */
+  std::unique_ptr<uint8_t[]> buf_in_; /**< Temporary input buffer to read */
+  uint8_t const* next_in_ = nullptr;  /**< Next input pointer */
+  std::size_t avail_in_ = 0;          /**< Available length of input data */
 };
 
 } /* end namespace vt::tv::utility */

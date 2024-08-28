@@ -54,7 +54,6 @@ namespace vt::tv {
  * \brief All the data for a given \c Rank
  */
 struct Rank {
-
   Rank() = default;
 
   /**
@@ -64,13 +63,11 @@ struct Rank {
    * \param[in] in_phase_info all the phase info
    */
   Rank(
-    NodeType in_rank,
-    std::unordered_map<PhaseType, PhaseWork> in_phase_info,
-    std::unordered_map<std::string, QOIVariantTypes> in_attributes = {}
-  ) : rank_(in_rank),
+    NodeType in_rank, std::unordered_map<PhaseType, PhaseWork> in_phase_info,
+    std::unordered_map<std::string, QOIVariantTypes> in_attributes = {})
+    : rank_(in_rank),
       phase_info_(std::move(in_phase_info)),
-      attributes_(std::move(in_attributes))
-  { }
+      attributes_(std::move(in_attributes)) { }
 
   /**
    * \brief Get the rank ID
@@ -98,7 +95,9 @@ struct Rank {
    *
    * \return the load
    */
-  double getLoad(PhaseType phase) const { return phase_info_.at(phase).getLoad(); }
+  double getLoad(PhaseType phase) const {
+    return phase_info_.at(phase).getLoad();
+  }
 
   /**
    * \brief Get attribute fields
@@ -114,15 +113,20 @@ struct Rank {
    *
    * \return the number of objects
    */
-   uint64_t getNumObjects(PhaseType phase) const { return phase_info_.at(phase).getObjectWork().size(); }
+  uint64_t getNumObjects(PhaseType phase) const {
+    return phase_info_.at(phase).getObjectWork().size();
+  }
 
   /**
   * \brief add a received communication to an object at a given phase
   *
   * \return void
   */
-  void addObjectReceivedCommunicationAtPhase(PhaseType phase_id, ElementIDType o_id, ElementIDType from_id, double bytes) {
-    phase_info_.at(phase_id).addObjectReceivedCommunication(o_id, from_id, bytes);
+  void addObjectReceivedCommunicationAtPhase(
+    PhaseType phase_id, ElementIDType o_id, ElementIDType from_id,
+    double bytes) {
+    phase_info_.at(phase_id).addObjectReceivedCommunication(
+      o_id, from_id, bytes);
   };
 
   /**
@@ -130,7 +134,8 @@ struct Rank {
    *
    * \return void
    */
-  void addObjectSentCommunicationAtPhase(PhaseType phase_id, ElementIDType o_id, ElementIDType to_id, double bytes) {
+  void addObjectSentCommunicationAtPhase(
+    PhaseType phase_id, ElementIDType o_id, ElementIDType to_id, double bytes) {
     phase_info_.at(phase_id).addObjectSentCommunication(o_id, to_id, bytes);
   };
 

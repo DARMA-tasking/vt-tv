@@ -70,11 +70,10 @@ struct DecompressionInputContainer {
    * \param[in] in_chunk_size the chunk size to read in increments
    */
   explicit DecompressionInputContainer(
-    std::string const& filename, std::size_t in_chunk_size = 1 << 16
-  );
+    std::string const& filename, std::size_t in_chunk_size = 1 << 16);
 
   /// Tag type for non-file constructor
-  struct AnyStreamTag {};
+  struct AnyStreamTag { };
 
   /**
    * \brief Construct with anything that resembles a stream
@@ -84,8 +83,7 @@ struct DecompressionInputContainer {
    */
   template <typename StreamLike>
   explicit DecompressionInputContainer(
-    AnyStreamTag, StreamLike stream, std::size_t in_chunk_size = 1 << 16
-  );
+    AnyStreamTag, StreamLike stream, std::size_t in_chunk_size = 1 << 16);
 
   /**
    * \brief Advance by one
@@ -102,11 +100,12 @@ struct DecompressionInputContainer {
   char const& getCurrent() const;
 
 private:
-  std::size_t chunk_size_ = 0;                      /**< The chunk size */
-  std::unique_ptr<DecompressorType> d_ = nullptr;   /**< The decompressor */
-  std::unique_ptr<uint8_t[]> output_buf_ = nullptr; /**< The temp output buffer */
-  std::size_t mutable cur_ = 0;                     /**< Current position */
-  std::size_t mutable len_ = 0;                     /**< Max position in buf */
+  std::size_t chunk_size_ = 0;                    /**< The chunk size */
+  std::unique_ptr<DecompressorType> d_ = nullptr; /**< The decompressor */
+  std::unique_ptr<uint8_t[]> output_buf_ =
+    nullptr;                    /**< The temp output buffer */
+  std::size_t mutable cur_ = 0; /**< Current position */
+  std::size_t mutable len_ = 0; /**< Max position in buf */
 };
 
 } /* end namespace vt::tv::utility */

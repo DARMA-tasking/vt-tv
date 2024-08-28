@@ -57,7 +57,6 @@ namespace vt::tv {
  * ranks or phases.
  */
 struct ObjectInfo {
-
   ObjectInfo() = default;
 
   /**
@@ -69,15 +68,12 @@ struct ObjectInfo {
    * \param[in] in_index the index for the object
    */
   ObjectInfo(
-    ElementIDType in_id,
-    NodeType in_home,
-    bool in_migratable,
-    std::vector<UniqueIndexBitType> const& in_index
-  ) : id_(in_id),
+    ElementIDType in_id, NodeType in_home, bool in_migratable,
+    std::vector<UniqueIndexBitType> const& in_index)
+    : id_(in_id),
       home_(in_home),
       migratable_(in_migratable),
-      index_(in_index)
-  { }
+      index_(in_index) { }
 
   /**
    * \brief Get the object's ID

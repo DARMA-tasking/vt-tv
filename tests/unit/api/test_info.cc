@@ -49,16 +49,19 @@
 
 namespace vt::tv::tests::unit::api {
 
-struct InfoTestParam
-{
-  public:
+struct InfoTestParam {
+public:
+  InfoTestParam(
+    uint64_t in_num_objects, int16_t in_num_ranks, size_t in_num_phases)
+    : num_objects(in_num_objects),
+      num_ranks(in_num_ranks),
+      num_phases(in_num_phases) { }
 
-  InfoTestParam(uint64_t in_num_objects, int16_t in_num_ranks, size_t in_num_phases):
-    num_objects(in_num_objects), num_ranks(in_num_ranks), num_phases(in_num_phases) {
-  }
-
-  friend std::ostream& operator<< (std::ostream& stream, const InfoTestParam& param) {
-    stream << "{num_objects: " << std::to_string(param.num_objects) << ", num_ranks: " << std::to_string(param.num_ranks) << ", num_phases: " << std::to_string(param.num_phases) << "}";
+  friend std::ostream&
+  operator<<(std::ostream& stream, const InfoTestParam& param) {
+    stream << "{num_objects: " << std::to_string(param.num_objects)
+           << ", num_ranks: " << std::to_string(param.num_ranks)
+           << ", num_phases: " << std::to_string(param.num_phases) << "}";
     return stream;
   }
 
@@ -70,14 +73,15 @@ struct InfoTestParam
 /**
  * Provides unit tests for the vt::tv::api::Info class
  */
-class InfoTest :public ::testing::TestWithParam<InfoTestParam> { };
+class InfoTest : public ::testing::TestWithParam<InfoTestParam> { };
 
 /**
  * Test Info:getNumRanks returns same number of ranks as defined in the sample
  */
 TEST_P(InfoTest, test_get_num_ranks) {
-  InfoTestParam const & param = GetParam();
-  Info info = Generator::makeInfo(param.num_objects, param.num_ranks, param.num_phases);
+  InfoTestParam const& param = GetParam();
+  Info info =
+    Generator::makeInfo(param.num_objects, param.num_ranks, param.num_phases);
   EXPECT_EQ(info.getNumRanks(), param.num_ranks);
 }
 
@@ -85,8 +89,9 @@ TEST_P(InfoTest, test_get_num_ranks) {
  * Test Info:getNumPhases
  */
 TEST_P(InfoTest, test_get_num_phases) {
-  InfoTestParam const & param = GetParam();
-  Info info = Generator::makeInfo(param.num_objects, param.num_ranks, param.num_phases);
+  InfoTestParam const& param = GetParam();
+  Info info =
+    Generator::makeInfo(param.num_objects, param.num_ranks, param.num_phases);
 
   EXPECT_EQ(info.getNumPhases(), param.num_phases);
 }
@@ -95,8 +100,9 @@ TEST_P(InfoTest, test_get_num_phases) {
  * Test Info:getRankIDs
  */
 TEST_P(InfoTest, test_get_rank_ids) {
-  InfoTestParam const & param = GetParam();
-  Info info = Generator::makeInfo(param.num_objects, param.num_ranks, param.num_phases);
+  InfoTestParam const& param = GetParam();
+  Info info =
+    Generator::makeInfo(param.num_objects, param.num_ranks, param.num_phases);
   fmt::print("{}={}", param.num_phases, info.getNumPhases());
 
   auto rank_ids = std::vector<NodeType>();
@@ -104,18 +110,22 @@ TEST_P(InfoTest, test_get_rank_ids) {
     rank_ids.push_back(rank_id);
   }
 
-  ASSERT_THAT(info.getRankIDs(), ::testing::UnorderedElementsAreArray(rank_ids));
+  ASSERT_THAT(
+    info.getRankIDs(), ::testing::UnorderedElementsAreArray(rank_ids));
 }
 
 /**
  * Test Info:getObjectQoiGetter
  */
 TEST_P(InfoTest, test_get_object_qoi_getter) {
-  InfoTestParam const & param = GetParam();
-  Info info = Generator::makeInfo(param.num_objects, param.num_ranks, param.num_phases);
+  InfoTestParam const& param = GetParam();
+  Info info =
+    Generator::makeInfo(param.num_objects, param.num_ranks, param.num_phases);
 
-  auto qoi_list = std::vector<std::string>({"load", "received_volume", "sent_volume", "max_volume", "id", "rank_id", "non-existent"});
-  for (auto const& qoi: qoi_list) {
+  auto qoi_list = std::vector<std::string>(
+    {"load", "received_volume", "sent_volume", "max_volume", "id", "rank_id",
+     "non-existent"});
+  for (auto const& qoi : qoi_list) {
     auto qoi_getter = info.getObjectQoiGetter(qoi);
   }
 }
@@ -124,7 +134,7 @@ TEST_P(InfoTest, test_get_object_qoi_getter) {
  * Test Info:getAllObjectIDs returns same items as defined in the sample
  */
 TEST_P(InfoTest, test_get_all_object_ids) {
-  InfoTestParam const & param = GetParam();
+  InfoTestParam const& param = GetParam();
 
   auto objects = Generator::makeObjects(param.num_objects);
   auto ranks = Generator::makeRanks(objects, param.num_ranks, param.num_phases);
@@ -135,35 +145,31 @@ TEST_P(InfoTest, test_get_all_object_ids) {
   auto const& actual = info.getAllObjectIDs();
 
   EXPECT_EQ(expected.size(), actual.size());
-  for (auto& pair: expected) {
+  for (auto& pair : expected) {
     auto object_id = pair.first;
-    EXPECT_NE(actual.find(pair.first), actual.end()) << "Cannot find element with id " << object_id;
+    EXPECT_NE(actual.find(pair.first), actual.end())
+      << "Cannot find element with id " << object_id;
   }
 }
 
 /* Run Unit tests using different data sets as Tests params */
 INSTANTIATE_TEST_SUITE_P(
-    InfoTests,
-    InfoTest,
-    ::testing::Values<InfoTestParam>(
-        // num_objects, num_ranks, num_phases
-        InfoTestParam(0,0,0), // empty case
-        InfoTestParam(2,5,1),
-        InfoTestParam(6,1,1)
-    ),
-    [](const testing::TestParamInfo<InfoTest::ParamType>& in_info) {
-      // test suffix
-      return std::to_string(in_info.param.num_objects) + "_" +
-             std::to_string(in_info.param.num_ranks) + "_" +
-             std::to_string(in_info.param.num_phases);
-    }
-);
+  InfoTests, InfoTest,
+  ::testing::Values<InfoTestParam>(
+    // num_objects, num_ranks, num_phases
+    InfoTestParam(0, 0, 0), // empty case
+    InfoTestParam(2, 5, 1), InfoTestParam(6, 1, 1)),
+  [](const testing::TestParamInfo<InfoTest::ParamType>& in_info) {
+    // test suffix
+    return std::to_string(in_info.param.num_objects) + "_" +
+      std::to_string(in_info.param.num_ranks) + "_" +
+      std::to_string(in_info.param.num_phases);
+  });
 
 /**
  * Test Info::addInfo
  */
 TEST_F(InfoTest, test_add_info) {
-
   Info info = Info();
 
   std::vector<size_t> idx;
@@ -191,16 +197,19 @@ TEST_F(InfoTest, test_add_info) {
   EXPECT_EQ(info.getRank(0).getPhaseWork().size(), 1);
 
   // Rank already added. Expected assertion error (DEBUG).
-  ASSERT_DEBUG_DEATH({ info.addInfo(object_info_map, rank); }, "Rank must not exist");
+  ASSERT_DEBUG_DEATH(
+    { info.addInfo(object_info_map, rank); }, "Rank must not exist");
 }
 
 /**
  * Test Info:getNumPhases with inconstent rank phases.
  */
 TEST_F(InfoTest, test_inconsistent_number_of_phases_across_ranks_throws_error) {
-  Rank rank_0 = Rank(0, {{0, {}}}, {}); // Rank with 1 phase
+  Rank rank_0 = Rank(0, {{0, {}}}, {});          // Rank with 1 phase
   Rank rank_1 = Rank(1, {{0, {}}, {1, {}}}, {}); // Rank with 2 phases
-  Info info = Info(Generator::makeObjectInfoMap(Generator::makeObjects(10)), { {0, rank_0}, {1, rank_1} } );
+  Info info = Info(
+    Generator::makeObjectInfoMap(Generator::makeObjects(10)),
+    {{0, rank_0}, {1, rank_1}});
   EXPECT_THROW(info.getNumPhases(), std::runtime_error);
 }
 
@@ -213,27 +222,33 @@ TEST_F(InfoTest, test_get_phase_objects) {
   auto objects_18_info = Generator::makeObjectInfoMap(objects_18);
   auto objects_20_info = Generator::makeObjectInfoMap(objects_20);
 
-  Rank rank_0 = Rank(0, { { 0, PhaseWork(0, objects_15) }, { 1, PhaseWork(1, {}) } }, {});
-  Rank rank_1 = Rank(1, { { 0, PhaseWork(0, {})         }, { 1, PhaseWork(1, objects_18) } }, {});
-  Rank rank_2 = Rank(2, { { 0, PhaseWork(0, objects_20) }, { 1, PhaseWork(1, {}) } }, {});
+  Rank rank_0 =
+    Rank(0, {{0, PhaseWork(0, objects_15)}, {1, PhaseWork(1, {})}}, {});
+  Rank rank_1 =
+    Rank(1, {{0, PhaseWork(0, {})}, {1, PhaseWork(1, objects_18)}}, {});
+  Rank rank_2 =
+    Rank(2, {{0, PhaseWork(0, objects_20)}, {1, PhaseWork(1, {})}}, {});
 
-  auto objects_info = std::unordered_map<ElementIDType,ObjectInfo>();
+  auto objects_info = std::unordered_map<ElementIDType, ObjectInfo>();
   objects_info.merge(objects_15_info);
   objects_info.merge(objects_18_info);
   objects_info.merge(objects_20_info);
 
-  Info info = Info(objects_info, { {0, rank_0}, {1, rank_1} , {2, rank_2} } );
+  Info info = Info(objects_info, {{0, rank_0}, {1, rank_1}, {2, rank_2}});
 
   auto phase_0_objects = info.getPhaseObjects(0);
   for (auto& [key, val] : phase_0_objects) {
-    fmt::print("Phase 0 has object {} at key {} with load {}\n", val.getID(), key, val.getLoad());
+    fmt::print(
+      "Phase 0 has object {} at key {} with load {}\n", val.getID(), key,
+      val.getLoad());
   }
   ASSERT_EQ(phase_0_objects.size(), 4);
   std::vector<int> actual_phase_0_object_ids;
-  for (const auto& [key, val]: phase_0_objects) {
+  for (const auto& [key, val] : phase_0_objects) {
     actual_phase_0_object_ids.push_back(key);
   }
-  ASSERT_THAT(actual_phase_0_object_ids, ::testing::UnorderedElementsAre(0, 1, 4, 5));
+  ASSERT_THAT(
+    actual_phase_0_object_ids, ::testing::UnorderedElementsAre(0, 1, 4, 5));
   ASSERT_EQ(phase_0_objects.at(0).getLoad(), 1.5);
   ASSERT_EQ(phase_0_objects.at(1).getLoad(), 1.5);
   ASSERT_EQ(phase_0_objects.at(4).getLoad(), 2.0);
@@ -241,11 +256,13 @@ TEST_F(InfoTest, test_get_phase_objects) {
 
   auto phase_1_objects = info.getPhaseObjects(1);
   for (auto& [key, val] : phase_1_objects) {
-    fmt::print("Phase 1 has object {} at key {} with load {}\n", val.getID(), key, val.getLoad());
+    fmt::print(
+      "Phase 1 has object {} at key {} with load {}\n", val.getID(), key,
+      val.getLoad());
   }
   ASSERT_EQ(phase_1_objects.size(), 2);
   std::vector<int> actual_phase_1_object_ids;
-  for (const auto& [key, val]: phase_1_objects) {
+  for (const auto& [key, val] : phase_1_objects) {
     actual_phase_1_object_ids.push_back(key);
   }
   ASSERT_THAT(actual_phase_1_object_ids, ::testing::ElementsAre(2, 3));
@@ -265,23 +282,27 @@ TEST_F(InfoTest, test_get_max_load_after_changing_selected_phase) {
   auto objects_18_info = Generator::makeObjectInfoMap(objects_18);
   auto objects_20_info = Generator::makeObjectInfoMap(objects_20);
 
-  Rank rank_0 = Rank(0, { { 0, PhaseWork(0, objects_15) }, { 1, PhaseWork(1, {}) } }, {});
-  Rank rank_1 = Rank(1, { { 0, PhaseWork(0, {})         }, { 1, PhaseWork(1, objects_18) } }, {});
-  Rank rank_2 = Rank(2, { { 0, PhaseWork(0, objects_20) }, { 1, PhaseWork(1, {}) } }, {});
+  Rank rank_0 =
+    Rank(0, {{0, PhaseWork(0, objects_15)}, {1, PhaseWork(1, {})}}, {});
+  Rank rank_1 =
+    Rank(1, {{0, PhaseWork(0, {})}, {1, PhaseWork(1, objects_18)}}, {});
+  Rank rank_2 =
+    Rank(2, {{0, PhaseWork(0, objects_20)}, {1, PhaseWork(1, {})}}, {});
 
-  auto objects_info = std::unordered_map<ElementIDType,ObjectInfo>();
+  auto objects_info = std::unordered_map<ElementIDType, ObjectInfo>();
   objects_info.merge(objects_15_info);
   objects_info.merge(objects_18_info);
   objects_info.merge(objects_20_info);
 
-  Info info = Info(objects_info, { {0, rank_0}, {1, rank_1} , {2, rank_2} } );
+  Info info = Info(objects_info, {{0, rank_0}, {1, rank_1}, {2, rank_2}});
 
   // case selected phase is not initialized.
   // Initial value is memory value at time it is allocated (not allocated in constructor)
   try {
     info.getMaxLoad();
-  } catch(std::exception & e) {
-    fmt::print("Authorized exception (unitialized selected phase): {}\n", e.what());
+  } catch (std::exception& e) {
+    fmt::print(
+      "Authorized exception (unitialized selected phase): {}\n", e.what());
   }
 
   info.setSelectedPhase(1);
@@ -290,7 +311,7 @@ TEST_F(InfoTest, test_get_max_load_after_changing_selected_phase) {
   info.setSelectedPhase(0);
   EXPECT_EQ(info.getMaxLoad(), 2.0);
 
-   // selected phase = all phases
+  // selected phase = all phases
   info.setSelectedPhase(std::numeric_limits<PhaseType>::max());
   EXPECT_EQ(info.getMaxLoad(), 2.0);
 }
@@ -298,10 +319,13 @@ TEST_F(InfoTest, test_get_max_load_after_changing_selected_phase) {
 /**
  * Test Info:getNumPhases with inconstent rank phases.
  */
-TEST_F(InfoTest, test_get_max_volume_throws_out_of_range_after_set_invalid_phase) {
+TEST_F(
+  InfoTest, test_get_max_volume_throws_out_of_range_after_set_invalid_phase) {
   Rank rank_0 = Rank(0, {{0, PhaseWork()}, {1, PhaseWork()}}, {});
   Rank rank_1 = Rank(1, {{0, PhaseWork()}, {1, PhaseWork()}}, {});
-  Info info = Info(Generator::makeObjectInfoMap(Generator::makeObjects(10)), { {0, rank_0}, {1, rank_1} } );
+  Info info = Info(
+    Generator::makeObjectInfoMap(Generator::makeObjects(10)),
+    {{0, rank_0}, {1, rank_1}});
   info.setSelectedPhase(2);
   EXPECT_THROW(info.getMaxVolume(), std::runtime_error);
 }
@@ -322,22 +346,25 @@ TEST_F(InfoTest, test_get_max_volume) {
   objects_18.at(2).addSentCommunications(4, 3.6);
   objects_20.at(4).addReceivedCommunications(2, 3.6);
 
-  Rank rank_0 = Rank(0, { { 0, PhaseWork(0, objects_15) }, { 1, PhaseWork(1, objects_20) } }, {});
-  Rank rank_1 = Rank(1, { { 0, PhaseWork(0, {}) },         { 1, PhaseWork(1, objects_18) } }, {});
+  Rank rank_0 =
+    Rank(0, {{0, PhaseWork(0, objects_15)}, {1, PhaseWork(1, objects_20)}}, {});
+  Rank rank_1 =
+    Rank(1, {{0, PhaseWork(0, {})}, {1, PhaseWork(1, objects_18)}}, {});
 
-  auto objects_info = std::unordered_map<ElementIDType,ObjectInfo>();
+  auto objects_info = std::unordered_map<ElementIDType, ObjectInfo>();
   objects_info.merge(objects_15_info);
   objects_info.merge(objects_18_info);
   objects_info.merge(objects_20_info);
 
-  Info info = Info(objects_info, { {0, rank_0}, {1, rank_1}} );
+  Info info = Info(objects_info, {{0, rank_0}, {1, rank_1}});
 
   // case selected phase is not initialized.
   // Initial value is memory value at time it is allocated (not allocated in constructor)
   try {
     info.getMaxVolume();
-  } catch(std::exception & e) {
-    fmt::print("Authorized exception (unitialized selected phase): {}\n", e.what());
+  } catch (std::exception& e) {
+    fmt::print(
+      "Authorized exception (unitialized selected phase): {}\n", e.what());
   }
 
   info.setSelectedPhase(0);
@@ -358,11 +385,13 @@ TEST_F(InfoTest, test_get_object_qoi) {
   ObjectWork object_0 = ObjectWork(0, 2.0, {}, {}, {});
 
   Info info = Info(
-    Generator::makeObjectInfoMap({{ 0, object_0 }}), // 1 object
-    Generator::makeRanks({{ 0, object_0 }}, 1, 1) // 1 phase 1 rank
+    Generator::makeObjectInfoMap({{0, object_0}}), // 1 object
+    Generator::makeRanks({{0, object_0}}, 1, 1)    // 1 phase 1 rank
   );
-  auto qoi_list = std::vector<std::string>({"load", "received_volume", "sent_volume", "max_volume", "id", "rank_id", "non-existent"});
-  for (auto const& qoi: qoi_list) {
+  auto qoi_list = std::vector<std::string>(
+    {"load", "received_volume", "sent_volume", "max_volume", "id", "rank_id",
+     "non-existent"});
+  for (auto const& qoi : qoi_list) {
     if (qoi == "non-existent") {
       EXPECT_THROW(info.getObjectQoi(0, 0, qoi), std::runtime_error);
     } else {
@@ -388,21 +417,26 @@ TEST_F(InfoTest, test_get_rank_qoi) {
   objects_18.at(2).addSentCommunications(4, 3.6);
   objects_20.at(4).addReceivedCommunications(2, 3.6);
 
-  Rank rank_0 = Rank(0, { { 0, PhaseWork(0, objects_15) }, { 1, PhaseWork(1, objects_20) } }, { {"attr1", 12}, {"attr2", "ab"} });
-  Rank rank_1 = Rank(1, { { 0, PhaseWork(0, {}) },         { 1, PhaseWork(1, objects_18) } }, { {"attr1", 13}, {"attr2", "cd"} });
+  Rank rank_0 = Rank(
+    0, {{0, PhaseWork(0, objects_15)}, {1, PhaseWork(1, objects_20)}},
+    {{"attr1", 12}, {"attr2", "ab"}});
+  Rank rank_1 = Rank(
+    1, {{0, PhaseWork(0, {})}, {1, PhaseWork(1, objects_18)}},
+    {{"attr1", 13}, {"attr2", "cd"}});
 
-  auto objects_info = std::unordered_map<ElementIDType,ObjectInfo>();
+  auto objects_info = std::unordered_map<ElementIDType, ObjectInfo>();
   objects_info.merge(objects_15_info);
   objects_info.merge(objects_18_info);
   objects_info.merge(objects_20_info);
 
-  Info info = Info(objects_info, { {0, rank_0}, {1, rank_1}} );
+  Info info = Info(objects_info, {{0, rank_0}, {1, rank_1}});
 
   // Test getRankQOIGetter
-  auto qoi_list = std::vector<std::string>({"load", "received_volume", "sent_volume", "number_of_objects",
-                                           "number_of_migratable_objects", "migratable_load", "sentinel_load", "id",
-                                          "attr1", "attr2" });
-  for (auto const& qoi: qoi_list) {
+  auto qoi_list = std::vector<std::string>(
+    {"load", "received_volume", "sent_volume", "number_of_objects",
+     "number_of_migratable_objects", "migratable_load", "sentinel_load", "id",
+     "attr1", "attr2"});
+  for (auto const& qoi : qoi_list) {
     auto qoi_getter = info.getRankQOIGetter(qoi);
 
     if (qoi == "id") {
@@ -420,8 +454,10 @@ TEST_F(InfoTest, test_get_rank_qoi) {
   ASSERT_EQ(std::get<int>(info.getRankAttribute(rank_0, "attr1")), 12.0);
   ASSERT_EQ(std::get<int>(info.getRankAttribute(rank_1, "attr1")), 13.0);
 
-  ASSERT_EQ(std::get<std::string>(info.getRankAttribute(rank_0, "attr2")), "ab");
-  ASSERT_EQ(std::get<std::string>(info.getRankAttribute(rank_1, "attr2")), "cd");
+  ASSERT_EQ(
+    std::get<std::string>(info.getRankAttribute(rank_0, "attr2")), "ab");
+  ASSERT_EQ(
+    std::get<std::string>(info.getRankAttribute(rank_1, "attr2")), "cd");
 
   // Test getRankQOIAtPhase method
   ASSERT_EQ(info.getRankQOIAtPhase(0, 0, "sent_volume"), 2.0);
@@ -436,9 +472,13 @@ TEST_F(InfoTest, test_get_rank_qoi) {
   ASSERT_EQ(info.getRankQOIAtPhase(0, 0, "attr1"), 12.0);
 }
 
-TEST_F(InfoTest, test_convert_qoi_variant_type_to_double_throws_runtime_error_for_string) {
+TEST_F(
+  InfoTest,
+  test_convert_qoi_variant_type_to_double_throws_runtime_error_for_string) {
   auto info = Info();
-  EXPECT_THROW(info.convertQOIVariantTypeToDouble_("some_string_value"), std::runtime_error);
+  EXPECT_THROW(
+    info.convertQOIVariantTypeToDouble_("some_string_value"),
+    std::runtime_error);
 }
 
-} // end namespace vt::tv::tests::unit
+} // namespace vt::tv::tests::unit::api

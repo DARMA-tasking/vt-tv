@@ -48,18 +48,18 @@ namespace vt::tv::tests::unit::api {
  * This basic serializer stores items as a map and enable the pipe operator to add
  * items to the inner map. This is useful to test api calls to serialization methods.
  */
-
 template <typename TSerializable>
 class BasicSerializer {
-    public:
-        void operator | (const TSerializable& item) {
-            items[n] = item;
-            n++;
-        }
+public:
+  void operator|(const TSerializable& item) {
+    items[n] = item;
+    n++;
+  }
 
-        std::map<int, TSerializable> items = std::map<int, TSerializable>();
-    private:
-        int n = 0;
+  std::map<int, TSerializable> items = std::map<int, TSerializable>();
+
+private:
+  int n = 0;
 };
 
-}
+} // namespace vt::tv::tests::unit::api

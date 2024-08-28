@@ -57,7 +57,6 @@ namespace vt::tv {
  * \brief The work for a given phase
  */
 struct PhaseWork {
-
   PhaseWork() = default;
 
   /**
@@ -68,10 +67,9 @@ struct PhaseWork {
    */
   PhaseWork(
     PhaseType in_phase,
-    std::unordered_map<ElementIDType, ObjectWork> in_objects
-  ) : phase_(in_phase),
-      objects_(std::move(in_objects))
-  { }
+    std::unordered_map<ElementIDType, ObjectWork> in_objects)
+    : phase_(in_phase),
+      objects_(std::move(in_objects)) { }
 
   /**
    * \brief Get the phase ID
@@ -105,14 +103,17 @@ struct PhaseWork {
    *
    * \return void
    */
-  void setCommunications(ElementIDType o_id, ObjectCommunicator& c) { objects_.at(o_id).setCommunications(c); };
+  void setCommunications(ElementIDType o_id, ObjectCommunicator& c) {
+    objects_.at(o_id).setCommunications(c);
+  };
 
   /**
    * \brief add a received communication to an object in this phase
    *
    * \return void
    */
-  void addObjectReceivedCommunication(ElementIDType o_id, ElementIDType from_id, double bytes) {
+  void addObjectReceivedCommunication(
+    ElementIDType o_id, ElementIDType from_id, double bytes) {
     objects_.at(o_id).addReceivedCommunications(from_id, bytes);
   };
 
@@ -121,7 +122,8 @@ struct PhaseWork {
    *
    * \return void
    */
-  void addObjectSentCommunication(ElementIDType o_id, ElementIDType to_id, double bytes) {
+  void addObjectSentCommunication(
+    ElementIDType o_id, ElementIDType to_id, double bytes) {
     objects_.at(o_id).addSentCommunications(to_id, bytes);
   };
 
@@ -133,7 +135,8 @@ struct PhaseWork {
 
     for (auto const& [obj_id, obj_work] : this->objects_) {
       auto obj_max_v = obj_work.getMaxVolume();
-      if (obj_max_v > ov_max) ov_max = obj_max_v;
+      if (obj_max_v > ov_max)
+        ov_max = obj_max_v;
     }
     return ov_max;
   }

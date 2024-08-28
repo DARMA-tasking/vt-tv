@@ -45,7 +45,7 @@
 
 extern "C" {
 void __ubsan_on_report() {
-   FAIL() << "Encountered an undefined behavior sanitizer error";
+  FAIL() << "Encountered an undefined behavior sanitizer error";
 }
 
 void __asan_on_error() {
@@ -53,13 +53,11 @@ void __asan_on_error() {
 }
 }
 
-int main(int argc, char **argv) {
+int main(int argc, char** argv) {
   ::testing::InitGoogleTest(&argc, argv);
 
   int ret = 0;
-  {
-    ret = RUN_ALL_TESTS();
-  }
+  { ret = RUN_ALL_TESTS(); }
 
   return ret;
 }

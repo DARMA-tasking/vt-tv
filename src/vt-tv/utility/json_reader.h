@@ -60,13 +60,10 @@ namespace vt::tv::utility {
  * \brief Reader for JSON in the LBDataType format.
  */
 struct JSONReader {
-
   /**
    * \brief Construct the reader
    */
-  JSONReader(NodeType in_rank)
-    : rank_(in_rank)
-  { }
+  JSONReader(NodeType in_rank) : rank_(in_rank) { }
 
   /**
    * \brief Check if the file is compressed or not

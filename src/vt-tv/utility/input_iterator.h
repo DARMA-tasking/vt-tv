@@ -64,9 +64,7 @@ struct InputIterator {
   using iterator_category = std::input_iterator_tag;
 
   InputIterator() = default;
-  explicit InputIterator(DecompressionInputContainer const* in_c)
-    : c_(in_c)
-  { }
+  explicit InputIterator(DecompressionInputContainer const* in_c) : c_(in_c) { }
 
   InputIterator& operator++() {
     if (not c_->advance()) {
@@ -76,13 +74,9 @@ struct InputIterator {
     return *this;
   }
 
-  bool operator!=(InputIterator const& rhs) const {
-    return rhs.c_ != c_;
-  }
+  bool operator!=(InputIterator const& rhs) const { return rhs.c_ != c_; }
 
-  reference operator*() const {
-    return c_->getCurrent();
-  }
+  reference operator*() const { return c_->getCurrent(); }
 
 private:
   /// The underlying container with the data.

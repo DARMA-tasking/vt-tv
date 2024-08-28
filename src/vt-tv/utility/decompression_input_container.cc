@@ -48,9 +48,8 @@
 namespace vt::tv::utility {
 
 DecompressionInputContainer::DecompressionInputContainer(
-  std::string const& filename, std::size_t in_chunk_size
-) : chunk_size_(in_chunk_size)
-{
+  std::string const& filename, std::size_t in_chunk_size)
+  : chunk_size_(in_chunk_size) {
   std::ifstream is(filename, std::ios::binary);
   assert(is.good());
   d_ = std::make_unique<DecompressorStreamType<std::ifstream>>(std::move(is));

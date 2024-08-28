@@ -51,8 +51,8 @@ namespace vt::tv::tests::unit::render {
  * Provides unit tests for the standalone vt-tv app.
  * It is similar to the ParseRender tests except it runs as a separate process.
  */
-class StandaloneAppTest :public ::testing::TestWithParam<std::tuple<std::string, int>> {
-
+class StandaloneAppTest
+  : public ::testing::TestWithParam<std::tuple<std::string, int>> {
   void SetUp() override {
     // This test is not testing vt-tv src.
     // That's why it is skipped. But it might be useful locally.
@@ -68,50 +68,59 @@ class StandaloneAppTest :public ::testing::TestWithParam<std::tuple<std::string,
  * Test standalone app run with different configuration files
  */
 TEST_P(StandaloneAppTest, test_run) {
-    std::string config_file = fmt::format("{}/tests/config/{}", SRC_DIR, std::get<0>(GetParam()));
-    int expected_phases = std::get<1>(GetParam());
+  std::string config_file =
+    fmt::format("{}/tests/config/{}", SRC_DIR, std::get<0>(GetParam()));
+  int expected_phases = std::get<1>(GetParam());
 
-    // Run vt-tv_standalone process
-    auto cmd = fmt::format("{}/apps/vt-tv_standalone --conf={}", BUILD_DIR, config_file);
-    const auto [status, output] = Util::exec(cmd.c_str());
-    fmt::print(output);
+  // Run vt-tv_standalone process
+  auto cmd =
+    fmt::format("{}/apps/vt-tv_standalone --conf={}", BUILD_DIR, config_file);
+  const auto [status, output] = Util::exec(cmd.c_str());
+  fmt::print(output);
 
-    // Load config for some checks
-    auto config = YAML::LoadFile(config_file);
-    std::string output_dir = Util::resolveDir(SRC_DIR, config["output"]["directory"].as<std::string>(), true);
-    std::string output_file_stem = config["output"]["file_stem"].as<std::string>();
+  // Load config for some checks
+  auto config = YAML::LoadFile(config_file);
+  std::string output_dir = Util::resolveDir(
+    SRC_DIR, config["output"]["directory"].as<std::string>(), true);
+  std::string output_file_stem =
+    config["output"]["file_stem"].as<std::string>();
 
-    if (config["viz"]["object_qoi"].as<std::string>() == "shared_block_id") {
-      // Temporary: this case must be removed as soon as the `shared_block_id` QOI becomes supported.
-      EXPECT_THAT(output, ::testing::HasSubstr("Error reading the configuration file: Invalid Object QOI: shared_block_id"));
-    } else {
-      // Expect 1 output file per phase for both rank meshes and object meshes
-      for (int64_t i = 0; i<expected_phases; i++) {
-        ASSERT_TRUE(
-          std::filesystem::exists(fmt::format("{}{}_rank_mesh_{}.vtp", output_dir, output_file_stem, i))
-        ) << fmt::format("Rank mesh not generated at {}{}_rank_mesh_{}.vtp", output_dir, output_file_stem, i);
-        ASSERT_TRUE(
-          std::filesystem::exists(fmt::format("{}{}_object_mesh_{}.vtp", output_dir, output_file_stem, i))
-        ) << fmt::format("Object mesh not generated at {}{}_object_mesh_{}.vtp", output_dir, output_file_stem, i);
-      }
+  if (config["viz"]["object_qoi"].as<std::string>() == "shared_block_id") {
+    // Temporary: this case must be removed as soon as the `shared_block_id` QOI becomes supported.
+    EXPECT_THAT(
+      output,
+      ::testing::HasSubstr("Error reading the configuration file: Invalid "
+                           "Object QOI: shared_block_id"));
+  } else {
+    // Expect 1 output file per phase for both rank meshes and object meshes
+    for (int64_t i = 0; i < expected_phases; i++) {
+      ASSERT_TRUE(std::filesystem::exists(
+        fmt::format("{}{}_rank_mesh_{}.vtp", output_dir, output_file_stem, i)))
+        << fmt::format(
+             "Rank mesh not generated at {}{}_rank_mesh_{}.vtp", output_dir,
+             output_file_stem, i);
+      ASSERT_TRUE(std::filesystem::exists(fmt::format(
+        "{}{}_object_mesh_{}.vtp", output_dir, output_file_stem, i)))
+        << fmt::format(
+             "Object mesh not generated at {}{}_object_mesh_{}.vtp", output_dir,
+             output_file_stem, i);
     }
+  }
 }
 
 /* Run with different configuration files */
 INSTANTIATE_TEST_SUITE_P(
-    StandaloneAppTests,
-    StandaloneAppTest,
-    // config file and expected number of phases
-    ::testing::Values(
-        // std::make_tuple<std::string, int>("conf.yaml", 8),
-        std::make_tuple<std::string, int>("ccm-example.yaml", 1)
-    ),
-    [](const ::testing::TestParamInfo<std::tuple<std::string, int>>& in_info) {
-      // test suffix as slug
-      auto suffix = std::regex_replace(std::get<0>(in_info.param), std::regex("\\.yaml"), "");
-      suffix = std::regex_replace(suffix, std::regex("-"), "_");
-      return suffix;
-    }
-);
+  StandaloneAppTests, StandaloneAppTest,
+  // config file and expected number of phases
+  ::testing::Values(
+    // std::make_tuple<std::string, int>("conf.yaml", 8),
+    std::make_tuple<std::string, int>("ccm-example.yaml", 1)),
+  [](const ::testing::TestParamInfo<std::tuple<std::string, int>>& in_info) {
+    // test suffix as slug
+    auto suffix =
+      std::regex_replace(std::get<0>(in_info.param), std::regex("\\.yaml"), "");
+    suffix = std::regex_replace(suffix, std::regex("-"), "_");
+    return suffix;
+  });
 
-} // end namespace vt::tv::tests::unit
+} // namespace vt::tv::tests::unit::render
