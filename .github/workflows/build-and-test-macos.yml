@@ -35,8 +35,8 @@ jobs:
 
       - name: Set folder permissions
         run: |
-          sudo mkdir -p ${{ env.VTK_SRC_DIR }} ${{ env.VTK_BUILD_DIR }}
-          sudo chown -R $(whoami) ${{ env.VTK_SRC_DIR }} ${{ env.VTK_BUILD_DIR }}
+          sudo mkdir -p ${{ env.VTK_SRC_DIR }} ${{ env.VTK_BUILD_DIR }} ${{ env.VT_TV_OUTPUT_DIR }}
+          sudo chown -R $(whoami) ${{ env.VTK_SRC_DIR }} ${{ env.VTK_BUILD_DIR }} ${{ env.VT_TV_OUTPUT_DIR }}
 
       - name: Set environment variables
         run: |
@@ -99,9 +99,6 @@ jobs:
 
       - name: Test
         run: |
-          sudo mkdir -p ${{ env.VT_TV_OUTPUT_DIR }}
-          sudo chown -R $(whoami) ${{ env.VT_TV_OUTPUT_DIR }}
-
           cd ${{ github.workspace }}
           sudo \
             VT_TV_BUILD=OFF \
