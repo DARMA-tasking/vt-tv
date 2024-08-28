@@ -22,9 +22,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install X11 dependencies
+      - name: Install dependencies
         run: |
-          brew --cask install xquartz
+          brew install xquartz --cask
 
       - name: Set up environment
         run:
