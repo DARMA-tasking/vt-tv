@@ -596,7 +596,7 @@ Render::createColorTransferFunction_(
     const std::pair<double, double>& range =
       std::get<std::pair<double, double>>(attribute_range);
     switch (ct) {
-    case BlueToRed: {
+    case ColorType::BlueToRed: {
       ctf->SetColorSpaceToDiverging();
       double const mid_point = (range.first + range.second) * .5;
       ctf->AddRGBPoint(range.first, .231, .298, .753);
@@ -606,7 +606,7 @@ Render::createColorTransferFunction_(
       ctf->SetAboveRangeColor(1.0, 0.0, 1.0);
       break;
     }
-    case HotSpot: {
+    case ColorType::HotSpot: {
       ctf->SetColorSpaceToDiverging();
       double const mid_point1 = (range.second - range.first) * 0.25;
       double const mid_point2 = (range.second - range.first) * 0.75;
@@ -620,14 +620,14 @@ Render::createColorTransferFunction_(
       ctf->SetAboveRangeColor(1.0, 1.0, 0.0); // Yellow
       break;
     }
-    case WhiteToBlack: {
+    case ColorType::WhiteToBlack: {
       ctf->AddRGBPoint(range.first, 1.0, 1.0, 1.0);
       ctf->AddRGBPoint(range.second, 0.0, 0.0, 0.0);
       ctf->SetBelowRangeColor(0.0, 0.0, 1.0);
       ctf->SetAboveRangeColor(1.0, 0.0, 0.0);
       break;
     }
-    case Default: {
+    case ColorType::Default: {
       double const mid_point = (range.first + range.second) * .5;
       ctf->AddRGBPoint(range.first, .431, .761, .161);
       ctf->AddRGBPoint(mid_point, .98, .992, .059);
@@ -752,7 +752,7 @@ Render::createColorTransferFunction_(
     vtkSmartPointer<vtkPolyDataMapper>::New();
   rank_mapper->SetInputConnection(trans->GetOutputPort());
   rank_mapper->SetLookupTable(
-    createColorTransferFunction_(rank_qoi_range, BlueToRed));
+    createColorTransferFunction_(rank_qoi_range, ColorType::BlueToRed));
   // Check the type held by the variant qoi range and set the scalar range appropriately
   if (std::holds_alternative<std::pair<double, double>>(rank_qoi_range)) {
     auto range_pair = std::get<std::pair<double, double>>(rank_qoi_range);

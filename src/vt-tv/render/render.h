@@ -107,7 +107,7 @@ namespace vt { namespace tv {
  */
 struct Render {
 private:
-  enum ColorType { Default, BlueToRed, HotSpot, WhiteToBlack };
+  enum struct ColorType: uint8_t { Default = 0, BlueToRed = 1, HotSpot = 2, WhiteToBlack = 3 };
 
   // quantities of interest
   std::string rank_qoi_ = "load";
