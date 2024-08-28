@@ -99,11 +99,15 @@ jobs:
 
       - name: Test
         run: |
+          sudo mkdir -p ${{ env.VT_TV_OUTPUT_DIR }}
+          sudo chown -R $(whoami) ${{ env.VT_TV_OUTPUT_DIR }}
+
           cd ${{ github.workspace }}
           sudo \
             VT_TV_BUILD=OFF \
             VT_TV_RUN_TESTS=ON \
-            VT_TV_BUILD_DIR=${{ env.VT_TV_BUILD_DIR }}
+            VT_TV_BUILD_DIR="${{ env.VT_TV_BUILD_DIR }}" \
+            VT_TV_OUTPUT_DIR="${{ env.VT_TV_OUTPUT_DIR }}"
             ./build.sh
 
       # - name: Build and Test Python bindings
@@ -120,7 +124,8 @@ jobs:
       - name: Collect artifacts
         run: |
           # Add artifacts
-          mkdir -p ${{ env.VT_TV_ARTIFACTS_DIR }}
+          sudo mkdir -p ${{ env.VT_TV_ARTIFACTS_DIR }}
+          sudo chown -R $(whoami) ${{ env.VT_TV_ARTIFACTS_DIR }}
 
           # > go to output directory
           pushd ${{ env.VT_TV_OUTPUT_DIR }}
