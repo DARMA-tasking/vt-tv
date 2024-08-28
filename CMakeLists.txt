@@ -45,8 +45,8 @@ set(VT_TV_N_THREADS "2" CACHE STRING "Number of OpenMP threads to use")
 
 include(cmake/load_packages.cmake)
 
-if(APPLE)
-  add_compile_options(-ffat-lto-objects -Wno-ignored-optimization-argument)
+if(APPLE AND NOT CMAKE_CXX_COMPILER_ID MATCHES "AppleClang")
+  add_compile_options(-ffat-lto-objects)
 endif()
 
 add_definitions(-DVT_TV_N_THREADS=${VT_TV_N_THREADS})
