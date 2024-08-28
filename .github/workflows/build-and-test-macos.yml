@@ -86,7 +86,8 @@ jobs:
           CC="${{ env.CC }}" \
           CXX="${{ env.CXX }}" \
           VTK_DIR="${{ env.VTK_BUILD_DIR }}" \
-          VT_TV_BUILD_DIR=${{ env.VT_TV_BUILD_DIR }} \
+          VT_TV_BUILD_DIR="${{ env.VT_TV_BUILD_DIR }}" \
+          VT_TV_CLEAN=OFF \
           VT_TV_TESTS_ENABLED=${{ env.VT_TV_TESTS_ENABLED }} \
           VT_TV_COVERAGE_ENABLED=${{ env.VT_TV_COVERAGE_ENABLED }} \
           GCOV=${{ matrix.host.gcov }} \
