@@ -99,7 +99,7 @@ public:
    * \param[in] base_path Prepends "{base_path}/" to the path if path is relative
    * \param[in] path The path as either a relative or an absolute path
    * \param[in] add_trailing_sep Appends a trailing "/" char at the end of the path if not exist
-   * 
+   *
    * \return the absolute path to the directory
    */
   static std::string resolveDir(
