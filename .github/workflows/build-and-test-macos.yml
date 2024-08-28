@@ -18,20 +18,16 @@ jobs:
     name: vt-tv build and test
     env:
         VTK_DIR: /opt/build/vtk
-        SEGMENT_DOWNLOAD_TIMEOUT_MINS: 60
+        VT_TV_TESTS_ENABLED: "ON"
+        VT_TV_COVERAGE_ENABLED: "ON"
+        VT_TV_OUTPUT_DIR: /var/vt-tv/output
+        VT_TV_ARTIFACTS_DIR: /tmp/artifacts
     steps:
       - uses: actions/checkout@v4
 
       - name: Install dependencies
         run: |
           brew install xquartz --cask
-
-      - name: Set up environment
-        run:
-          export VTK_DIR=${{ env.VTK_DIR }}
-          # export CC=${{ matrix.compiler[0] }}
-          # export CXX=${{ matrix.compiler[1] }}
-          # export GCOV=${{ matrix.compiler[2] }}
 
       - name: Set up cache
         id: vtk-cache
@@ -47,7 +43,7 @@ jobs:
           sudo mkdir -p /opt/src/vtk
           sudo git clone --recursive --branch v${{ matrix.vtk_version }} https://gitlab.kitware.com/vtk/vtk.git /opt/src/vtk
 
-          sudo mkdir -p ${VTK_DIR}
+          sudo mkdir -p ${{ env.VTK_DIR }}
           cd ${VTK_DIR}
           sudo cmake \
             -DCMAKE_BUILD_TYPE:STRING=Release \
@@ -59,20 +55,71 @@ jobs:
             -DVTK_USE_SDL2:BOOL=OFF \
             -DVTK_Group_Rendering:BOOL=OFF \
             -DBUILD_SHARED_LIBS:BOOL=ON \
-            -S /opt/src/vtk -B ${VTK_DIR}
-          sudo cmake --build ${VTK_DIR} -j$(sysctl -n hw.logicalcpu)
+            -S /opt/src/vtk -B ${{ env.VTK_DIR }}
+          sudo cmake --build ${{ env.VTK_DIR }} -j$(sysctl -n hw.logicalcpu)
 
-      - name: Build VT-TV
+      - name: Build
         run: |
           cd ${{ github.workspace }}
           sudo chmod +x ./ci/build.sh
           sudo mkdir -p /opt/build/vt-tv
-          sudo VT_TV_COVERAGE_ENABLED=OFF ./ci/build.sh
+          sudo VTK_DIR=/opt/build/vtk \
+            VT_TV_TESTS_ENABLED=${{ env.VT_TV_TESTS_ENABLED }} \
+            VT_TV_COVERAGE_ENABLED=${{ env.VT_TV_COVERAGE_ENABLED }} \
+            VT_TV_WERROR_ENABLED=ON \
+          ./build.sh
 
       - name: Test
         run: |
           cd ${{ github.workspace }}
           sudo mkdir -p /opt/build/vt-tv
-          sudo VT_TV_BUILD=OFF VT_TV_RUN_TESTS=ON ./ci/build.sh
+          sudo VT_TV_BUILD=OFF VT_TV_RUN_TESTS=ON ./build.sh
 
-        
+      - name: Collect artifacts
+        run: |
+          # Add artifacts
+          mkdir -p ${{ env.VT_TV_ARTIFACTS_DIR }}
+
+          # > go to output directory
+          pushd ${{ env.VT_TV_OUTPUT_DIR }}
+
+          # > add the unit tests report artifact
+          cp "junit-report.xml" ${{ env.VT_TV_ARTIFACTS_DIR }}/ || true
+
+          # > add mesh files and png artifacts
+          if [ -d "${{ env.VT_TV_OUTPUT_DIR }}" ]; then
+              cp "${{ env.VT_TV_OUTPUT_DIR }}/"*".vtp"  ${{ env.VT_TV_ARTIFACTS_DIR }}/
+              cp "${{ env.VT_TV_OUTPUT_DIR }}/"*".png"  ${{ env.VT_TV_ARTIFACTS_DIR }}/
+          fi
+
+          if [[ "${{ env.VT_TV_COVERAGE_ENABLED }}" == "ON" ]]; then
+              # > add `coverage --list` file artifact
+              lcov --list lcov_vt-tv_test_no_deps.info > ${{ env.VT_TV_ARTIFACTS_DIR }}/lcov-list-report.txt
+
+              # > add total lines coverage file artifact (percentage of lines covered)
+              # might be useful for generating later a badge in ci
+              LCOV_SUMMARY=$(lcov --summary lcov_vt-tv_test_no_deps.info)
+              LCOV_TOTAL_LINES_COV=$(echo $LCOV_SUMMARY | grep -E -o 'lines......: ([0-9.]+)*' | grep -o -E '[0-9]+.[0-9]+')
+              echo $LCOV_TOTAL_LINES_COV > lcov-lines-total.txt
+              cp lcov-lines-total.txt ${{ env.VT_TV_ARTIFACTS_DIR }}/
+          fi
+          popd
+
+          # list artifacts dir content
+          ls ${{ env.VT_TV_ARTIFACTS_DIR }}
+
+      - name: Unit tests
+        if: ${{ env.VT_TV_TESTS_ENABLED == 'ON' }}
+        uses: phoenix-actions/test-reporting@v15
+        with:
+          name: Tests report
+          path: ${{ env.VT_TV_ARTIFACTS_DIR }}/junit-report.xml
+          reporter: java-junit
+          output-to: step-summary
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: vt-tv-artifacts
+          path: ${{ env.VT_TV_ARTIFACTS_DIR }}
