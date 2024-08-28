@@ -40,8 +40,8 @@ jobs:
       - name: Set environment variables
         run: |
           echo "CC=$(which ${{ matrix.host.compiler.cc }})" >> $GITHUB_ENV
-          echo "CXX=$(which ${{ matrix.host.compiler.cc }})" >> $GITHUB_ENV
-      
+          echo "CXX=$(which ${{ matrix.host.compiler.cxx }})" >> $GITHUB_ENV
+
       - name: Install dependencies
         run: |
           brew update && brew install coreutils lcov && brew install xquartz --cask
@@ -62,9 +62,9 @@ jobs:
           cd ${{ env.VTK_SRC_DIR }}
           cmake \
             -DCMAKE_BUILD_TYPE:STRING=Release \
+            -DBUILD_TESTING:BOOL=OFF \
             -DCMAKE_C_COMPILER="${{ env.CC }}" \
             -DCMAKE_CXX_COMPILER="${{ env.CXX }}" \
-            -DBUILD_TESTING:BOOL=OFF \
             -DVTK_OPENGL_HAS_OSMESA:BOOL=OFF \
             -DVTK_DEFAULT_RENDER_WINDOW_OFFSCREEN:BOOL=OFF \
             -DVTK_USE_X:BOOL=OFF \
