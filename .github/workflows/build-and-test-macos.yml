@@ -100,12 +100,11 @@ jobs:
       - name: Test
         run: |
           cd ${{ github.workspace }}
-          sudo \
-            VT_TV_BUILD=OFF \
-            VT_TV_RUN_TESTS=ON \
-            VT_TV_BUILD_DIR="${{ env.VT_TV_BUILD_DIR }}" \
-            VT_TV_OUTPUT_DIR="${{ env.VT_TV_OUTPUT_DIR }}"
-            ./build.sh
+          VT_TV_BUILD=OFF \
+          VT_TV_RUN_TESTS=ON \
+          VT_TV_BUILD_DIR="${{ env.VT_TV_BUILD_DIR }}" \
+          VT_TV_OUTPUT_DIR="${{ env.VT_TV_OUTPUT_DIR }}" \
+          ./build.sh
 
       # - name: Build and Test Python bindings
       #   run: |
