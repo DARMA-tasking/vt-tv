@@ -92,7 +92,7 @@ jobs:
           VT_TV_CLEAN=OFF \
           VT_TV_TESTS_ENABLED=${{ env.VT_TV_TESTS_ENABLED }} \
           VT_TV_COVERAGE_ENABLED=${{ env.VT_TV_COVERAGE_ENABLED }} \
-          GCOV=${{ env.GCOV }} \
+          GCOV="${{ env.GCOV }}" \
           VT_TV_PYTHON_BINDINGS_ENABLED=OFF \
           VT_TV_WERROR_ENABLED=ON \
           ./build.sh

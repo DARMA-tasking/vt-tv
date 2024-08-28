@@ -78,7 +78,7 @@ include(CTest) #adds option BUILD_TESTING (default ON)
 message(STATUS "VT_TV_COVERAGE_ENABLED: ${VT_TV_COVERAGE_ENABLED}")
 if (VT_TV_COVERAGE_ENABLED)
   add_compile_options(-fprofile-arcs -ftest-coverage -O0)
-  add_link_options(-lgcov --coverage)
+  add_link_options(--coverage)
 endif()
 
 message(STATUS "VT_TV_TESTS_ENABLED: ${VT_TV_TESTS_ENABLED}")
