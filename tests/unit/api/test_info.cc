@@ -179,7 +179,7 @@ INSTANTIATE_TEST_SUITE_P(
 TEST_F(InfoTest, test_add_info) {
   Info info = Info();
 
-  std::vector<size_t> idx;
+  std::vector<UniqueIndexBitType> idx;
 
   // Create object info and add to a map
   ObjectInfo o_info = ObjectInfo(0, 0, true, idx);
