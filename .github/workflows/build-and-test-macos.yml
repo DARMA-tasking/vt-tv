@@ -30,7 +30,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          brew update && brew install core-utils lcov xquartz --cask
+          brew update && brew install coreutils lcov && brew install xquartz --cask
 
       - name: Set up cache
         id: vtk-cache
