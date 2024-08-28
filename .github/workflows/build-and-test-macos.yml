@@ -18,66 +18,39 @@ jobs:
     name: vt-tv build and test
     env:
         VTK_DIR: /opt/build/vtk
+        SEGMENT_DOWNLOAD_TIMEOUT_MINS: 60
     steps:
       - uses: actions/checkout@v4
 
-      - name: CI Variables
-        id: vars
-        run: echo "DOCKER_TAG=$(echo ${{ github.ref }} | cut -d'/' -f3- | sed 's/[^a-z0-9_-]/__/gi')" >> $GITHUB_ENV
+      - name: Install X11 dependencies
+        run: |
+          brew --cask install xquartz
 
-      # - name: Install requirements
-      #   run: |
-      #     brew update && brew install \
-      #       lzip \
-      #       mesa \
-      #       mesa-glu \
-      #       boost \
-      #       double-conversion \
-      #       eigen \
-      #       gl2ps \
-      #       glew \
-      #       libaec \
-      #       hdf5 \
-      #       jsoncpp \
-      #       libogg \
-      #       netcdf \
-      #       pugixml \
-      #       assimp \
-      #       dbus \
-      #       hunspell \
-      #       jasper \
-      #       libb2 \
-      #       libmng \
-      #       md4c \
-      #       webp \
-      #       qt \
-      #       pyqt \
-      #       libvorbis \
-      #       theora \
-      #       utf8cpp
-            # export CC=${{ matrix.compiler[0] }}
-            # export CXX=${{ matrix.compiler[1] }}
-            # export GCOV=${{ matrix.compiler[2] }}
-            # export VTK_DIR=${{ env.VTK_DIR }}
+      - name: Set up environment
+        run:
+          export VTK_DIR=${{ env.VTK_DIR }}
+          # export CC=${{ matrix.compiler[0] }}
+          # export CXX=${{ matrix.compiler[1] }}
+          # export GCOV=${{ matrix.compiler[2] }}
 
-      # Once it is ok activate cache
-      # - name: Cache VTK Build
-      #   uses: actions/cache@v3
-      #   with:
-      #     path: /opt/build/vtk
-      #     key: ${{ matrix.os }}-vtk-build-${{ matrix.vtk_version }}
-
+      - name: Set up cache
+        id: vtk-cache
+        uses: actions/cache@v3
+        with:
+          path: /opt/build/vtk
+          key: ${{ matrix.os }}-vtk-build-${{ matrix.vtk_version }}
 
       - name: Build VTK
-        # TODO only if not cached, setting compiler does not work (AppleClang used)
-        run: |         
+        id: cache-vtk-build
+        if: ${{steps.vtk-cache.outputs.cache-hit != 'true'}}
+        run: |
           sudo mkdir -p /opt/src/vtk
           sudo git clone --recursive --branch v${{ matrix.vtk_version }} https://gitlab.kitware.com/vtk/vtk.git /opt/src/vtk
 
           sudo mkdir -p ${VTK_DIR}
           cd ${VTK_DIR}
           sudo cmake \
-            -DCMAKE_BUILD_TYPE:STRING=Debug \
+            -DCMAKE_BUILD_TYPE:STRING=Release \
             -DBUILD_TESTING:BOOL=OFF \
             -DVTK_OPENGL_HAS_OSMESA:BOOL=OFF \
             -DVTK_DEFAULT_RENDER_WINDOW_OFFSCREEN:BOOL=OFF \
@@ -87,4 +60,19 @@ jobs:
             -DVTK_Group_Rendering:BOOL=OFF \
             -DBUILD_SHARED_LIBS:BOOL=ON \
             -S /opt/src/vtk -B ${VTK_DIR}
-          sudo cmake --build ${VTK_DIR} -j$(sysctl -n hw.logicalcpu)           
+          sudo cmake --build ${VTK_DIR} -j$(sysctl -n hw.logicalcpu)
+
+      - name: Build VT-TV
+        run: |
+          cd ${{ github.workspace }}
+          sudo chmod +x ./ci/build.sh
+          sudo mkdir -p /opt/build/vt-tv
+          sudo VT_TV_COVERAGE_ENABLED=OFF ./ci/build.sh
+
+      - name: Test
+        run: |
+          cd ${{ github.workspace }}
+          sudo mkdir -p /opt/build/vt-tv
+          sudo VT_TV_BUILD=OFF VT_TV_RUN_TESTS=ON ./ci/build.sh
+
+        
