@@ -31,6 +31,9 @@ jobs:
       - name: Install dependencies
         run: |
           brew update && brew install coreutils lcov && brew install xquartz --cask
+          echo $(whoami)
+          sudo mkdir -p /opt/build
+          sudo chown -R $(whoami) /opt/build
 
       - name: Set up cache
         id: vtk-cache
