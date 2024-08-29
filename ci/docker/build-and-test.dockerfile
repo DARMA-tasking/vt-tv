@@ -1,7 +1,7 @@
 ARG BASE_IMAGE=lifflander1/vt:ubuntu_22.04-gcc_11-vtk_9.2.2-py_3.8
 ARG VT_TV_TESTS_ENABLED=OFF
 ARG VT_TV_COVERAGE_ENABLED=OFF
-ARG VT_TV_PYTHON_BINDINGS_ENABLED=ON
+ARG VT_TV_TEST_PYTHON_BINDINGS=OFF
 
 FROM ${BASE_IMAGE} AS base
 
@@ -27,10 +27,7 @@ RUN VT_TV_COVERAGE_ENABLED=$VT_TV_COVERAGE_ENABLED bash /opt/src/vt-tv/ci/test_c
 
 # Python tests (Builds VT-TV with Python bindings & test python package)
 FROM base AS test-python
-ARG VT_TV_PYTHON_BINDINGS_ENABLED=OFF
-RUN if [[ VT_TV_PYTHON_BINDINGS_ENABLED == "ON" ]]; then \n \
-    bash /opt/src/vt-tv/ci/test_python.sh \n \
-    fi
+RUN bash /opt/src/vt-tv/ci/test_python.sh
 
 # Artifacts
 FROM scratch AS artifacts
