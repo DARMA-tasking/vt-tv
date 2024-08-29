@@ -26,7 +26,7 @@ jobs:
         VT_TV_TESTS_ENABLED: "ON"
         VT_TV_COVERAGE_ENABLED: ${{ matrix.host.compiler.gcov == '' && 'OFF' || 'ON'  }}
         VT_TV_OUTPUT_DIR: ${{ github.workspace }}/output
-        VT_TV_TESTS_OUTPUT_DIR: /opt/src/vt-tv/output/tests
+        VT_TV_TESTS_OUTPUT_DIR: ${{ github.workspace }}/output/tests
         VT_TV_ARTIFACTS_DIR: /tmp/artifacts
         CC: ~
         CXX: ~
