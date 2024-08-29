@@ -29,7 +29,7 @@ jobs:
 
       - name: CI Variables
         id: vars
-        run: echo "DOCKER_TAG=$(echo ${{ github.ref }} | cut -d'/' -f3- | sed 's/[^a-z0-9_-]/__/gi')" >> $GITHUB_ENV
+        run: echo "DOCKER_TAG=vt-tv-build-and-test-ubuntu:$(date +%s)" >> $GITHUB_ENV
 
       - name: Set up Docker Buildx
         id: buildx

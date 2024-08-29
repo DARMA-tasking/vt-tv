@@ -157,7 +157,7 @@ jobs:
             pip install PyYAML
             pip install .
             # Test
-            # Create an output directory (required)
+            # Create vizualization output directory (required)
             sudo mkdir -p /opt/build/vt-tv/test_output
             sudo chown $(whoami) /opt/build/vt-tv/test_output
             python ./tests/test_bindings.py

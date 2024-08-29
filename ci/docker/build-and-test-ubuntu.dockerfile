@@ -13,6 +13,12 @@ RUN apt-get update && apt-get install -y \
 COPY . /opt/src/vt-tv
 RUN mkdir -p /opt/build/vt-tv
 
+# Python tests (Builds VT-TV with Python bindings & test python package)
+FROM base AS test-python
+# Create vizualization output directory (required)
+RUN mkdir -p /opt/build/vt-tv/test_output
+RUN bash /opt/src/vt-tv/ci/test_python.sh
+
 # Build
 FROM base AS build
 ARG VT_TV_COVERAGE_ENABLED=OFF
@@ -24,7 +30,6 @@ FROM build AS test-cpp
 ARG VT_TV_COVERAGE_ENABLED=OFF
 ARG VT_TV_TESTS_ENABLED=OFF
 RUN VT_TV_COVERAGE_ENABLED=$VT_TV_COVERAGE_ENABLED bash /opt/src/vt-tv/ci/test_cpp.sh
-RUN bash /opt/src/vt-tv/ci/test_python.sh
 
 # Artifacts
 FROM scratch AS artifacts
