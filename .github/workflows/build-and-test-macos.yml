@@ -148,8 +148,7 @@ jobs:
         run: |
           declare -a PYTHON_VERSIONS=${{ env.PYTHON_VERSIONS }}
           for python_version in "${PYTHON_VERSIONS[@]}"
-          do
-            echo "> Build & Test for Python ${python_version}"
+            echo "::group Build & Test Python Bindings (${python_version})"
             # Activate conda environment
             . ~/miniconda3/etc/profile.d/conda.sh && conda activate py${python_version}
             # Add PyYaml dep and build vt-tv
@@ -163,6 +162,7 @@ jobs:
             python ./tests/test_bindings.py
             # Deactivate conda environment
             conda deactivate
+            echo "::endgroup"
           done
 
       - name: Collect artifacts
