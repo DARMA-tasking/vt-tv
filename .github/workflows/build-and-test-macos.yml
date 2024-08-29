@@ -156,7 +156,7 @@ jobs:
             pip install PyYAML
             pip install .
             # Test
-            python ./tests/test_bindings.py
+            sudo python ./tests/test_bindings.py
             # Deactivate conda environment
             conda deactivate
           done
