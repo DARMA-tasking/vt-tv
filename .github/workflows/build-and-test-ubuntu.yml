@@ -58,6 +58,7 @@ jobs:
             VT_TV_TESTS_ENABLED=${{ env.VT_TV_TESTS_ENABLED }}
             VT_TV_COVERAGE_ENABLED=${{ env.VT_TV_COVERAGE_ENABLED }}
           outputs: type=local,dest=${{ env.OUTPUT_DIR }}
+          no-cache: true
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
