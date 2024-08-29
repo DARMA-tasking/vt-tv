@@ -33,7 +33,7 @@ jobs:
         CC: ~
         CXX: ~
         GCOV: ~
-        PYTHON_VERSIONS: ("3.8" "3.9")
+        PYTHON_VERSIONS: 3.8,3.9
     steps:
       - uses: actions/checkout@v4
 
@@ -73,7 +73,7 @@ jobs:
           conda activate
 
           # create an environment per python version to test
-          declare -a PYTHON_VERSIONS=${{ env.PYTHON_VERSIONS }}
+          PYTHON_VERSIONS=(`echo '${{ env.PYTHON_VERSIONS }}' | sed 's/,/\n/g'`)
           for python_version in "${PYTHON_VERSIONS[@]}"
           do
             echo "> Create conda environment `py${python_version}`"
@@ -144,9 +144,9 @@ jobs:
           VT_TV_RUN_TESTS=ON \
           ./build.sh
 
-      - name: Build Python bindings ${{ env.PYTHON_VERSIONS }}
+      - name: Build Python bindings (${{ env.PYTHON_VERSIONS }})
         run: |
-          declare -a PYTHON_VERSIONS=${{ env.PYTHON_VERSIONS }}
+          PYTHON_VERSIONS=(`echo '${{ env.PYTHON_VERSIONS }}' | sed 's/,/\n/g'`)
           for python_version in "${PYTHON_VERSIONS[@]}"
           do
             echo "::group::Build Python Bindings (${python_version})"
@@ -162,9 +162,9 @@ jobs:
             echo "::endgroup::"
           done
 
-      - name: Test Python bindings ${{ env.PYTHON_VERSIONS }}
+      - name: Test Python bindings (${{ env.PYTHON_VERSIONS }})
         run: |
-          declare -a PYTHON_VERSIONS=${{ env.PYTHON_VERSIONS }}
+          PYTHON_VERSIONS=(`echo '${{ env.PYTHON_VERSIONS }}' | sed 's/,/\n/g'`)
           for python_version in "${PYTHON_VERSIONS[@]}"
           do
             echo "::group::Test Python Bindings (${python_version})"
