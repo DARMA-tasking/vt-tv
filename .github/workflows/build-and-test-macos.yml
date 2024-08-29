@@ -159,7 +159,7 @@ jobs:
             # Test
             # Create an output directory (required)
             sudo mkdir -p /opt/build/vt-tv/test_output
-            chown $(whoami) /opt/build/vt-tv/test_output
+            sudo chown $(whoami) /opt/build/vt-tv/test_output
             python ./tests/test_bindings.py
             # Deactivate conda environment
             conda deactivate
