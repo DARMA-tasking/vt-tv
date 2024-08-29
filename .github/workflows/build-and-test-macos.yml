@@ -12,8 +12,10 @@ jobs:
       fail-fast: false
       matrix:
         host: [
-          { os: macos-latest, compiler: { cc: clang, cxx: clang++ }, gcov: llvm-gcov },
-          # { os: macos-latest, compiler: { name: gcc12, cc: gcc-12, cxx: g++-12 }, gcov: gcov-12 } # VTK Build issue
+          { os: macos-12, compiler: { cc: clang, cxx: clang++ }, gcov: llvm-gcov },
+          { os: macos-13, compiler: { cc: clang, cxx: clang++ }, gcov: llvm-gcov },
+          { os: macos-14, compiler: { cc: clang, cxx: clang++ }, gcov: llvm-gcov }
+          # { os: macos-14, compiler: { name: gcc12, cc: gcc-12, cxx: g++-12 }, gcov: gcov-12 } # VTK Build issue
         ]
         vtk_version: [ 9.3.1 ]
     runs-on: ${{ matrix.host.os }}
