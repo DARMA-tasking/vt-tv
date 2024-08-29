@@ -127,25 +127,31 @@ jobs:
           # > go to output directory
           pushd ${{ env.VT_TV_OUTPUT_DIR }}
 
+          echo "> List Output files"
+          find * | while read line; do echo "- $line"; done
+
           echo "> add junit test report artifact"
           cp "junit-report.xml" ${{ env.VT_TV_ARTIFACTS_DIR }}/ || true
 
           echo "> add mesh files and png artifacts"
           if [ -d "${{ env.VT_TV_OUTPUT_DIR }}/tests" ]; then
-              cp "${{ env.VT_TV_OUTPUT_DIR }}/tests/"*".vtp"  ${{ env.VT_TV_ARTIFACTS_DIR }}/  || true
-              cp "${{ env.VT_TV_OUTPUT_DIR }}/tests/"*".png"  ${{ env.VT_TV_ARTIFACTS_DIR }}/  || true
+            
+
+            ls -l "${{ env.VT_TV_OUTPUT_DIR }}/tests"
+            cp "${{ env.VT_TV_OUTPUT_DIR }}/tests/"*".vtp"  ${{ env.VT_TV_ARTIFACTS_DIR }}/  || true
+            cp "${{ env.VT_TV_OUTPUT_DIR }}/tests/"*".png"  ${{ env.VT_TV_ARTIFACTS_DIR }}/  || true
           fi
 
           if [[ "${{ env.VT_TV_COVERAGE_ENABLED }}" == "ON" ]]; then
-              echo "> add `coverage --list` file artifact"
-              lcov --list lcov_vt-tv_test_no_deps.info > ${{ env.VT_TV_ARTIFACTS_DIR }}/lcov-list-report.txt
+            echo "> add `coverage --list` file artifact"
+            lcov --list lcov_vt-tv_test_no_deps.info > ${{ env.VT_TV_ARTIFACTS_DIR }}/lcov-list-report.txt
 
-              echo "> add total lines coverage file artifact (percentage of lines covered)"
-              # might be useful for generating later a badge in ci
-              LCOV_SUMMARY=$(lcov --summary lcov_vt-tv_test_no_deps.info)
-              LCOV_TOTAL_LINES_COV=$(echo $LCOV_SUMMARY | grep -E -o 'lines......: ([0-9.]+)*' | grep -o -E '[0-9]+.[0-9]+')
-              echo $LCOV_TOTAL_LINES_COV > lcov-lines-total.txt
-              cp lcov-lines-total.txt ${{ env.VT_TV_ARTIFACTS_DIR }}/
+            echo "> add total lines coverage file artifact (percentage of lines covered)"
+            # might be useful for generating later a badge in ci
+            LCOV_SUMMARY=$(lcov --summary lcov_vt-tv_test_no_deps.info)
+            LCOV_TOTAL_LINES_COV=$(echo $LCOV_SUMMARY | grep -E -o 'lines......: ([0-9.]+)*' | grep -o -E '[0-9]+.[0-9]+')
+            echo $LCOV_TOTAL_LINES_COV > lcov-lines-total.txt
+            cp lcov-lines-total.txt ${{ env.VT_TV_ARTIFACTS_DIR }}/
           fi
           popd
 
