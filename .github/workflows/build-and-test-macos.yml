@@ -33,6 +33,7 @@ jobs:
         CC: ~
         CXX: ~
         GCOV: ~
+        PYTHON_VERSIONS: ("3.8", "3.9")
     steps:
       - uses: actions/checkout@v4
 
@@ -50,6 +51,24 @@ jobs:
       - name: Install dependencies
         run: |
           brew update && brew install coreutils lcov xquartz
+
+      - name: Setup Miniconda
+        run: |
+          mkdir -p ~/miniconda3
+          curl https://repo.anaconda.com/miniconda/Miniconda3-latest-MacOSX-arm64.sh -o ~/miniconda3/miniconda.sh
+          sudo bash ~/miniconda3/miniconda.sh -b -u -p ~/miniconda3
+          rm -rf ~/miniconda3/miniconda.sh
+          export PATH="~/miniconda3/bin:${PATH}"
+
+          declare -a PYTHON_VERSIONS=${{ env.PYTHON_VERSIONS }}
+          for python_version in "${PYTHON_VERSIONS[@]}"
+          do
+            # Create a new environment and install necessary packages
+            sudo conda create -y -n py${python_version} python=${python_version} && \
+            conda activate py${python_version} && \
+            pip install nanobind && \
+            conda deactivate
+          done
 
       - name: Load VTK from cache
         id: vtk-cache
@@ -112,16 +131,21 @@ jobs:
           VT_TV_RUN_TESTS=ON \
           ./build.sh
 
-      # - name: Build and Test Python bindings
-      #   run: |
-      #     # TODO: install conda for macos
-      #     # Activate conda environment
-      #     # . /opt/conda/etc/profile.d/conda.sh && conda activate deves
-      #     # Build
-      #     # pip install PyYAML
-      #     # pip install .
-      #     # Test
-      #     # python ./tests/test_bindings.py
+      - name: Build and Test for Python (${{ env.PYTHON_VERSIONS }})
+        run: |
+          declare -a PYTHON_VERSIONS=${{ env.PYTHON_VERSIONS }}
+          for python_version in "${PYTHON_VERSIONS[@]}"
+          do
+            # Activate conda environment
+            conda activate py${python_version}
+            # Add PyYaml dep and build vt-tv
+            pip install PyYAML
+            pip install .
+            # Test
+            python ./tests/test_bindings.py
+            # Deactivate conda environment
+            conda deactivate 
+          done          
 
       - name: Collect artifacts
         run: |
