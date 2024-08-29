@@ -152,7 +152,7 @@ jobs:
             echo "::group::Build Python Bindings (${python_version})"
             # Activate conda environment
             . ~/miniconda3/etc/profile.d/conda.sh && conda activate py${python_version}
-            echo "Python version: ${python --version}"
+            echo "Python version: $(python --version)"
             # Add deps required by vt-tv bindings
             export VTK_DIR=${{ env.VTK_BUILD_DIR }}
             pip install PyYAML
@@ -170,7 +170,7 @@ jobs:
             echo "::group::Test Python Bindings (${python_version})"
             # Activate conda environment
             . ~/miniconda3/etc/profile.d/conda.sh && conda activate py${python_version}
-            echo "Python version: ${python --version}"
+            echo "Python version: $(python --version)"
             # Create vizualization output directory (required)
             sudo mkdir -p /opt/build/vt-tv/test_output
             sudo chown $(whoami) /opt/build/vt-tv/test_output
