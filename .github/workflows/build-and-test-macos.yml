@@ -25,7 +25,7 @@ jobs:
         VT_TV_BUILD_DIR: /opt/build/vt-tv
         VT_TV_TESTS_ENABLED: "ON"
         VT_TV_COVERAGE_ENABLED: ${{ matrix.host.compiler.gcov == '' && 'OFF' || 'ON'  }}
-        VT_TV_OUTPUT_DIR: /var/vt-tv/output
+        VT_TV_OUTPUT_DIR: ${{ github.workspace }}/output
         VT_TV_TESTS_OUTPUT_DIR: /opt/src/vt-tv/output/tests
         VT_TV_ARTIFACTS_DIR: /tmp/artifacts
         CC: ~
@@ -33,11 +33,6 @@ jobs:
         GCOV: ~
     steps:
       - uses: actions/checkout@v4
-
-      - name: Set folder permissions
-        run: |
-          sudo mkdir -p ${{ env.VT_TV_OUTPUT_DIR }}
-          sudo chown -R $(whoami) /opt ${{ env.VT_TV_OUTPUT_DIR }}
 
       - name: Set environment variables
         run: |
