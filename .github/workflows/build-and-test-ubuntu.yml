@@ -52,7 +52,7 @@ jobs:
           push: false
           tags: ${{ env.DOCKER_TAG }}
           context: .
-          file: ./ci/docker/build-and-test.dockerfile
+          file: ./ci/docker/build-and-test-ubuntu.dockerfile
           build-args: |
             BASE_IMAGE=${{ env.DOCKER_REPOSITORY }}:${{ matrix.image }}
             VT_TV_TESTS_ENABLED=${{ env.VT_TV_TESTS_ENABLED }}
