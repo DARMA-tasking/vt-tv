@@ -84,7 +84,7 @@ jobs:
           chmod +x ./ci/build.sh
 
           mkdir -p ${{ env.VT_TV_BUILD_DIR }}
-          
+
           CC="${{ env.CC }}" \
           CXX="${{ env.CXX }}" \
           VTK_DIR="${{ env.VTK_BUILD_DIR }}" \
@@ -130,7 +130,7 @@ jobs:
           echo "> add junit test report artifact"
           cp "junit-report.xml" ${{ env.VT_TV_ARTIFACTS_DIR }}/ || true
 
-          echo "> add mesh files and png artifacts" 
+          echo "> add mesh files and png artifacts"
           if [ -d "${{ env.VT_TV_OUTPUT_DIR }}/tests" ]; then
               cp "${{ env.VT_TV_OUTPUT_DIR }}/tests/"*".vtp"  ${{ env.VT_TV_ARTIFACTS_DIR }}/  || true
               cp "${{ env.VT_TV_OUTPUT_DIR }}/tests/"*".png"  ${{ env.VT_TV_ARTIFACTS_DIR }}/  || true
