@@ -144,19 +144,33 @@ jobs:
           VT_TV_RUN_TESTS=ON \
           ./build.sh
 
-      - name: Build and Test for Python ${{ env.PYTHON_VERSIONS }}
+      - name: Build Python bindings ${{ env.PYTHON_VERSIONS }}
         run: |
           declare -a PYTHON_VERSIONS=${{ env.PYTHON_VERSIONS }}
           for python_version in "${PYTHON_VERSIONS[@]}"
           do
-            echo "::group::Build & Test Python Bindings (${python_version})"
+            echo "::group::Build Python Bindings (${python_version})"
             # Activate conda environment
             . ~/miniconda3/etc/profile.d/conda.sh && conda activate py${python_version}
-            # Add PyYaml dep and build vt-tv
+            echo "Python version: ${python --version}"
+            # Add deps required by vt-tv bindings
             export VTK_DIR=${{ env.VTK_BUILD_DIR }}
             pip install PyYAML
             pip install .
-            # Test
+            # Deactivate conda environment
+            conda deactivate
+            echo "::endgroup::"
+          done
+
+      - name: Test Python bindings ${{ env.PYTHON_VERSIONS }}
+        run: |
+          declare -a PYTHON_VERSIONS=${{ env.PYTHON_VERSIONS }}
+          for python_version in "${PYTHON_VERSIONS[@]}"
+          do
+            echo "::group::Test Python Bindings (${python_version})"
+            # Activate conda environment
+            . ~/miniconda3/etc/profile.d/conda.sh && conda activate py${python_version}
+            echo "Python version: ${python --version}"
             # Create vizualization output directory (required)
             sudo mkdir -p /opt/build/vt-tv/test_output
             sudo chown $(whoami) /opt/build/vt-tv/test_output
