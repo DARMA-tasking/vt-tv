@@ -148,6 +148,7 @@ jobs:
         run: |
           declare -a PYTHON_VERSIONS=${{ env.PYTHON_VERSIONS }}
           for python_version in "${PYTHON_VERSIONS[@]}"
+          do
             echo "::group Build & Test Python Bindings (${python_version})"
             # Activate conda environment
             . ~/miniconda3/etc/profile.d/conda.sh && conda activate py${python_version}
