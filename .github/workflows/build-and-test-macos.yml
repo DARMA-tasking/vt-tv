@@ -149,6 +149,7 @@ jobs:
           declare -a PYTHON_VERSIONS=${{ env.PYTHON_VERSIONS }}
           for python_version in "${PYTHON_VERSIONS[@]}"
           do
+            echo "> Build & Test for Python ${python_version}"
             # Activate conda environment
             . ~/miniconda3/etc/profile.d/conda.sh && conda activate py${python_version}
             # Add PyYaml dep and build vt-tv
@@ -156,7 +157,10 @@ jobs:
             pip install PyYAML
             pip install .
             # Test
-            sudo python ./tests/test_bindings.py
+            # Create an output directory (required)
+            sudo mkdir -p /opt/build/vt-tv/test_output
+            chown $(whoami) /opt/build/vt-tv/test_output
+            python ./tests/test_bindings.py
             # Deactivate conda environment
             conda deactivate
           done
