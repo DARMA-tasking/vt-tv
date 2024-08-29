@@ -152,6 +152,7 @@ jobs:
             # Activate conda environment
             . ~/miniconda3/etc/profile.d/conda.sh && conda activate py${python_version}
             # Add PyYaml dep and build vt-tv
+            export VTK_DIR=${{ env.VTK_BUILD_DIR }}
             pip install PyYAML
             pip install .
             # Test
