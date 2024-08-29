@@ -33,11 +33,7 @@ ENV TEST_PHASE=python
 RUN mkdir -p /opt/build/vt-tv/test_output
 RUN bash /opt/src/vt-tv/ci/test_python.sh
 
-FROM base AS all-tests-output
-COPY --from=test-cpp /tmp/artifacts /tmp/artifacts
-COPY --from=test-python /opt/build/vt-tv/test_output /tmp/python-artifacts
-
 # Artifacts
 FROM scratch AS artifacts
-COPY --from=all-tests-output /tmp/artifacts /tmp/artifacts
-COPY --from=all-tests-output /tmp/python-artifacts /tmp/python-artifacts
+COPY --from=test-cpp /tmp/artifacts /tmp/artifacts
+COPY --from=test-python /opt/build/vt-tv/test_output /tmp/python-artifacts
