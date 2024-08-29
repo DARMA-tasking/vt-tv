@@ -26,6 +26,7 @@ jobs:
         VT_TV_TESTS_ENABLED: "ON"
         VT_TV_COVERAGE_ENABLED: ${{ matrix.host.compiler.gcov == '' && 'OFF' || 'ON'  }}
         VT_TV_OUTPUT_DIR: /var/vt-tv/output
+        VT_TV_TESTS_OUTPUT_DIR: /opt/src/vt-tv/output/tests
         VT_TV_ARTIFACTS_DIR: /tmp/artifacts
         CC: ~
         CXX: ~
@@ -127,20 +128,8 @@ jobs:
           # > go to output directory
           pushd ${{ env.VT_TV_OUTPUT_DIR }}
 
-          echo "> List Output files"
-          find * | while read line; do echo "- $line"; done
-
           echo "> add junit test report artifact"
           cp "junit-report.xml" ${{ env.VT_TV_ARTIFACTS_DIR }}/ || true
-
-          echo "> add mesh files and png artifacts"
-          if [ -d "${{ env.VT_TV_OUTPUT_DIR }}/tests" ]; then
-            
-
-            ls -l "${{ env.VT_TV_OUTPUT_DIR }}/tests"
-            cp "${{ env.VT_TV_OUTPUT_DIR }}/tests/"*".vtp"  ${{ env.VT_TV_ARTIFACTS_DIR }}/  || true
-            cp "${{ env.VT_TV_OUTPUT_DIR }}/tests/"*".png"  ${{ env.VT_TV_ARTIFACTS_DIR }}/  || true
-          fi
 
           if [[ "${{ env.VT_TV_COVERAGE_ENABLED }}" == "ON" ]]; then
             echo "> add `coverage --list` file artifact"
@@ -155,8 +144,16 @@ jobs:
           fi
           popd
 
-          echo "Collected artifacts:"
-          ls ${{ env.VT_TV_ARTIFACTS_DIR }}
+          echo "> add tests output mesh files and png artifacts"
+          if [ -d "${{ env.VT_TV_TESTS_OUTPUT_DIR }}" ]; then
+            cp "${{ env.VT_TV_TESTS_OUTPUT_DIR }}/"*".vtp"  ${{ env.VT_TV_ARTIFACTS_DIR }}/  || true
+            cp "${{ env.VT_TV_TESTS_OUTPUT_DIR }}/"*".png"  ${{ env.VT_TV_ARTIFACTS_DIR }}/  || true
+          fi
+
+          echo "> list of collected artifacts:"
+          pushd ${{ env.VT_TV_ARTIFACTS_DIR }}
+          find ${{ env.VT_TV_ARTIFACTS_DIR }}  | while read line; do echo "- $line"; done
+          popd
 
       - name: Unit tests
         if: ${{ env.VT_TV_TESTS_ENABLED == 'ON' }}
