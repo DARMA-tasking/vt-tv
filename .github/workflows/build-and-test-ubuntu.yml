@@ -1,4 +1,4 @@
-name: Build and Test
+name: Build and Test (ubuntu)
 
 # Trigger the workflow on push or pull request
 on:

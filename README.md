@@ -1,4 +1,5 @@
-[![Build and Test](https://github.com/DARMA-tasking/vt-tv/actions/workflows/build-and-test.yml/badge.svg)](https://github.com/DARMA-tasking/vt-tv/actions/workflows/build-and-test.yml)
+[![Build and Test (Ubuntu)](https://github.com/DARMA-tasking/vt-tv/actions/workflows/build-and-test-ubuntu.yml/badge.svg)](https://github.com/DARMA-tasking/vt-tv/actions/workflows/build-and-test-ubuntu.yml)
+[![Build and Test (MacOS)](https://github.com/DARMA-tasking/vt-tv/actions/workflows/build-and-test-macos.yml/badge.svg)](https://github.com/DARMA-tasking/vt-tv/actions/workflows/build-and-test-macos.yml)
 
 # tv => task visualizer
 
