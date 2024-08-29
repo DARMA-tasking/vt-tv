@@ -47,11 +47,11 @@ jobs:
 
       - name: Install dependencies
         run: |
-          brew update && brew install coreutils lcov && brew install xquartz --cask
+          brew update && brew install coreutils lcov xquartz
 
       - name: Load VTK from cache
         id: vtk-cache
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: |
             ${{ env.VTK_SRC_DIR }}
