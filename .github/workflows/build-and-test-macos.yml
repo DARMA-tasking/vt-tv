@@ -60,18 +60,27 @@ jobs:
           else
             curl https://repo.anaconda.com/miniconda/Miniconda3-latest-MacOSX-x86_64.sh -o ~/miniconda3/miniconda.sh
           fi
-          sudo bash ~/miniconda3/miniconda.sh -b -u -p ~/miniconda3
+          bash ~/miniconda3/miniconda.sh -b -u -p ~/miniconda3
           rm -rf ~/miniconda3/miniconda.sh
-          export PATH="~/miniconda3/bin:${PATH}"
 
+          ~/miniconda3/bin/conda init zsh
+          . ~/.zshrc
+
+          echo "Conda path: $(which conda)"
+          echo "Conda version: $(conda --version)"
+
+          echo "> Activate base environment"
+          conda activate
+
+          # create an environment per python version to test
           declare -a PYTHON_VERSIONS=${{ env.PYTHON_VERSIONS }}
           for python_version in "${PYTHON_VERSIONS[@]}"
           do
+            echo "> Create conda environment `py${python_version}`"
             # Create a new environment and install necessary packages
-            sudo conda create -y -n py${python_version} python=${python_version} && \
-            conda activate py${python_version} && \
-            pip install nanobind && \
-            conda deactivate
+            conda create -y -n py${python_version} python=${python_version} && \
+            . ~/miniconda3/etc/profile.d/conda.sh && conda activate py${python_version} && \
+            pip install nanobind
           done
 
       - name: Load VTK from cache
@@ -135,21 +144,21 @@ jobs:
           VT_TV_RUN_TESTS=ON \
           ./build.sh
 
-      - name: Build and Test for Python (${{ env.PYTHON_VERSIONS }})
+      - name: Build and Test for Python ${{ env.PYTHON_VERSIONS }}
         run: |
           declare -a PYTHON_VERSIONS=${{ env.PYTHON_VERSIONS }}
           for python_version in "${PYTHON_VERSIONS[@]}"
           do
             # Activate conda environment
-            conda activate py${python_version}
+            . ~/miniconda3/etc/profile.d/conda.sh && conda activate py${python_version}
             # Add PyYaml dep and build vt-tv
             pip install PyYAML
             pip install .
             # Test
             python ./tests/test_bindings.py
             # Deactivate conda environment
-            conda deactivate 
-          done          
+            conda deactivate
+          done
 
       - name: Collect artifacts
         run: |
