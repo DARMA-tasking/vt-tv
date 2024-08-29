@@ -45,6 +45,7 @@
 #define INCLUDED_VT_TV_TESTS_UNIT_UTIL_H
 
 // common includes for any tests
+#include <array>
 #include <string>
 #include <filesystem>
 #include <fstream>
