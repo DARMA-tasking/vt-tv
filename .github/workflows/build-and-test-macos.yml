@@ -65,6 +65,7 @@ jobs:
           key: ${{ env.CACHE_KEY }}
 
       - name: Setup Miniconda3
+        if: ${{steps.base-cache.outputs.cache-hit != 'true'}}
         run: |
           mkdir -p ~/miniconda3
           if [[ $(arch) == 'arm64' ]]; then
