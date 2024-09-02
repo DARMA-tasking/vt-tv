@@ -83,22 +83,8 @@ RUN mkdir -p /opt/src/vtk
 RUN git clone --recursive --branch v${VTK_VERSION} https://gitlab.kitware.com/vtk/vtk.git /opt/src/vtk
 
 # Build VTK
-# Note: Ubuntu 24.04 currently encounters inner glew build error when OPENGL_HAS_OSMESA is true.
-#       but successfully build using X.
-RUN mkdir -p ${VTK_DIR}
-WORKDIR ${VTK_DIR}
-RUN cmake \
-  -DCMAKE_BUILD_TYPE:STRING=Release \
-  -DBUILD_TESTING:BOOL=OFF \
-  -DVTK_OPENGL_HAS_OSMESA:BOOL=$([ "${BASE_IMAGE}" == "ubuntu:24.04" ] && echo "OFF" || echo "ON") \ 
-  -DVTK_DEFAULT_RENDER_WINDOW_OFFSCREEN:BOOL=ON \
-  -DVTK_USE_X:BOOL=$([ "${BASE_IMAGE}" == "ubuntu:24.04" ] && echo "ON" || echo "OFF") \
-	-DVTK_USE_WIN32_OPENGL:BOOL=OFF \
-	-DVTK_USE_COCOA:BOOL=OFF \
-	-DVTK_USE_SDL2:BOOL=OFF \
-  -DVTK_Group_Rendering:BOOL=OFF \
-  -DBUILD_SHARED_LIBS:BOOL=ON \
-  -S /opt/src/vtk -B ${VTK_DIR}
-RUN cmake --build ${VTK_DIR} -j$(nproc)
+RUN mkdir -p /opt/scripts
+COPY ci/build_vtk.sh /opt/scripts/build_vtk.sh
+RUN VTK_DIR=${VTK_DIR} bash /opt/scripts/build_vtk.sh
 
 RUN echo "Base creation success"
