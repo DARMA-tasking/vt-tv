@@ -64,6 +64,6 @@ jobs:
             GCOV=${{ env.GCOV }}
             VTK_VERSION=${{ env.VTK_VERSION }}
             PYTHON_VERSION=${{ env.PYTHON_VERSION }}
-          file: ci/docker/make-base.dockerfile
+          file: ci/docker/make-base-ubuntu.dockerfile
           push: true
           tags: "${{ env.DOCKER_REPOSITORY }}:${{ env.DOCKER_TAG }}"

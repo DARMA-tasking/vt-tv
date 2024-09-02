@@ -10,7 +10,7 @@ on:
         - ubuntu_22.04-gcc_11-vtk_9.2.2-py_3.8
         - ubuntu_22.04-clang_11-vtk_9.2.2-py_3.8
         - ubuntu_22.04-gcc_12-vtk_9.3.0-py_3.8
-        - ubuntu_24.04-gcc_12-vtk_9.3.1-py_3.8
+        - ubuntu_24.04-gcc_13-vtk_9.3.1-py_3.8
         default: ubuntu_22.04-gcc_12-vtk_9.3.0-py_3.8
 
 jobs:
@@ -28,7 +28,6 @@ jobs:
         run: |
           IFS='_-' read -r -a CONFIG <<< "${{ inputs.image }}"
           echo "BASE_IMAGE=${CONFIG[0]}:${CONFIG[1]}" >> $GITHUB_ENV
-          echo "BASE_DOCKERFILE=make-base-${CONFIG[0]}-${CONFIG[1]}.dockerfile" >> $GITHUB_ENV
           echo "CC=${CONFIG[2]}-${CONFIG[3]}" >> $GITHUB_ENV
           if [[ "${CONFIG[2]}" == "gcc" ]]; then
             echo "CXX=g++-${CONFIG[3]}" >> $GITHUB_ENV
@@ -70,6 +69,6 @@ jobs:
             GCOV=${{ env.GCOV }}
             VTK_VERSION=${{ env.VTK_VERSION }}
             PYTHON_VERSION=${{ env.PYTHON_VERSION }}
-          file: ci/docker/${{ env.BASE_DOCKERFILE }}
+          file: ci/docker/make-base-ubuntu.dockerfile
           push: true
           tags: "${{ env.DOCKER_REPOSITORY }}:${{ env.DOCKER_TAG }}"
