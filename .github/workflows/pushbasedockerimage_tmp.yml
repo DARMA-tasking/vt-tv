@@ -13,7 +13,7 @@ jobs:
       DOCKER_REPOSITORY: lifflander1/vt
     strategy:
       matrix:
-        image: [ ubuntu_24.04-gcc_12-vtk_9.3.1-py_3.8 ]
+        image: [ ubuntu_24.04-gcc_13-vtk_9.3.1-py_3.8 ]
     steps:
       - name: Check out the repo
         uses: actions/checkout@v4
