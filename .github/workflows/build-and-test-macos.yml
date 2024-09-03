@@ -79,10 +79,10 @@ jobs:
       - name: Install dependencies (Ubuntu)
         if: ${{ runner.os ==  'Linux' }}
         run: |
-          apt-get update -y -q && \
-          apt-get install -y -q --no-install-recommends \
-          ${{ env.CC }} \
-          ${{ env.CXX }} \
+          sudo apt-get update -y -q && \
+          sudo apt-get install -y -q --no-install-recommends \
+          ${{ matrix.host.compiler.cc }} \
+          ${{ matrix.host.compiler.cxx }} \
           git \
           xz-utils \
           bzip2 \
@@ -113,8 +113,8 @@ jobs:
           xvfb \
           lcov  \
           && \
-          apt-get clean && \
-          rm -rf /var/lib/apt/lists/*
+          sudo apt-get clean && \
+          sudo rm -rf /var/lib/apt/lists/*
 
       - name: Load cache (VTK, Miniconda3)
         id: base-cache
@@ -140,14 +140,18 @@ jobs:
             fi
           else
             curl https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -o ~/miniconda.sh
-          end
+          fi
           bash ~/miniconda.sh -b -u -p ${{ env.CONDA_PATH }}
           rm -rf ~/miniconda.sh
 
           ${{ env.CONDA_PATH }}/bin/conda init bash
           ${{ env.CONDA_PATH }}/bin/conda init zsh
-          . ~/.zshrc
-          . ~/.bash_profile
+          if [ -f ~/.zshrc ]; then
+            . ~/.zshrc
+          fi
+          if [ -f ~/.profile ]; then
+            . ~/.profile
+          fi
 
           echo "Conda path: $(which conda)"
           echo "Conda version: $(conda --version)"
