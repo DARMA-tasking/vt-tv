@@ -45,7 +45,7 @@ _In future directions, we will assume that the `vt-tv` source is located in `${V
 `vt-tv` can installed as either a standalone C++ app or as a Python module. Instructions for both cases are included in the dropdowns below.
 
 <details>
-<summary><h3><code>vt-tv</code> Standalone</h3></summary>
+<summary><b>Standalone</b></summary>
 
 ### 1. Build
 
@@ -101,7 +101,7 @@ Additionally, DARMA-tasking's Load Balancing Analysis Framework (LBAF) provides 
 
 </details>
 <details>
-<summary><h3><code>vt-tv</code> Python Module</h3></summary>
+<summary><b>Python Module</b></summary>
 
 ### Dependencies
 
@@ -207,7 +207,9 @@ visualization:
 While `vt-tv` natively supports a variety of QOI, such as the `load`, `id`, or `volume` of ranks and objects[^1], we also support user-defined QOI, called `attributes`.
 
 <details>
-<summary><h4>Rank Attributes</h4></summary>
+<summary><b>Rank Attributes</b></summary>
+
+<br />
 
 Rank `attributes` are defined in the `metadata` field of the JSON data files. For example:
 
@@ -225,7 +227,9 @@ In this example, the user defines `max_memory_usage` as a rank attribute. This c
 
 </details>
 <details>
-<summary><h4>Object Attributes</h4></summary>
+<summary><b>Object Attributes</b></summary>
+
+<br />
 
 Object `attributes` are defined in the `tasks` field of the JSON data files. For example:
 
