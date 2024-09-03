@@ -32,13 +32,6 @@ jobs:
             gcov: llvm-gcov,
             python: ['3.8', '3.9', '3.10', '3.11', '3.12'],
             vtk: '9.3.1'
-          },
-          {
-            base: macos-14,
-            compiler: { cc: gcc-13, cxx: g++-13 },
-            gcov: gcov-13,
-            python: ['3.8', '3.9', '3.10', '3.11', '3.12'],
-            vtk: '9.3.1'
           }
         ]
     runs-on: ${{ matrix.host.base }}
