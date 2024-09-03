@@ -71,9 +71,50 @@ jobs:
           echo "CXX=$(which ${{ matrix.host.compiler.cxx }})" >> $GITHUB_ENV
           echo "GCOV=$(which ${{ matrix.host.gcov }})" >> $GITHUB_ENV
 
-      - name: Install dependencies
+      - name: Install dependencies (MacOsX)
+        if: ${{ runner.os ==  'macOS'}}
         run: |
           brew update && brew install coreutils lcov xquartz
+
+      - name: Install dependencies (Ubuntu)
+        if: ${{ runner.os ==  'Linux' && contains(runner.name, 'ubuntu') }}
+        run: |
+          apt-get update -y -q && \
+          apt-get install -y -q --no-install-recommends \
+          ${{ env.CC }} \
+          ${{ env.CXX }} \
+          git \
+          xz-utils \
+          bzip2 \
+          zip \
+          gpg \
+          wget \
+          gpgconf \
+          software-properties-common \
+          libsigsegv2 \
+          libsigsegv-dev \
+          pkg-config \
+          zlib1g \
+          zlib1g-dev \
+          m4 \
+          gfortran-11 \
+          make \
+          cmake-data \
+          cmake \
+          pkg-config \
+          libncurses5-dev \
+          m4 \
+          libgl1-mesa-dev \
+          libglu1-mesa-dev \
+          mesa-common-dev \
+          libosmesa6-dev \
+          perl \
+          curl \
+          xvfb \
+          lcov  \
+          && \
+          apt-get clean && \
+          rm -rf /var/lib/apt/lists/*
 
       - name: Load cache (VTK, Miniconda3)
         id: base-cache

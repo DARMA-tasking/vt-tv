@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# This script builds vtk using Mesa
+# This script builds vtk
 
 set -ex
 
@@ -17,23 +17,21 @@ unameOut=$(uname -a)
 case "${unameOut}" in
     Linux*)    OS="Linux";;
     Darwin*)   OS="MacOSX";;
-    *)         OS="UNKNOWN:${unameOut}"
+    *)         OS="${unameOut}"
 esac
 
 if [ "$OS" == "Linux" ]; then
   . /etc/lsb-release
   # Issue with Ubuntu 24.04 / OSMESA : glew build error. Use X instead.
-  if [ "$DISTRIB_ID" == "Ubuntu" -a "$DISTRIB_RELEASE" == "24.04" ]; then
-    echo "Disabling VTK_OPENGL_HAS_OSMESA (not supported in Ubuntu 24.04). Using DVTK_USE_X instead."
+  if [ "$DISTRIB_RELEASE" == "24.04" ]; then
+    echo "Disabling VTK_OPENGL_HAS_OSMESA (not supported in Ubuntu 24.04). Use VTK_USE_X instead."
     VTK_USE_X=ON
   else
     VTK_OPENGL_HAS_OSMESA=ON
   end
-  # MacOs
+  # MacOSX
 elif [ "$OS" == "MacOSX" ]; then
   VTK_USE_COCOA=ON
-else
-  VTK_OPENGL_HAS_OSMESA=ON
 fi
 
 cmake \
