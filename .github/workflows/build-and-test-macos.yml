@@ -16,29 +16,29 @@ jobs:
             os: macos-12,
             compiler: { cc: clang, cxx: clang++ },
             gcov: llvm-gcov,
-            python: [3.8, 3.9, 3.10, 3.11, 3.12],
-            vtk: 9.3.1
+            python: ['3.8', '3.9', '3.10', '3.11', '3.12'],
+            vtk: '9.3.1'
           },
-          { 
+          {
             os: macos-13,
             compiler: { cc: clang, cxx: clang++ },
             gcov: llvm-gcov,
-            python: [3.8, 3.9, 3.10, 3.11, 3.12],
-            vtk: 9.3.1
+            python: ['3.8', '3.9', '3.10', '3.11', '3.12'],
+            vtk: '9.3.1'
           },
-          { 
+          {
             os: macos-14,
             compiler: { cc: clang, cxx: clang++ },
             gcov: llvm-gcov,
-            python: [3.8, 3.9, 3.10, 3.11, 3.12],
-            vtk: 9.3.1
+            python: ['3.8', '3.9', '3.10', '3.11', '3.12'],
+            vtk: '9.3.1'
           },
           {
             os: macos-14,
             compiler: { cc: gcc-13, cxx: g++-13 },
             gcov: gcov-13,
-            python: [3.8, 3.9, 3.10, 3.11, 3.12],
-            vtk: 9.3.1
+            python: ['3.8', '3.9', '3.10', '3.11', '3.12'],
+            vtk: '9.3.1'
           }
         ]
     runs-on: ${{ matrix.host.os }}
