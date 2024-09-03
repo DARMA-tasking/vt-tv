@@ -1,8 +1,8 @@
 find_package(Python COMPONENTS Interpreter Development.Module REQUIRED)
 
 if(NOT (${Python_VERSION_MAJOR} EQUAL 3 AND
-       (${Python_VERSION_MINOR} GREATER_EQUAL 8 AND ${Python_VERSION_MINOR} LESS_EQUAL 11)))
-    message(FATAL_ERROR "With Python bindings enabled, vt-tv requires Python version 3.8 or 3.9.")
+       (${Python_VERSION_MINOR} GREATER_EQUAL 8)))
+    message(FATAL_ERROR "With Python bindings enabled, vt-tv requires Python version 3.8 or later.")
 endif()
 
 

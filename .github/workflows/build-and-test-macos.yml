@@ -13,40 +13,40 @@ jobs:
       matrix:
         host: [
           {
-            os: macos-12,
+            base: macos-12,
             compiler: { cc: clang, cxx: clang++ },
             gcov: llvm-gcov,
             python: ['3.8', '3.9', '3.10', '3.11', '3.12'],
             vtk: '9.3.1'
           },
           {
-            os: macos-13,
+            base: macos-13,
             compiler: { cc: clang, cxx: clang++ },
             gcov: llvm-gcov,
             python: ['3.8', '3.9', '3.10', '3.11', '3.12'],
             vtk: '9.3.1'
           },
           {
-            os: macos-14,
+            base: macos-14,
             compiler: { cc: clang, cxx: clang++ },
             gcov: llvm-gcov,
             python: ['3.8', '3.9', '3.10', '3.11', '3.12'],
             vtk: '9.3.1'
           },
           {
-            os: macos-14,
+            base: macos-14,
             compiler: { cc: gcc-13, cxx: g++-13 },
             gcov: gcov-13,
             python: ['3.8', '3.9', '3.10', '3.11', '3.12'],
             vtk: '9.3.1'
           }
         ]
-    runs-on: ${{ matrix.host.os }}
-    name: vt-tv build and test (${{ matrix.host.os }}-${{ matrix.host.compiler.cc }}-vtk-${{ matrix.host.vtk }}-py${{ join(matrix.host.python) }})
+    runs-on: ${{ matrix.host.base }}
+    name: vt-tv build and test (${{ matrix.host.base }}-${{ matrix.host.compiler.cc }}, vtk-${{ matrix.host.vtk }}, py[${{ join(matrix.host.python, ', ') }}])
     env:
         VTK_SRC_DIR: /opt/src/vtk
         VTK_BUILD_DIR: /opt/build/vtk
-        CACHE_KEY: ${{ matrix.host.os }}-${{ matrix.host.compiler.cc }}-vtk-${{ matrix.host.vtk }}
+        CACHE_KEY: ${{ matrix.host.base }}-${{ matrix.host.compiler.cc }}-vtk-${{ matrix.host.vtk }}
         VT_TV_BUILD_DIR: /opt/build/vt-tv
         VT_TV_TESTS_ENABLED: "ON"
         VT_TV_COVERAGE_ENABLED: ${{ matrix.host.compiler.gcov == '' && 'OFF' || 'ON'  }}
