@@ -12,18 +12,41 @@ jobs:
       fail-fast: false
       matrix:
         host: [
-          { os: macos-12, compiler: { cc: clang, cxx: clang++ }, gcov: llvm-gcov },
-          { os: macos-13, compiler: { cc: clang, cxx: clang++ }, gcov: llvm-gcov },
-          { os: macos-14, compiler: { cc: clang, cxx: clang++ }, gcov: llvm-gcov }
-          # { os: macos-14, compiler: { name: gcc12, cc: gcc-12, cxx: g++-12 }, gcov: gcov-12 } # VTK Build issue
+          {
+            os: macos-12,
+            compiler: { cc: clang, cxx: clang++ },
+            gcov: llvm-gcov,
+            python: [3.8, 3.9, 3.10, 3.11, 3.12],
+            vtk: 9.3.1
+          },
+          { 
+            os: macos-13,
+            compiler: { cc: clang, cxx: clang++ },
+            gcov: llvm-gcov,
+            python: [3.8, 3.9, 3.10, 3.11, 3.12],
+            vtk: 9.3.1
+          },
+          { 
+            os: macos-14,
+            compiler: { cc: clang, cxx: clang++ },
+            gcov: llvm-gcov,
+            python: [3.8, 3.9, 3.10, 3.11, 3.12],
+            vtk: 9.3.1
+          },
+          {
+            os: macos-14,
+            compiler: { cc: gcc-13, cxx: g++-13 },
+            gcov: gcov-13,
+            python: [3.8, 3.9, 3.10, 3.11, 3.12],
+            vtk: 9.3.1
+          }
         ]
-        vtk_version: [ 9.3.1 ]
     runs-on: ${{ matrix.host.os }}
-    name: vt-tv build and test
+    name: vt-tv build and test (${{ matrix.host.os }}-${{ matrix.host.compiler.cc }}-vtk-${{ matrix.host.vtk }}-py${{ join(matrix.host.python) }})
     env:
         VTK_SRC_DIR: /opt/src/vtk
         VTK_BUILD_DIR: /opt/build/vtk
-        CACHE_KEY: ${{ matrix.host.os }}-${{ matrix.host.compiler.cc }}-vtk-${{ matrix.vtk_version }}-miniconda3
+        CACHE_KEY: ${{ matrix.host.os }}-${{ matrix.host.compiler.cc }}-vtk-${{ matrix.host.vtk }}
         VT_TV_BUILD_DIR: /opt/build/vt-tv
         VT_TV_TESTS_ENABLED: "ON"
         VT_TV_COVERAGE_ENABLED: ${{ matrix.host.compiler.gcov == '' && 'OFF' || 'ON'  }}
@@ -34,7 +57,6 @@ jobs:
         CC: ~
         CXX: ~
         GCOV: ~
-        PYTHON_VERSIONS: 3.8,3.9,3.10,3.11,3.12
     steps:
       - uses: actions/checkout@v4
 
@@ -86,7 +108,7 @@ jobs:
           conda activate
 
           # create an environment per python version to test
-          PYTHON_VERSIONS=(`echo '${{ env.PYTHON_VERSIONS }}' | sed 's/,/\n/g'`)
+          PYTHON_VERSIONS=(`echo '${{ join(matrix.host.python) }}' | sed 's/,/\n/g'`)
           for python_version in "${PYTHON_VERSIONS[@]}"
           do
             echo "> Create conda environment `py${python_version}`"
@@ -96,11 +118,11 @@ jobs:
             pip install nanobind
           done
 
-      - name: Setup VTK ${{ matrix.vtk_version }}
+      - name: Setup VTK ${{ matrix.host.vtk }}
         if: ${{steps.base-cache.outputs.cache-hit != 'true'}}
         run: |
           mkdir -p ${{ env.VTK_SRC_DIR }}
-          git clone --recursive --branch v${{ matrix.vtk_version }} https://gitlab.kitware.com/vtk/vtk.git ${{ env.VTK_SRC_DIR }}
+          git clone --recursive --branch v${{ matrix.host.vtk }} https://gitlab.kitware.com/vtk/vtk.git ${{ env.VTK_SRC_DIR }}
           cd ${{ env.VTK_SRC_DIR }}
           cmake \
             -DCMAKE_BUILD_TYPE:STRING=Release \
@@ -148,9 +170,9 @@ jobs:
           VT_TV_RUN_TESTS=ON \
           ./build.sh
 
-      - name: Build Python bindings (${{ env.PYTHON_VERSIONS }})
+      - name: Build Python bindings (${{ join(matrix.host.python, ', ') }})
         run: |
-          PYTHON_VERSIONS=(`echo '${{ env.PYTHON_VERSIONS }}' | sed 's/,/\n/g'`)
+          PYTHON_VERSIONS=(`echo '${{ join(matrix.host.python) }}' | sed 's/,/\n/g'`)
           for python_version in "${PYTHON_VERSIONS[@]}"
           do
             echo "::group::Build Python Bindings (${python_version})"
@@ -166,9 +188,9 @@ jobs:
             echo "::endgroup::"
           done
 
-      - name: Test Python bindings (${{ env.PYTHON_VERSIONS }})
+      - name: Test Python bindings (${{ join(matrix.host.python) }})
         run: |
-          PYTHON_VERSIONS=(`echo '${{ env.PYTHON_VERSIONS }}' | sed 's/,/\n/g'`)
+          PYTHON_VERSIONS=(`echo '${{ join(matrix.host.python) }}' | sed 's/,/\n/g'`)
           for python_version in "${PYTHON_VERSIONS[@]}"
           do
             echo "::group::Test Python Bindings (${python_version})"
