@@ -32,6 +32,13 @@ jobs:
             gcov: llvm-gcov,
             python: ['3.8', '3.9', '3.10', '3.11', '3.12'],
             vtk: '9.3.1'
+          },
+          {
+            base: ubuntu:latest,
+            compiler: { cc: gcc-13, cxx: g++-13 },
+            gcov: gcov,
+            python: ['3.8', '3.9', '3.10', '3.11', '3.12'],
+            vtk: '9.3.1'
           }
         ]
     runs-on: ${{ matrix.host.base }}
@@ -77,6 +84,7 @@ jobs:
             ${{ env.VTK_BUILD_DIR }}
             ${{ env.CONDA_PATH }}
             ~/.zshrc
+            ~/.bash_profile
           key: ${{ env.CACHE_KEY }}
 
       - name: Setup Miniconda3
@@ -91,8 +99,10 @@ jobs:
           bash ~/miniconda.sh -b -u -p ${{ env.CONDA_PATH }}
           rm -rf ~/miniconda.sh
 
+          ${{ env.CONDA_PATH }}/bin/conda init bash
           ${{ env.CONDA_PATH }}/bin/conda init zsh
           . ~/.zshrc
+          . ~/.bash_profile
 
           echo "Conda path: $(which conda)"
           echo "Conda version: $(conda --version)"
@@ -116,21 +126,7 @@ jobs:
         run: |
           mkdir -p ${{ env.VTK_SRC_DIR }}
           git clone --recursive --branch v${{ matrix.host.vtk }} https://gitlab.kitware.com/vtk/vtk.git ${{ env.VTK_SRC_DIR }}
-          cd ${{ env.VTK_SRC_DIR }}
-          cmake \
-            -DCMAKE_BUILD_TYPE:STRING=Release \
-            -DBUILD_TESTING:BOOL=OFF \
-            -DCMAKE_C_COMPILER="${{ env.CC }}" \
-            -DCMAKE_CXX_COMPILER="${{ env.CXX }}" \
-            -DVTK_OPENGL_HAS_OSMESA:BOOL=OFF \
-            -DVTK_DEFAULT_RENDER_WINDOW_OFFSCREEN:BOOL=OFF \
-            -DVTK_USE_X:BOOL=OFF \
-            -DVTK_USE_COCOA:BOOL=ON \
-            -DVTK_USE_SDL2:BOOL=OFF \
-            -DVTK_Group_Rendering:BOOL=OFF \
-            -DBUILD_SHARED_LIBS:BOOL=ON \
-            -S ${{ env.VTK_SRC_DIR }} -B ${{ env.VTK_BUILD_DIR }}
-          cmake --build ${{ env.VTK_BUILD_DIR }} -j$(nproc)
+          VTK_DIR=${{ env.VTK_BUILD_DIR }} VTK_SRC_DIR=${{ env.VTK_SRC_DIR }} bash ${{ github.workspace }}/ci/build_vtk.sh
 
       - name: Build
         run: |
