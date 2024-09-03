@@ -28,7 +28,7 @@ if [ "$OS" == "Linux" ]; then
     VTK_USE_X=ON
   else
     VTK_OPENGL_HAS_OSMESA=ON
-  end
+  fi
   # MacOSX
 elif [ "$OS" == "MacOSX" ]; then
   VTK_USE_COCOA=ON
