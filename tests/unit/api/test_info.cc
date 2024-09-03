@@ -115,7 +115,7 @@ TEST_P(InfoTest, test_get_rank_ids) {
 }
 
 /**
- * Test Info:getObjectQoiGetter
+ * Test Info:getObjectQOIGetter
  */
 TEST_P(InfoTest, test_get_object_qoi_getter) {
   InfoTestParam const& param = GetParam();
@@ -131,7 +131,7 @@ TEST_P(InfoTest, test_get_object_qoi_getter) {
      "rank_id",
      "non-existent"});
   for (auto const& qoi : qoi_list) {
-    auto qoi_getter = info.getObjectQoiGetter(qoi);
+    auto qoi_getter = info.getObjectQOIGetter(qoi);
   }
 }
 
@@ -390,7 +390,7 @@ TEST_F(InfoTest, test_get_max_volume) {
 }
 
 /**
- * Test Info:getObjectQoi
+ * Test Info:getObjectQOIAtPhase
  */
 TEST_F(InfoTest, test_get_object_qoi) {
   ObjectWork object_0 = ObjectWork(0, 2.0, {}, {}, {});
@@ -409,9 +409,9 @@ TEST_F(InfoTest, test_get_object_qoi) {
      "non-existent"});
   for (auto const& qoi : qoi_list) {
     if (qoi == "non-existent") {
-      EXPECT_THROW(info.getObjectQoi(0, 0, qoi), std::runtime_error);
+      EXPECT_THROW(info.getObjectQOIAtPhase(0, 0, qoi), std::runtime_error);
     } else {
-      ASSERT_NO_THROW(info.getObjectQoi(0, 0, qoi));
+      ASSERT_NO_THROW(info.getObjectQOIAtPhase(0, 0, qoi));
     }
   }
 }

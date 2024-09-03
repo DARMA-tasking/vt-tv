@@ -229,7 +229,7 @@ struct Info {
    * \brief Returns a getter to a specified object QOI
    */
   std::function<double(ObjectWork)>
-  getObjectQoiGetter(const std::string& object_qoi) const {
+  getObjectQOIGetter(const std::string& object_qoi) const {
     std::function<double(ObjectWork)> qoi_getter;
     if (object_qoi == "load") {
       qoi_getter = [&](ObjectWork obj) {
@@ -320,9 +320,9 @@ struct Info {
    *
    * \return the object QOI
    */
-  double getObjectQoi(
+  double getObjectQOI(
     ElementIDType obj_id, PhaseType phase, std::string obj_qoi) const {
-    auto qoi_getter = getObjectQoiGetter(obj_qoi);
+    auto qoi_getter = getObjectQOIGetter(obj_qoi);
     auto const& objects = this->getPhaseObjects(phase);
     auto const& obj = objects.at(obj_id);
     return qoi_getter(obj);
