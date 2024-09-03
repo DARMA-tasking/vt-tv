@@ -71,13 +71,13 @@ jobs:
           echo "CXX=$(which ${{ matrix.host.compiler.cxx }})" >> $GITHUB_ENV
           echo "GCOV=$(which ${{ matrix.host.gcov }})" >> $GITHUB_ENV
 
-      - name: Install dependencies (MacOsX)
+      - name: Install dependencies (macOS)
         if: ${{ runner.os ==  'macOS'}}
         run: |
           brew update && brew install coreutils lcov xquartz
 
       - name: Install dependencies (Ubuntu)
-        if: ${{ runner.os ==  'Linux' && contains(runner.name, 'ubuntu') }}
+        if: ${{ runner.os ==  'Linux' }}
         run: |
           apt-get update -y -q && \
           apt-get install -y -q --no-install-recommends \
@@ -132,11 +132,15 @@ jobs:
         if: ${{steps.base-cache.outputs.cache-hit != 'true'}}
         run: |
           mkdir -p ~/miniconda3
-          if [[ $(arch) == 'arm64' ]]; then
-            curl https://repo.anaconda.com/miniconda/Miniconda3-latest-MacOSX-arm64.sh -o ~/miniconda.sh
+          if [[ $(uname -a) == *"Darwin"* ]]; then
+            if [[ $(arch) == 'arm64' ]]; then
+              curl https://repo.anaconda.com/miniconda/Miniconda3-latest-MacOSX-arm64.sh -o ~/miniconda.sh
+            else
+              curl https://repo.anaconda.com/miniconda/Miniconda3-latest-MacOSX-x86_64.sh -o ~/miniconda.sh
+            fi
           else
-            curl https://repo.anaconda.com/miniconda/Miniconda3-latest-MacOSX-x86_64.sh -o ~/miniconda.sh
-          fi
+            curl https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -o ~/miniconda.sh
+          end
           bash ~/miniconda.sh -b -u -p ${{ env.CONDA_PATH }}
           rm -rf ~/miniconda.sh
 
