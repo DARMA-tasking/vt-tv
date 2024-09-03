@@ -116,6 +116,12 @@ jobs:
           sudo apt-get clean && \
           sudo rm -rf /var/lib/apt/lists/*
 
+      - name: Setup XVFB Virtual display (Ubuntu)
+        if: ${{ runner.os ==  'Linux' }}
+        run: |
+          Xvfb :99 -screen 0 1024x768x24 -nolisten tcp > /dev/null 2>&1 & \
+          sleep 1s
+
       - name: Load cache (VTK, Miniconda3)
         id: base-cache
         uses: actions/cache@v4
