@@ -4,6 +4,12 @@
 
 `vt-tv` provides visualizations of an application's work-to-rank mappings, communications, and memory usage.
 
+Jump to:
+- [Overview](#overview)
+- [Getting Started](#getting-started)
+- [Installation and Usage](#installation-and-usage)
+- [Design Information](#design-information)
+
 ## Overview
 
 Specifically, the task visualizer takes in JSON files that describe work as a series of phases and subphases
@@ -258,9 +264,18 @@ In the YAML configuration file passed to `vt-tv`, they may specify any of these 
 
 ### 2. General Structure
 
-`vt-tv` is designed according to the following sketch:
+`vt-tv` is designed according to the following hierarchy:
 
-![UML Diagram](./docs/vt-tv-uml.png)
+```mermaid
+graph TD;
+    Info-->ObjectInfo;
+    Info-->Rank;
+    Rank-->PhaseWork;
+    PhaseWork-->ObjectWork;
+    ObjectWork-->ObjectCommunicator
+```
+
+Further information on each class, including methods and member variables, can be found in the documentation.
 
 #### 1. Navigating the Hierarchy
 
@@ -270,7 +285,7 @@ For example, an instance of `Info` holds getters to all object and rank QOI (inc
 
 ```cpp
 auto rank_qoi = info.getRankQOIAtPhase(rank_id, phase_id, qoi_string);
-auto obj_qoi = info.getObjectQoi(obj_id, phase_id, qoi_string);
+auto obj_qoi = info.getObjectQOIAtPhase(obj_id, phase_id, qoi_string);
 ```
 where the `qoi_string` is the name of the desired QOI, like "load" or "id". This string can also be a user-defined attribute, as described above.
 
@@ -283,12 +298,11 @@ There are two classes that hold object data: `ObjectInfo` and `ObjectWork`.
 - the object's home rank (where it originated)
 - whether the object is migratable or sentinel (stays on the same rank)
 
-`ObjectWork` holds information that may change as an object moves ranks or changes phase, such as:
-- the object's load
+`ObjectWork` holds information that may change as an object changes rank or phase, such as:
 - the object's attributes
 - the object's communications
 
 > [!TIP]
-> As discussed above, users should use the getters present in `Info` rather than directly calling these classes.
+> As discussed above, users should utilize the getters present in `Info` rather than directly calling these classes.
 
-[^1]: All natively-supported QOI for ranks and objects are in [`src/vt-tv/api/info.h`](https://github.com/DARMA-tasking/vt-tv/blob/master/src/vt-tv/api/info.h).
+[^1]: For a list of all natively-supported QOI for ranks and objects, see [`src/vt-tv/api/info.h`](https://github.com/DARMA-tasking/vt-tv/blob/master/src/vt-tv/api/info.h).
