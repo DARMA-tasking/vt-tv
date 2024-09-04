@@ -13,14 +13,7 @@ VTK_DIR=${VTK_DIR:-"/opt/build/vtk"}
 mkdir -p $VTK_DIR
 pushd $VTK_DIR
 
-unameOut=$(uname -a)
-case "${unameOut}" in
-    Linux*)    OS="Linux";;
-    Darwin*)   OS="MacOSX";;
-    *)         OS="${unameOut}"
-esac
-
-if [ "$OS" == "Linux" ]; then
+if [[ $(uname -a) != *"Darwin"* ]]; then
   . /etc/lsb-release
   # Issue with Ubuntu 24.04 / OSMESA : glew build error. Use X instead.
   if [ "$DISTRIB_RELEASE" == "24.04" ]; then
@@ -29,8 +22,7 @@ if [ "$OS" == "Linux" ]; then
   else
     VTK_OPENGL_HAS_OSMESA=ON
   fi
-  # MacOSX
-elif [ "$OS" == "MacOSX" ]; then
+else
   VTK_USE_COCOA=ON
 fi
 

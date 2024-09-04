@@ -206,20 +206,20 @@ jobs:
           VT_TV_OUTPUT_DIR="${{ env.VT_TV_OUTPUT_DIR }}" \
           ./ci/test_cpp.sh
 
-      - name: Setup environment variables for Python tests
-        run: |
-          export VTK_DIR=${{ env.VTK_BUILD_DIR }}
-
       - name: Build Python package (${{ join(matrix.host.python, ', ') }})
         run: |
           cd ${{ github.workspace }}
           chmod +x ./ci/python_build.sh
 
           PYTHON_VERSIONS=(`echo '${{ join(matrix.host.python) }}' | sed 's/,/\n/g'`)
+          export VTK_DIR=${{ env.VTK_BUILD_DIR }}
           for python_version in "${PYTHON_VERSIONS[@]}"
           do
             echo "::group::Build Python package (${python_version})"
-            CONDA_PATH=${{ env.CONDA_PATH }} VT_TV_CONDA_ENV=py${python_version} ./ci/python_build.sh
+            VTK_DIR=${{ env.VTK_BUILD_DIR }} \
+            CONDA_PATH=${{ env.CONDA_PATH }} \
+            VT_TV_CONDA_ENV=py${python_version} \
+            ./ci/python_build.sh
             echo "::endgroup::"
           done
 
@@ -232,7 +232,9 @@ jobs:
           for python_version in "${PYTHON_VERSIONS[@]}"
           do
             echo "::group::Test Python Bindings (${python_version})"
-            CONDA_PATH=${{ env.CONDA_PATH }} VT_TV_CONDA_ENV=py${python_version} ./ci/python_test.sh
+            CONDA_PATH=${{ env.CONDA_PATH }} \
+            VT_TV_CONDA_ENV=py${python_version} \
+            ./ci/python_test.sh
             echo "::endgroup::"
           done
 

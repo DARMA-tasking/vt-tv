@@ -4,20 +4,19 @@
 
 set -ex
 
+CURRENT_DIR="$(dirname -- "$(realpath -- "$0")")"
+PARENT_DIR="$(dirname "$CURRENT_DIR")"
+
 CONDA_PATH=${CONDA_PATH:-/opt/conda}
 VT_TV_CONDA_ENV=${VT_TV_CONDA_ENV:-deves}
-
-CURRENT_DIR="$(dirname -- "$(realpath -- "$0")")"
+VT_TV_SRC_DIR=${VT_TV_SRC_DIR:-$PARENT_DIR}
 
 # Activate conda environment
 . ${CONDA_PATH}/etc/profile.d/conda.sh && conda activate $VT_TV_CONDA_ENV
 
 # Build
 pip install PyYAML
-
-pushd /opt/src/vt-tv
-pip install .
-popd
+pip install $VT_TV_SRC_DIR
 
 # Deactivate conda environment
 conda deactivate
