@@ -13,14 +13,14 @@ VT_TV_OUTPUT_DIR=${VT_TV_OUTPUT_DIR:-"$VT_TV_SRC_DIR/output"}
 VT_TV_TESTS_OUTPUT_DIR=${VT_TV_TESTS_OUTPUT_DIR:-"$VT_TV_OUTPUT_DIR/tests"}
 
 # Start virtual display (Linux)
-CURRENT_DISPLAY=$(echo $DISPLAY)
+DISPLAY_0=$(echo $DISPLAY)
 if [[ $(uname -a) != *"Darwin"* ]]; then
     $CURRENT_DIR/xvfb_start.sh :99
-    echo "DISPLAY(test)=$DISPLAY"
+    export DISPLAY=:99
 fi
 
 # Run tests
-bash -c "VTK_DIR=/opt/build/vtk \
+DISPLAY=$DISPLAY bash -c "VTK_DIR=/opt/build/vtk \
     VT_TV_BUILD=OFF \
     VT_TV_BUILD_DIR=${VT_TV_BUILD_DIR} \
     VT_TV_COVERAGE_ENABLED=${VT_TV_COVERAGE_ENABLED:-OFF} \
@@ -30,7 +30,8 @@ bash -c "VTK_DIR=/opt/build/vtk \
 
 # Restore display (Linux)
 if [[ $(uname -a) != *"Darwin"* ]]; then
-    $CURRENT_DIR/xvfb_stop.sh :99 $CURRENT_DISPLAY
+    $CURRENT_DIR/xvfb_stop.sh :99
+    export DISPLAY=:$DISPLAY_0
 fi
 
 # Add artifacts

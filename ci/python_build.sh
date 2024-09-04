@@ -14,7 +14,10 @@ CURRENT_DIR="$(dirname -- "$(realpath -- "$0")")"
 
 # Build
 pip install PyYAML
-pip install /opt/src/vt-tv
+
+pushd /opt/src/vt-tv
+pip install .
+popd
 
 # Deactivate conda environment
 conda deactivate
