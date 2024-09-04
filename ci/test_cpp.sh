@@ -4,6 +4,8 @@ set -ex
 
 VT_TV_OUTPUT_DIR=/var/vt-tv/output
 VT_TV_TESTS_OUTPUT_DIR=/opt/src/vt-tv/output/tests
+VTK_SRC_DIR=${VTK_SRC_DIR:-"/opt/src/vtk"}
+VTK_DIR=${VTK_DIR:-"/opt/build/vtk"}
 
 # call build script with options to only run tests without building
 # (in CI the docker image define the build and the test stages separately).
@@ -13,8 +15,8 @@ bash -c "VTK_DIR=/opt/build/vtk \
     VT_TV_COVERAGE_ENABLED=${VT_TV_COVERAGE_ENABLED:-OFF} \
     VT_TV_OUTPUT_DIR=$VT_TV_OUTPUT_DIR \
     VT_TV_RUN_TESTS=ON \
-    VT_TV_XVFB_ENABLED=ON \
-    /opt/src/vt-tv/build.sh"
+    VT_TV_XVFB_ENABLED=${VT_TV_XVFB_ENABLED:-"OFF"} \
+    $VTK_SRC_DIR/build.sh"
 
 # Add artifacts
 VT_TV_ARTIFACTS_DIR="/tmp/artifacts"
