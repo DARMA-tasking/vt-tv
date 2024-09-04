@@ -56,14 +56,12 @@ using JSONReader = vt::tv::utility::JSONReader;
  */
 struct JSONReaderTest : public ::testing::Test { };
 
-TEST_F(JSONReaderTest, test_json_reader_1) {
-  std::filesystem::path p =
-    std::filesystem::path(SRC_DIR) / "data/lb_test_data";
+void test_json_reader(std::filesystem::path p, std::string suffix) {
   std::string path = std::filesystem::absolute(p).string();
 
   NodeType rank = 0;
   JSONReader reader{rank};
-  reader.readFile(path + "/data.0.json");
+  reader.readFile(path + "/data.0" + suffix);
   auto info = reader.parse();
 
   auto const& obj_info = info->getObjectInfo();
@@ -113,6 +111,16 @@ TEST_F(JSONReaderTest, test_json_reader_1) {
       fmt::print("\t elm_id={:x}: load={}\n", elm_id, work.getLoad());
     }
   }
+}
+
+TEST_F(JSONReaderTest, test_json_reader_1) {
+  std::filesystem::path p = std::filesystem::path(SRC_DIR) / "data/lb_test_data" ;
+  test_json_reader(p, ".json");
+}
+
+TEST_F(JSONReaderTest, test_json_reader_compressed) {
+  std::filesystem::path p = std::filesystem::path(SRC_DIR) / "data/lb_test_data_compressed" ;
+  test_json_reader(p, ".json.br");
 }
 
 TEST_F(JSONReaderTest, test_json_reader_metadata_attributes) {
