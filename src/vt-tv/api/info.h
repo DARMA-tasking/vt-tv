@@ -563,9 +563,9 @@ struct Info {
     auto phase_objects = createPhaseObjectsMapping(phase);
     // Checking all communications for object A in all objects of all ranks at given phase: A <- ... and A -> ...
     for (auto& [A_id, object_work] : phase_objects) {
-      //      fmt::print("- Object ID: {}\n", A_id);
+      // fmt::print("- Object ID: {}\n", A_id);
       auto sent = object_work.getSent();
-      //      fmt::print(" Has {} sent communications", sent.size());
+      // fmt::print(" Has {} sent communications", sent.size());
       auto received = object_work.getReceived();
       //      fmt::print(" and {} received communications.\n", received.size());
       // Going through A -> ... communications
