@@ -55,7 +55,9 @@ add_compile_definitions(SRC_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
 add_compile_definitions(BUILD_DIR="${CMAKE_BINARY_DIR}")
 
 add_custom_target(vt_tv_examples)
-add_custom_target(vt_tv_tests)
+if (VT_TV_TESTS_ENABLED)
+  add_custom_target(vt_tv_tests)
+endif()
 add_custom_target(vt_tv_apps)
 
 set(PROJECT_BIN_DIR      ${CMAKE_CURRENT_BINARY_DIR})

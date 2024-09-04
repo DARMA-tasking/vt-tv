@@ -1,12 +1,12 @@
 input:
-  directory: tests/data/lb_test_data
+  directory: data/lb_test_data
   n_ranks: 4
 
 viz:
   x_ranks: 2
   y_ranks: 2
   z_ranks: 1
-  object_jitter: 0.5
+  object_jitter: 0.0
   rank_qoi: load
   object_qoi: load
   save_meshes: true

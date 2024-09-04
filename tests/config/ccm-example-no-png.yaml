@@ -10,9 +10,9 @@ viz:
   rank_qoi: load
   object_qoi: shared_id
   save_meshes: true
-  save_pngs: true
+  save_pngs: false
   force_continuous_object_qoi: true
 
 output:
-  directory: output/tests
+  directory: output/tests/no_png
   file_stem: ccm_example

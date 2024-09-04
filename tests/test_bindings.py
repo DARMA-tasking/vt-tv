@@ -23,7 +23,7 @@ n_ranks = params["visualization"]["x_ranks"] * params["visualization"]["y_ranks"
 rank_data = []
 
 for rank in range(n_ranks):
-  with open(f'{source_dir}/tests/data/lb_test_data/data.{rank}.json', 'r') as f:
+  with open(f'{source_dir}/data/lb_test_data/data.{rank}.json', 'r') as f:
     data = json.load(f)
 
   data_serialized = json.dumps(data)

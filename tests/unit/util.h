@@ -123,6 +123,16 @@ class Util {
         ifs.close();
         return content;
     }
+
+    /**
+     * \brief Formats a text with suport of null values
+     */
+    static std::string formatNullable(const char* data) {
+        if (data == nullptr) {
+            return "<nullptr>";
+        }
+        return fmt::format("{}", data);
+    }
 };
 
 } /* end namespace vt::tv::tests::unit */

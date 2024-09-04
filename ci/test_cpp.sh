@@ -2,12 +2,6 @@
 
 set -ex
 
-export DISPLAY=:99.0
-
-# Start custom display with X virtual frame buffer
-Xvfb :99 -screen 0 1024x768x24 -nolisten tcp > /dev/null 2>&1 &
-sleep 1s
-
 VT_TV_OUTPUT_DIR=/var/vt-tv/output
 VT_TV_TESTS_OUTPUT_DIR=/opt/src/vt-tv/output/tests
 
@@ -19,6 +13,7 @@ bash -c "VTK_DIR=/opt/build/vtk \
     VT_TV_COVERAGE_ENABLED=${VT_TV_COVERAGE_ENABLED:-OFF} \
     VT_TV_OUTPUT_DIR=$VT_TV_OUTPUT_DIR \
     VT_TV_RUN_TESTS=ON \
+    VT_TV_XVFB_ENABLED=ON \
     /opt/src/vt-tv/build.sh"
 
 # Add artifacts
@@ -53,8 +48,3 @@ popd
 
 # list artifacts dir content
 ls $VT_TV_ARTIFACTS_DIR
-
-# Clean and restore regular display
-pkill Xvfb
-rm -rf /tmp/.X11-unix/X99
-export DISPLAY=:0
