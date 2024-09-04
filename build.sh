@@ -223,7 +223,19 @@ if [[ "$VT_TV_RUN_TESTS" == "ON" ]]; then
 
   gtest_cmd="\"$VT_TV_BUILD_DIR/tests/unit/AllTests\" $GTEST_OPTIONS"
   echo "Run GTest..."
+
+  CURRENT_DISPLAY=$(echo $DISPLAY)
+  if [[ "$VT_TV_RUN_TESTS" == "ON" -a $VT_TV_XVFB_ENABLED == "ON" ]]; then
+    export DISPLAY=:99.0
+    Xvfb :99 -screen 0 1024x768x24 -nolisten tcp > /dev/null 2>&1 &
+    sleep 1s
+  fi
   eval "$gtest_cmd" || true
+  if [[ "$VT_TV_RUN_TESTS" == "ON" -a $VT_TV_XVFB_ENABLED == "ON" ]]; then
+    pkill Xvfb
+    export DISPLAY=$CURRENT_DISPLAY
+    rm -rf /tmp/.X11-unix/X99
+  fi
 
   echo "Tests done."
 
