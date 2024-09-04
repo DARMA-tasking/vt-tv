@@ -64,7 +64,7 @@ namespace vt::tv::tests::unit {
 /**
  * Utility methods
  */
-class Util {
+struct Util {
 public:
   /**
          * \brief Execute a command on the underlying system and returns exit code and output
