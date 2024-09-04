@@ -164,6 +164,7 @@ echo CC=$CC
 echo CXX=$CXX
 echo GCOV=$GCOV
 echo VTK_DIR=$VTK_DIR
+echo DISPLAY=$DISPLAY
 
 # Build
 if [[ "${VT_TV_BUILD}" == "ON" ]]; then
