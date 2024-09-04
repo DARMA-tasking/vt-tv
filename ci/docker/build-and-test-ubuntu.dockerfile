@@ -6,9 +6,7 @@ ARG VT_TV_TEST_PYTHON_BINDINGS=OFF
 FROM ${BASE_IMAGE} AS base
 
 # setup requirements for rendering tests (xvfb) + coverage report (lcov)
-RUN apt-get update && apt-get install -y \
-    xvfb \
-    lcov
+RUN apt-get update && apt-get install -y
 
 COPY . /opt/src/vt-tv
 RUN mkdir -p /opt/build/vt-tv
