@@ -4,10 +4,9 @@
 # > setup as pip package (internally build VT-TV with Python binding)
 # > run tests
 
-
 set -ex
 
-export DISPLAY=:99.0
+CURRENT_DIR="$(dirname -- "$(realpath -- "$0")")"
 
 # Activate conda environment
 . /opt/conda/etc/profile.d/conda.sh && conda activate deves
@@ -16,14 +15,16 @@ export DISPLAY=:99.0
 pip install PyYAML
 pip install /opt/src/vt-tv
 
-# Start custom display with X virtual frame buffer
-Xvfb :99 -screen 0 1024x768x24 -nolisten tcp > /dev/null 2>&1 &
-sleep 1s
+# Start virtual display
+CURRENT_DISPLAY=$(echo $DISPLAY)
+if [ "$(echo  $(uname -a))" != *"Darwin"* ]; then
+    $CURRENT_DIR/xvfb_start.sh :99
+fi
 
-# Test (needs display)
+# Run test
 python /opt/src/vt-tv/tests/test_bindings.py
 
-# Clean and restore regular display
-pkill Xvfb
-rm -rf /tmp/.X11-unix/X99
-export DISPLAY=:0
+# Restore display
+if [ "$(echo  $(uname -a))" != *"Darwin"* ]; then
+    $CURRENT_DIR/xvfb_stop.sh :99 $CURRENT_DISPLAY
+fi
