@@ -21,7 +21,7 @@ RUN VT_TV_COVERAGE_ENABLED=$VT_TV_COVERAGE_ENABLED bash /opt/src/vt-tv/ci/build.
 FROM build AS test-cpp
 ARG VT_TV_COVERAGE_ENABLED=OFF
 ARG VT_TV_TESTS_ENABLED=OFF
-RUN VT_TV_COVERAGE_ENABLED=$VT_TV_COVERAGE_ENABLED bash /opt/src/vt-tv/ci/test_cpp.sh
+RUN VT_TV_COVERAGE_ENABLED=$VT_TV_COVERAGE_ENABLED bash /opt/src/vt-tv/ci/test.sh
 
 # Python tests (Builds VT-TV with Python bindings & test python package)
 FROM test-cpp AS test-python

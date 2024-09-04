@@ -199,12 +199,12 @@ jobs:
       - name: Test
         run: |
           cd ${{ github.workspace }}
-          chmod +x ./ci/test_cpp.sh
+          chmod +x ./ci/test.sh
 
           VTK_DIR=${{ env.VTK_BUILD_DIR }} \
           VT_TV_COVERAGE_ENABLED=${{ env.VT_TV_COVERAGE_ENABLED }} \
           VT_TV_OUTPUT_DIR="${{ env.VT_TV_OUTPUT_DIR }}" \
-          ./ci/test_cpp.sh
+          ./ci/test.sh
 
       - name: Build Python package (${{ join(matrix.host.python, ', ') }})
         run: |

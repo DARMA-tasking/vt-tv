@@ -4,10 +4,12 @@
 
 set -ex
 
+CURRENT_DIR="$(dirname -- "$(realpath -- "$0")")"
+PARENT_DIR="$(dirname "$CURRENT_DIR")"
+
 CONDA_PATH=${CONDA_PATH:-/opt/conda}
 VT_TV_CONDA_ENV=${VT_TV_CONDA_ENV:-deves}
-
-CURRENT_DIR="$(dirname -- "$(realpath -- "$0")")"
+VT_TV_SRC_DIR=${VT_TV_SRC_DIR:-$PARENT_DIR}
 
 # Activate conda environment
 . ${CONDA_PATH}/etc/profile.d/conda.sh && conda activate $VT_TV_CONDA_ENV
@@ -20,7 +22,7 @@ if [[ $(uname -a) != *"Darwin"* ]]; then
 fi
 
 # Run test
-python /opt/src/vt-tv/tests/test_bindings.py
+python $VT_TV_SRC_DIR/tests/test_bindings.py
 
 # Restore display
 if [[ $(uname -a) != *"Darwin"* ]]; then
