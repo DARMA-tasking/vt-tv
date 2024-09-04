@@ -60,7 +60,8 @@ struct StandaloneAppTest
     return;
 
     // Make the output directory for these tests
-    std::filesystem::create_directories(fmt::format("{}/output/tests", SRC_DIR));
+    std::filesystem::create_directories(
+      fmt::format("{}/output/tests", SRC_DIR));
   }
 };
 

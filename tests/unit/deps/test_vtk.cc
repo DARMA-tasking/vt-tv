@@ -116,7 +116,7 @@ TEST_F(VtkTest, test_vtk_screenshot_example) {
   w2i->SetMagnification(2); // image quality
 #endif
   w2i->SetInputBufferTypeToRGBA(); // also record the alpha
-                                                   // (transparency) channel
+                                   // (transparency) channel
   w2i->ReadFrontBufferOff();       // read from the back buffer
   w2i->Update();
 
