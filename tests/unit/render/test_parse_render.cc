@@ -64,79 +64,45 @@ using Util = vt::tv::tests::unit::Util;
 /**
  * Provides unit tests for the vt::tv::utility::ParseRender class to test with config file input
  */
-struct ParseRenderTest : public ::testing::TestWithParam<std::string> {
-  void SetUp() override {
-    // Make the output directory for these tests
-    std::filesystem::create_directory(fmt::format("{}/output", SRC_DIR));
-    std::filesystem::create_directory(fmt::format("{}/output/tests", SRC_DIR));
-  }
-};
+class ParseRenderTest : public ::testing::TestWithParam<std::string> { };
 
 /**
  * Test ParseRender:parseAndRender correcty run the different configuration files
  */
-TEST_P(ParseRenderTest, test_parse_config_and_render_output) {
+TEST_P(ParseRenderTest, test_parse_config_and_render_no_png) {
   std::string const& config_file = GetParam();
   auto parse_render =
     ParseRender(fmt::format("{}/tests/config/{}", SRC_DIR, config_file));
-  ASSERT_NO_THROW(parse_render.parseAndRender());
-
   YAML::Node config =
     YAML::LoadFile(fmt::format("{}/tests/config/{}", SRC_DIR, config_file));
   Info info = Generator::loadInfoFromConfig(config);
-  std::string output_dir = Util::resolveDir(
-    SRC_DIR, config["output"]["directory"].as<std::string>(), true);
 
-  std::string output_file_stem =
-    config["output"]["file_stem"].as<std::string>();
+  auto output_dir = Util::resolveDir(
+    SRC_DIR, config["output"]["directory"].as<std::string>(), true);
+  std::filesystem::create_directories(output_dir);
+
+  auto output_file_stem = config["output"]["file_stem"].as<std::string>();
+
+  // generate file containing object jitter dimensions for output trace and input usage
+  // this is needed for image and mesh tests
+  ASSERT_NO_THROW(parse_render.parseAndRender());
+
   for (uint64_t i = 0; i < info.getNumPhases(); i++) {
-    // 1. test files exist: rank mesh, object mesh, png
     auto rank_mesh_file =
       fmt::format("{}{}_rank_mesh_{}.vtp", output_dir, output_file_stem, i);
     auto object_mesh_file =
       fmt::format("{}{}_object_mesh_{}.vtp", output_dir, output_file_stem, i);
     auto png_file = fmt::format("{}{}{}.png", output_dir, output_file_stem, i);
+
+    fmt::print("----- Test phase {} -----\n", i);
+    // 1. test files exist: rank mesh, object mesh, png
     ASSERT_TRUE(std::filesystem::exists(rank_mesh_file))
-      << fmt::format("Error: rank mesh not generated at {}", object_mesh_file);
+      << fmt::format("Error: rank mesh not generated at {}", rank_mesh_file);
     ASSERT_TRUE(std::filesystem::exists(object_mesh_file)) << fmt::format(
       "Error: object mesh not generated at {}", object_mesh_file);
-    ASSERT_TRUE(std::filesystem::exists(png_file))
+    ASSERT_FALSE(std::filesystem::exists(png_file))
       << fmt::format("Error: PNG image not generated at {}", png_file);
 
-    // 2. test PNG with tolerance
-    auto expected_png_file = fmt::format(
-      "{}/tests/expected/{}/{}{}.png",
-      SRC_DIR,
-      output_file_stem,
-      output_file_stem,
-      i);
-    std::vector<std::string> cmd_vars = {
-      fmt::format("ACTUAL={}", png_file),
-      fmt::format("EXPECTED={}", expected_png_file),
-      "TOLERANCE=2.0",
-    };
-    auto cmd = fmt::format(
-      "{} {}/tests/test_image.sh", fmt::join(cmd_vars, " "), SRC_DIR);
-    const auto [status, output] = Util::exec(cmd.c_str());
-    fmt::print("PNG diff: {}\n", output);
-    ASSERT_EQ(status, EXIT_SUCCESS) << fmt::format("Error: {}", output);
-
-    // TODO: testing mesh files cannot be a simple diff as below because each run generates some different data.
-    //       The future test should test XML Nodes
-    //   // 3. test vtp's file content
-    //   // 3.1 rank mesh file
-    //   auto expected_rank_mesh_file = fmt::format("{}/tests/expected/{}/{}_rank_mesh_{}.vtp",
-    //                                               SRC_DIR, output_file_stem, output_file_stem, i);
-    //   auto rank_mesh_content = Util::getFileContent(rank_mesh_file);
-    //   auto expected_rank_mesh_content = Util::getFileContent(expected_rank_mesh_file);
-    //   ASSERT_EQ(expected_rank_mesh_content, rank_mesh_content) << fmt::format("rank mesh file content differs from expected at phase {}", i);
-
-    //   // 3.2 object mesh file
-    //   auto expected_object_mesh_file = fmt::format("{}/tests/expected/{}/{}_object_mesh_{}.vtp",
-    //                                               SRC_DIR, output_file_stem, output_file_stem, i);
-    //   auto object_mesh_content = Util::getFileContent(object_mesh_file);
-    //   auto expected_object_mesh_content = Util::getFileContent(expected_object_mesh_file);
-    //   ASSERT_EQ(expected_object_mesh_content, object_mesh_content) << fmt::format("object mesh file content differs from expected at phase {}", i);
   } // end phases loop
 }
 
@@ -144,7 +110,7 @@ TEST_P(ParseRenderTest, test_parse_config_and_render_output) {
 INSTANTIATE_TEST_SUITE_P(
   ParseRenderTests,
   ParseRenderTest,
-  ::testing::Values<std::string>("conf.yaml", "ccm-example.yaml"),
+  ::testing::Values<std::string>("conf-no-png.yaml", "ccm-example-no-png.yaml"),
   [](const ::testing::TestParamInfo<std::string>& in_info) {
     // test suffix as slug
     auto suffix = std::regex_replace(in_info.param, std::regex("\\.yaml"), "");

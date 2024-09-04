@@ -64,13 +64,12 @@ namespace vt::tv::tests::unit {
 /**
  * Utility methods
  */
-struct Util {
+class Util {
 public:
   /**
-   * \brief Execute a command on the underlying system and returns exit code and output
-   *
-   * \throws {@link std::runtime_error} if an error occurs while opening the process
-   */
+         * \brief Execute a command on the underlying system and returns exit code and output
+         * \throws {@link std::runtime_error} if an error occurs while opening the process
+         */
   static std::tuple<int, std::string> exec(const char* cmd) {
     std::array<char, 128> buffer;
     std::string output;
@@ -94,14 +93,11 @@ public:
   }
 
   /**
-   * \brief Resolves a directory absolute path.
-   *
-   * \param[in] base_path Prepends "{base_path}/" to the path if path is relative
-   * \param[in] path The path as either a relative or an absolute path
-   * \param[in] add_trailing_sep Appends a trailing "/" char at the end of the path if not exist
-   *
-   * \return the absolute path to the directory
-   */
+     * \brief Resolves a directory absolute path.
+     * \param[in] base_path Prepends "{base_path}/" to the path if path is relative
+     * \param[in] path The path as either a relative or an absolute path
+     * \param[in] add_trailing_sep Appends a trailing "/" char at the end of the path if not exist
+     */
   static std::string resolveDir(
     std::string base_path, std::string path, bool add_trailing_sep = false) {
     std::filesystem::path abs_path(path);
@@ -122,8 +118,8 @@ public:
   }
 
   /**
-   * \brief Reads file content and returns it as a string
-   */
+     * \brief Reads file content and returns it as a string
+     */
   static std::string getFileContent(std::string filename) {
     std::ifstream ifs(filename);
     std::string content(
@@ -131,6 +127,16 @@ public:
       (std::istreambuf_iterator<char>()));
     ifs.close();
     return content;
+  }
+
+  /**
+     * \brief Formats a text with suport of null values
+     */
+  static std::string formatNullable(const char* data) {
+    if (data == nullptr) {
+      return "<nullptr>";
+    }
+    return fmt::format("{}", data);
   }
 };
 
