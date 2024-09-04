@@ -116,7 +116,7 @@ EOF
 
 while getopts btch-: OPT; do  # allow -b -t -c -h, and --long_attr=value"
   # support long options: https://stackoverflow.com/a/28466267/519360
-  if [ "$OPT" = "-" ]; then   # long option: reformulate OPT and OPTARG
+  if [ "$OPT" == "-" ]; then   # long option: reformulate OPT and OPTARG
     OPT="${OPTARG%%=*}"       # extract long option name
     OPTARG="${OPTARG#"$OPT"}" # extract long option argument (may be empty)
     OPTARG="${OPTARG#=}"      # if long option argument, remove assigning `=`
@@ -205,7 +205,7 @@ if [[ "${VT_TV_BUILD}" == "ON" ]]; then
 fi # End build
 
 # Run tests
-if [[ "$VT_TV_RUN_TESTS" == "ON" ]]; then
+if [ "$VT_TV_RUN_TESTS" == "ON" ]; then
   mkdir -p "$VT_TV_OUTPUT_DIR"
   pushd $VT_TV_OUTPUT_DIR
   # Tests
@@ -225,13 +225,14 @@ if [[ "$VT_TV_RUN_TESTS" == "ON" ]]; then
   echo "Run GTest..."
 
   CURRENT_DISPLAY=$(echo $DISPLAY)
-  if [[ "$VT_TV_RUN_TESTS" == "ON" -a $VT_TV_XVFB_ENABLED == "ON" ]]; then
+  if [ "$VT_TV_RUN_TESTS" == "ON" -a "$VT_TV_XVFB_ENABLED" == "ON" ]; then
+    echo "Running Xvfb display..."
     export DISPLAY=:99.0
     Xvfb :99 -screen 0 1024x768x24 -nolisten tcp > /dev/null 2>&1 &
     sleep 1s
   fi
   eval "$gtest_cmd" || true
-  if [[ "$VT_TV_RUN_TESTS" == "ON" -a $VT_TV_XVFB_ENABLED == "ON" ]]; then
+  if [ "$VT_TV_RUN_TESTS" == "ON" -a "$VT_TV_XVFB_ENABLED" == "ON" ]; then
     pkill Xvfb
     export DISPLAY=$CURRENT_DISPLAY
     rm -rf /tmp/.X11-unix/X99
@@ -243,7 +244,7 @@ if [[ "$VT_TV_RUN_TESTS" == "ON" ]]; then
 fi
 
 # Coverage
-if [[ "$VT_TV_COVERAGE_ENABLED" == "ON" ]]; then
+if [ "$VT_TV_COVERAGE_ENABLED" == "ON" ]; then
   mkdir -p "$VT_TV_OUTPUT_DIR"
   pushd $VT_TV_OUTPUT_DIR
   # base coverage files
