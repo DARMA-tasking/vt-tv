@@ -69,7 +69,7 @@ class ParseRenderTest : public ::testing::TestWithParam<std::string> { };
 /**
  * Test ParseRender:parseAndRender correcty run the different configuration files
  */
-TEST_P(ParseRenderTest, test_parse_config_and_render_no_png) {
+TEST_P(ParseRenderTest, test_parse_render_no_png_generates_mesh_files_only) {
   std::string const& config_file = GetParam();
   auto parse_render =
     ParseRender(fmt::format("{}/tests/config/{}", SRC_DIR, config_file));
