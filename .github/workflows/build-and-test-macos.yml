@@ -116,12 +116,6 @@ jobs:
           sudo apt-get clean && \
           sudo rm -rf /var/lib/apt/lists/*
 
-      - name: Setup XVFB Virtual display (Ubuntu)
-        if: ${{ runner.os ==  'Linux' }}
-        run: |
-          Xvfb :99 -screen 0 1024x768x24 -nolisten tcp > /dev/null 2>&1 & \
-          sleep 1s
-
       - name: Load cache (VTK, Miniconda3)
         id: base-cache
         uses: actions/cache@v4
@@ -212,6 +206,7 @@ jobs:
           VT_TV_COVERAGE_ENABLED=${{ env.VT_TV_COVERAGE_ENABLED }} \
           VT_TV_OUTPUT_DIR="${{ env.VT_TV_OUTPUT_DIR }}" \
           VT_TV_RUN_TESTS=ON \
+          VT_TV_XVFB_ENABLED=$([[ $(uname -a) == *"Darwin"* ]] && echo "OFF" || echo "ON")\
           ./build.sh
 
       - name: Build Python bindings (${{ join(matrix.host.python, ', ') }})
