@@ -108,7 +108,8 @@ TEST_P(ParseRenderTest, test_parse_config_and_render_no_png) {
 
 /* Run with different configuration files */
 INSTANTIATE_TEST_SUITE_P(
-  ParseRenderTests, ParseRenderTest,
+  ParseRenderTests,
+  ParseRenderTest,
   ::testing::Values<std::string>("conf-no-png.yaml", "ccm-example-no-png.yaml"),
   [](const ::testing::TestParamInfo<std::string>& in_info) {
     // test suffix as slug

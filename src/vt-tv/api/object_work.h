@@ -71,7 +71,8 @@ struct ObjectWork {
    * \param[in] in_user_defined the user-defined fields in json
    */
   ObjectWork(
-    ElementIDType in_id, TimeType in_whole_phase_load,
+    ElementIDType in_id,
+    TimeType in_whole_phase_load,
     std::unordered_map<SubphaseType, TimeType> in_subphase_loads,
     std::unordered_map<std::string, QOIVariantTypes> in_user_defined = {},
     std::unordered_map<std::string, QOIVariantTypes> in_attributes = {})

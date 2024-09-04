@@ -98,20 +98,25 @@ TEST_P(StandaloneAppTest, test_run) {
       ASSERT_TRUE(std::filesystem::exists(
         fmt::format("{}{}_rank_mesh_{}.vtp", output_dir, output_file_stem, i)))
         << fmt::format(
-             "Rank mesh not generated at {}{}_rank_mesh_{}.vtp", output_dir,
-             output_file_stem, i);
+             "Rank mesh not generated at {}{}_rank_mesh_{}.vtp",
+             output_dir,
+             output_file_stem,
+             i);
       ASSERT_TRUE(std::filesystem::exists(fmt::format(
         "{}{}_object_mesh_{}.vtp", output_dir, output_file_stem, i)))
         << fmt::format(
-             "Object mesh not generated at {}{}_object_mesh_{}.vtp", output_dir,
-             output_file_stem, i);
+             "Object mesh not generated at {}{}_object_mesh_{}.vtp",
+             output_dir,
+             output_file_stem,
+             i);
     }
   }
 }
 
 /* Run with different configuration files */
 INSTANTIATE_TEST_SUITE_P(
-  StandaloneAppTests, StandaloneAppTest,
+  StandaloneAppTests,
+  StandaloneAppTest,
   // config file and expected number of phases
   ::testing::Values(
     // std::make_tuple<std::string, int>("conf.yaml", 8),

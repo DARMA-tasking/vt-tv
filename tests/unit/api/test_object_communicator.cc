@@ -133,7 +133,8 @@ TEST_F(ObjectCommunicatorTest, test_serialization) {
       fmt::print(
         "Missing received volume {} from object {} in serialized communicator "
         "data",
-        received_volume, object_id);
+        received_volume,
+        object_id);
       any_failure = true;
       ADD_FAILURE();
     } else if (
@@ -161,7 +162,8 @@ TEST_F(ObjectCommunicatorTest, test_serialization) {
       fmt::print(
         "Missing received volume {} from object {} in serialized communicator "
         "data",
-        received_volume, object_id);
+        received_volume,
+        object_id);
       ADD_FAILURE();
     }
   }
@@ -170,7 +172,8 @@ TEST_F(ObjectCommunicatorTest, test_serialization) {
     if (actual_sent.find(object_id) == actual_sent.cend()) {
       fmt::print(
         "Missing sent volume {} from object {} in serialized communicator data",
-        sent_volume, object_id);
+        sent_volume,
+        object_id);
       any_failure = true;
       ADD_FAILURE();
     } else if (
@@ -197,7 +200,8 @@ TEST_F(ObjectCommunicatorTest, test_serialization) {
       fmt::print(
         "Missing received volume {} from object {} in serialized communicator "
         "data",
-        sent_volume, object_id);
+        sent_volume,
+        object_id);
       ADD_FAILURE();
     }
   }

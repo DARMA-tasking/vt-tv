@@ -137,7 +137,8 @@ struct Info {
     if (this->ranks_.size() > 0) {
       n_phases = this->ranks_.at(0).getNumPhases();
       for (NodeType rank_id = 1;
-           rank_id < static_cast<NodeType>(this->ranks_.size()); rank_id++) {
+           rank_id < static_cast<NodeType>(this->ranks_.size());
+           rank_id++) {
         if (ranks_.at(rank_id).getNumPhases() != n_phases) {
           throw std::runtime_error(
             "Number of phases must be consistent across ranks");
@@ -590,7 +591,9 @@ struct Info {
           fmt::print(
             "  /!\\ Didn't find recipient object {} when searching for "
             "communication sent by object {} of {} bytes.\n",
-            B_id, A_id, bytes);
+            B_id,
+            A_id,
+            bytes);
         }
       }
       // Going through A <- ... communications

@@ -68,7 +68,9 @@ struct ObjectInfo {
    * \param[in] in_index the index for the object
    */
   ObjectInfo(
-    ElementIDType in_id, NodeType in_home, bool in_migratable,
+    ElementIDType in_id,
+    NodeType in_home,
+    bool in_migratable,
     std::vector<UniqueIndexBitType> const& in_index)
     : id_(in_id),
       home_(in_home),

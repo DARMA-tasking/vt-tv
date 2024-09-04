@@ -207,8 +207,11 @@ std::unique_ptr<Info> JSONReader::parse() {
             objects.try_emplace(
               object,
               ObjectWork{
-                object, time, std::move(subphase_loads),
-                std::move(readed_user_defined), std::move(readed_attributes)});
+                object,
+                time,
+                std::move(subphase_loads),
+                std::move(readed_user_defined),
+                std::move(readed_attributes)});
           }
         }
       }
@@ -245,7 +248,8 @@ std::unique_ptr<Info> JSONReader::parse() {
                 fmt::print(
                   "Warning: Communication {} -> {}: neither sender nor "
                   "recipient was found in objects.\n",
-                  from_id, to_id);
+                  from_id,
+                  to_id);
               }
             }
           }

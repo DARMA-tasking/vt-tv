@@ -75,8 +75,11 @@ TEST_F(JSONReaderTest, test_json_reader_1) {
 
   for (auto const& [elm_id, oi] : obj_info) {
     fmt::print(
-      "elm_id={:x}, home={}, migratable={}, index_array size={}\n", elm_id,
-      oi.getHome(), oi.isMigratable(), oi.getIndexArray().size());
+      "elm_id={:x}, home={}, migratable={}, index_array size={}\n",
+      elm_id,
+      oi.getHome(),
+      oi.isMigratable(),
+      oi.getIndexArray().size());
     EXPECT_EQ(elm_id, oi.getID());
     fmt::print("elm_id: {}, oi.getID: {}\n", elm_id, oi.getID());
 

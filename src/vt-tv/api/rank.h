@@ -63,7 +63,8 @@ struct Rank {
    * \param[in] in_phase_info all the phase info
    */
   Rank(
-    NodeType in_rank, std::unordered_map<PhaseType, PhaseWork> in_phase_info,
+    NodeType in_rank,
+    std::unordered_map<PhaseType, PhaseWork> in_phase_info,
     std::unordered_map<std::string, QOIVariantTypes> in_attributes = {})
     : rank_(in_rank),
       phase_info_(std::move(in_phase_info)),
@@ -123,7 +124,9 @@ struct Rank {
   * \return void
   */
   void addObjectReceivedCommunicationAtPhase(
-    PhaseType phase_id, ElementIDType o_id, ElementIDType from_id,
+    PhaseType phase_id,
+    ElementIDType o_id,
+    ElementIDType from_id,
     double bytes) {
     phase_info_.at(phase_id).addObjectReceivedCommunication(
       o_id, from_id, bytes);

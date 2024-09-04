@@ -54,7 +54,10 @@ namespace vt::tv::tests::unit::api {
 struct ObjectWorkTest : public ::testing::Test {
 public:
   ObjectWork object_0 = ObjectWork(
-    12, 10.0, {{3, 12.0}}, Generator::makeQOIVariants(3, "user_", "_value"),
+    12,
+    10.0,
+    {{3, 12.0}},
+    Generator::makeQOIVariants(3, "user_", "_value"),
     Generator::makeQOIVariants(2, "attr_", "_value"));
 };
 

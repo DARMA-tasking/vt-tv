@@ -107,7 +107,12 @@ namespace vt::tv {
  */
 struct Render {
 private:
-  enum struct ColorType: uint8_t { Default = 0, BlueToRed = 1, HotSpot = 2, WhiteToBlack = 3 };
+  enum struct ColorType : uint8_t {
+    Default = 0,
+    BlueToRed = 1,
+    HotSpot = 2,
+    WhiteToBlack = 3
+  };
 
   // quantities of interest
   std::string rank_qoi_ = "load";
@@ -211,8 +216,11 @@ private:
     ColorType ct = ColorType::Default);
 
   static vtkSmartPointer<vtkScalarBarActor> createScalarBarActor_(
-    vtkSmartPointer<vtkMapper> mapper, const std::string& title, double x,
-    double y, uint64_t font_size = 50,
+    vtkSmartPointer<vtkMapper> mapper,
+    const std::string& title,
+    double x,
+    double y,
+    uint64_t font_size = 50,
     std::set<std::variant<double, int>> values = {});
 
   static vtkSmartPointer<vtkRenderer> setupRenderer_();
@@ -255,10 +263,15 @@ public:
    * \param[in] in_selected_phase the phase selected (if max then render all)
    */
   Render(
-    std::array<std::string, 3> in_qoi_request, bool in_continuous_object_qoi,
-    Info& in_info, std::array<uint64_t, 3> in_grid_size,
-    double in_object_jitter, std::string in_output_dir,
-    std::string in_output_file_stem, double in_resolution, bool in_save_meshes,
+    std::array<std::string, 3> in_qoi_request,
+    bool in_continuous_object_qoi,
+    Info& in_info,
+    std::array<uint64_t, 3> in_grid_size,
+    double in_object_jitter,
+    std::string in_output_dir,
+    std::string in_output_file_stem,
+    double in_resolution,
+    bool in_save_meshes,
     bool in_save_pngs,
     PhaseType in_selected_phase = std::numeric_limits<PhaseType>::max());
 
@@ -277,9 +290,15 @@ public:
    * @return A smart pointer to the resulting render window.
    */
   void renderPNG(
-    PhaseType phase, vtkPolyData* rank_mesh, vtkPolyData* object_mesh,
-    uint64_t edge_width, double glyph_factor, uint64_t win_size,
-    uint64_t font_size, std::string output_dir, std::string output_file_stem);
+    PhaseType phase,
+    vtkPolyData* rank_mesh,
+    vtkPolyData* object_mesh,
+    uint64_t edge_width,
+    double glyph_factor,
+    uint64_t win_size,
+    uint64_t font_size,
+    std::string output_dir,
+    std::string output_file_stem);
 
   void generate(uint64_t font_size = 50, uint64_t win_size = 2000);
 };

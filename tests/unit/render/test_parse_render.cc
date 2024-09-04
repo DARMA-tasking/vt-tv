@@ -105,8 +105,11 @@ TEST_P(ParseRenderTest, test_parse_config_and_render_output) {
 
     // 2. test PNG with tolerance
     auto expected_png_file = fmt::format(
-      "{}/tests/expected/{}/{}{}.png", SRC_DIR, output_file_stem,
-      output_file_stem, i);
+      "{}/tests/expected/{}/{}{}.png",
+      SRC_DIR,
+      output_file_stem,
+      output_file_stem,
+      i);
     std::vector<std::string> cmd_vars = {
       fmt::format("ACTUAL={}", png_file),
       fmt::format("EXPECTED={}", expected_png_file),
@@ -139,7 +142,8 @@ TEST_P(ParseRenderTest, test_parse_config_and_render_output) {
 
 /* Run with different configuration files */
 INSTANTIATE_TEST_SUITE_P(
-  ParseRenderTests, ParseRenderTest,
+  ParseRenderTests,
+  ParseRenderTest,
   ::testing::Values<std::string>("conf.yaml", "ccm-example.yaml"),
   [](const ::testing::TestParamInfo<std::string>& in_info) {
     // test suffix as slug

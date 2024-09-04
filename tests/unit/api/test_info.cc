@@ -123,7 +123,12 @@ TEST_P(InfoTest, test_get_object_qoi_getter) {
     Generator::makeInfo(param.num_objects, param.num_ranks, param.num_phases);
 
   auto qoi_list = std::vector<std::string>(
-    {"load", "received_volume", "sent_volume", "max_volume", "id", "rank_id",
+    {"load",
+     "received_volume",
+     "sent_volume",
+     "max_volume",
+     "id",
+     "rank_id",
      "non-existent"});
   for (auto const& qoi : qoi_list) {
     auto qoi_getter = info.getObjectQoiGetter(qoi);
@@ -154,11 +159,13 @@ TEST_P(InfoTest, test_get_all_object_ids) {
 
 /* Run Unit tests using different data sets as Tests params */
 INSTANTIATE_TEST_SUITE_P(
-  InfoTests, InfoTest,
+  InfoTests,
+  InfoTest,
   ::testing::Values<InfoTestParam>(
     // num_objects, num_ranks, num_phases
     InfoTestParam(0, 0, 0), // empty case
-    InfoTestParam(2, 5, 1), InfoTestParam(6, 1, 1)),
+    InfoTestParam(2, 5, 1),
+    InfoTestParam(6, 1, 1)),
   [](const testing::TestParamInfo<InfoTest::ParamType>& in_info) {
     // test suffix
     return std::to_string(in_info.param.num_objects) + "_" +
@@ -239,7 +246,9 @@ TEST_F(InfoTest, test_get_phase_objects) {
   auto phase_0_objects = info.getPhaseObjects(0);
   for (auto& [key, val] : phase_0_objects) {
     fmt::print(
-      "Phase 0 has object {} at key {} with load {}\n", val.getID(), key,
+      "Phase 0 has object {} at key {} with load {}\n",
+      val.getID(),
+      key,
       val.getLoad());
   }
   ASSERT_EQ(phase_0_objects.size(), 4);
@@ -257,7 +266,9 @@ TEST_F(InfoTest, test_get_phase_objects) {
   auto phase_1_objects = info.getPhaseObjects(1);
   for (auto& [key, val] : phase_1_objects) {
     fmt::print(
-      "Phase 1 has object {} at key {} with load {}\n", val.getID(), key,
+      "Phase 1 has object {} at key {} with load {}\n",
+      val.getID(),
+      key,
       val.getLoad());
   }
   ASSERT_EQ(phase_1_objects.size(), 2);
@@ -389,7 +400,12 @@ TEST_F(InfoTest, test_get_object_qoi) {
     Generator::makeRanks({{0, object_0}}, 1, 1)    // 1 phase 1 rank
   );
   auto qoi_list = std::vector<std::string>(
-    {"load", "received_volume", "sent_volume", "max_volume", "id", "rank_id",
+    {"load",
+     "received_volume",
+     "sent_volume",
+     "max_volume",
+     "id",
+     "rank_id",
      "non-existent"});
   for (auto const& qoi : qoi_list) {
     if (qoi == "non-existent") {
@@ -418,10 +434,12 @@ TEST_F(InfoTest, test_get_rank_qoi) {
   objects_20.at(4).addReceivedCommunications(2, 3.6);
 
   Rank rank_0 = Rank(
-    0, {{0, PhaseWork(0, objects_15)}, {1, PhaseWork(1, objects_20)}},
+    0,
+    {{0, PhaseWork(0, objects_15)}, {1, PhaseWork(1, objects_20)}},
     {{"attr1", 12}, {"attr2", "ab"}});
   Rank rank_1 = Rank(
-    1, {{0, PhaseWork(0, {})}, {1, PhaseWork(1, objects_18)}},
+    1,
+    {{0, PhaseWork(0, {})}, {1, PhaseWork(1, objects_18)}},
     {{"attr1", 13}, {"attr2", "cd"}});
 
   auto objects_info = std::unordered_map<ElementIDType, ObjectInfo>();
@@ -433,9 +451,16 @@ TEST_F(InfoTest, test_get_rank_qoi) {
 
   // Test getRankQOIGetter
   auto qoi_list = std::vector<std::string>(
-    {"load", "received_volume", "sent_volume", "number_of_objects",
-     "number_of_migratable_objects", "migratable_load", "sentinel_load", "id",
-     "attr1", "attr2"});
+    {"load",
+     "received_volume",
+     "sent_volume",
+     "number_of_objects",
+     "number_of_migratable_objects",
+     "migratable_load",
+     "sentinel_load",
+     "id",
+     "attr1",
+     "attr2"});
   for (auto const& qoi : qoi_list) {
     auto qoi_getter = info.getRankQOIGetter(qoi);
 

@@ -77,8 +77,9 @@ TEST_F(PhaseWorkTest, test_initial_state) {
   EXPECT_EQ(
     phase_0.getLoad(),
     std::accumulate(
-      objects_0.begin(), objects_0.end(), 0,
-      [](double value, const auto& p) { return value + p.second.getLoad(); }));
+      objects_0.begin(), objects_0.end(), 0, [](double value, const auto& p) {
+        return value + p.second.getLoad();
+      }));
   EXPECT_EQ(phase_0.getMaxVolume(), 0.0);
 }
 

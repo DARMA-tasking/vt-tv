@@ -113,10 +113,16 @@ Render::Render(Info in_info)
 };
 
 Render::Render(
-  std::array<std::string, 3> in_qoi_request, bool in_continuous_object_qoi,
-  Info& in_info, std::array<uint64_t, 3> in_grid_size, double in_object_jitter,
-  std::string in_output_dir, std::string in_output_file_stem,
-  double in_resolution, bool in_save_meshes, bool in_save_pngs,
+  std::array<std::string, 3> in_qoi_request,
+  bool in_continuous_object_qoi,
+  Info& in_info,
+  std::array<uint64_t, 3> in_grid_size,
+  double in_object_jitter,
+  std::string in_output_dir,
+  std::string in_output_file_stem,
+  double in_resolution,
+  bool in_save_meshes,
+  bool in_save_pngs,
   PhaseType in_selected_phase)
   : rank_qoi_(in_qoi_request[0]),
     object_qoi_(in_qoi_request[2]),
@@ -248,7 +254,8 @@ std::pair<double, double> Render::computeRankQoiRange_() {
 
     // Get max qoi for this rank across all phases
     auto prmax = std::max_element(
-      std::begin(rank_qoi_map), std::end(rank_qoi_map),
+      std::begin(rank_qoi_map),
+      std::end(rank_qoi_map),
       [](
         const std::pair<PhaseType, double>& p1,
         const std::pair<PhaseType, double>& p2) {
@@ -258,7 +265,8 @@ std::pair<double, double> Render::computeRankQoiRange_() {
 
     // Get min qoi for this rank across all phases
     auto prmin = std::max_element(
-      std::begin(rank_qoi_map), std::end(rank_qoi_map),
+      std::begin(rank_qoi_map),
+      std::end(rank_qoi_map),
       [](
         const std::pair<PhaseType, double>& p1,
         const std::pair<PhaseType, double>& p2) {
@@ -392,7 +400,8 @@ vtkNew<vtkPolyData> Render::createObjectMesh_(PhaseType phase) {
       this->globalIDToCartesian_(rankID, this->grid_size_);
 
     std::array<double, 3> offsets = {
-      ijk[0] * this->grid_resolution_, ijk[1] * this->grid_resolution_,
+      ijk[0] * this->grid_resolution_,
+      ijk[1] * this->grid_resolution_,
       ijk[2] * this->grid_resolution_};
 
     // Compute local object block parameters
@@ -447,7 +456,9 @@ vtkNew<vtkPolyData> Render::createObjectMesh_(PhaseType phase) {
       }
 
       points->SetPoint(
-        point_index, currentPointPosition[0], currentPointPosition[1],
+        point_index,
+        currentPointPosition[0],
+        currentPointPosition[1],
         currentPointPosition[2]);
 
       // Set object attributes
@@ -474,9 +485,9 @@ vtkNew<vtkPolyData> Render::createObjectMesh_(PhaseType phase) {
   lineValuesArray->SetName("bytes");
   vtkNew<vtkCellArray> lines;
   uint64_t n_e = 0;
-  std::map<
-    std::tuple<ElementIDType, ElementIDType>, std::tuple<uint64_t, double>>
-    edge_values;
+  std::
+    map<std::tuple<ElementIDType, ElementIDType>, std::tuple<uint64_t, double>>
+      edge_values;
 
   fmt::print("  Creating inter-object communication edges\n");
   for (auto& [pt_index, k, v] : sent_volumes) {
@@ -644,8 +655,12 @@ Render::createColorTransferFunction_(
 }
 
 /*static*/ vtkSmartPointer<vtkScalarBarActor> Render::createScalarBarActor_(
-  vtkSmartPointer<vtkMapper> mapper, const std::string& title, double x,
-  double y, uint64_t font_size, std::set<std::variant<double, int>> values) {
+  vtkSmartPointer<vtkMapper> mapper,
+  const std::string& title,
+  double x,
+  double y,
+  uint64_t font_size,
+  std::set<std::variant<double, int>> values) {
   vtkSmartPointer<vtkScalarBarActor> scalar_bar_actor =
     vtkSmartPointer<vtkScalarBarActor>::New();
   scalar_bar_actor->SetLookupTable(mapper->GetLookupTable());
@@ -783,9 +798,15 @@ Render::createColorTransferFunction_(
 }
 
 void Render::renderPNG(
-  PhaseType phase, vtkPolyData* rank_mesh, vtkPolyData* object_mesh,
-  uint64_t edge_width, double glyph_factor, uint64_t win_size,
-  uint64_t font_size, std::string output_dir, std::string output_file_stem) {
+  PhaseType phase,
+  vtkPolyData* rank_mesh,
+  vtkPolyData* object_mesh,
+  uint64_t edge_width,
+  double glyph_factor,
+  uint64_t win_size,
+  uint64_t font_size,
+  std::string output_dir,
+  std::string output_file_stem) {
   // Setup rendering space
   vtkSmartPointer<vtkRenderer> renderer = setupRenderer_();
 
@@ -939,7 +960,11 @@ void Render::renderPNG(
       }
       vtkSmartPointer<vtkActor2D> object_qoi_scalar_bar_actor =
         createScalarBarActor_(
-          glyph_mappers.at(1.0), object_qoi_name.c_str(), 0.52, 0.04, font_size,
+          glyph_mappers.at(1.0),
+          object_qoi_name.c_str(),
+          0.52,
+          0.04,
+          font_size,
           values);
       renderer->AddActor2D(object_qoi_scalar_bar_actor);
     }
@@ -1054,8 +1079,15 @@ void Render::generate(uint64_t font_size, uint64_t win_size) {
       fmt::print("  Image size: {}x{}px\n", win_size, win_size);
       fmt::print("  Font size: {}pt\n", font_size);
       this->renderPNG(
-        phase, rank_mesh, object_mesh, edge_width, glyph_factor, window_size,
-        font_size, output_dir_, output_file_stem_);
+        phase,
+        rank_mesh,
+        object_mesh,
+        edge_width,
+        glyph_factor,
+        window_size,
+        font_size,
+        output_dir_,
+        output_file_stem_);
     }
   };
 

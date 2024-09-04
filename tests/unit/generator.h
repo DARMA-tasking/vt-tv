@@ -66,7 +66,8 @@ public:
    * Make a map of new objects
    */
   static const std::unordered_map<ElementIDType, ObjectWork> makeObjects(
-    const int num_objects = rand() % 10, TimeType load = 2.0,
+    const int num_objects = rand() % 10,
+    TimeType load = 2.0,
     int first_id = 0) {
     auto object_work_map = std::unordered_map<ElementIDType, ObjectWork>();
     for (auto object_id = first_id; object_id < first_id + num_objects;
@@ -110,7 +111,8 @@ public:
    */
   static const std::unordered_map<NodeType, Rank> makeRanks(
     std::unordered_map<ElementIDType, ObjectWork> objects,
-    int16_t num_ranks = rand() % 10, uint64_t num_phases = rand() % 10) {
+    int16_t num_ranks = rand() % 10,
+    uint64_t num_phases = rand() % 10) {
     auto rank_map = std::unordered_map<NodeType, Rank>();
     for (NodeType rank_id = 0; rank_id < num_ranks; rank_id++) {
       auto rank = Rank(rank_id, makePhases(objects, num_phases));
@@ -135,7 +137,8 @@ public:
   }
 
   static std::unordered_map<std::string, QOIVariantTypes> makeQOIVariants(
-    uint64_t num = rand() % 10, std::string key_prefix = "attr_",
+    uint64_t num = rand() % 10,
+    std::string key_prefix = "attr_",
     std::string value_suffix = "_value") {
     auto qoi_map = std::unordered_map<std::string, QOIVariantTypes>();
     for (size_t i = 0; i < num; i++) {
@@ -149,7 +152,8 @@ public:
    * Make an Info instance
    */
   static const Info makeInfo(
-    int num_objects = rand() % 100, int num_ranks = rand() % 10,
+    int num_objects = rand() % 100,
+    int num_ranks = rand() % 10,
     uint64_t num_phases = 10) {
     auto objects = makeObjects(num_objects);
     auto ranks = makeRanks(objects, num_ranks, num_phases);

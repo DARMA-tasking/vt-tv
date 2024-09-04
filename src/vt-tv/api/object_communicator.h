@@ -81,7 +81,8 @@ struct ObjectCommunicator {
    * \param[in] sent_in send edges
    */
   ObjectCommunicator(
-    ElementIDType id_in, std::multimap<ElementIDType, double> recv_in,
+    ElementIDType id_in,
+    std::multimap<ElementIDType, double> recv_in,
     std::multimap<ElementIDType, double> sent_in)
     : object_id_(id_in),
       received_(recv_in),
@@ -169,14 +170,16 @@ struct ObjectCommunicator {
     // Search for the maximum value in received and sent (0. if sets are empty)
     double max_recv = !this->received_.empty() ?
       std::max_element(
-        this->received_.begin(), this->received_.end(),
+        this->received_.begin(),
+        this->received_.end(),
         [](const auto& a, const auto& b) { return a.second < b.second; })
         ->second :
       0.0;
 
     double max_sent = !this->sent_.empty() ?
       std::max_element(
-        this->sent_.begin(), this->sent_.end(),
+        this->sent_.begin(),
+        this->sent_.end(),
         [](const auto& a, const auto& b) { return a.second < b.second; })
         ->second :
       0.0;

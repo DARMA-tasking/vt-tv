@@ -107,7 +107,8 @@ void ParseRender::parseAndRender(
     }
 
     std::array<std::string, 3> qoi_request = {
-      config["viz"]["rank_qoi"].as<std::string>("load"), "",
+      config["viz"]["rank_qoi"].as<std::string>("load"),
+      "",
       config["viz"]["object_qoi"].as<std::string>("load")};
 
     bool save_meshes = config["viz"]["save_meshes"].as<bool>(true);
@@ -165,8 +166,16 @@ void ParseRender::parseAndRender(
 
     // Instantiate render
     Render r(
-      qoi_request, continuous_object_qoi, *std::move(info), grid_size,
-      object_jitter, output_dir, output_file_stem, 1.0, save_meshes, save_pngs,
+      qoi_request,
+      continuous_object_qoi,
+      *std::move(info),
+      grid_size,
+      object_jitter,
+      output_dir,
+      output_file_stem,
+      1.0,
+      save_meshes,
+      save_pngs,
       phase_id);
 
     if (save_meshes || save_pngs) {
