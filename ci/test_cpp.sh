@@ -12,7 +12,7 @@ VT_TV_BUILD_DIR=${VT_TV_BUILD_DIR:-"/opt/build/vt-tv"}
 VT_TV_OUTPUT_DIR=${VT_TV_OUTPUT_DIR:-"$VT_TV_SRC_DIR/output"}
 VT_TV_TESTS_OUTPUT_DIR=${VT_TV_TESTS_OUTPUT_DIR:-"$VT_TV_OUTPUT_DIR/tests"}
 
-# Start virtual display
+# Start virtual display (Linux)
 CURRENT_DISPLAY=$(echo $DISPLAY)
 if [[ $(uname -a) != *"Darwin"* ]]; then
     $CURRENT_DIR/xvfb_start.sh :99
@@ -27,7 +27,7 @@ bash -c "VTK_DIR=/opt/build/vtk \
     VT_TV_RUN_TESTS=ON \
     $VT_TV_SRC_DIR/build.sh"
 
-# Restore display
+# Restore display (Linux)
 if [[ $(uname -a) != *"Darwin"* ]]; then
     $CURRENT_DIR/xvfb_stop.sh :99 $CURRENT_DISPLAY
 fi
