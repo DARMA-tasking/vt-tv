@@ -175,7 +175,7 @@ jobs:
         run: |
           mkdir -p ${{ env.VTK_SRC_DIR }}
           git clone --recursive --branch v${{ matrix.host.vtk }} https://gitlab.kitware.com/vtk/vtk.git ${{ env.VTK_SRC_DIR }}
-          VTK_DIR=${{ env.VTK_BUILD_DIR }} VTK_SRC_DIR=${{ env.VTK_SRC_DIR }} bash ${{ github.workspace }}/ci/build_vtk.sh
+          VTK_DIR=${{ env.VTK_BUILD_DIR }} VTK_SRC_DIR=${{ env.VTK_SRC_DIR }} bash ${{ github.workspace }}/ci/vtk_build.sh
 
       - name: Build
         run: |
@@ -207,33 +207,32 @@ jobs:
           VT_TV_OUTPUT_DIR="${{ env.VT_TV_OUTPUT_DIR }}" \
           ./ci/test_cpp.sh
 
+      - name: Setup environment variables for Python tests
+        run: |
+          export VTK_DIR=${{ env.VTK_BUILD_DIR }}
+          export PYTHON_VERSIONS=${{ join(matrix.host.python) }}
+
       - name: Build Python bindings (${{ join(matrix.host.python, ', ') }})
         run: |
           cd ${{ github.workspace }}
-          chmod +x ./ci/test_python.sh
+          chmod +x ./ci/python_build.sh
 
-          PYTHON_VERSIONS=${{ join(matrix.host.python) }}
           for python_version in "${PYTHON_VERSIONS[@]}"
           do
             echo "::group::Build Python Bindings (${python_version})"
-            VTK_DIR=./ci/test_python.sh
+            CONDA_PATH=${{ env.CONDA_PATH }} VT_TV_CONDA_ENV=py${python_version} ./ci/python_build.sh
+            echo "::endgroup::"
           done
 
       - name: Test Python bindings (${{ join(matrix.host.python) }})
         run: |
-          PYTHON_VERSIONS=${{ join(matrix.host.python) }}
+          cd ${{ github.workspace }}
+          chmod +x ./ci/python_test.sh
+
           for python_version in "${PYTHON_VERSIONS[@]}"
           do
             echo "::group::Test Python Bindings (${python_version})"
-            # Activate conda environment
-            . ${{ env.CONDA_PATH }}/etc/profile.d/conda.sh && conda activate py${python_version}
-            echo "Python version: $(python --version)"
-            # Create vizualization output directory (required)
-            sudo mkdir -p /opt/build/vt-tv/test_output
-            sudo chown $(whoami) /opt/build/vt-tv/test_output
-            python ./tests/test_bindings.py
-            # Deactivate conda environment
-            conda deactivate
+            CONDA_PATH=${{ env.CONDA_PATH }} VT_TV_CONDA_ENV=py${python_version} ./ci/python_test.sh
             echo "::endgroup::"
           done
 

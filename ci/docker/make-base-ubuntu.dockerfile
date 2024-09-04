@@ -84,7 +84,7 @@ RUN git clone --recursive --branch v${VTK_VERSION} https://gitlab.kitware.com/vt
 
 # Build VTK
 RUN mkdir -p /opt/scripts
-COPY ci/build_vtk.sh /opt/scripts/build_vtk.sh
-RUN VTK_DIR=${VTK_DIR} bash /opt/scripts/build_vtk.sh
+COPY ci/vtk_build.sh /opt/scripts/vtk_build.sh
+RUN VTK_DIR=${VTK_DIR} bash /opt/scripts/vtk_build.sh
 
 RUN echo "Base creation success"
