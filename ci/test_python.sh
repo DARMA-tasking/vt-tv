@@ -6,10 +6,12 @@
 
 set -ex
 
+VT_TV_CONDA_ENV=${VT_TV_CONDA_ENV:-deves}
+
 CURRENT_DIR="$(dirname -- "$(realpath -- "$0")")"
 
 # Activate conda environment
-. /opt/conda/etc/profile.d/conda.sh && conda activate deves
+. /opt/conda/etc/profile.d/conda.sh && conda activate $VT_TV_CONDA_ENV
 
 # Build
 pip install PyYAML
