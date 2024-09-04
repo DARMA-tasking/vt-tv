@@ -123,7 +123,7 @@ TEST_F(VtkTest, test_vtk_screenshot_example) {
   vtkNew<vtkPNGWriter> writer;
   writer->SetFileName(
     fmt::format("{}/output/tests/vtk_example_screenshot.png", SRC_DIR).c_str());
-  writer->SetInputConnection(windowToImageFilter->GetOutputPort());
+  writer->SetInputConnection(w2i->GetOutputPort());
 }
 
 } // namespace vt::tv::tests::unit::deps
