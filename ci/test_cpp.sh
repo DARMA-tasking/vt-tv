@@ -2,21 +2,34 @@
 
 set -ex
 
+CURRENT_DIR="$(dirname -- "$(realpath -- "$0")")"
+PARENT_DIR="$(dirname "$CURRENT_DIR")"
 VT_TV_OUTPUT_DIR=/var/vt-tv/output
+VTK_SRC_DIR=${VTK_SRC_DIR:-$PARENT_DIR}
 VT_TV_TESTS_OUTPUT_DIR=/opt/src/vt-tv/output/tests
-VTK_SRC_DIR=${VTK_SRC_DIR:-"/opt/src/vtk"}
-VTK_DIR=${VTK_DIR:-"/opt/build/vtk"}
 
-# call build script with options to only run tests without building
-# (in CI the docker image define the build and the test stages separately).
+VTK_DIR=${VTK_DIR:-"/opt/build/vtk"}
+VT_TV_BUILD_DIR=${VT_TV_BUILD_DIR:-"/opt/build/vt-tv"}
+
+# Start virtual display
+CURRENT_DISPLAY=$(echo $DISPLAY)
+if [ "$(echo  $(uname -a))" != *"Darwin"* ]; then
+    $CURRENT_DIR/xvfb_start.sh :99
+fi
+
+# Run tests
 bash -c "VTK_DIR=/opt/build/vtk \
     VT_TV_BUILD=OFF \
-    VT_TV_BUILD_DIR=/opt/build/vt-tv \
+    VT_TV_BUILD_DIR=${VT_TV_BUILD_DIR} \
     VT_TV_COVERAGE_ENABLED=${VT_TV_COVERAGE_ENABLED:-OFF} \
     VT_TV_OUTPUT_DIR=$VT_TV_OUTPUT_DIR \
     VT_TV_RUN_TESTS=ON \
-    VT_TV_XVFB_ENABLED=${VT_TV_XVFB_ENABLED:-"OFF"} \
     $VTK_SRC_DIR/build.sh"
+
+# Restore display
+if [ "$(echo  $(uname -a))" != *"Darwin"* ]; then
+    $CURRENT_DIR/xvfb_stop.sh :99 $CURRENT_DISPLAY
+fi
 
 # Add artifacts
 VT_TV_ARTIFACTS_DIR="/tmp/artifacts"
