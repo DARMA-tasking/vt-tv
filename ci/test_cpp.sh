@@ -4,12 +4,14 @@ set -ex
 
 CURRENT_DIR="$(dirname -- "$(realpath -- "$0")")"
 PARENT_DIR="$(dirname "$CURRENT_DIR")"
-VT_TV_OUTPUT_DIR=/var/vt-tv/output
-VTK_SRC_DIR=${VTK_SRC_DIR:-$PARENT_DIR}
-VT_TV_TESTS_OUTPUT_DIR=/opt/src/vt-tv/output/tests
 
 VTK_DIR=${VTK_DIR:-"/opt/build/vtk"}
+
+VT_TV_SRC_DIR=${VT_TV_SRC_DIR:-$PARENT_DIR}
 VT_TV_BUILD_DIR=${VT_TV_BUILD_DIR:-"/opt/build/vt-tv"}
+VT_TV_OUTPUT_DIR=/var/vt-tv/output
+VT_TV_TESTS_OUTPUT_DIR=/opt/src/vt-tv/output/tests
+
 
 # Start virtual display
 CURRENT_DISPLAY=$(echo $DISPLAY)
@@ -24,7 +26,7 @@ bash -c "VTK_DIR=/opt/build/vtk \
     VT_TV_COVERAGE_ENABLED=${VT_TV_COVERAGE_ENABLED:-OFF} \
     VT_TV_OUTPUT_DIR=$VT_TV_OUTPUT_DIR \
     VT_TV_RUN_TESTS=ON \
-    $VTK_SRC_DIR/build.sh"
+    $VT_TV_SRC_DIR/build.sh"
 
 # Restore display
 if [ "$(echo  $(uname -a))" != *"Darwin"* ]; then

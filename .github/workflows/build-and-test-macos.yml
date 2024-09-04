@@ -209,20 +209,14 @@ jobs:
 
       - name: Build Python bindings (${{ join(matrix.host.python, ', ') }})
         run: |
+          cd ${{ github.workspace }}
+          chmod +x ./ci/test_python.sh
+
           PYTHON_VERSIONS=${{ join(matrix.host.python) }}
           for python_version in "${PYTHON_VERSIONS[@]}"
           do
             echo "::group::Build Python Bindings (${python_version})"
-            # Activate conda environment
-            . ${{ env.CONDA_PATH }}/etc/profile.d/conda.sh && conda activate py${python_version}
-            echo "Python version: $(python --version)"
-            # Add deps required by vt-tv bindings
-            export VTK_DIR=${{ env.VTK_BUILD_DIR }}
-            pip install PyYAML
-            pip install .
-            # Deactivate conda environment
-            conda deactivate
-            echo "::endgroup::"
+            VTK_DIR=./ci/test_python.sh
           done
 
       - name: Test Python bindings (${{ join(matrix.host.python) }})
