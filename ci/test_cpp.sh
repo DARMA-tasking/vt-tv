@@ -16,6 +16,7 @@ VT_TV_TESTS_OUTPUT_DIR=${VT_TV_TESTS_OUTPUT_DIR:-"$VT_TV_OUTPUT_DIR/tests"}
 CURRENT_DISPLAY=$(echo $DISPLAY)
 if [[ $(uname -a) != *"Darwin"* ]]; then
     $CURRENT_DIR/xvfb_start.sh :99
+    echo "DISPLAY(test)=$DISPLAY"
 fi
 
 # Run tests
