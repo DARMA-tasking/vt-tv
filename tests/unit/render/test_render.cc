@@ -155,9 +155,9 @@ protected:
 
   void assertPolyEquals(vtkPolyData* actual, vtkPolyData* expected) {
     // fmt::print("Actual vtkPolyData:\n");
-    printVtkPolyData(actual);
+    // printVtkPolyData(actual);
     // fmt::print("Expected vtkPolyData:\n");
-    printVtkPolyData(expected);
+    // printVtkPolyData(expected);
 
     // Assertions required to test vt-tv meshaes
     // Number of point data should be ranks
