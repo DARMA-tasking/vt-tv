@@ -206,7 +206,7 @@ jobs:
           VT_TV_COVERAGE_ENABLED=${{ env.VT_TV_COVERAGE_ENABLED }} \
           VT_TV_OUTPUT_DIR="${{ env.VT_TV_OUTPUT_DIR }}" \
           VT_TV_RUN_TESTS=ON \
-          VT_TV_XVFB_ENABLED=$([[ $(uname -a) == *"Darwin"* ]] && echo "OFF" || echo "ON")\
+          VT_TV_XVFB_ENABLED=$([[ $(uname -a) == *"Darwin"* ]] && echo "OFF" || echo "ON") \
           ./build.sh
 
       - name: Build Python bindings (${{ join(matrix.host.python, ', ') }})
