@@ -261,9 +261,13 @@ TEST_P(RenderTest, test_render_from_config_with_png) {
         "TOLERANCE=0.1",
       };
       auto cmd = fmt::format(
-        "{} {}/tests/test_image.sh", fmt::join(cmd_vars, " "), SRC_DIR);
+        "{} {}/tests/test_image.sh",
+        fmt::join(cmd_vars, " "),
+        SRC_DIR
+      );
+      cout << cmd << endl;
       const auto [status, output] = Util::exec(cmd.c_str());
-      cout << output;
+      cout << output << endl;
       ASSERT_EQ(status, EXIT_SUCCESS) << output;
     } else {
       ADD_FAILURE() << "Cannot test png file (not generated)";
