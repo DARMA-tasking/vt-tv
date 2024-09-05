@@ -23,6 +23,8 @@ if [[ $(uname -a) != *"Darwin"* ]]; then
     export DISPLAY=:99
 fi
 
+export LIBGL_ALWAYS_INDIRECT=1
+
 # Run test
 mkdir -p $VT_TV_PYTHON_TESTS_OUTPUT_DIR
 python $VT_TV_SRC_DIR/tests/test_bindings.py
