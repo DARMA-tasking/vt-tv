@@ -173,8 +173,9 @@ jobs:
           for python_version in "${PYTHON_VERSIONS[@]}"
           do
             echo "::group::Create conda environment (py${python_version})"
-            conda create -y -n py${python_version} python=${python_version} && \
-            . ${{ env.CONDA_PATH }}/etc/profile.d/conda.sh && conda activate py${python_version} && \
+            conda create -y -n py${python_version} python=${python_version}
+            . ${{ env.CONDA_PATH }}/etc/profile.d/conda.sh && conda activate py${python_version}
+            echo "Python version: $(python --version)"
             pip install nanobind
             echo "::endgroup::"
           done
