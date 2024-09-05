@@ -34,6 +34,13 @@ jobs:
             vtk: '9.3.1'
           },
           {
+            base: "ubuntu-22.04",
+            compiler: { cc: gcc-11, cxx: g++-11 },
+            gcov: gcov,
+            python: ['3.8', '3.9', '3.10', '3.11', '3.12'],
+            vtk: '9.3.0'
+          },
+          {
             base: "ubuntu-24.04",
             compiler: { cc: gcc-13, cxx: g++-13 },
             gcov: gcov,
