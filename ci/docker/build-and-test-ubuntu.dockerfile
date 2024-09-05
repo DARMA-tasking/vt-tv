@@ -25,10 +25,8 @@ RUN VT_TV_COVERAGE_ENABLED=$VT_TV_COVERAGE_ENABLED bash /opt/src/vt-tv/ci/test.s
 
 # Python tests (Builds VT-TV with Python bindings & test python package)
 FROM test-cpp AS test-python
-# Create vizualization output directory (required)
-RUN mkdir -p /opt/build/vt-tv/test_output
 RUN bash /opt/src/vt-tv/ci/python_build.sh
-RUN bash /opt/src/vt-tv/ci/python_test.sh
+RUN VT_TV_PYTHON_TESTS_OUTPUT_DIR=/opt/src/vt-tv/output/python_tests bash /opt/src/vt-tv/ci/python_test.sh
 
 # Artifacts
 FROM scratch AS artifacts
