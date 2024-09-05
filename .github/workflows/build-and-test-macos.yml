@@ -125,7 +125,8 @@ jobs:
           sudo rm -rf /var/lib/apt/lists/*
 
       - name: Install Latest Mesa Drivers (Ubuntu 24.04)
-        # To fix on Ubuntu 24.04: MESA: error: ZINK: vkCreateInstance failed (VK_ERROR_INCOMPATIBLE_DRIVER)
+        # To fix error occuring on the `ubuntu-24.04` runner:
+        # Error: MESA: error: ZINK: vkCreateInstance failed (VK_ERROR_INCOMPATIBLE_DRIVER)
         if: ${{matrix.host.base == 'ubuntu-24.04'}}
         run: |
           # Start virtual display (Linux)
