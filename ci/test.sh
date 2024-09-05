@@ -20,7 +20,7 @@ if [[ $(uname -a) != *"Darwin"* ]]; then
 fi
 
 # Run tests
-LIBGL_ALWAYS_INDIRECT=1 DISPLAY=$DISPLAY bash -c "VTK_DIR=/opt/build/vtk \
+DISPLAY=$DISPLAY bash -c "VTK_DIR=/opt/build/vtk \
     VT_TV_BUILD=OFF \
     VT_TV_BUILD_DIR=${VT_TV_BUILD_DIR} \
     VT_TV_COVERAGE_ENABLED=${VT_TV_COVERAGE_ENABLED:-OFF} \
