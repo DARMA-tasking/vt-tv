@@ -134,6 +134,7 @@ jobs:
             ~/.zshrc
             ~/.bash_profile
           key: ${{ env.CACHE_KEY }}
+          save-always: true
 
       - name: Setup Miniconda3
         if: ${{steps.base-cache.outputs.cache-hit != 'true'}}
@@ -245,6 +246,7 @@ jobs:
             echo "::group::Test Python Bindings (${python_version})"
             CONDA_PATH=${{ env.CONDA_PATH }} \
             VT_TV_CONDA_ENV=py${python_version} \
+            VT_TV_OUTPUT_DIR="${{ env.VT_TV_OUTPUT_DIR }}/python_tests" \
             ./ci/python_test.sh
             echo "::endgroup::"
           done
