@@ -125,9 +125,9 @@ jobs:
           sudo rm -rf /var/lib/apt/lists/*
 
       - name: Install Latest Mesa Drivers (Ubuntu 24.04)
+        # To fix on Ubuntu 24.04: MESA: error: ZINK: vkCreateInstance failed (VK_ERROR_INCOMPATIBLE_DRIVER)
         if: ${{matrix.host.base == 'ubuntu-24.04'}}
         run: |
-
           # Start virtual display (Linux)
           DISPLAY_0=$(echo $DISPLAY)
           if [[ $(uname -a) != *"Darwin"* ]]; then
@@ -191,18 +191,18 @@ jobs:
           echo "Conda path: $(which conda)"
           echo "Conda version: $(conda --version)"
 
-          echo "> Activate base environment"
-          conda activate
+
 
           PYTHON_VERSIONS=(`echo '${{ join(matrix.host.python) }}' | sed 's/,/\n/g'`)
           for python_version in "${PYTHON_VERSIONS[@]}"
           do
             echo "::group::Create conda environment (py${python_version})"
             conda create -y -n py${python_version} python=${python_version}
-            conda deactivate
+
             . ${{ env.CONDA_PATH }}/etc/profile.d/conda.sh && conda activate py${python_version}
             echo "Python version: $(python --version)"
             pip install nanobind
+            conda deactivate
             echo "::endgroup::"
           done
 
