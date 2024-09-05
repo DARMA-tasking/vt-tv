@@ -15,7 +15,9 @@ with open(f'{source_dir}/tests/test_bindings_conf.yaml', 'r') as stream:
     print(exc)
 
 # make output_visualization_dir directory parameter absolute
-params["visualization"]["output_visualization_dir"] = os.path.abspath(params["visualization"]["output_visualization_dir"])
+if (not os.path.isabs(params["visualization"]["output_visualization_dir"])):
+  params["visualization"]["output_visualization_dir"] = source_dir + "/" + params["visualization"]["output_visualization_dir"]
+  print("Python bindings tests output directory: " + params["visualization"]["output_visualization_dir"])
 
 params_serialized = yaml.dump(params["visualization"])
 

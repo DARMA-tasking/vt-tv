@@ -264,9 +264,15 @@ jobs:
           cd ${{ github.workspace }}
           chmod +x ./ci/python_test.sh
 
+          # Create vizualization output directory (required).
+          sudo mkdir -p ${{ env.VT_TV_OUTPUT_DIR }}/python_tests
+
           PYTHON_VERSIONS=(`echo '${{ join(matrix.host.python) }}' | sed 's/,/\n/g'`)
           for python_version in "${PYTHON_VERSIONS[@]}"
           do
+            # Clear vizualization output directory
+            rm -rf ${{ env.VT_TV_OUTPUT_DIR }}/python_tests/*
+
             echo "::group::Test Python Bindings (${python_version})"
             CONDA_PATH=${{ env.CONDA_PATH }} \
             VT_TV_CONDA_ENV=py${python_version} \
