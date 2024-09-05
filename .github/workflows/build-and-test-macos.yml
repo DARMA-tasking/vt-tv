@@ -115,6 +115,7 @@ jobs:
           libglu1-mesa-dev \
           mesa-common-dev \
           libosmesa6-dev \
+          mesa-utils \
           perl \
           curl \
           xvfb \
@@ -122,6 +123,29 @@ jobs:
           && \
           sudo apt-get clean && \
           sudo rm -rf /var/lib/apt/lists/*
+
+      - name: Install Latest Mesa Drivers (Ubuntu 24.04)
+        if: ${{matrix.host.base == 'ubuntu-24.04'}}
+        run: |
+
+          # Start virtual display (Linux)
+          DISPLAY_0=$(echo $DISPLAY)
+          if [[ $(uname -a) != *"Darwin"* ]]; then
+              bash ci/xvfb_start.sh :99
+              export DISPLAY=:99
+          fi
+
+          glxinfo | grep "OpenGL version"
+          sudo add-apt-repository ppa:oibaf/graphics-drivers -y
+          sudo apt update
+          sudo apt upgrade
+          glxinfo | grep "OpenGL version"
+
+          # Restore display (none)
+          if [[ $(uname -a) != *"Darwin"* ]]; then
+              bash ci/xvfb_stop.sh :99
+              export DISPLAY=DISPLAY_0
+          fi
 
       - name: Load cache (VTK, Miniconda3)
         id: base-cache
