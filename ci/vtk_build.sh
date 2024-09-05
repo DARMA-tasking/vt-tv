@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# This script builds vtk
+# This script builds VTK (required by vt-tv)
 
 set -ex
 

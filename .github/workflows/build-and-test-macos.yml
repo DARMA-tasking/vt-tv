@@ -169,15 +169,14 @@ jobs:
           echo "> Activate base environment"
           conda activate
 
-          # create an environment per python version to test
           PYTHON_VERSIONS=(`echo '${{ join(matrix.host.python) }}' | sed 's/,/\n/g'`)
           for python_version in "${PYTHON_VERSIONS[@]}"
           do
-            echo "> Create conda environment `py${python_version}`"
-            # Create a new environment and install necessary packages
+            echo "::group::Create conda environment (py${python_version})"
             conda create -y -n py${python_version} python=${python_version} && \
             . ${{ env.CONDA_PATH }}/etc/profile.d/conda.sh && conda activate py${python_version} && \
             pip install nanobind
+            echo "::endgroup::"
           done
 
       - name: Setup VTK ${{ matrix.host.vtk }}
