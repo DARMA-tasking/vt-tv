@@ -4,9 +4,6 @@
 
 set -ex
 
-# VTK_OPENGL_HAS_OSMESA=OFF
-# VTK_USE_X=OFF
-# VTK_USE_COCOA=OFF
 VTK_SRC_DIR=${VTK_SRC_DIR:-"/opt/src/vtk"}
 VTK_DIR=${VTK_DIR:-"/opt/build/vtk"}
 

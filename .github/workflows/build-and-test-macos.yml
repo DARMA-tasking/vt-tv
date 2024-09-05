@@ -191,8 +191,6 @@ jobs:
           echo "Conda path: $(which conda)"
           echo "Conda version: $(conda --version)"
 
-
-
           PYTHON_VERSIONS=(`echo '${{ join(matrix.host.python) }}' | sed 's/,/\n/g'`)
           for python_version in "${PYTHON_VERSIONS[@]}"
           do
