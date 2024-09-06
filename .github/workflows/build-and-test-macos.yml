@@ -81,10 +81,19 @@ jobs:
           key: ${{ env.CACHE_KEY }}
           save-always: true
 
-      - name: Setup Miniconda3
+      - name: Setup Conda
         if: ${{steps.base-cache.outputs.cache-hit != 'true'}}
         run: |
           sudo CONDA_PATH=${{ env.CONDA_PATH }} bash ./ci/setup_conda.sh ${{ join(matrix.host.python) }}
+
+      - name: Reload environment variables
+        run: |
+          if [ -f ~/.zshrc ]; then . ~/.zshrc fi
+          if [ -f ~/.profile ]; then . ~/.profile fi
+          if [ -f ~/.bashrc ]; then . ~/.bashrc fi
+          which conda
+          conda --version
+          conda env list
 
       - name: Setup VTK ${{ matrix.host.vtk }}
         if: ${{steps.base-cache.outputs.cache-hit != 'true'}}
