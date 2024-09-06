@@ -22,7 +22,7 @@ jobs:
     env:
       OUTPUT_DIR: '/tmp/artifacts'
       VT_TV_TESTS_ENABLED: 'ON'
-      VT_TV_COVERAGE_ENABLED: ${{ matrix.image == 'ubuntu_24.04-gcc_13-vtk_9.3.1-py_3.all' && 'ON' || 'OFF' }}  # Coverage only with main test image
+      VT_TV_COVERAGE_ENABLED: ${{ matrix.image == 'ubuntu_22.04-gcc_12-vtk_9.3.0-py_3.all' && 'ON' || 'OFF' }}  # Coverage only with main test image
       DOCKER_REPOSITORY: lifflander1/vt
       DOCKER_TAG: ~
     name: vt-tv build and test
