@@ -16,7 +16,7 @@ ARG GCOV=gcov-11
 # Copy setup scripts
 RUN mkdir -p /opt/scripts
 COPY ci/setup_mesa.sh /opt/scripts/setup_mesa.sh
-COPY ci/setup_mesa.sh /opt/scripts/setup_conda.sh
+COPY ci/setup_conda.sh /opt/scripts/setup_conda.sh
 COPY ci/setup_vtk.sh /opt/scripts/setup_vtk.sh
 
 ENV DEBIAN_FRONTEND=noninteractive
