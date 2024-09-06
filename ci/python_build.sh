@@ -9,7 +9,7 @@ PARENT_DIR="$(dirname "$CURRENT_DIR")"
 
 VT_TV_SRC_DIR=${VT_TV_SRC_DIR:-$PARENT_DIR}
 
-for env in $(conda env list | grep py | cut -d" " -f1); do if == "#" ; then continue; fi;
+for env in $(conda env list | grep 'py*' | perl -lane 'print $F[-1]' | xargs ls -lrt1d |  perl -lane 'print $F[-1]' | sed -r 's/^.*\/(.*)$/\1/'); do
     # Clear vizualization output directory
     rm -rf $VT_TV_OUTPUT_DIR/python_tests/*
 
