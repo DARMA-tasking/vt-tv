@@ -33,6 +33,7 @@ for env in $(conda env list | grep 'py*' | perl -lane 'print $F[-1]' | xargs ls 
         python $VT_TV_SRC_DIR/tests/test_bindings.py
     fi
 
+    # Deactivate conda environment
     conda deactivate
 
     echo "::endgroup::"
