@@ -1,4 +1,4 @@
-name: Build & push base Docker image (add ubuntu_24.04-gcc_12-vtk_9.3.1-py_3.8 image)
+name: Build & push base Docker image (add ubuntu_24.04-gcc_12-vtk_9.3.1-py_3.8_3.12 image)
 
 on:
   push:
@@ -13,7 +13,7 @@ jobs:
       DOCKER_REPOSITORY: lifflander1/vt
     strategy:
       matrix:
-        image: [ ubuntu_24.04-gcc_13-vtk_9.3.1-py_3.8 ]
+        image: [ ubuntu_24.04-gcc_12-vtk_9.3.1-py_3.all ]
     steps:
       - name: Check out the repo
         uses: actions/checkout@v4
@@ -33,7 +33,11 @@ jobs:
             exit 1
           fi
           echo "VTK_VERSION=${CONFIG[5]}" >> $GITHUB_ENV
-          echo "PYTHON_VERSION=${CONFIG[7]}" >> $GITHUB_ENV
+          if [[ "${CONFIG[7]}" == "3.all" ]]; then
+            echo "PYTHON_VERSIONS=3.8,3.9,3.10,3.11,3.12" >> $GITHUB_ENV
+          else
+            echo "PYTHON_VERSIONS=${CONFIG[7]}" >> $GITHUB_ENV
+          fi
           echo "DOCKER_TAG=${{ matrix.image }}" >> $GITHUB_ENV
 
       - name: Build configuration
@@ -43,7 +47,7 @@ jobs:
           echo "CXX Compiler: $CXX"
           echo "GCOV: $GCOV"
           echo "VTK: $VTK_VERSION"
-          echo "Python: $PYTHON_VERSION"
+          echo "Python: $PYTHON_VERSIONS"
           echo "Docker tag: $DOCKER_TAG"
 
       - name: Log in to Docker Hub
@@ -62,7 +66,7 @@ jobs:
             CXX=${{ env.CXX }}
             GCOV=${{ env.GCOV }}
             VTK_VERSION=${{ env.VTK_VERSION }}
-            PYTHON_VERSION=${{ env.PYTHON_VERSION }}
+            PYTHON_VERSIONS=${{ env.PYTHON_VERSIONS }}
           file: ci/docker/make-base-ubuntu.dockerfile
           push: true
           tags: "${{ env.DOCKER_REPOSITORY }}:${{ env.DOCKER_TAG }}"
