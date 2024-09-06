@@ -6,22 +6,21 @@ set -ex
 
 CURRENT_DIR="$(dirname -- "$(realpath -- "$0")")"
 PARENT_DIR="$(dirname "$CURRENT_DIR")"
+CONDA_PATH=${CONDA_PATH:-"/opt/conda"}
 
 VT_TV_SRC_DIR=${VT_TV_SRC_DIR:-$PARENT_DIR}
 
 for env in $(conda env list | grep 'py*' | perl -lane 'print $F[-1]' | xargs ls -lrt1d |  perl -lane 'print $F[-1]' | sed -r 's/^.*\/(.*)$/\1/'); do
-    # Clear vizualization output directory
-    rm -rf $VT_TV_OUTPUT_DIR/python_tests/*
-
     echo "::group::Test Python Bindings (${python_version})"
 
     # Activate conda environment
     . $CONDA_PATH/etc/profile.d/conda.sh && conda activate env
 
-    # Build
+    # Build VT-TV python package
     pip install PyYAML
     pip install $VT_TV_SRC_DIR
 
+    # Deactivate conda environment
     conda deactivate
 
     echo "::endgroup::"
