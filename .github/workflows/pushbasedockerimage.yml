@@ -5,13 +5,13 @@ on:
     inputs:
       image:
         type: choice
-        description: The configuration to build as a combination of os, compiler, vtk and python versions
+        description: The configuration to build as a combination of os, compiler, vtk
         options:
-        - ubuntu_22.04-gcc_11-vtk_9.2.2-py_3.8
-        - ubuntu_22.04-clang_11-vtk_9.2.2-py_3.8
-        - ubuntu_22.04-gcc_12-vtk_9.3.0-py_3.8
-        - ubuntu_24.04-gcc_13-vtk_9.3.1-py_3.8
-        default: ubuntu_22.04-gcc_12-vtk_9.3.0-py_3.8
+        - ubuntu_22.04-gcc_11-vtk_9.2.2-py_3.all
+        - ubuntu_22.04-clang_11-vtk_9.2.2-py_3.all
+        - ubuntu_22.04-gcc_12-vtk_9.3.0-py_3.all
+        - ubuntu_24.04-gcc_13-vtk_9.3.1-py_3.all
+        default: ubuntu_22.04-gcc_12-vtk_9.3.0-py_3.all
 
 jobs:
   push_to_registry:
@@ -19,6 +19,13 @@ jobs:
     runs-on: ubuntu-latest
     env:
       DOCKER_REPOSITORY: lifflander1/vt
+      DOCKER_TAG: ~
+      BASE_IMAGE: ~
+      CXX: ~
+      CC: ~
+      GCOV: ~
+      VTK_VERSION: ~
+      PYTHON_VERSIONS: ~
     steps:
       - name: Check out the repo
         uses: actions/checkout@v4
@@ -39,7 +46,11 @@ jobs:
             exit 1
           fi
           echo "VTK_VERSION=${CONFIG[5]}" >> $GITHUB_ENV
-          echo "PYTHON_VERSION=${CONFIG[7]}" >> $GITHUB_ENV
+          if [[ "${CONFIG[7]}" == "3.all" ]]; then
+            echo "PYTHON_VERSIONS=3.8,3.9,3.10,3.11,3.12" >> $GITHUB_ENV
+          else
+            echo "PYTHON_VERSIONS=${CONFIG[7]}" >> $GITHUB_ENV
+          fi
           echo "DOCKER_TAG=${{ inputs.image }}" >> $GITHUB_ENV
 
       - name: Build configuration
@@ -49,7 +60,7 @@ jobs:
           echo "CXX Compiler: $CXX"
           echo "GCOV: $GCOV"
           echo "VTK: $VTK_VERSION"
-          echo "Python: $PYTHON_VERSION"
+          echo "Python: $PYTHON_VERSIONS"
           echo "Docker tag: $DOCKER_TAG"
 
       - name: Log in to Docker Hub
@@ -68,7 +79,7 @@ jobs:
             CXX=${{ env.CXX }}
             GCOV=${{ env.GCOV }}
             VTK_VERSION=${{ env.VTK_VERSION }}
-            PYTHON_VERSION=${{ env.PYTHON_VERSION }}
+            PYTHON_VERSIONS=${{ env.PYTHON_VERSIONS }}
           file: ci/docker/make-base-ubuntu.dockerfile
           push: true
           tags: "${{ env.DOCKER_REPOSITORY }}:${{ env.DOCKER_TAG }}"
