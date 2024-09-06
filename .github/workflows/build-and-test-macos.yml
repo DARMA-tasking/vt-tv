@@ -131,9 +131,7 @@ jobs:
       - name: Setup VTK ${{ matrix.host.vtk }}
         if: ${{steps.base-cache.outputs.cache-hit != 'true'}}
         run: |
-          mkdir -p ${{ env.VTK_SRC_DIR }}
-          git clone --recursive --branch v${{ matrix.host.vtk }} https://gitlab.kitware.com/vtk/vtk.git ${{ env.VTK_SRC_DIR }}
-          VTK_DIR=${{ env.VTK_BUILD_DIR }} VTK_SRC_DIR=${{ env.VTK_SRC_DIR }} bash ./ci/vtk_build.sh
+          VTK_DIR=${{ env.VTK_BUILD_DIR }} VTK_SRC_DIR=${{ env.VTK_SRC_DIR }} bash ./ci/setup_vtk.sh
 
       - name: Build
         run: |
