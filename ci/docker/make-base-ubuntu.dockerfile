@@ -13,6 +13,11 @@ ARG CC=gcc-11
 ARG CXX=g++-11
 ARG GCOV=gcov-11
 
+# Copy scripts
+RUN mkdir -p /opt/scripts
+COPY ci/setup_mesa.sh /opt/scripts/setup_mesa.sh
+COPY ci/vtk_build.sh /opt/scripts/vtk_build.sh
+
 ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update -y -q && \
   apt-get install -y -q --no-install-recommends \
@@ -39,17 +44,15 @@ RUN apt-get update -y -q && \
   pkg-config \
   libncurses5-dev \
   m4 \
-  libgl1-mesa-dev \
-  libglu1-mesa-dev \
-  mesa-common-dev \
-  libosmesa6-dev \
   perl \
   curl \
   xvfb \
-  lcov  \
-  && \
-  apt-get clean && \
-  rm -rf /var/lib/apt/lists/*
+  lcov
+
+RUN bash /opt/scripts/setup_mesa.sh
+RUN xvfb-run bash -c "glxinfo | grep 'OpenGL version'"
+
+RUN apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Share environment variables for use in images based on this.
 ENV CC=/usr/bin/$CC
@@ -83,8 +86,6 @@ RUN mkdir -p /opt/src/vtk
 RUN git clone --recursive --branch v${VTK_VERSION} https://gitlab.kitware.com/vtk/vtk.git /opt/src/vtk
 
 # Build VTK
-RUN mkdir -p /opt/scripts
-COPY ci/vtk_build.sh /opt/scripts/vtk_build.sh
 RUN VTK_DIR=${VTK_DIR} bash /opt/scripts/vtk_build.sh
 
 RUN echo "Base creation success"
