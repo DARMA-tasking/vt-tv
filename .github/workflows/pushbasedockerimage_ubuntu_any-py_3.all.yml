@@ -1,4 +1,4 @@
-name: Build & push base Docker image (add ubuntu_24.04-gcc_12-vtk_9.3.1-py_3.8_3.12 image)
+name: Build & push base Docker image (add ubuntu_*-py.all images)
 
 on:
   push:
