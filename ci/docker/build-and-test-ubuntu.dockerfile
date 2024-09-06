@@ -5,9 +5,6 @@ ARG VT_TV_TEST_PYTHON_BINDINGS=OFF
 
 FROM ${BASE_IMAGE} AS base
 
-# setup requirements for rendering tests (xvfb) + coverage report (lcov)
-RUN apt-get update && apt-get install -y
-
 COPY . /opt/src/vt-tv
 RUN mkdir -p /opt/build/vt-tv
 
@@ -29,6 +26,7 @@ FROM test-cpp AS test-python
 RUN mkdir -p /opt/src/vt-tv/output/python_tests
 RUN bash /opt/src/vt-tv/ci/python_build.sh
 RUN bash /opt/src/vt-tv/ci/python_test.sh
+
 
 # Artifacts
 FROM scratch AS artifacts

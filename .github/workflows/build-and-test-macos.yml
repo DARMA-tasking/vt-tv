@@ -46,7 +46,7 @@ jobs:
         VT_TV_OUTPUT_DIR: ${{ github.workspace }}/output
         VT_TV_TESTS_OUTPUT_DIR: ${{ github.workspace }}/output/tests
         VT_TV_ARTIFACTS_DIR: /tmp/artifacts
-        CONDA_PATH: /opt/miniconda # ~/miniconda3
+        CONDA_PREFIX: /opt/miniconda3
         CC: ~
         CXX: ~
         GCOV: ~
@@ -117,7 +117,7 @@ jobs:
           path: |
             ${{ env.VTK_SRC_DIR }}
             ${{ env.VTK_BUILD_DIR }}
-            ${{ env.CONDA_PATH }}
+            ${{ env.CONDA_PREFIX }}
             ~/.zshrc
             ~/.bash_profile
           key: ${{ env.CACHE_KEY }}
@@ -126,59 +126,17 @@ jobs:
       - name: Setup Miniconda3
         if: ${{steps.base-cache.outputs.cache-hit != 'true'}}
         run: |
-          mkdir -p ~/miniconda3
-          if [[ $(uname -a) == *"Darwin"* ]]; then
-            if [[ $(arch) == 'arm64' ]]; then
-              curl https://repo.anaconda.com/miniconda/Miniconda3-latest-MacOSX-arm64.sh -o ~/miniconda.sh
-            else
-              curl https://repo.anaconda.com/miniconda/Miniconda3-latest-MacOSX-x86_64.sh -o ~/miniconda.sh
-            fi
-          else
-            curl https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -o ~/miniconda.sh
-          fi
-          bash ~/miniconda.sh -b -u -p ${{ env.CONDA_PATH }}
-          rm -rf ~/miniconda.sh
-
-          ${{ env.CONDA_PATH }}/bin/conda init bash
-          ${{ env.CONDA_PATH }}/bin/conda init zsh
-          if [ -f ~/.zshrc ]; then
-            . ~/.zshrc
-          fi
-          if [ -f ~/.profile ]; then
-            . ~/.profile
-          fi
-          if [ -f ~/.bashrc ]; then
-            . ~/.bashrc
-          fi
-
-          echo "Conda path: $(which conda)"
-          echo "Conda version: $(conda --version)"
-
-          PYTHON_VERSIONS=(`echo '${{ join(matrix.host.python) }}' | sed 's/,/\n/g'`)
-          for python_version in "${PYTHON_VERSIONS[@]}"
-          do
-            echo "::group::Create conda environment (py${python_version})"
-            conda create -y -n py${python_version} python=${python_version}
-
-            . ${{ env.CONDA_PATH }}/etc/profile.d/conda.sh && conda activate py${python_version}
-            echo "Python version: $(python --version)"
-            pip install nanobind
-            conda deactivate
-            echo "::endgroup::"
-          done
+          sudo CONDA_PREFIX=${{ env.CONDA_PREFIX }} bash ./ci/setup_conda.sh ${{ join(matrix.host.python) }}
 
       - name: Setup VTK ${{ matrix.host.vtk }}
         if: ${{steps.base-cache.outputs.cache-hit != 'true'}}
         run: |
           mkdir -p ${{ env.VTK_SRC_DIR }}
           git clone --recursive --branch v${{ matrix.host.vtk }} https://gitlab.kitware.com/vtk/vtk.git ${{ env.VTK_SRC_DIR }}
-          VTK_DIR=${{ env.VTK_BUILD_DIR }} VTK_SRC_DIR=${{ env.VTK_SRC_DIR }} bash ${{ github.workspace }}/ci/vtk_build.sh
+          VTK_DIR=${{ env.VTK_BUILD_DIR }} VTK_SRC_DIR=${{ env.VTK_SRC_DIR }} bash ./ci/vtk_build.sh
 
       - name: Build
         run: |
-          cd ${{ github.workspace }}
-          chmod +x ./ci/build.sh
-
           mkdir -p ${{ env.VT_TV_BUILD_DIR }}
 
           CC="${{ env.CC }}" \
@@ -191,56 +149,22 @@ jobs:
           GCOV="${{ env.GCOV }}" \
           VT_TV_PYTHON_BINDINGS_ENABLED=OFF \
           VT_TV_WERROR_ENABLED=ON \
-          ./build.sh
+          bash ./build.sh
 
       - name: Test
         run: |
-          cd ${{ github.workspace }}
-          chmod +x ./ci/test.sh
-
           VTK_DIR=${{ env.VTK_BUILD_DIR }} \
           VT_TV_COVERAGE_ENABLED=${{ env.VT_TV_COVERAGE_ENABLED }} \
           VT_TV_OUTPUT_DIR="${{ env.VT_TV_OUTPUT_DIR }}" \
-          ./ci/test.sh
+          bash ./ci/test.sh
 
       - name: Build Python package (${{ join(matrix.host.python, ', ') }})
         run: |
-          cd ${{ github.workspace }}
-          chmod +x ./ci/python_build.sh
-
-          PYTHON_VERSIONS=(`echo '${{ join(matrix.host.python) }}' | sed 's/,/\n/g'`)
-          export VTK_DIR=${{ env.VTK_BUILD_DIR }}
-          for python_version in "${PYTHON_VERSIONS[@]}"
-          do
-            echo "::group::Build Python package (${python_version})"
-            VTK_DIR=${{ env.VTK_BUILD_DIR }} \
-            CONDA_PATH=${{ env.CONDA_PATH }} \
-            VT_TV_CONDA_ENV=py${python_version} \
-            ./ci/python_build.sh
-            echo "::endgroup::"
-          done
+          VTK_DIR=${{ env.VTK_BUILD_DIR }} bash ./ci/python_build.sh
 
       - name: Test Python bindings (${{ join(matrix.host.python) }})
         run: |
-          cd ${{ github.workspace }}
-          chmod +x ./ci/python_test.sh
-
-          # Create vizualization output directory (required).
-          sudo mkdir -p ${{ env.VT_TV_OUTPUT_DIR }}/python_tests
-
-          PYTHON_VERSIONS=(`echo '${{ join(matrix.host.python) }}' | sed 's/,/\n/g'`)
-          for python_version in "${PYTHON_VERSIONS[@]}"
-          do
-            # Clear vizualization output directory
-            rm -rf ${{ env.VT_TV_OUTPUT_DIR }}/python_tests/*
-
-            echo "::group::Test Python Bindings (${python_version})"
-            CONDA_PATH=${{ env.CONDA_PATH }} \
-            VT_TV_CONDA_ENV=py${python_version} \
-            VT_TV_OUTPUT_DIR="${{ env.VT_TV_OUTPUT_DIR }}/python_tests" \
-            ./ci/python_test.sh
-            echo "::endgroup::"
-          done
+          VTK_DIR=${{ env.VTK_BUILD_DIR }} bash ./ci/python_test.sh
 
       - name: Collect artifacts
         run: |
