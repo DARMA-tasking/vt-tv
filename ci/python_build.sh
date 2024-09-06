@@ -14,7 +14,7 @@ for env in $(conda env list | grep ^py | perl -lane 'print $F[-1]' | xargs ls -l
     echo "::group::Build Python Bindings (${python_version})"
 
     # Activate conda environment
-    . $CONDA_PATH/etc/profile.d/conda.sh && conda activate env
+    . $CONDA_PATH/etc/profile.d/conda.sh && conda activate $env
 
     # Build VT-TV python package
     pip install PyYAML
