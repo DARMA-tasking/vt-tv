@@ -22,8 +22,8 @@ COPY ci/setup_vtk.sh /opt/scripts/setup_vtk.sh
 ENV DEBIAN_FRONTEND=noninteractive
 
 # Setup common tools and compiler
-RUN apt update -y -q && \
-  apt install -y -q --no-install-recommends \
+RUN apt-get update -y -q && \
+  apt-get install -y -q --no-install-recommends \
   ${CC} \
   ${CXX} \
   git \
@@ -72,6 +72,6 @@ RUN VTK_VERSION=${VTK_VERSION} \
   bash /opt/scripts/setup_vtk.sh
 
 # Clean apt
-RUN apt clean && rm -rf /var/lib/apt/lists/*
+RUN apt-get clean && rm -rf /var/lib/apt/lists/*
 
 RUN echo "Base creation success"

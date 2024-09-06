@@ -9,10 +9,10 @@
 if [ "$DISTRIB_RELEASE" == "24.04" ]; then
     echo "FIX: Using latest MESA drivers (dev) for Ubuntu 24.04 to fix MESA errors !"
     add-apt-repository ppa:oibaf/graphics-drivers -y
-    apt update
+    apt-get update
 fi
 
-apt install -y -q --no-install-recommends \
+apt-get install -y -q --no-install-recommends \
     libgl1-mesa-dev \
     libglu1-mesa-dev \
     mesa-common-dev \
