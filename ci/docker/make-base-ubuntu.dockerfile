@@ -56,7 +56,7 @@ RUN apt-get update -y -q && \
 RUN bash /opt/scripts/setup_mesa.sh
 RUN xvfb-run bash -c "glxinfo | grep 'OpenGL version'"
 
-# Setup environment variables (conda path, python environments, compiler path)
+# Environment variables (conda path, python environments, compiler path)
 ENV CC=/usr/bin/$CC
 ENV CXX=/usr/bin/$CXX
 ENV GCOV=/usr/bin/$GCOV
