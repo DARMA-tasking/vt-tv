@@ -15,18 +15,11 @@ VT_TV_OUTPUT_DIR=${VT_TV_OUTPUT_DIR:-"$VT_TV_SRC_DIR/output"}
 # Activate conda environment
 . ${CONDA_PATH}/etc/profile.d/conda.sh && conda activate $VT_TV_CONDA_ENV
 
-# Start virtual display (Linux)
-DISPLAY_0=$(echo $DISPLAY)
-if [[ $(uname -a) != *"Darwin"* ]]; then
-    $CURRENT_DIR/xvfb_start.sh :99
-    export DISPLAY=:99
-fi
 
 # Run test
-python $VT_TV_SRC_DIR/tests/test_bindings.py
-
-# Restore display
 if [[ $(uname -a) != *"Darwin"* ]]; then
-    $CURRENT_DIR/xvfb_stop.sh :99
-    export DISPLAY=DISPLAY_0
+    # Start virtual display (Linux)
+    xvfb-run python $VT_TV_SRC_DIR/tests/test_bindings.py
+else
+    python $VT_TV_SRC_DIR/tests/test_bindings.py
 fi
