@@ -10,7 +10,7 @@ EXPECTED=${EXPECTED:-$CURRENT_DIR/expected/ccm_example0.png}
 TOLERANCE=${TOLERANCE:-0.1}
 DEBUG=${DEBUG:-"OFF"}
 
-if [ $DEBUG == "ON"]; then
+if [ $DEBUG == "ON" ]; then
     set -ex
 fi
 
@@ -19,7 +19,7 @@ if [ ! -f "$ACTUAL" ]; then
     exit 1
 fi
 
-if [ $DEBUG == "ON"]; then
+if [ $DEBUG == "ON" ]; then
     echo "ACTUAL image found !"
 fi
 
@@ -28,13 +28,13 @@ if [ ! -f "$EXPECTED" ]; then
     exit 1
 fi
 
-if [ $DEBUG == "ON"]; then
+if [ $DEBUG == "ON" ]; then
     echo "EXPECTED image found !"
 fi
 
 pip install imgcompare --quiet 2>/dev/null
 
-if [ $DEBUG == "ON"]; then
+if [ $DEBUG == "ON" ]; then
     echo "imgcompare package installed !"
 fi
 
@@ -46,7 +46,7 @@ else
     echo "Image diff = $DIFF%. Tolerance = $TOLERANCE. OK"
 fi
 
-if [ $DEBUG == "ON"]; then
+if [ $DEBUG == "ON" ]; then
     echo "Success!"
 fi
 
