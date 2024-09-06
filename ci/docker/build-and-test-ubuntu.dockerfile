@@ -27,7 +27,7 @@ RUN VT_TV_COVERAGE_ENABLED=$VT_TV_COVERAGE_ENABLED bash /opt/src/vt-tv/ci/test.s
 FROM test-cpp AS test-python
 # Create vizualization output directory (required)
 RUN mkdir -p /opt/src/vt-tv/output/python_tests
-RUN bash /opt/src/vt-tv/ci/python_build.sh
+RUN VTK_DIR=/opt/build/vtk bash /opt/src/vt-tv/ci/python_build.sh
 RUN bash /opt/src/vt-tv/ci/python_test.sh
 
 # CI test script run

@@ -7,6 +7,7 @@ set -ex
 CURRENT_DIR="$(dirname -- "$(realpath -- "$0")")"
 PARENT_DIR="$(dirname "$CURRENT_DIR")"
 CONDA_PATH=${CONDA_PATH:-"/opt/conda"}
+VTK_DIR="${VTK_DIR:-$PARENT_DIR/vtk/build}"
 
 VT_TV_SRC_DIR=${VT_TV_SRC_DIR:-$PARENT_DIR}
 
