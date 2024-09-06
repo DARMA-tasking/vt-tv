@@ -60,7 +60,7 @@ RUN xvfb-run bash -c "glxinfo | grep 'OpenGL version'"
 ENV CC=/usr/bin/$CC
 ENV CXX=/usr/bin/$CXX
 ENV GCOV=/usr/bin/$GCOV
-ENV CONDA_PREFIX=/opt/conda
+ENV CONDA_PATH=/opt/conda
 
 # Setup conda with python environments
 RUN bash /opt/scripts/setup_conda.sh ${PYTHON_VERSIONS}

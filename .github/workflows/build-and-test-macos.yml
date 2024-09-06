@@ -46,7 +46,7 @@ jobs:
         VT_TV_OUTPUT_DIR: ${{ github.workspace }}/output
         VT_TV_TESTS_OUTPUT_DIR: ${{ github.workspace }}/output/tests
         VT_TV_ARTIFACTS_DIR: /tmp/artifacts
-        CONDA_PREFIX: /opt/miniconda3
+        CONDA_PATH: /opt/miniconda3
         CC: ~
         CXX: ~
         GCOV: ~
@@ -117,7 +117,7 @@ jobs:
           path: |
             ${{ env.VTK_SRC_DIR }}
             ${{ env.VTK_BUILD_DIR }}
-            ${{ env.CONDA_PREFIX }}
+            ${{ env.CONDA_PATH }}
             ~/.zshrc
             ~/.bash_profile
           key: ${{ env.CACHE_KEY }}
@@ -126,7 +126,7 @@ jobs:
       - name: Setup Miniconda3
         if: ${{steps.base-cache.outputs.cache-hit != 'true'}}
         run: |
-          sudo CONDA_PREFIX=${{ env.CONDA_PREFIX }} bash ./ci/setup_conda.sh ${{ join(matrix.host.python) }}
+          sudo CONDA_PATH=${{ env.CONDA_PATH }} bash ./ci/setup_conda.sh ${{ join(matrix.host.python) }}
 
       - name: Setup VTK ${{ matrix.host.vtk }}
         if: ${{steps.base-cache.outputs.cache-hit != 'true'}}

@@ -5,6 +5,8 @@ ARG VT_TV_TEST_PYTHON_BINDINGS=OFF
 
 FROM ${BASE_IMAGE} AS base
 
+ENV CONDA_PATH=/opt/conda
+
 COPY . /opt/src/vt-tv
 RUN mkdir -p /opt/build/vt-tv
 
