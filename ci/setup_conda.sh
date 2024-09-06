@@ -1,7 +1,9 @@
 #!/bin/bash
 
 # This script installs Conda and setup conda environments on the host machine for the given python versions
-# Example: setup_conda.sh 3.8,3.9,3.10,3.11,3.12
+# Example: `setup_conda.sh 3.8,3.9,3.10,3.11,3.12` will
+# 1. Setup conda 
+# 2. Create conda environments py3.8, py3.9, py3.10, py3.11, py3.12 (with python version and nanobind package)
 
 CONDA_PREFIX=${CONDA_PREFIX:-"/opt/miniconda3"}
 PYTHON_VERSIONS=${1:-"3.8,3.9,3.10,3.11,3.12"}
