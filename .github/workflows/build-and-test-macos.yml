@@ -46,7 +46,7 @@ jobs:
         VT_TV_OUTPUT_DIR: ${{ github.workspace }}/output
         VT_TV_TESTS_OUTPUT_DIR: ${{ github.workspace }}/output/tests
         VT_TV_ARTIFACTS_DIR: /tmp/artifacts
-        CONDA_PATH: /opt/miniconda3
+        CONDA_PATH: /opt/conda
         CC: ~
         CXX: ~
         GCOV: ~

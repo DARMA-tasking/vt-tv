@@ -5,7 +5,7 @@
 # 1. Setup conda
 # 2. Create conda environments py3.8, py3.9, py3.10, py3.11, py3.12 (with python version and nanobind package)
 
-CONDA_PATH=${CONDA_PATH:-"/opt/miniconda3"}
+CONDA_PATH=${CONDA_PATH:-"/opt/conda"}
 PYTHON_VERSIONS=${1:-"3.8,3.9,3.10,3.11,3.12"}
 
 echo "::group::Install conda"
