@@ -16,7 +16,7 @@ chmod +x ./ci/python_test.sh
 # Create vizualization output directory (required).
 mkdir -p $VT_TV_OUTPUT_DIR/python_tests
 
-for env in $(conda env list | grep 'py*' | perl -lane 'print $F[-1]' | xargs ls -lrt1d |  perl -lane 'print $F[-1]' | sed -r 's/^.*\/(.*)$/\1/'); do
+for env in $(conda env list | grep ^py | perl -lane 'print $F[-1]' | xargs ls -lrt1d |  perl -lane 'print $F[-1]' | sed -r 's/^.*\/(.*)$/\1/'); do
     # Clear vizualization output directory
     rm -rf $VT_TV_OUTPUT_DIR/python_tests/*
 

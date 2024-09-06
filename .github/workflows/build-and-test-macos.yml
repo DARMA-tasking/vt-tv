@@ -86,7 +86,7 @@ jobs:
         run: |
           sudo CONDA_PATH=${{ env.CONDA_PATH }} bash ./ci/setup_conda.sh ${{ join(matrix.host.python) }}
 
-      - name: Reload environment variables
+      - name: Reload shell variables
         run: |
           if [ -f ~/.zshrc ]; then . ~/.zshrc; fi
           if [ -f ~/.profile ]; then . ~/.profile; fi
