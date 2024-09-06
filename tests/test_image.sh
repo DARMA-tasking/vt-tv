@@ -8,19 +8,10 @@ PARENT_DIR="$(dirname "$CURRENT_DIR")"
 ACTUAL=${ACTUAL:-$PARENT_DIR/output/tests/ccm_example0.png}
 EXPECTED=${EXPECTED:-$CURRENT_DIR/expected/ccm_example0.png}
 TOLERANCE=${TOLERANCE:-0.1}
-DEBUG=${DEBUG:-"OFF"}
-
-if [ $DEBUG == "ON" ]; then
-    set -ex
-fi
 
 if [ ! -f "$ACTUAL" ]; then
     echo "Image not found at "$ACTUAL
     exit 1
-fi
-
-if [ $DEBUG == "ON" ]; then
-    echo "ACTUAL image found !"
 fi
 
 if [ ! -f "$EXPECTED" ]; then
@@ -28,15 +19,7 @@ if [ ! -f "$EXPECTED" ]; then
     exit 1
 fi
 
-if [ $DEBUG == "ON" ]; then
-    echo "EXPECTED image found !"
-fi
-
 pip install imgcompare --quiet 2>/dev/null
-
-if [ $DEBUG == "ON" ]; then
-    echo "imgcompare package installed !"
-fi
 
 DIFF=$(printf "%.2f" $(python -c 'import imgcompare; print(imgcompare.image_diff_percent("'$ACTUAL'", "'$EXPECTED'"));'))
 if { echo $TOLERANCE ; echo $DIFF ; } | sort -n -c 2>/dev/null; then
@@ -44,10 +27,6 @@ if { echo $TOLERANCE ; echo $DIFF ; } | sort -n -c 2>/dev/null; then
     exit 2
 else
     echo "Image diff = $DIFF%. Tolerance = $TOLERANCE. OK"
-fi
-
-if [ $DEBUG == "ON" ]; then
-    echo "Success!"
 fi
 
 exit 0
