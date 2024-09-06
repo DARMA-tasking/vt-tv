@@ -8,19 +8,22 @@ FROM ${BASE_IMAGE} AS base
 
 # Arguments
 ARG VTK_VERSION=9.2.2
-ARG PYTHON_VERSION=3.8
+ARG PYTHON_VERSIONS=3.8,3.9,3.10,3.11,3.12
 ARG CC=gcc-11
 ARG CXX=g++-11
 ARG GCOV=gcov-11
 
-# Copy scripts
+# Copy setup scripts
 RUN mkdir -p /opt/scripts
 COPY ci/setup_mesa.sh /opt/scripts/setup_mesa.sh
-COPY ci/vtk_build.sh /opt/scripts/vtk_build.sh
+COPY ci/setup_mesa.sh /opt/scripts/setup_conda.sh
+COPY ci/setup_vtk.sh /opt/scripts/setup_vtk.sh
 
 ENV DEBIAN_FRONTEND=noninteractive
-RUN apt-get update -y -q && \
-  apt-get install -y -q --no-install-recommends \
+
+# Setup common tools and compiler
+RUN apt update -y -q && \
+  apt install -y -q --no-install-recommends \
   ${CC} \
   ${CXX} \
   git \
@@ -49,43 +52,25 @@ RUN apt-get update -y -q && \
   xvfb \
   lcov
 
+# Setup MESA (opengl)
 RUN bash /opt/scripts/setup_mesa.sh
 RUN xvfb-run bash -c "glxinfo | grep 'OpenGL version'"
 
-RUN apt-get clean && rm -rf /var/lib/apt/lists/*
+# Setup conda and python environments
+RUN bash /opt/scripts/setup_conda.sh ${PYTHON_VERSIONS}
 
-# Share environment variables for use in images based on this.
+# Setup compiler using environment variables
 ENV CC=/usr/bin/$CC
 ENV CXX=/usr/bin/$CXX
 ENV GCOV=/usr/bin/$GCOV
-ENV VTK_DIR=/opt/build/vtk
 
-# Setup python 3.8 with conda
+# Setup VTK
+RUN VTK_VERSION=${VTK_VERSION} \
+  VTK_DIR=${VTK_DIR} \
+  VTK_SRC_DIR=/opt/src/vtk \
+  bash /opt/scripts/setup_vtk.sh
 
-# Download and install Miniconda
-RUN curl -LO https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh && \
-    bash Miniconda3-latest-Linux-x86_64.sh -b -p /opt/conda && \
-    rm Miniconda3-latest-Linux-x86_64.sh
-
-# Update PATH so that conda and the installed packages are usable
-ENV PATH="/opt/conda/bin:${PATH}"
-
-# Create a new environment and install necessary packages
-RUN conda create -y -n deves python=${PYTHON_VERSION} && \
-    echo "source activate deves" > ~/.bashrc && \
-    /bin/bash -c ". /opt/conda/etc/profile.d/conda.sh && conda activate deves && pip install nanobind"
-
-# Set the environment to deves on container run
-ENV CONDA_DEFAULT_ENV=deves
-ENV CONDA_PREFIX=/opt/conda/envs/$CONDA_DEFAULT_ENV
-ENV PATH=$PATH:$CONDA_PREFIX/bin
-ENV CONDA_AUTO_UPDATE_CONDA=false
-
-# Clone VTK source
-RUN mkdir -p /opt/src/vtk
-RUN git clone --recursive --branch v${VTK_VERSION} https://gitlab.kitware.com/vtk/vtk.git /opt/src/vtk
-
-# Build VTK
-RUN VTK_DIR=${VTK_DIR} bash /opt/scripts/vtk_build.sh
+# Clean apt
+RUN apt clean && rm -rf /var/lib/apt/lists/*
 
 RUN echo "Base creation success"

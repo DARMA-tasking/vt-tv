@@ -7,19 +7,35 @@ set -ex
 CURRENT_DIR="$(dirname -- "$(realpath -- "$0")")"
 PARENT_DIR="$(dirname "$CURRENT_DIR")"
 
-CONDA_PATH=${CONDA_PATH:-/opt/conda}
-VT_TV_CONDA_ENV=${VT_TV_CONDA_ENV:-deves}
 VT_TV_SRC_DIR=${VT_TV_SRC_DIR:-$PARENT_DIR}
 VT_TV_OUTPUT_DIR=${VT_TV_OUTPUT_DIR:-"$VT_TV_SRC_DIR/output"}
 
-# Activate conda environment
-. ${CONDA_PATH}/etc/profile.d/conda.sh && conda activate $VT_TV_CONDA_ENV
+pushd $VT_TV_SRC_DIR
+chmod +x ./ci/python_test.sh
 
+# Create vizualization output directory (required).
+sudo mkdir -p $VT_TV_OUTPUT_DIR/python_tests
 
-# Run test
-if [[ $(uname -a) != *"Darwin"* ]]; then
-    # Start virtual display (Linux)
-    xvfb-run python $VT_TV_SRC_DIR/tests/test_bindings.py
-else
-    python $VT_TV_SRC_DIR/tests/test_bindings.py
-fi
+for env in $(conda env list | grep py | cut -d" " -f1); do if == "#" ; then continue; fi;
+    # Clear vizualization output directory
+    rm -rf $VT_TV_OUTPUT_DIR/python_tests/*
+
+    echo "::group::Test Python Bindings (${python_version})"
+
+    # Activate conda environment
+    . $CONDA_PREFIX/etc/profile.d/conda.sh && conda activate env
+
+    # Run test
+    if [[ $(uname -a) != *"Darwin"* ]]; then
+        # Start virtual display (Linux)
+        xvfb-run python $VT_TV_SRC_DIR/tests/test_bindings.py
+    else
+        python $VT_TV_SRC_DIR/tests/test_bindings.py
+    fi
+
+    conda deactivate
+
+    echo "::endgroup::"
+done
+
+popd
