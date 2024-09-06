@@ -11,7 +11,7 @@ CONDA_PATH=${CONDA_PATH:-"/opt/conda"}
 VT_TV_SRC_DIR=${VT_TV_SRC_DIR:-$PARENT_DIR}
 
 for env in $(conda env list | grep 'py*' | perl -lane 'print $F[-1]' | xargs ls -lrt1d |  perl -lane 'print $F[-1]' | sed -r 's/^.*\/(.*)$/\1/'); do
-    echo "::group::Test Python Bindings (${python_version})"
+    echo "::group::Build Python Bindings (${python_version})"
 
     # Activate conda environment
     . $CONDA_PATH/etc/profile.d/conda.sh && conda activate env
