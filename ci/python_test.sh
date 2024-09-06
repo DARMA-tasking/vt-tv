@@ -14,7 +14,7 @@ pushd $VT_TV_SRC_DIR
 chmod +x ./ci/python_test.sh
 
 # Create vizualization output directory (required).
-sudo mkdir -p $VT_TV_OUTPUT_DIR/python_tests
+mkdir -p $VT_TV_OUTPUT_DIR/python_tests
 
 for env in $(conda env list | grep py | cut -d" " -f1); do if == "#" ; then continue; fi;
     # Clear vizualization output directory
