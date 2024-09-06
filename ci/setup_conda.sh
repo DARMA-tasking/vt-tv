@@ -5,7 +5,7 @@
 # 1. Setup conda
 # 2. Create conda environments py3.8, py3.9, py3.10, py3.11, py3.12 (with python version and nanobind package)
 
-CONDA_PREFIX=${CONDA_PREFIX:-"/opt/miniconda3"}
+CONDA_PATH=${CONDA_PATH:-"/opt/miniconda3"}
 PYTHON_VERSIONS=${1:-"3.8,3.9,3.10,3.11,3.12"}
 
 echo "::group::Install conda"
@@ -19,11 +19,11 @@ if [[ $(uname -a) == *"Darwin"* ]]; then
 else
     curl https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -o ~/miniconda.sh
 fi
-bash ~/miniconda.sh -b -u -p $CONDA_PREFIX
+bash ~/miniconda.sh -b -u -p $CONDA_PATH
 rm -rf ~/miniconda.sh
 
-$CONDA_PREFIX/bin/conda init bash
-$CONDA_PREFIX/bin/conda init zsh
+$CONDA_PATH/bin/conda init bash
+$CONDA_PATH/bin/conda init zsh
 if [ -f ~/.zshrc ]; then
 . ~/.zshrc
 fi
@@ -45,7 +45,7 @@ do
     echo "::group::Create conda environment (py${python_version})"
     conda create -y -n py${python_version} python=${python_version}
 
-    . $CONDA_PREFIX/etc/profile.d/conda.sh && conda activate py${python_version}
+    . $CONDA_PATH/etc/profile.d/conda.sh && conda activate py${python_version}
     echo "Python version: $(python --version)"
     pip install nanobind
     conda deactivate
