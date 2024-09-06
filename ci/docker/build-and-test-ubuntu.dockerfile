@@ -28,7 +28,7 @@ RUN bash /opt/src/vt-tv/ci/python_build.sh
 RUN bash /opt/src/vt-tv/ci/python_test.sh
 
 # CI test script run
-RUN ACTUAL=/opt/src/vt-tv/output/tests/default0.png EXPECTED=/opt/src/vt-tv/tests/expected/default/default0.png TOLERANCE=0.1 /opt/src/vt-tv/tests/test_image.sh
+RUN DEBUG=ON ACTUAL=/opt/src/vt-tv/output/tests/default0.png EXPECTED=/opt/src/vt-tv/tests/expected/default/default0.png TOLERANCE=0.1 /opt/src/vt-tv/tests/test_image.sh
 
 # Artifacts
 FROM scratch AS artifacts
