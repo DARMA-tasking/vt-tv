@@ -11,7 +11,6 @@ VT_TV_SRC_DIR=${VT_TV_SRC_DIR:-$PARENT_DIR}
 VT_TV_OUTPUT_DIR=${VT_TV_OUTPUT_DIR:-"$VT_TV_SRC_DIR/output"}
 
 pushd $VT_TV_SRC_DIR
-chmod +x ./ci/python_test.sh
 
 # Create vizualization output directory (required).
 mkdir -p $VT_TV_OUTPUT_DIR/python_tests
