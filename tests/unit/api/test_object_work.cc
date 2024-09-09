@@ -51,15 +51,14 @@ namespace vt::tv::tests::unit::api {
 /**
  * Provides unit tests for the vt::tv::api::ObjectWork class
  */
-class ObjectWorkTest :public ::testing::Test {
-  public:
-    ObjectWork object_0 = ObjectWork(
-      12,
-      10.0,
-      {{ 3, 12.0 }},
-      Generator::makeQOIVariants(3, "user_", "_value"),
-      Generator::makeQOIVariants(2, "attr_", "_value")
-    );
+struct ObjectWorkTest : public ::testing::Test {
+public:
+  ObjectWork object_0 = ObjectWork(
+    12,
+    10.0,
+    {{3, 12.0}},
+    Generator::makeQOIVariants(3, "user_", "_value"),
+    Generator::makeQOIVariants(2, "attr_", "_value"));
 };
 
 TEST_F(ObjectWorkTest, test_empty_constructor) {
@@ -78,13 +77,23 @@ TEST_F(ObjectWorkTest, test_std_constructor_and_getters) {
   EXPECT_EQ(object_0.getSubphaseLoads().at(3), static_cast<TimeType>(12.0));
 
   EXPECT_EQ(object_0.getUserDefined().size(), 3);
-  EXPECT_EQ(object_0.getUserDefined().at("user_0"), static_cast<QOIVariantTypes>("user_0_value"));
-  EXPECT_EQ(object_0.getUserDefined().at("user_1"), static_cast<QOIVariantTypes>("user_1_value"));
-  EXPECT_EQ(object_0.getUserDefined().at("user_2"), static_cast<QOIVariantTypes>("user_2_value"));
+  EXPECT_EQ(
+    object_0.getUserDefined().at("user_0"),
+    static_cast<QOIVariantTypes>("user_0_value"));
+  EXPECT_EQ(
+    object_0.getUserDefined().at("user_1"),
+    static_cast<QOIVariantTypes>("user_1_value"));
+  EXPECT_EQ(
+    object_0.getUserDefined().at("user_2"),
+    static_cast<QOIVariantTypes>("user_2_value"));
 
   EXPECT_EQ(object_0.getAttributes().size(), 2);
-  EXPECT_EQ(object_0.getAttributes().at("attr_0"), static_cast<QOIVariantTypes>("attr_0_value"));
-  EXPECT_EQ(object_0.getAttributes().at("attr_1"), static_cast<QOIVariantTypes>("attr_1_value"));
+  EXPECT_EQ(
+    object_0.getAttributes().at("attr_0"),
+    static_cast<QOIVariantTypes>("attr_0_value"));
+  EXPECT_EQ(
+    object_0.getAttributes().at("attr_1"),
+    static_cast<QOIVariantTypes>("attr_1_value"));
 
   EXPECT_EQ(object_0.getReceivedVolume(), 0.0);
   EXPECT_EQ(object_0.getSentVolume(), 0.0);
@@ -106,4 +115,4 @@ TEST_F(ObjectWorkTest, test_add_and_get_sent_volumes) {
   EXPECT_EQ(object_0.getSentVolume(), 15.85);
 }
 
-} // end namespace vt::tv::tests::unit
+} // namespace vt::tv::tests::unit::api

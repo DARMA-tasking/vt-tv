@@ -98,7 +98,7 @@
 #include <variant>
 #include <cmath>
 
-namespace vt { namespace tv {
+namespace vt::tv {
 
 /**
  * \struct Render
@@ -107,11 +107,11 @@ namespace vt { namespace tv {
  */
 struct Render {
 private:
-  enum ColorType {
-    Default,
-    BlueToRed,
-    HotSpot,
-    WhiteToBlack
+  enum struct ColorType : uint8_t {
+    Default = 0,
+    BlueToRed = 1,
+    HotSpot = 2,
+    WhiteToBlack = 3
   };
 
   // quantities of interest
@@ -134,7 +134,8 @@ private:
   PhaseType selected_phase_ = std::numeric_limits<PhaseType>::max();
 
   // numeric parameters
-  std::variant<std::pair<double, double>, std::set<std::variant<double,int>>> object_qoi_range_;
+  std::variant<std::pair<double, double>, std::set<std::variant<double, int>>>
+    object_qoi_range_;
   std::pair<double, double> rank_qoi_range_;
 
   // Maximum object attribute values
@@ -158,7 +159,8 @@ private:
    *
    * \return object qoi range
    */
-  std::variant<std::pair<double, double>, std::set<std::variant<double,int>>> computeObjectQoiRange_();
+  std::variant<std::pair<double, double>, std::set<std::variant<double, int>>>
+  computeObjectQoiRange_();
 
   /**
    * \brief Compute range of rank qoi.
@@ -183,7 +185,8 @@ private:
    *
    * \return mapping
    */
-  std::map<NodeType, std::unordered_map<ElementIDType, ObjectWork>> createObjectMapping_(PhaseType phase);
+  std::map<NodeType, std::unordered_map<ElementIDType, ObjectWork>>
+  createObjectMapping_(PhaseType phase);
 
   /**
    * \brief Map ranks to polygonal mesh.
@@ -203,26 +206,29 @@ private:
    */
   vtkNew<vtkPolyData> createObjectMesh_(PhaseType phase);
 
-  static void getRgbFromTab20Colormap_(int index, double& r, double& g, double& b);
+  static void
+  getRgbFromTab20Colormap_(int index, double& r, double& g, double& b);
 
-  static vtkSmartPointer<vtkDiscretizableColorTransferFunction> createColorTransferFunction_(
-    std::variant<std::pair<double, double>, std::set<std::variant<double,int>>> attribute_range, ColorType ct = ColorType::Default
-  );
+  static vtkSmartPointer<vtkDiscretizableColorTransferFunction>
+  createColorTransferFunction_(
+    std::variant<std::pair<double, double>, std::set<std::variant<double, int>>>
+      attribute_range,
+    ColorType ct = ColorType::Default);
 
   static vtkSmartPointer<vtkScalarBarActor> createScalarBarActor_(
     vtkSmartPointer<vtkMapper> mapper,
     const std::string& title,
-    double x, double y,
+    double x,
+    double y,
     uint64_t font_size = 50,
-    std::set<std::variant<double,int>> values = {}
-  );
+    std::set<std::variant<double, int>> values = {});
 
   static vtkSmartPointer<vtkRenderer> setupRenderer_();
 
   static vtkSmartPointer<vtkMapper> createRanksMapper_(
     vtkPolyData* rank_mesh,
-    std::variant<std::pair<double, double>, std::set<std::variant<double,int>>> rank_qoi_range
-  );
+    std::variant<std::pair<double, double>, std::set<std::variant<double, int>>>
+      rank_qoi_range);
 
   /**
    * \brief Map global index to its Cartesian grid coordinates.
@@ -232,9 +238,8 @@ private:
    *
    * \return i,j,k Cartesian coordinates
    */
-  static std::array<uint64_t, 3> globalIDToCartesian_(
-    uint64_t flat_id, std::array<uint64_t, 3> grid_sizes
-  );
+  static std::array<uint64_t, 3>
+  globalIDToCartesian_(uint64_t flat_id, std::array<uint64_t, 3> grid_sizes);
 
 public:
   /**
@@ -268,8 +273,7 @@ public:
     double in_resolution,
     bool in_save_meshes,
     bool in_save_pngs,
-    PhaseType in_selected_phase = std::numeric_limits<PhaseType>::max()
-  );
+    PhaseType in_selected_phase = std::numeric_limits<PhaseType>::max());
 
   /**
    * @brief Export a visualization PNG from meshes.
@@ -294,12 +298,11 @@ public:
     uint64_t win_size,
     uint64_t font_size,
     std::string output_dir,
-    std::string output_file_stem
-  );
+    std::string output_file_stem);
 
   void generate(uint64_t font_size = 50, uint64_t win_size = 2000);
 };
 
-}} /* end namespace vt::tv */
+} /* end namespace vt::tv */
 
 #endif /*INCLUDED_VT_TV_RENDER_RENDER_H*/

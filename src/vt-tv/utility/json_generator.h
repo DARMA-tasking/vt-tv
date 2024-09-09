@@ -59,7 +59,6 @@ namespace vt::tv::utility {
  * \brief Generates JSON from vt-tv data structures
  */
 struct JSONGenerator {
-
   /**
    * \brief Construct the reader
    *
@@ -68,8 +67,7 @@ struct JSONGenerator {
   JSONGenerator(Info const& in_info, NodeType in_rank, PhaseType in_phase)
     : info_(in_info),
       rank_(in_rank),
-      phase_(in_phase)
-  { }
+      phase_(in_phase) { }
 
   /**
    * \brief Generate JSON for given rank and phase

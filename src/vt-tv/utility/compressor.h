@@ -57,7 +57,6 @@ namespace vt::tv::utility {
  * \brief A streaming compressor for outputting data with brotli compression
  */
 struct Compressor {
-
   /**
    * \brief Construct a compressor
    *
@@ -66,8 +65,7 @@ struct Compressor {
    * \param[in] buf_size the size of the temporary buffer
    */
   explicit Compressor(
-    int in_quality, int in_window_bits, std::size_t buf_size = 1 << 20
-  );
+    int in_quality, int in_window_bits, std::size_t buf_size = 1 << 20);
 
   ~Compressor();
 
@@ -106,16 +104,15 @@ private:
    */
   template <typename StreamLike>
   bool writeImpl(
-    StreamLike& s, uint8_t const* buffer, std::size_t const size,
-    bool finish_
-  );
+    StreamLike& s, uint8_t const* buffer, std::size_t const size, bool finish_);
 
 private:
-  int quality_ = 0;                              /**< The compressor quality */
-  int window_bits_ = 0;                          /**< The compressor lgwin bits */
-  std::size_t buf_size_ = 0;                     /**< The output buffer size */
-  BrotliEncoderState* enc_ = nullptr;            /**< Underlying encoder state */
-  std::unique_ptr<uint8_t[]> out_buf_ = nullptr; /**< The temporary output buffer */
+  int quality_ = 0;                   /**< The compressor quality */
+  int window_bits_ = 0;               /**< The compressor lgwin bits */
+  std::size_t buf_size_ = 0;          /**< The output buffer size */
+  BrotliEncoderState* enc_ = nullptr; /**< Underlying encoder state */
+  std::unique_ptr<uint8_t[]> out_buf_ =
+    nullptr; /**< The temporary output buffer */
 };
 
 } /* end namespace vt::tv::utility */

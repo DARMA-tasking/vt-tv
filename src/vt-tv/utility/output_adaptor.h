@@ -58,7 +58,6 @@ namespace vt::tv::utility {
  */
 template <typename StreamLike, typename CharType = char>
 struct OutputAdaptor : nlohmann::detail::output_adapter_protocol<CharType> {
-
   /**
    * \brief Construct with a stream
    *
@@ -67,17 +66,14 @@ struct OutputAdaptor : nlohmann::detail::output_adapter_protocol<CharType> {
    */
   OutputAdaptor(StreamLike& in_os, bool compress)
     : c_((compress ? std::make_unique<compress::Compressor>(8, 20) : nullptr)),
-      os_(in_os)
-  { }
+      os_(in_os) { }
 
   /**
    * \brief Write a single character to the output
    *
    * \param[in] c the character
    */
-  void write_character(CharType c) override {
-    write_characters(&c, 1);
-  }
+  void write_character(CharType c) override { write_characters(&c, 1); }
 
   /**
    * \brief Write an array of characters to the output
@@ -103,8 +99,8 @@ struct OutputAdaptor : nlohmann::detail::output_adapter_protocol<CharType> {
   }
 
 private:
-  std::unique_ptr<Compressor> c_ = nullptr;  /**< The compressor */
-  StreamLike& os_;                           /**< The output stream */
+  std::unique_ptr<Compressor> c_ = nullptr; /**< The compressor */
+  StreamLike& os_;                          /**< The output stream */
 };
 
 } /* end namespace vt::tv::utility */

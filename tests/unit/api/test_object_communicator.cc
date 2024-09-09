@@ -51,21 +51,16 @@ namespace vt::tv::tests::unit::api {
 /**
  * Provides unit tests for the vt::tv::api::ObjectCommunicator class
  */
-class ObjectCommunicatorTest :public ::testing::Test {
-  public:
-    ObjectCommunicator comm_0 = ObjectCommunicator(0);
+struct ObjectCommunicatorTest : public ::testing::Test {
+public:
+  ObjectCommunicator comm_0 = ObjectCommunicator(0);
 
-    ObjectCommunicator comm_1 = ObjectCommunicator(
-        1,
-        // recv
-        {
-            { 1, 25.5 }, { 2, 12.0 }
-        },
-        // sent
-        {
-            { 1, 29.5 },  { 2, 10.2 },  { 3, 10.3 }
-        }
-    );
+  ObjectCommunicator comm_1 = ObjectCommunicator(
+    1,
+    // recv
+    {{1, 25.5}, {2, 12.0}},
+    // sent
+    {{1, 29.5}, {2, 10.2}, {3, 10.3}});
 };
 
 /**
@@ -116,7 +111,10 @@ TEST_F(ObjectCommunicatorTest, test_initial_state) {
 }
 
 TEST_F(ObjectCommunicatorTest, test_serialization) {
-  BasicSerializer<std::variant<ElementIDType,std::multimap<ElementIDType, double>>> s = BasicSerializer<std::variant<ElementIDType,std::multimap<ElementIDType, double>>>();
+  BasicSerializer<
+    std::variant<ElementIDType, std::multimap<ElementIDType, double>>>
+    s = BasicSerializer<
+      std::variant<ElementIDType, std::multimap<ElementIDType, double>>>();
 
   comm_1.serialize(s);
   EXPECT_EQ(s.items.size(), 3); // object_id_, received_, sent_
@@ -124,17 +122,28 @@ TEST_F(ObjectCommunicatorTest, test_serialization) {
   auto actual_object_id = std::get<PhaseType>(s.items[0]);
   EXPECT_EQ(actual_object_id, comm_1.getObjectId()); // object id
 
-  std::multimap<ElementIDType, double> actual_received = std::get<std::multimap<ElementIDType, double>>(s.items[1]);
-  std::multimap<ElementIDType, double> actual_sent = std::get<std::multimap<ElementIDType, double>>(s.items[2]);
+  std::multimap<ElementIDType, double> actual_received =
+    std::get<std::multimap<ElementIDType, double>>(s.items[1]);
+  std::multimap<ElementIDType, double> actual_sent =
+    std::get<std::multimap<ElementIDType, double>>(s.items[2]);
 
   bool any_failure = false;
   for (auto const& [object_id, received_volume] : comm_1.getReceived()) {
     if (actual_received.find(object_id) == actual_received.cend()) {
-      fmt::print("Missing received volume {} from object {} in serialized communicator data", received_volume, object_id);
+      fmt::print(
+        "Missing received volume {} from object {} in serialized communicator "
+        "data",
+        received_volume,
+        object_id);
       any_failure = true;
       ADD_FAILURE();
-    } else if (actual_received.count(object_id) != comm_1.getReceived().count(object_id)) {
-      fmt::print("Different count of received volume from object {} in serialized communicator data", object_id);
+    } else if (
+      actual_received.count(object_id) !=
+      comm_1.getReceived().count(object_id)) {
+      fmt::print(
+        "Different count of received volume from object {} in serialized "
+        "communicator data",
+        object_id);
       any_failure = true;
       ADD_FAILURE();
     }
@@ -150,18 +159,29 @@ TEST_F(ObjectCommunicatorTest, test_serialization) {
 
     if (!found) {
       any_failure = true;
-      fmt::print("Missing received volume {} from object {} in serialized communicator data", received_volume, object_id);
+      fmt::print(
+        "Missing received volume {} from object {} in serialized communicator "
+        "data",
+        received_volume,
+        object_id);
       ADD_FAILURE();
     }
   }
 
   for (auto const& [object_id, sent_volume] : comm_1.getSent()) {
     if (actual_sent.find(object_id) == actual_sent.cend()) {
-      fmt::print("Missing sent volume {} from object {} in serialized communicator data", sent_volume, object_id);
+      fmt::print(
+        "Missing sent volume {} from object {} in serialized communicator data",
+        sent_volume,
+        object_id);
       any_failure = true;
       ADD_FAILURE();
-    } else if (actual_sent.count(object_id) != comm_1.getSent().count(object_id)) {
-      fmt::print("Different count of sent volume from object {} in serialized communicator data", object_id);
+    } else if (
+      actual_sent.count(object_id) != comm_1.getSent().count(object_id)) {
+      fmt::print(
+        "Different count of sent volume from object {} in serialized "
+        "communicator data",
+        object_id);
       any_failure = true;
       ADD_FAILURE();
     }
@@ -177,7 +197,11 @@ TEST_F(ObjectCommunicatorTest, test_serialization) {
 
     if (!found) {
       any_failure = true;
-      fmt::print("Missing received volume {} from object {} in serialized communicator data", sent_volume, object_id);
+      fmt::print(
+        "Missing received volume {} from object {} in serialized communicator "
+        "data",
+        sent_volume,
+        object_id);
       ADD_FAILURE();
     }
   }
@@ -187,4 +211,4 @@ TEST_F(ObjectCommunicatorTest, test_serialization) {
   }
 }
 
-} // end namespace vt::tv::tests::unit
+} // namespace vt::tv::tests::unit::api

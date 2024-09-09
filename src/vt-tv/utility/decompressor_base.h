@@ -59,7 +59,8 @@ namespace vt::tv::utility {
 struct DecompressorBase {
   virtual ~DecompressorBase() = default;
   virtual bool done() const = 0;
-  virtual std::size_t read(uint8_t* output_buffer, std::size_t bytes_to_output) = 0;
+  virtual std::size_t
+  read(uint8_t* output_buffer, std::size_t bytes_to_output) = 0;
 };
 
 } /* end namespace vt::tv::utility */

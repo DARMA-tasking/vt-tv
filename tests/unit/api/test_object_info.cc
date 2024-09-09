@@ -50,21 +50,19 @@ namespace vt::tv::tests::unit::api {
 /**
  * Provides unit tests for the vt::tv::api::ObjectInfo class
  */
-class ObjectInfoTest :public ::testing::Test {
-  public:
-    ObjectInfo object_0 = ObjectInfo(
-      6, // id
-      2, // home
-      false, // migratable
-      std::vector<size_t>({ 0, 1, 2})
-    );
+struct ObjectInfoTest : public ::testing::Test {
+public:
+  ObjectInfo object_0 = ObjectInfo(
+    6,     // id
+    2,     // home
+    false, // migratable
+    std::vector<size_t>({0, 1, 2}));
 
-    ObjectInfo object_1 = ObjectInfo(
-      7, // id
-      1, // home
-      true, // migratable
-      std::vector<size_t>({ 3, 5, 6})
-    );
+  ObjectInfo object_1 = ObjectInfo(
+    7,    // id
+    1,    // home
+    true, // migratable
+    std::vector<size_t>({3, 5, 6}));
 };
 
 /**
@@ -98,4 +96,4 @@ TEST_F(ObjectInfoTest, test_initial_state) {
   EXPECT_FALSE(object_0.getIsObjGroup());
 }
 
-} // end namespace vt::tv::tests::unit
+} // namespace vt::tv::tests::unit::api

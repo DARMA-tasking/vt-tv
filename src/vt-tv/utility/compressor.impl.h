@@ -51,15 +51,15 @@
 namespace vt::tv::utility {
 
 template <typename StreamLike>
-bool Compressor::write(StreamLike& s, uint8_t const* buffer, std::size_t const size) {
+bool Compressor::write(
+  StreamLike& s, uint8_t const* buffer, std::size_t const size) {
   constexpr auto finish_writing = false;
   return writeImpl(s, buffer, size, finish_writing);
 }
 
 template <typename StreamLike>
 bool Compressor::writeImpl(
-  StreamLike& s, uint8_t const* buffer, std::size_t const size, bool finish_
-) {
+  StreamLike& s, uint8_t const* buffer, std::size_t const size, bool finish_) {
   assert(enc_ && "Must have a valid compressor");
 
   uint8_t const* cur = buffer;
@@ -71,8 +71,7 @@ bool Compressor::writeImpl(
 
     auto op = finish_ ? BROTLI_OPERATION_FINISH : BROTLI_OPERATION_PROCESS;
     bool ret = BrotliEncoderCompressStream(
-      enc_, op, &rem, &cur, &avail_out, &next_out, nullptr
-    );
+      enc_, op, &rem, &cur, &avail_out, &next_out, nullptr);
     if (!ret) {
       assert(false && "Failed to stream compression data out\n");
       return false;

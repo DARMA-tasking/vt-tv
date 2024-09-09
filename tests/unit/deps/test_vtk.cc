@@ -61,8 +61,7 @@ namespace vt::tv::tests::unit::deps {
 /**
  * Provides unit tests for the Vtk functions called from vt-tv
  */
-class VtkTest :public ::testing::Test {
-
+struct VtkTest : public ::testing::Test {
   void SetUp() override {
     // This test is not testing vt-tv src.
     // That's why it is skipped. But it might be useful locally.
@@ -117,13 +116,14 @@ TEST_F(VtkTest, test_vtk_screenshot_example) {
   w2i->SetMagnification(2); // image quality
 #endif
   w2i->SetInputBufferTypeToRGBA(); // also record the alpha
-                                                   // (transparency) channel
+                                   // (transparency) channel
   w2i->ReadFrontBufferOff();       // read from the back buffer
   w2i->Update();
 
   vtkNew<vtkPNGWriter> writer;
-  writer->SetFileName(fmt::format("{}/output/tests/vtk_example_screenshot.png", SRC_DIR).c_str());
+  writer->SetFileName(
+    fmt::format("{}/output/tests/vtk_example_screenshot.png", SRC_DIR).c_str());
   writer->SetInputConnection(w2i->GetOutputPort());
 }
 
-} // end namespace vt::tv::tests::unit
+} // namespace vt::tv::tests::unit::deps

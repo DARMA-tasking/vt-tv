@@ -64,7 +64,6 @@ struct Object;
  * \brief A class holding received and sent messages for an object.
  */
 struct ObjectCommunicator {
-
   ObjectCommunicator() = default;
 
   /**
@@ -72,9 +71,7 @@ struct ObjectCommunicator {
    *
    * \param[in] id_in the object id
    */
-  explicit ObjectCommunicator(ElementIDType id_in)
-    : object_id_(id_in)
-  {}
+  explicit ObjectCommunicator(ElementIDType id_in) : object_id_(id_in) { }
 
   /**
    * \brief Construct an \c ObjectCommunicator with edges
@@ -86,11 +83,10 @@ struct ObjectCommunicator {
   ObjectCommunicator(
     ElementIDType id_in,
     std::multimap<ElementIDType, double> recv_in,
-    std::multimap<ElementIDType, double> sent_in
-  ) : object_id_(id_in),
+    std::multimap<ElementIDType, double> sent_in)
+    : object_id_(id_in),
       received_(recv_in),
-      sent_(sent_in)
-  { }
+      sent_(sent_in) { }
 
   /**
    * \brief Get the id of object for this communicator
@@ -114,7 +110,7 @@ struct ObjectCommunicator {
 
     std::vector<double> results;
     for (auto it = range.first; it != range.second; ++it) {
-        results.push_back(it->second);
+      results.push_back(it->second);
     }
 
     return results;
@@ -133,7 +129,7 @@ struct ObjectCommunicator {
 
     std::vector<double> results;
     for (auto it = range.first; it != range.second; ++it) {
-        results.push_back(it->second);
+      results.push_back(it->second);
     }
 
     return results;
@@ -149,8 +145,7 @@ struct ObjectCommunicator {
     this->received_.insert(std::make_pair(from_id, bytes));
     if (from_id == this->object_id_) {
       fmt::print(
-        "Object {} receiving communication from myself\n", this->object_id_
-      );
+        "Object {} receiving communication from myself\n", this->object_id_);
     }
   }
 
@@ -164,37 +159,34 @@ struct ObjectCommunicator {
     this->sent_.insert(std::make_pair(to_id, bytes));
     if (to_id == this->object_id_) {
       fmt::print(
-        "Object {} sending communication to myself\n", this->object_id_
-      );
+        "Object {} sending communication to myself\n", this->object_id_);
     }
   }
 
-   /**
+  /**
    * \brief maximum bytes received or sent at this communicator
    */
   double getMaxVolume() const {
     // Search for the maximum value in received and sent (0. if sets are empty)
     double max_recv = !this->received_.empty() ?
-                      std::max_element(
-                          this->received_.begin(),
-                          this->received_.end(),
-                          [](const auto& a, const auto& b) {
-                              return a.second < b.second;
-                          })->second :
-                      0.0;
+      std::max_element(
+        this->received_.begin(),
+        this->received_.end(),
+        [](const auto& a, const auto& b) { return a.second < b.second; })
+        ->second :
+      0.0;
 
     double max_sent = !this->sent_.empty() ?
-                      std::max_element(
-                          this->sent_.begin(),
-                          this->sent_.end(),
-                          [](const auto& a, const auto& b) {
-                              return a.second < b.second;
-                      })->second :
-                      0.0;
+      std::max_element(
+        this->sent_.begin(),
+        this->sent_.end(),
+        [](const auto& a, const auto& b) { return a.second < b.second; })
+        ->second :
+      0.0;
 
     // Return the max
     return std::max(max_recv, max_sent);
-}
+  }
 
   /**
    * \brief Get the total received communication volume for this communicator
@@ -235,7 +227,7 @@ struct ObjectCommunicator {
   }
 
 private:
-  ElementIDType object_id_;                  /**< The object id */
+  ElementIDType object_id_;                       /**< The object id */
   std::multimap<ElementIDType, double> received_; /**< The received edges */
   std::multimap<ElementIDType, double> sent_;     /**< The sent edges */
 };

@@ -48,9 +48,8 @@ namespace vt::tv::utility {
 
 template <typename StreamLike>
 DecompressionInputContainer::DecompressionInputContainer(
-  AnyStreamTag, StreamLike stream, std::size_t in_chunk_size
-) : chunk_size_(in_chunk_size)
-{
+  AnyStreamTag, StreamLike stream, std::size_t in_chunk_size)
+  : chunk_size_(in_chunk_size) {
   d_ = std::make_unique<DecompressorStreamType<StreamLike>>(std::move(stream));
   output_buf_ = std::make_unique<uint8_t[]>(chunk_size_);
   len_ = d_->read(output_buf_.get(), chunk_size_);

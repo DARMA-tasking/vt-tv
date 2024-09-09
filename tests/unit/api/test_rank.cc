@@ -50,31 +50,30 @@ namespace vt::tv::tests::unit::api {
 /**
  * Provides unit tests for the vt::tv::api::Rank class
  */
-class RankTest :public ::testing::Test {
-  public:
+struct RankTest : public ::testing::Test {
+public:
+  // 6 objects with 2.0 load
+  std::unordered_map<ElementIDType, ObjectWork> objects =
+    Generator::makeObjects(6, 2.0);
 
-    // 6 objects with 2.0 load
-    std::unordered_map<ElementIDType, ObjectWork> objects = Generator::makeObjects(6, 2.0);
+  // 3 phases (2 objects per phase) (default load = 2.0 per object)
+  std::unordered_map<ElementIDType, ObjectWork> objects_0 = {
+    {0, objects.at(0)}, {1, objects.at(1)}};
+  std::unordered_map<ElementIDType, ObjectWork> objects_1 = {
+    {2, objects.at(2)}, {3, objects.at(3)}};
+  std::unordered_map<ElementIDType, ObjectWork> objects_2 = {
+    {4, objects.at(4)}, {5, objects.at(5)}};
+  PhaseWork phase_0 = Generator::makePhase(0, objects_0);
+  PhaseWork phase_1 = Generator::makePhase(1, objects_1);
+  PhaseWork phase_2 = Generator::makePhase(2, objects_2);
 
-    // 3 phases (2 objects per phase) (default load = 2.0 per object)
-    std::unordered_map<ElementIDType, ObjectWork> objects_0 = { { 0, objects.at(0) }, { 1, objects.at(1) } };
-    std::unordered_map<ElementIDType, ObjectWork> objects_1 = { { 2, objects.at(2) }, { 3, objects.at(3) } };
-    std::unordered_map<ElementIDType, ObjectWork> objects_2 = { { 4, objects.at(4) }, { 5, objects.at(5) } };
-    PhaseWork phase_0 = Generator::makePhase(0, objects_0);
-    PhaseWork phase_1 = Generator::makePhase(1, objects_1);
-    PhaseWork phase_2 = Generator::makePhase(2, objects_2);
-
-    // rank
-    std::unordered_map<PhaseType, PhaseWork> phase_info_0 = {
-      { 0, phase_0 },
-      { 1, phase_1 },
-      { 2, phase_2 },
-    };
-    Rank rank_0 = Rank(
-      2,
-      phase_info_0,
-      Generator::makeQOIVariants(10)
-    );
+  // rank
+  std::unordered_map<PhaseType, PhaseWork> phase_info_0 = {
+    {0, phase_0},
+    {1, phase_1},
+    {2, phase_2},
+  };
+  Rank rank_0 = Rank(2, phase_info_0, Generator::makeQOIVariants(10));
 };
 
 /**
@@ -101,7 +100,9 @@ TEST_F(RankTest, test_initial_state) {
  */
 TEST_F(RankTest, test_communications_and_get_max_volume) {
   // object 0 not in phase 2 objects must fire an error
-  ASSERT_THROW({ rank_0.addObjectReceivedCommunicationAtPhase(2, 0, 3, 12.0); }, std::out_of_range);
+  ASSERT_THROW(
+    { rank_0.addObjectReceivedCommunicationAtPhase(2, 0, 3, 12.0); },
+    std::out_of_range);
 
   // Phase 1, object 2 receives from object 4 (phase 2) a 12.0 load.
   rank_0.addObjectReceivedCommunicationAtPhase(1, 2, 4, 3.5);
@@ -115,4 +116,4 @@ TEST_F(RankTest, test_communications_and_get_max_volume) {
   ASSERT_EQ(rank_0.getPhaseWork().at(0).getMaxVolume(), 7.0);
 }
 
-} // end namespace vt::tv::tests::unit
+} // namespace vt::tv::tests::unit::api

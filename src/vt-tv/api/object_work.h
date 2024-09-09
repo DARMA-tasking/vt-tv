@@ -60,7 +60,6 @@ namespace vt::tv {
  * \brief Holds work for an object for a given phase
  */
 struct ObjectWork {
-
   ObjectWork() = default;
 
   /**
@@ -76,14 +75,13 @@ struct ObjectWork {
     TimeType in_whole_phase_load,
     std::unordered_map<SubphaseType, TimeType> in_subphase_loads,
     std::unordered_map<std::string, QOIVariantTypes> in_user_defined = {},
-    std::unordered_map<std::string, QOIVariantTypes> in_attributes = {}
-  ) : id_(in_id),
+    std::unordered_map<std::string, QOIVariantTypes> in_attributes = {})
+    : id_(in_id),
       whole_phase_load_(in_whole_phase_load),
       subphase_loads_(std::move(in_subphase_loads)),
       user_defined_(std::move(in_user_defined)),
       communicator_(id_),
-      attributes_(std::move(in_attributes))
-  { }
+      attributes_(std::move(in_attributes)) { }
 
   /**
    * \brief Get element ID
@@ -165,9 +163,7 @@ struct ObjectWork {
   /**
    * \brief Get maximum bytes received or sent at this object
    */
-  double getMaxVolume() const {
-    return communicator_.getMaxVolume();
-  }
+  double getMaxVolume() const { return communicator_.getMaxVolume(); }
 
   /**
    * \brief Get the total received communication volume for this object
@@ -183,9 +179,7 @@ struct ObjectWork {
    *
    * \return total sent communication volume
    */
-  double getSentVolume() const {
-    return communicator_.getTotalSentVolume();
-  }
+  double getSentVolume() const { return communicator_.getTotalSentVolume(); }
 
   /**
    * \brief Serializer for data
@@ -215,7 +209,6 @@ private:
   ObjectCommunicator communicator_;
   // QOIs to be visualized
   std::unordered_map<std::string, QOIVariantTypes> attributes_;
-
 };
 
 } /* end namespace vt::tv */

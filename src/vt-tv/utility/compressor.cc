@@ -48,8 +48,7 @@ namespace vt::tv::utility {
 Compressor::Compressor(int in_quality, int in_window_bits, std::size_t buf_size)
   : quality_(in_quality),
     window_bits_(in_window_bits),
-    buf_size_(buf_size)
-{
+    buf_size_(buf_size) {
   // for now, use the default allocator
   enc_ = BrotliEncoderCreateInstance(nullptr, nullptr, nullptr);
   if (!enc_) {
@@ -61,8 +60,7 @@ Compressor::Compressor(int in_quality, int in_window_bits, std::size_t buf_size)
   }
   if (
     window_bits_ < BROTLI_MIN_WINDOW_BITS or
-    window_bits_ > BROTLI_MAX_WINDOW_BITS
-  ) {
+    window_bits_ > BROTLI_MAX_WINDOW_BITS) {
     window_bits_ = BROTLI_MAX_WINDOW_BITS;
   }
   // Set the quality parameter for the encoder

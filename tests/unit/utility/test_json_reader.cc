@@ -54,10 +54,11 @@ using JSONReader = vt::tv::utility::JSONReader;
 /**
  * Provides unit tests for the vt::tv::utility::JSONReader class
  */
-struct JSONReaderTest :public ::testing::Test {};
+struct JSONReaderTest : public ::testing::Test { };
 
 TEST_F(JSONReaderTest, test_json_reader_1) {
-  std::filesystem::path p = std::filesystem::path(SRC_DIR) / "data/lb_test_data" ;
+  std::filesystem::path p =
+    std::filesystem::path(SRC_DIR) / "data/lb_test_data";
   std::string path = std::filesystem::absolute(p).string();
 
   NodeType rank = 0;
@@ -75,8 +76,10 @@ TEST_F(JSONReaderTest, test_json_reader_1) {
   for (auto const& [elm_id, oi] : obj_info) {
     fmt::print(
       "elm_id={:x}, home={}, migratable={}, index_array size={}\n",
-      elm_id, oi.getHome(), oi.isMigratable(), oi.getIndexArray().size()
-    );
+      elm_id,
+      oi.getHome(),
+      oi.isMigratable(),
+      oi.getIndexArray().size());
     EXPECT_EQ(elm_id, oi.getID());
     fmt::print("elm_id: {}, oi.getID: {}\n", elm_id, oi.getID());
 
@@ -113,7 +116,8 @@ TEST_F(JSONReaderTest, test_json_reader_1) {
 }
 
 TEST_F(JSONReaderTest, test_json_reader_metadata_attributes) {
-  std::filesystem::path p = std::filesystem::path(SRC_DIR) / "data/lb_test_data" ;
+  std::filesystem::path p =
+    std::filesystem::path(SRC_DIR) / "data/lb_test_data";
   std::string path = std::filesystem::absolute(p).string();
 
   NodeType rank = 0;
@@ -136,7 +140,8 @@ TEST_F(JSONReaderTest, test_json_reader_metadata_attributes) {
 }
 
 TEST_F(JSONReaderTest, test_json_reader_object_info_attributes) {
-  std::filesystem::path p = std::filesystem::path(SRC_DIR) / "data/lb_test_data" ;
+  std::filesystem::path p =
+    std::filesystem::path(SRC_DIR) / "data/lb_test_data";
   std::string path = std::filesystem::absolute(p).string();
 
   NodeType rank = 0;
@@ -154,10 +159,12 @@ TEST_F(JSONReaderTest, test_json_reader_object_info_attributes) {
   EXPECT_TRUE(object_attributes.find("intSample") != object_attributes.end());
   EXPECT_EQ(-100, std::get<int>(object_attributes.at("intSample")));
 
-  EXPECT_TRUE(object_attributes.find("doubleSample") != object_attributes.end());
+  EXPECT_TRUE(
+    object_attributes.find("doubleSample") != object_attributes.end());
   EXPECT_EQ(0, std::get<double>(object_attributes.at("doubleSample")));
 
-  EXPECT_TRUE(object_attributes.find("stringSample") != object_attributes.end());
+  EXPECT_TRUE(
+    object_attributes.find("stringSample") != object_attributes.end());
   EXPECT_EQ("", std::get<std::string>(object_attributes.at("stringSample")));
 }
 
@@ -184,7 +191,8 @@ TEST_F(JSONReaderTest, test_json_reader_qoi_serializer) {
 }
 
 TEST_F(JSONReaderTest, test_json_reader_object_work_user_defined) {
-  std::filesystem::path p = std::filesystem::path(SRC_DIR) / "data/lb_test_data" ;
+  std::filesystem::path p =
+    std::filesystem::path(SRC_DIR) / "data/lb_test_data";
   std::string path = std::filesystem::absolute(p).string();
 
   NodeType rank = 0;
@@ -204,4 +212,4 @@ TEST_F(JSONReaderTest, test_json_reader_object_work_user_defined) {
   EXPECT_EQ(1, std::get<int>(user_defined.at("isSample")));
 }
 
-} // end namespace vt::tv::tests::unit
+} // namespace vt::tv::tests::unit::utility

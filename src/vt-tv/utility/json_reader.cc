@@ -142,8 +142,7 @@ std::unique_ptr<Info> JSONReader::parse() {
 
             if (
               task["entity"].find("collection_id") != task["entity"].end() and
-              task["entity"].find("index") != task["entity"].end()
-            ) {
+              task["entity"].find("index") != task["entity"].end()) {
               auto cid = task["entity"]["collection_id"];
               auto idx = task["entity"]["index"];
               if (cid.is_number() && idx.is_array()) {
@@ -183,7 +182,8 @@ std::unique_ptr<Info> JSONReader::parse() {
               }
             }
 
-            std::unordered_map<std::string, QOIVariantTypes> readed_user_defined;
+            std::unordered_map<std::string, QOIVariantTypes>
+              readed_user_defined;
             if (task.find("user_defined") != task.end()) {
               auto user_defined = task["user_defined"];
               if (user_defined.is_object()) {
@@ -207,9 +207,11 @@ std::unique_ptr<Info> JSONReader::parse() {
             objects.try_emplace(
               object,
               ObjectWork{
-                object, time, std::move(subphase_loads), std::move(readed_user_defined), std::move(readed_attributes)
-              }
-            );
+                object,
+                time,
+                std::move(subphase_loads),
+                std::move(readed_user_defined),
+                std::move(readed_attributes)});
           }
         }
       }
@@ -243,7 +245,11 @@ std::unique_ptr<Info> JSONReader::parse() {
               if (to_it != objects.end()) {
                 to_it->second.addReceivedCommunications(from_id, bytes);
               } else {
-                fmt::print("Warning: Communication {} -> {}: neither sender nor recipient was found in objects.\n", from_id, to_id);
+                fmt::print(
+                  "Warning: Communication {} -> {}: neither sender nor "
+                  "recipient was found in objects.\n",
+                  from_id,
+                  to_id);
               }
             }
           }

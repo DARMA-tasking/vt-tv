@@ -41,7 +41,6 @@
 //@HEADER
 */
 
-
 #include <vt-tv/api/phase_work.h>
 
 #include "../util.h"
@@ -55,12 +54,12 @@ using ObjectWorkMap = std::unordered_map<ElementIDType, ObjectWork>;
 /**
  * Provides unit tests for the vt::tv::api::PhaseWork class
  */
-class PhaseWorkTest : public ::testing::Test {
- public:
+struct PhaseWorkTest : public ::testing::Test {
+public:
   PhaseWorkTest() {
     objects_0 = Generator::makeObjects(10);
     phase_0 = PhaseWork(
-      11, // phase id
+      11,       // phase id
       objects_0 // map of ObjectWork
     );
   }
@@ -76,11 +75,11 @@ TEST_F(PhaseWorkTest, test_initial_state) {
   // Assertions for phase_0
   EXPECT_EQ(phase_0.getPhase(), 11);
   EXPECT_EQ(
-      phase_0.getLoad(),
-      std::accumulate(objects_0.begin(), objects_0.end(), 0,
-                      [](double value, const auto& p) {
-                        return value + p.second.getLoad();
-                      }));
+    phase_0.getLoad(),
+    std::accumulate(
+      objects_0.begin(), objects_0.end(), 0, [](double value, const auto& p) {
+        return value + p.second.getLoad();
+      }));
   EXPECT_EQ(phase_0.getMaxVolume(), 0.0);
 }
 
@@ -96,7 +95,8 @@ TEST_F(PhaseWorkTest, test_communications) {
   ObjectCommunicator communicator = ObjectCommunicator(3);
 
   // object id (2) != communicator object id (3). Expected assertion error (DEBUG).
-  ASSERT_DEBUG_DEATH({ phase_0.setCommunications(object_id, communicator); }, "");
+  ASSERT_DEBUG_DEATH(
+    { phase_0.setCommunications(object_id, communicator); }, "");
 
   object_id = 3;
   phase_0.setCommunications(object_id, communicator);
@@ -123,7 +123,8 @@ TEST_F(PhaseWorkTest, test_communications) {
  * Test PhaseWork::serialize correctly serialize PhaseWork instance members
  */
 TEST_F(PhaseWorkTest, test_serialization) {
-  BasicSerializer<std::variant<PhaseType,ObjectWorkMap>> s = BasicSerializer<std::variant<PhaseType,ObjectWorkMap>>();
+  BasicSerializer<std::variant<PhaseType, ObjectWorkMap>> s =
+    BasicSerializer<std::variant<PhaseType, ObjectWorkMap>>();
 
   phase_0.serialize(s);
   EXPECT_EQ(s.items.size(), 2);
@@ -139,4 +140,4 @@ TEST_F(PhaseWorkTest, test_serialization) {
   }
 }
 
-}  // namespace vt::tv::tests::unit::api
+} // namespace vt::tv::tests::unit::api

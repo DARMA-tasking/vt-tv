@@ -64,18 +64,21 @@ using Util = vt::tv::tests::unit::Util;
 /**
  * Provides unit tests for the vt::tv::utility::ParseRender class to test with config file input
  */
-class ParseRenderTest :public ::testing::TestWithParam<std::string> { };
+class ParseRenderTest : public ::testing::TestWithParam<std::string> { };
 
 /**
  * Test ParseRender:parseAndRender correcty run the different configuration files
  */
-TEST_P(ParseRenderTest, test_parse_config_and_render_no_png) {
-  std::string const & config_file = GetParam();
-  auto parse_render = ParseRender(fmt::format("{}/tests/config/{}", SRC_DIR, config_file));
-  YAML::Node config = YAML::LoadFile(fmt::format("{}/tests/config/{}", SRC_DIR, config_file));
+TEST_P(ParseRenderTest, test_parse_render_no_png_generates_mesh_files_only) {
+  std::string const& config_file = GetParam();
+  auto parse_render =
+    ParseRender(fmt::format("{}/tests/config/{}", SRC_DIR, config_file));
+  YAML::Node config =
+    YAML::LoadFile(fmt::format("{}/tests/config/{}", SRC_DIR, config_file));
   Info info = Generator::loadInfoFromConfig(config);
 
-  auto output_dir = Util::resolveDir(SRC_DIR, config["output"]["directory"].as<std::string>(), true);
+  auto output_dir = Util::resolveDir(
+    SRC_DIR, config["output"]["directory"].as<std::string>(), true);
   std::filesystem::create_directories(output_dir);
 
   auto output_file_stem = config["output"]["file_stem"].as<std::string>();
@@ -84,41 +87,35 @@ TEST_P(ParseRenderTest, test_parse_config_and_render_no_png) {
   // this is needed for image and mesh tests
   ASSERT_NO_THROW(parse_render.parseAndRender());
 
-  for (uint64_t i = 0; i<info.getNumPhases(); i++) {
-    auto rank_mesh_file = fmt::format("{}{}_rank_mesh_{}.vtp", output_dir, output_file_stem, i);
-    auto object_mesh_file = fmt::format("{}{}_object_mesh_{}.vtp", output_dir, output_file_stem, i);
+  for (uint64_t i = 0; i < info.getNumPhases(); i++) {
+    auto rank_mesh_file =
+      fmt::format("{}{}_rank_mesh_{}.vtp", output_dir, output_file_stem, i);
+    auto object_mesh_file =
+      fmt::format("{}{}_object_mesh_{}.vtp", output_dir, output_file_stem, i);
     auto png_file = fmt::format("{}{}{}.png", output_dir, output_file_stem, i);
 
     fmt::print("----- Test phase {} -----\n", i);
     // 1. test files exist: rank mesh, object mesh, png
-    ASSERT_TRUE(
-      std::filesystem::exists(rank_mesh_file)
-    ) << fmt::format("Error: rank mesh not generated at {}", rank_mesh_file);
-    ASSERT_TRUE(
-      std::filesystem::exists(object_mesh_file)
-    ) << fmt::format("Error: object mesh not generated at {}", object_mesh_file);
-    ASSERT_FALSE(
-      std::filesystem::exists(png_file)
-    ) << fmt::format("Error: PNG image not generated at {}", png_file);
+    ASSERT_TRUE(std::filesystem::exists(rank_mesh_file))
+      << fmt::format("Error: rank mesh not generated at {}", rank_mesh_file);
+    ASSERT_TRUE(std::filesystem::exists(object_mesh_file)) << fmt::format(
+      "Error: object mesh not generated at {}", object_mesh_file);
+    ASSERT_FALSE(std::filesystem::exists(png_file))
+      << fmt::format("Error: PNG image not generated at {}", png_file);
 
-    } // end phases loop
+  } // end phases loop
 }
-
 
 /* Run with different configuration files */
 INSTANTIATE_TEST_SUITE_P(
-    ParseRenderTests,
-    ParseRenderTest,
-    ::testing::Values<std::string>(
-        "conf-no-png.yaml",
-        "ccm-example-no-png.yaml"
-    ),
-    [](const ::testing::TestParamInfo<std::string>& in_info) {
-      // test suffix as slug
-      auto suffix = std::regex_replace(in_info.param, std::regex("\\.yaml"), "");
-      suffix = std::regex_replace(suffix, std::regex("-"), "_");
-      return suffix;
-    }
-);
+  ParseRenderTests,
+  ParseRenderTest,
+  ::testing::Values<std::string>("conf-no-png.yaml", "ccm-example-no-png.yaml"),
+  [](const ::testing::TestParamInfo<std::string>& in_info) {
+    // test suffix as slug
+    auto suffix = std::regex_replace(in_info.param, std::regex("\\.yaml"), "");
+    suffix = std::regex_replace(suffix, std::regex("-"), "_");
+    return suffix;
+  });
 
-} // end namespace vt::tv::tests::unit
+} // namespace vt::tv::tests::unit::render

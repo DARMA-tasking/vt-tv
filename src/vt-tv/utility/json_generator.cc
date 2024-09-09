@@ -82,9 +82,9 @@ std::unique_ptr<nlohmann::json> JSONGenerator::generateJSON() const {
     for (auto const& [key, val] : user_defined) {
       // can't capture structured binding in C++17 (wait for 20!)
       auto const& key2 = key;
-      std::visit([&](auto&& arg) {
-        j["tasks"][task_index]["user_defined"][key2] = arg;
-      }, val);
+      std::visit(
+        [&](auto&& arg) { j["tasks"][task_index]["user_defined"][key2] = arg; },
+        val);
     }
 
     // @todo: add communications
@@ -93,10 +93,12 @@ std::unique_ptr<nlohmann::json> JSONGenerator::generateJSON() const {
   return std::make_unique<json>(std::move(j));
 }
 
-void JSONGenerator::outputObjectMetaData(nlohmann::json& j, ElementIDType id) const {
+void JSONGenerator::outputObjectMetaData(
+  nlohmann::json& j, ElementIDType id) const {
   auto const& object_info_map = info_.getObjectInfo();
 
-  assert(object_info_map.find(id) != object_info_map.end() && "Object must exist");
+  assert(
+    object_info_map.find(id) != object_info_map.end() && "Object must exist");
   auto const& object_info = object_info_map.find(id)->second;
 
   j["type"] = "object";
