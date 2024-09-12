@@ -35,7 +35,7 @@ jobs:
           }
         ]
     runs-on: ${{ matrix.host.base }}
-    name: vt-tv build and test (${{ matrix.host.base }}-${{ matrix.host.compiler.cc }}, vtk-${{ matrix.host.vtk }}, py[${{ join(matrix.host.python, ', ') }}])
+    name: vt-tv build and test (${{ matrix.host.base }}, ${{ matrix.host.compiler.cc }}, vtk-${{ matrix.host.vtk }}, py[${{ join(matrix.host.python, ', ') }}])
     env:
         VTK_SRC_DIR: /opt/src/vtk
         VTK_BUILD_DIR: /opt/build/vtk
