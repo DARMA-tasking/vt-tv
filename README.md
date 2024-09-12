@@ -52,15 +52,21 @@ _In future directions, we will assume that the `vt-tv` source is located in `${V
 For the simplest build, run from `${VTTV_SOURCE_DIR}`:
 
 ```
-mkdir build && cd build
-cmake -D VTK_DIR=/path/to/vtk/build ..
-make
+VTK_DIR=/path/to/vtk/build ./build.sh
 ```
 
-Alternatively, for an interactive build, run from `${VTTV_SOURCE_DIR}`:
+To build and run tests, add the `--tests-run` flag:
 
-```bash
-./build.sh
+```
+VTK_DIR=/path/to/vtk/build ./build.sh --tests-run
+```
+
+More documentation for `build.sh` can be found within the script itself, including examples.
+
+Alternatively, for an interactive build process, run:
+
+```
+./interactive_build.sh
 ```
 
 _In future directions, we will assume  that the `vt-tv` build is in `${VTTV_BUILD_DIR}`._
