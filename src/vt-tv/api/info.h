@@ -320,7 +320,7 @@ struct Info {
    *
    * \return the object QOI
    */
-  double getObjectQOI(
+  double getObjectQOIAtPhase(
     ElementIDType obj_id, PhaseType phase, std::string obj_qoi) const {
     auto qoi_getter = getObjectQOIGetter(obj_qoi);
     auto const& objects = this->getPhaseObjects(phase);
