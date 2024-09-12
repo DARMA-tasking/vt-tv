@@ -4,7 +4,9 @@ name: Build and Test (macos)
 on:
   push:
     branches:
-      - 97-add-more-environments-to-test-in-ci
+      - master
+  pull_request:
+    types: [opened, reopened, synchronize, converted_to_draft, ready_for_review]
 
 jobs:
   build:
