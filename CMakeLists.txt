@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.17 FATAL_ERROR)
-project(vt-tv)
+project(vt-tv VERSION 1.5.0)
 
 # Try to find ccache to speed up compilation
 find_program(ccache_binary ccache)
