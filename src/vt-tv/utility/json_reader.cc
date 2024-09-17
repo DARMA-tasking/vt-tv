@@ -128,15 +128,15 @@ std::unique_ptr<Info> JSONReader::parse() {
           auto node = task["node"];
           auto time = task["time"];
           auto etype = task["entity"]["type"];
-          assert(time.is_number());
-          assert(node.is_number());
+          assert(time.is_number() && "task time must be a number");
+          assert(node.is_number() && "task node must be a number");
 
           if (etype == "object") {
-            auto object = task["entity"]["id"];
+            auto object = task["entity"].value("id", task["entity"]["seq_id"]);
             auto home = task["entity"]["home"];
             bool migratable = task["entity"]["migratable"];
-            assert(object.is_number());
-            assert(home.is_number());
+            assert(object.is_number() && "task id or seq_id must be provided and be a number");
+            assert(home.is_number() && "task home must be a number");
 
             std::vector<UniqueIndexBitType> index_arr;
 
@@ -174,8 +174,8 @@ std::unique_ptr<Info> JSONReader::parse() {
                   auto sid = s["id"];
                   auto stime = s["time"];
 
-                  assert(sid.is_number());
-                  assert(stime.is_number());
+                  assert(sid.is_number() && "sid must be a number");
+                  assert(stime.is_number() && "stime must be a number");
 
                   subphase_loads[sid] = stime;
                 }
@@ -227,10 +227,10 @@ std::unique_ptr<Info> JSONReader::parse() {
             auto from = comm["from"];
             auto to = comm["to"];
 
-            ElementIDType from_id = from["id"];
-            ElementIDType to_id = to["id"];
+            ElementIDType from_id = from.value("id", from["seq_id"]);
+            ElementIDType to_id = to.value("id", to["seq_id"]);
 
-            assert(bytes.is_number());
+            assert(bytes.is_number() && "bytes must be a number");
             // assert(from.is_number());
             // assert(to.is_number());
 
