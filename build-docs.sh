@@ -64,9 +64,8 @@ cd "$GHPAGE"
 
 # Change branch [dev]
 git checkout -b 112-add-documentation
-
-# # # git config --global user.email "jliffla@sandia.gov"
-# # # git config --global user.name "Jonathan Lifflander"
+git config --global user.email "jliffla@sandia.gov"
+git config --global user.name "Jonathan Lifflander"
 
 git add "$GIT_OUTPUT_FOLDER"
 git commit -m "Update $GIT_OUTPUT_FOLDER (auto-build)"
