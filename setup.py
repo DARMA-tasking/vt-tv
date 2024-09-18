@@ -67,7 +67,7 @@ class CMakeBuild(build_ext):
 
 setup(
   name='vttv',
-  version='0.0.1',
+  version='1.5.0',
   author='Pierre Pebay',
   author_email='pierre.pebay@ng-analytics.com',
   url='https://github.com/DARMA-tasking/vt-tv',
