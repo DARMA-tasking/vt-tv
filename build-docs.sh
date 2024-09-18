@@ -35,13 +35,13 @@ mkdir -p ${BUILD_DIR}
 cp ${DOXYGEN_CONFIG_IN} ${DOXYGEN_CONFIG_OUT}
 cp ${DOXYGEN_CONFIG_IN}-mcss ${DOXYGEN_CONFIG_OUT}-mcss
 
-# Replace by env variables 
+# Replace by env variables
 env | grep -E 'DOXYGEN|VERSION_|PROJECT_SOURCE_DIR|PROJECT_BINARY_DIR' | while IFS= read -r line; do
-  value=${line#*=} 
-  name=${line%%=*} 
+  value=${line#*=}
+  name=${line%%=*}
   valueEscape=$( echo $value | sed 's/\//\\\//g' )
 
-  # Replace @VARIBALE_NAME@ by is value 
+  # Replace @VARIBALE_NAME@ by is value
   sed -i "s/@${name}@/${valueEscape}/" ${DOXYGEN_CONFIG_OUT}
 done
 
@@ -54,7 +54,7 @@ ${DOXYGEN_EXECUTABLE} ${DOXYGEN_CONFIG_OUT}
 # GIT Clone m.css
 git clone https://github.com/mosra/m.css
 
-# GIT Checkout m.css on master 
+# GIT Checkout m.css on master
 cd m.css
 git checkout master
 cd ../
@@ -62,16 +62,16 @@ cd ../
 # GIT Clone documentation repository
 git clone --depth=1 "https://${TOKEN}@github.com/DARMA-tasking/${GIT_REPO_DOCS}"
 
-# Copy into the documentation repository and go to the into the repository 
+# Copy into the documentation repository and go to the into the repository
 cd "$GHPAGE"
 
 # Change branch [dev]
 git checkout -b "$GIT_BRANCH"
 
-# Launch doxygen python script to apply style on generated documentation 
+# Launch doxygen python script to apply style on generated documentation
 "$MCSS/documentation/doxygen.py" ${DOXYGEN_CONFIG_OUT}-mcss
 
-# Copy new docs into the documentation repository 
+# Copy new docs into the documentation repository
 mv "$DOXYGEN_OUTPUT_DIR" "$GHPAGE/$GIT_OUTPUT_FOLDER"
 
 # GIT set user
@@ -81,6 +81,6 @@ git config --global user.name "Jonathan Lifflander"
 # GIT add the new folder documentation
 git add "$GIT_OUTPUT_FOLDER"
 
-# GIT Commit and push 
+# GIT Commit and push
 git commit -m "Update $GIT_OUTPUT_FOLDER (auto-build)"
 git push origin "$GIT_BRANCH" --force

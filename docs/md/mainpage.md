@@ -3,7 +3,7 @@
 \tableofcontents
 
 \section ckpt_what_is What is VT TV?
-VT TV is ... 
+VT TV is ...
 
 \section License
 
