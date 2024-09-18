@@ -3,6 +3,11 @@
 \tableofcontents
 
 \section ckpt_what_is What is VT TV?
+VT TV is ... 
+
+\section License
+
+@m_class{m-note m-dim}
 
 @parblock
 Copyright 2021 National Technology & Engineering Solutions of Sandia, LLC
