@@ -3,20 +3,27 @@
 import os
 import json
 import yaml
+import sys
 
 import vttv
 
 # source dir is the directory a level above this file
 source_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
+# Read the YAML config file 
 with open(f'{source_dir}/tests/test_bindings_conf.yaml', 'r') as stream:
     try:
         params = yaml.safe_load(stream)
     except yaml.YAMLError as exc:
         print(exc)
 
+# Check main key is "visualization"
+if 'visualization' not in params:
+    print("The YAML configuration file is not valid: missing required paramaters: visualization")
+    sys.exit(1)
+
 # make output_visualization_dir directory parameter absolute
-if 'visualization' in params and 'output_visualization_dir' in params["visualization"]:
+if 'output_visualization_dir' in params["visualization"]:
     params["visualization"]["output_visualization_dir"] = os.path.abspath(
       params["visualization"]["output_visualization_dir"]
     )

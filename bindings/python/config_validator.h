@@ -47,12 +47,16 @@
 #include <yaml-cpp/yaml.h>
 
 namespace vt::tv::bindings::python {
+    /**
+     * ConfiValidator Class
+     */
     class ConfigValidator
     {
         public:
             std::array<std::string, 2> requiredParameters = {"output_visualization_dir", "output_visualization_file_stem"};
             YAML::Node config;
             bool isValid();
+            std::string getMissingRequiredParameters();
             ConfigValidator(YAML::Node configData) {
                 config = configData;
             }

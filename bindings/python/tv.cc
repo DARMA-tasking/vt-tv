@@ -26,7 +26,7 @@ void tvFromJson(const std::vector<std::string>& input_json_per_rank_list, const 
 
     // Throw error if configuration is not valid
     if (!is_config_valid) {
-      throw std::runtime_error("The YML configuration file is not valid: missing required paramaters ");
+      throw std::runtime_error("The YAML configuration file is not valid: missing required paramaters: " + config_validator.getMissingRequiredParameters());
     }
 
     std::array<std::string, 3> qoi_request = {
