@@ -3,7 +3,7 @@
 
 # tv => task visualizer
 
-`vt-tv` provides visualizations of an application's work-to-rank mappings, communications, and memory usage.
+`vt-tv` provides visualizations of the work-to-rank mappings, communications, and memory usage of an application.
 
 Jump to:
 - [Overview](#overview)
@@ -16,7 +16,7 @@ Jump to:
 Specifically, the task visualizer takes in JSON files that describe work as a series of phases and subphases
 that contain 1) tasks for each rank, 2) communications, and 3) other user-defined fields (such as memory usage).
 
-Using this input data, the task visualizer produces Exodus meshes to
+Using such input data, the task visualizer produces Exodus meshes to
 describe the ranks and objects over time, which can be visualized
 using Paraview. Additionally, the task visualizer can produce PNGs
 directly using a VTK workflow to render a visualization of ranks and
@@ -26,7 +26,7 @@ tasks over phases (as seen below).
 
 ## Getting Started
 
-You will need the following dependencies:
+You need the following dependencies:
 
 1. A C++ compiler that supports C++17
 2. [`cmake`](https://cmake.org/cmake/help/latest/) >= 3.17
@@ -38,11 +38,11 @@ Begin by cloning `vt-tv`:
 git clone https://github.com/DARMA-tasking/vt-tv.git
 ```
 
-_In future directions, we will assume that the `vt-tv` source is located in `${VTTV_SOURCE_DIR}`._
+_From now on, we will assume that the `vt-tv` source is located in `${VTTV_SOURCE_DIR}`._
 
 ## Installation and Usage
 
-`vt-tv` can installed as either a standalone C++ app or as a Python module. Instructions for both cases are included in the dropdowns below.
+`vt-tv` can be installed as either a standalone C++ app or as a Python module. Instructions for both cases are included in the dropdowns below.
 
 <details>
 <summary><b>Standalone</b></summary>
@@ -69,7 +69,7 @@ Alternatively, for an interactive build process, run:
 ./interactive_build.sh
 ```
 
-_In future directions, we will assume  that the `vt-tv` build is in `${VTTV_BUILD_DIR}`._
+_From now on, we will assume  that the `vt-tv` build is in `${VTTV_BUILD_DIR}`._
 
 ---
 
@@ -90,7 +90,7 @@ _**IMPORTANT:** The_ `path/to/config` _argument should be relative to_ `${VTTV_S
 
 #### YAML Input
 
-A sample YAML configuration file can be found in `${VTTV_SOURCE_DIR}/config/conf.yaml`. To use it, run
+A YAML configuration exemplar can be found in `${VTTV_SOURCE_DIR}/config/conf.yaml`. To use it, run
 
 ```bash
 ${VTTV_BUILD_DIR}/apps/vt_standalone -c config/conf.yaml
@@ -111,7 +111,7 @@ Additionally, DARMA-tasking's Load Balancing Analysis Framework (LBAF) provides 
 
 ### Dependencies
 
-In addition to the basic `vt-tv` dependencies listed above, you will also need:
+In addition to the basic `vt-tv` dependencies listed above, you also need:
 
 1. A Python version between 3.8 - 3.11
 2. [`nanobind`](https://nanobind.readthedocs.io/en/latest/), which can be installed with:
@@ -305,13 +305,13 @@ where the `qoi_string` is the name of the desired QOI, like "load" or "id". This
 There are two classes that hold object data: `ObjectInfo` and `ObjectWork`.
 
 `ObjectInfo` holds information about a given object across all ranks and phases. This includes:
-- the object's ID
-- the object's home rank (where it originated)
+- the ID
+- the home rank (where the object originated)
 - whether the object is migratable or sentinel (stays on the same rank)
 
 `ObjectWork` holds information that may change as an object changes rank or phase, such as:
-- the object's attributes
-- the object's communications
+- the attributes
+- the communications
 
 > [!TIP]
 > As discussed above, users should utilize the getters present in `Info` rather than directly calling these classes.
