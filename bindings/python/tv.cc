@@ -1,4 +1,5 @@
 #include "tv.h"
+#include "config_validator.h"
 
 namespace vt::tv::bindings::python {
 
@@ -16,7 +17,17 @@ void tvFromJson(const std::vector<std::string>& input_json_per_rank_list, const 
   try {
     // Load the configuration from serialized YAML
     YAML::Node viz_config = YAML::Load(input_yaml_params_str);
+    
+    // Config Validator
+    ConfigValidator config_validator(viz_config);
 
+    // Check configuration
+    bool is_config_valid = config_validator.isValid();
+
+    // Throw error if configuration is not valid
+    if (!is_config_valid) {
+      throw std::runtime_error("The YML configuration file is not valid: missing required paramaters ");
+    }
 
     std::array<std::string, 3> qoi_request = {
       viz_config["rank_qoi"].as<std::string>(),
