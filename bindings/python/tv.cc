@@ -17,7 +17,7 @@ void tvFromJson(const std::vector<std::string>& input_json_per_rank_list, const 
   try {
     // Load the configuration from serialized YAML
     YAML::Node viz_config = YAML::Load(input_yaml_params_str);
-    
+
     // Config Validator
     ConfigValidator config_validator(viz_config);
 

@@ -10,7 +10,7 @@ import vttv
 # source dir is the directory a level above this file
 source_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-# Read the YAML config file 
+# Read the YAML config file
 with open(f'{source_dir}/tests/test_bindings_conf.yaml', 'r') as stream:
     try:
         params = yaml.safe_load(stream)

@@ -23,7 +23,7 @@ namespace vt::tv::bindings::python {
   /**
    * Get the list of missing parameters
    *
-   * @return A string containing the list of the missing parameters 
+   * @return A string containing the list of the missing parameters
    */
   std::string ConfigValidator::getMissingRequiredParameters()
   {
@@ -32,9 +32,9 @@ namespace vt::tv::bindings::python {
     for (std::string requiredParameter: requiredParameters) {
       if (!config[requiredParameter]) {
         if (i == 0 ) {
-          parameters = parameters + requiredParameter; 
+          parameters = parameters + requiredParameter;
         } else {
-          parameters = parameters + ", " + requiredParameter; 
+          parameters = parameters + ", " + requiredParameter;
         }
         i++;
       }
