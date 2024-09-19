@@ -25,7 +25,7 @@ export DOXYGEN_EXAMPLE_DIR=${CURRENT_DIR}/examples/
 export DOXYGEN_MAIN_PAGE=${CURRENT_DIR}/docs/md/mainpage.md
 export DOXYGEN_OUTPUT_DIR=${BUILD_DIR}/${GIT_OUTPUT_FOLDER}/
 export VERSION_MAJOR="1"
-export VERSION_MINOR="0"
+export VERSION_MINOR="5"
 export VERSION_PATCH="0"
 
 # Create buid dir
