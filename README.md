@@ -309,7 +309,7 @@ There are two classes that hold object data: `ObjectInfo` and `ObjectWork`.
 - the home rank (where the object originated)
 - whether the object is migratable or sentinel (stays on the same rank)
 
-`ObjectWork` holds information that may change as an object changes rank or phase, such as:
+`ObjectWork` holds information about an object that may vary as it changes rank or phase, such as:
 - the attributes
 - the communications
 
