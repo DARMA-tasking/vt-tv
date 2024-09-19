@@ -2,8 +2,8 @@
 
 import os
 import json
-import yaml
 import sys
+import yaml
 
 import vttv
 
@@ -18,12 +18,12 @@ with open(f'{source_dir}/tests/test_bindings_conf.yaml', 'r') as stream:
         print(exc)
 
 # Check main key is "visualization"
-if 'visualization' not in params:
+if "visualization" not in params:
     print("The YAML configuration file is not valid: missing required paramaters: visualization")
     sys.exit(1)
 
 # make output_visualization_dir directory parameter absolute
-if 'output_visualization_dir' in params["visualization"]:
+if "output_visualization_dir" in params["visualization"]:
     params["visualization"]["output_visualization_dir"] = os.path.abspath(
       params["visualization"]["output_visualization_dir"]
     )
@@ -43,5 +43,5 @@ for rank in range(n_ranks):
     data_serialized = json.dumps(data)
     rank_data.append((data_serialized))
 
-# Launch
+# Launch VT TV from JSON data
 vttv.tvFromJson(rank_data, params_serialized, n_ranks)
