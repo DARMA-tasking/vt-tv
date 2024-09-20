@@ -124,8 +124,7 @@ void tvFromJson(const std::vector<std::string>& input_json_per_rank_list, const 
     );
     render.generate(font_size, win_size);
   } catch (std::exception const& e) {
-    std::cout << "vt-tv: Error reading the configuration file: " << e.what() << std::endl;
-    exit(1);
+    throw std::runtime_error(fmt::format("vt-tv: Error reading the configuration file: {}", e.what()));
   }
 
   fmt::print("vt-tv: Done.\n");
