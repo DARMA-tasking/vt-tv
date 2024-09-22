@@ -20,6 +20,21 @@ function on_off() {
    esac
 }
 
+# A function to determine the number of available processors
+get_num_processors() {
+    case "$(uname)" in
+        Linux)
+            nproc
+            ;;
+        Darwin)
+            sysctl -n hw.ncpu
+            ;;
+        *)
+            getconf _NPROCESSORS_ONLN
+            ;;
+    esac
+}
+
 # Configuration
 # > Build variables
 # >> Path
@@ -33,7 +48,7 @@ VT_TV_OUTPUT_DIR="${VT_TV_OUTPUT_DIR:-$CURRENT_DIR/output}"
 # >> Build settings
 VT_TV_BUILD=$(on_off ${VT_TV_BUILD:-ON}) # option to turn off the build to only run tests
 VT_TV_BUILD_TYPE=${VT_TV_BUILD_TYPE:-Release}
-VT_TV_CMAKE_JOBS=${VT_TV_CMAKE_JOBS:-$(nproc)}
+VT_TV_CMAKE_JOBS=${VT_TV_CMAKE_JOBS:-$(get_num_processors)}
 VT_TV_TESTS_ENABLED=$(on_off ${VT_TV_TESTS_ENABLED:-ON})
 VT_TV_TEST_REPORT=${VT_TV_TEST_REPORT:-"$VT_TV_OUTPUT_DIR/junit-report.xml"}
 VT_TV_COVERAGE_ENABLED=$(on_off ${VT_TV_COVERAGE_ENABLED:-OFF})
