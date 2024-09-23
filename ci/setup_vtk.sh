@@ -9,7 +9,7 @@ VTK_DIR=${VTK_DIR:-"/opt/build/vtk"}
 VTK_VERSION=${VTK_VERSION:-"9.3.1"}
 
 echo "Setup VTK $VTK_VERSION from source..."
-git clone --recursive --branch v${VTK_VERSION} https://gitlab.kitware.com/vtk/vtk.git /opt/src/vtk
+git clone --recursive --branch v${VTK_VERSION} https://gitlab.kitware.com/vtk/vtk.git ${VTK_SRC_DIR}
 
 mkdir -p $VTK_DIR
 pushd $VTK_DIR
