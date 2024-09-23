@@ -1,0 +1,112 @@
+name: Issue 70 (temp)
+
+# Trigger the workflow on push or pull request
+on:
+  push:
+    branches:
+      - 70-incorrectly-generated-png-artifacts
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        host: [
+          {
+            base: macos-14,
+            compiler: { cc: clang, cxx: clang++ },
+            gcov: llvm-gcov,
+            vtk: '9.3.1'
+          }
+        ]
+    runs-on: ${{ matrix.host.base }}
+    name: vt-tv build (${{ matrix.host.base }}, ${{ matrix.host.compiler.cc }}, vtk-${{ matrix.host.vtk }})
+    env:
+        VTK_SRC_DIR: /opt/vtk/src
+        VTK_BUILD_DIR: /opt/vtk/build
+        CACHE_KEY: ${{ matrix.host.base }}-${{ matrix.host.compiler.cc }}-vtk-${{ matrix.host.vtk }}
+        VT_TV_BUILD_DIR: /opt/vt-tv/build
+        VT_TV_TESTS_ENABLED: "ON"
+        VT_TV_COVERAGE_ENABLED: ${{ matrix.host.compiler.gcov == '' && 'OFF' || 'ON'  }}
+        VT_TV_OUTPUT_DIR: ${{ github.workspace }}/output
+        VT_TV_TESTS_OUTPUT_DIR: ${{ github.workspace }}/output/tests
+        VT_TV_ARTIFACTS_DIR: /tmp/artifacts
+        CC: ~
+        CXX: ~
+        GCOV: ~
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set folder permissions
+        run: |
+          sudo chown -R $(whoami) /opt
+          mkdir -p ${{ env.VTK_SRC_DIR }} ${{ env.VT_TV_BUILD_DIR }} ${{ env.VT_TV_OUTPUT_DIR }}
+
+      - name: Set environment variables
+        run: |
+          echo "CC=$(which ${{ matrix.host.compiler.cc }})" >> $GITHUB_ENV
+          echo "CXX=$(which ${{ matrix.host.compiler.cxx }})" >> $GITHUB_ENV
+          echo "GCOV=$(which ${{ matrix.host.gcov }})" >> $GITHUB_ENV
+
+      - name: Install dependencies
+        run: |
+          brew update && brew install coreutils lcov
+
+      - name: Load cache (VTK)
+        id: base-cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ${{ env.VTK_SRC_DIR }}
+            ${{ env.VTK_BUILD_DIR }}
+          key: ${{ env.CACHE_KEY }}
+          save-always: true
+
+      - name: Setup VTK ${{ matrix.host.vtk }}
+        if: ${{steps.base-cache.outputs.cache-hit != 'true'}}
+        run: |
+          VTK_DIR=${{ env.VTK_BUILD_DIR }} VTK_SRC_DIR=${{ env.VTK_SRC_DIR }} bash ./ci/setup_vtk.sh
+
+      - name: Build
+        run: |
+          mkdir -p ${{ env.VT_TV_BUILD_DIR }}
+
+          CC="${{ env.CC }}" \
+          CXX="${{ env.CXX }}" \
+          VTK_DIR="${{ env.VTK_BUILD_DIR }}" \
+          VT_TV_BUILD_DIR="${{ env.VT_TV_BUILD_DIR }}" \
+          VT_TV_CLEAN=OFF \
+          VT_TV_TESTS_ENABLED=${{ env.VT_TV_TESTS_ENABLED }} \
+          VT_TV_COVERAGE_ENABLED=${{ env.VT_TV_COVERAGE_ENABLED }} \
+          GCOV="${{ env.GCOV }}" \
+          VT_TV_PYTHON_BINDINGS_ENABLED=OFF \
+          VT_TV_WERROR_ENABLED=ON \
+          bash ./build.sh
+
+      - name: Run VT-TV Standalone
+        run: |
+          cd ${{ env.VT_TV_BUILD_DIR }}
+          ./apps/vt-tv_standalone --conf=${{ github.workspace }}/config/conf.yaml
+
+      - name: Collect artifacts
+        run: |
+          mkdir -p ${{ env.VT_TV_ARTIFACTS_DIR }}
+
+          # > go to output directory
+          pushd ${{ env.VT_TV_OUTPUT_DIR }}
+
+          echo "> add output mesh files and png artifacts"
+          cp "${{ env.VT_TV_OUTPUT_DIR }}/"*".vtp"  ${{ env.VT_TV_ARTIFACTS_DIR }}/  || true
+          cp "${{ env.VT_TV_OUTPUT_DIR }}/"*".png"  ${{ env.VT_TV_ARTIFACTS_DIR }}/  || true
+          cp ${{ env.VTK_BUILD_DIR }}/CMakeCache.txt ${{ env.VT_TV_ARTIFACTS_DIR }}/CMakeCache-vtk.txt  || true
+
+          echo "> list of collected artifacts:"
+          pushd ${{ env.VT_TV_ARTIFACTS_DIR }}
+          find ${{ env.VT_TV_ARTIFACTS_DIR }}  | while read line; do echo "- $line"; done
+          popd
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: vt-tv-artifacts-${{ env.CACHE_KEY }}
+          path: ${{ env.VT_TV_ARTIFACTS_DIR }}

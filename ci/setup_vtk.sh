@@ -16,8 +16,6 @@ pushd $VTK_DIR
 
 cmake \
   -DCMAKE_BUILD_TYPE:STRING=Release \
-  -DBUILD_TESTING:BOOL=OFF \
-  -DBUILD_SHARED_LIBS:BOOL=ON \
   -S "$VTK_SRC_DIR" -B "$VTK_DIR"
 cmake --build "$VTK_DIR" -j$(nproc)
 
