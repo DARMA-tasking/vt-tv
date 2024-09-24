@@ -5,7 +5,7 @@
 
 set -e
 
-CURRENT_DIR="$(dirname -- "$(realpath -- "$0")")" # Current directory
+CURRENT_DIR="$(dirname -- "$(realpath -- "$0")")"
 PARENT_DIR="$(dirname "$CURRENT_DIR")"
 
 
@@ -116,7 +116,7 @@ EOF
 
 while getopts btch-: OPT; do  # allow -b -t -c -h, and --long_attr=value"
   # support long options: https://stackoverflow.com/a/28466267/519360
-  if [ "$OPT" = "-" ]; then   # long option: reformulate OPT and OPTARG
+  if [ "$OPT" == "-" ]; then   # long option: reformulate OPT and OPTARG
     OPT="${OPTARG%%=*}"       # extract long option name
     OPTARG="${OPTARG#"$OPT"}" # extract long option argument (may be empty)
     OPTARG="${OPTARG#=}"      # if long option argument, remove assigning `=`
@@ -164,6 +164,7 @@ echo CC=$CC
 echo CXX=$CXX
 echo GCOV=$GCOV
 echo VTK_DIR=$VTK_DIR
+echo DISPLAY=$DISPLAY
 
 # Build
 if [[ "${VT_TV_BUILD}" == "ON" ]]; then
@@ -205,7 +206,7 @@ if [[ "${VT_TV_BUILD}" == "ON" ]]; then
 fi # End build
 
 # Run tests
-if [[ "$VT_TV_RUN_TESTS" == "ON" ]]; then
+if [ "$VT_TV_RUN_TESTS" == "ON" ]; then
   mkdir -p "$VT_TV_OUTPUT_DIR"
   pushd $VT_TV_OUTPUT_DIR
   # Tests
@@ -224,14 +225,13 @@ if [[ "$VT_TV_RUN_TESTS" == "ON" ]]; then
   gtest_cmd="\"$VT_TV_BUILD_DIR/tests/unit/AllTests\" $GTEST_OPTIONS"
   echo "Run GTest..."
   eval "$gtest_cmd" || true
-
   echo "Tests done."
 
   popd
 fi
 
 # Coverage
-if [[ "$VT_TV_COVERAGE_ENABLED" == "ON" ]]; then
+if [ "$VT_TV_COVERAGE_ENABLED" == "ON" ]; then
   mkdir -p "$VT_TV_OUTPUT_DIR"
   pushd $VT_TV_OUTPUT_DIR
   # base coverage files

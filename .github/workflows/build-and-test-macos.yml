@@ -1,0 +1,184 @@
+name: Build and Test (macos)
+
+# Trigger the workflow on push or pull request
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    types: [opened, reopened, synchronize, converted_to_draft, ready_for_review]
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        host: [
+          {
+            base: macos-12,
+            compiler: { cc: clang, cxx: clang++ },
+            gcov: llvm-gcov,
+            python: ['3.8', '3.9', '3.10', '3.11', '3.12'],
+            vtk: '9.3.1'
+          },
+          {
+            base: macos-13,
+            compiler: { cc: clang, cxx: clang++ },
+            gcov: llvm-gcov,
+            python: ['3.8', '3.9', '3.10', '3.11', '3.12'],
+            vtk: '9.3.1'
+          },
+          {
+            base: macos-14,
+            compiler: { cc: clang, cxx: clang++ },
+            gcov: llvm-gcov,
+            python: ['3.8', '3.9', '3.10', '3.11', '3.12'],
+            vtk: '9.3.1'
+          }
+        ]
+    runs-on: ${{ matrix.host.base }}
+    name: vt-tv build and test (${{ matrix.host.base }}, ${{ matrix.host.compiler.cc }}, vtk-${{ matrix.host.vtk }}, py[${{ join(matrix.host.python, ', ') }}])
+    env:
+        VTK_SRC_DIR: /opt/src/vtk
+        VTK_BUILD_DIR: /opt/build/vtk
+        CACHE_KEY: ${{ matrix.host.base }}-${{ matrix.host.compiler.cc }}-vtk-${{ matrix.host.vtk }}
+        VT_TV_BUILD_DIR: /opt/build/vt-tv
+        VT_TV_TESTS_ENABLED: "ON"
+        VT_TV_COVERAGE_ENABLED: ${{ matrix.host.compiler.gcov == '' && 'OFF' || 'ON'  }}
+        VT_TV_OUTPUT_DIR: ${{ github.workspace }}/output
+        VT_TV_TESTS_OUTPUT_DIR: ${{ github.workspace }}/output/tests
+        VT_TV_ARTIFACTS_DIR: /tmp/artifacts
+        CONDA_PATH: /opt/conda
+        CC: ~
+        CXX: ~
+        GCOV: ~
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set folder permissions
+        run: |
+          sudo chown -R $(whoami) /opt
+          mkdir -p ${{ env.VTK_SRC_DIR }} ${{ env.VT_TV_BUILD_DIR }}
+
+      - name: Set environment variables
+        run: |
+          echo "CC=$(which ${{ matrix.host.compiler.cc }})" >> $GITHUB_ENV
+          echo "CXX=$(which ${{ matrix.host.compiler.cxx }})" >> $GITHUB_ENV
+          echo "GCOV=$(which ${{ matrix.host.gcov }})" >> $GITHUB_ENV
+
+      - name: Install dependencies
+        run: |
+          brew update && brew install coreutils lcov xquartz
+
+      - name: Load cache (VTK, Miniconda3)
+        id: base-cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ${{ env.VTK_SRC_DIR }}
+            ${{ env.VTK_BUILD_DIR }}
+            ${{ env.CONDA_PATH }}
+            ~/.zshrc
+            ~/.bash_profile
+          key: ${{ env.CACHE_KEY }}
+          save-always: true
+
+      - name: Setup Conda
+        if: ${{steps.base-cache.outputs.cache-hit != 'true'}}
+        run: |
+          sudo CONDA_PATH=${{ env.CONDA_PATH }} bash ./ci/setup_conda.sh ${{ join(matrix.host.python) }}
+
+      - name: Reload shell variables
+        run: |
+          if [ -f ~/.zshrc ]; then . ~/.zshrc; fi
+          if [ -f ~/.profile ]; then . ~/.profile; fi
+          if [ -f ~/.bashrc ]; then . ~/.bashrc; fi
+          which conda
+          conda --version
+          conda env list
+
+      - name: Setup VTK ${{ matrix.host.vtk }}
+        if: ${{steps.base-cache.outputs.cache-hit != 'true'}}
+        run: |
+          VTK_DIR=${{ env.VTK_BUILD_DIR }} VTK_SRC_DIR=${{ env.VTK_SRC_DIR }} bash ./ci/setup_vtk.sh
+
+      - name: Build
+        run: |
+          mkdir -p ${{ env.VT_TV_BUILD_DIR }}
+
+          CC="${{ env.CC }}" \
+          CXX="${{ env.CXX }}" \
+          VTK_DIR="${{ env.VTK_BUILD_DIR }}" \
+          VT_TV_BUILD_DIR="${{ env.VT_TV_BUILD_DIR }}" \
+          VT_TV_CLEAN=OFF \
+          VT_TV_TESTS_ENABLED=${{ env.VT_TV_TESTS_ENABLED }} \
+          VT_TV_COVERAGE_ENABLED=${{ env.VT_TV_COVERAGE_ENABLED }} \
+          GCOV="${{ env.GCOV }}" \
+          VT_TV_PYTHON_BINDINGS_ENABLED=OFF \
+          VT_TV_WERROR_ENABLED=ON \
+          bash ./build.sh
+
+      - name: Test
+        run: |
+          VTK_DIR=${{ env.VTK_BUILD_DIR }} \
+          VT_TV_COVERAGE_ENABLED=${{ env.VT_TV_COVERAGE_ENABLED }} \
+          VT_TV_OUTPUT_DIR="${{ env.VT_TV_OUTPUT_DIR }}" \
+          bash ./ci/test.sh
+
+      - name: Build Python package (${{ join(matrix.host.python, ', ') }})
+        run: |
+          VTK_DIR=${{ env.VTK_BUILD_DIR }} bash ./ci/python_build.sh
+
+      - name: Test Python bindings (${{ join(matrix.host.python) }})
+        run: |
+          VTK_DIR=${{ env.VTK_BUILD_DIR }} bash ./ci/python_test.sh
+
+      - name: Collect artifacts
+        run: |
+          mkdir -p ${{ env.VT_TV_ARTIFACTS_DIR }}
+
+          # > go to output directory
+          pushd ${{ env.VT_TV_OUTPUT_DIR }}
+
+          echo "> add junit test report artifact"
+          cp "junit-report.xml" ${{ env.VT_TV_ARTIFACTS_DIR }}/ || true
+
+          if [[ "${{ env.VT_TV_COVERAGE_ENABLED }}" == "ON" ]]; then
+            echo "> add `coverage --list` file artifact"
+            lcov --list lcov_vt-tv_test_no_deps.info > ${{ env.VT_TV_ARTIFACTS_DIR }}/lcov-list-report.txt
+
+            echo "> add total lines coverage file artifact (percentage of lines covered)"
+            # might be useful for generating later a badge in ci
+            LCOV_SUMMARY=$(lcov --summary lcov_vt-tv_test_no_deps.info)
+            LCOV_TOTAL_LINES_COV=$(echo $LCOV_SUMMARY | grep -E -o 'lines......: ([0-9.]+)*' | grep -o -E '[0-9]+.[0-9]+')
+            echo $LCOV_TOTAL_LINES_COV > lcov-lines-total.txt
+            cp lcov-lines-total.txt ${{ env.VT_TV_ARTIFACTS_DIR }}/
+          fi
+          popd
+
+          echo "> add tests output mesh files and png artifacts"
+          if [ -d "${{ env.VT_TV_TESTS_OUTPUT_DIR }}" ]; then
+            cp "${{ env.VT_TV_TESTS_OUTPUT_DIR }}/"*".vtp"  ${{ env.VT_TV_ARTIFACTS_DIR }}/  || true
+            cp "${{ env.VT_TV_TESTS_OUTPUT_DIR }}/"*".png"  ${{ env.VT_TV_ARTIFACTS_DIR }}/  || true
+          fi
+
+          echo "> list of collected artifacts:"
+          pushd ${{ env.VT_TV_ARTIFACTS_DIR }}
+          find ${{ env.VT_TV_ARTIFACTS_DIR }}  | while read line; do echo "- $line"; done
+          popd
+
+      - name: Unit tests
+        if: ${{ env.VT_TV_TESTS_ENABLED == 'ON' }}
+        uses: phoenix-actions/test-reporting@v15
+        with:
+          name: Tests report
+          path: ${{ env.VT_TV_ARTIFACTS_DIR }}/junit-report.xml
+          reporter: java-junit
+          output-to: step-summary
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: vt-tv-artifacts-${{ env.CACHE_KEY }}
+          path: ${{ env.VT_TV_ARTIFACTS_DIR }}

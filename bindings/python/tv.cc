@@ -41,7 +41,7 @@ void tvFromJson(const std::vector<std::string>& input_json_per_rank_list, const 
 
     // Throw an error if the output directory does not exist or is not absolute
     if (!std::filesystem::exists(output_path)) {
-      throw std::runtime_error("Visualization output directory does not exist.");
+      throw std::runtime_error(fmt::format("Visualization output directory does not exist at {}", output_dir));
     }
     if (!output_path.is_absolute()) {
       throw std::runtime_error("Visualization output directory must be absolute.");
@@ -124,7 +124,7 @@ void tvFromJson(const std::vector<std::string>& input_json_per_rank_list, const 
     );
     render.generate(font_size, win_size);
   } catch (std::exception const& e) {
-    std::cout << "vt-tv: Error reading the configuration file: " << e.what() << std::endl;
+    throw std::runtime_error(fmt::format("vt-tv: Error reading the configuration file: {}", e.what()));
   }
 
   fmt::print("vt-tv: Done.\n");
