@@ -48,18 +48,17 @@
 
 namespace vt::tv::bindings::python {
     /**
-     * ConfiValidator Class
+     * ConfigValidator Class
      */
     class ConfigValidator
     {
         public:
-            std::array<std::string, 2> requiredParameters = {"output_visualization_dir", "output_visualization_file_stem"};
+            std::array<std::string, 2> required_parameters = {"output_visualization_dir", "output_visualization_file_stem"};
             YAML::Node config;
             bool isValid();
             std::string getMissingRequiredParameters();
-            ConfigValidator(YAML::Node configData) {
-                config = configData;
-            }
+            ConfigValidator(YAML::Node in_config) 
+                :config(in_config) {}
     };
 }
 

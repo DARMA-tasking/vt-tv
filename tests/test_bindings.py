@@ -1,4 +1,4 @@
-'''TESTS BINDING'''
+"""TEST BINDINGS"""
 
 import os
 import json
@@ -11,7 +11,7 @@ import vttv
 source_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 # Read the YAML config file
-with open(f'{source_dir}/tests/test_bindings_conf.yaml', 'r') as stream:
+with open(f'{source_dir}/tests/test_bindings_conf.yaml', 'r', encoding="UTF-8") as stream:
     try:
         params = yaml.safe_load(stream)
     except yaml.YAMLError as exc:
@@ -37,7 +37,7 @@ n_ranks *= params["visualization"]["z_ranks"]
 # Prepare rank data
 rank_data = []
 for rank in range(n_ranks):
-    with open(f'{source_dir}/data/lb_test_data/data.{rank}.json', 'r') as f:
+    with open(f'{source_dir}/data/lb_test_data/data.{rank}.json', 'r', encoding="UTF-8") as f:
         data = json.load(f)
 
     data_serialized = json.dumps(data)
