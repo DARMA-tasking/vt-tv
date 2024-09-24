@@ -57,7 +57,7 @@ namespace vt::tv::bindings::python {
             YAML::Node config;
             bool isValid();
             std::string getMissingRequiredParameters();
-            ConfigValidator(YAML::Node in_config) 
+            ConfigValidator(YAML::Node in_config)
                 :config(in_config) {}
     };
 }
