@@ -6,11 +6,11 @@ def validate_ids(field):
     Ensure that 1) either seq_id or id is provided,
     and 2) if an object is migratable, collection_id has been set.
     """
-    if 'seq_id' not in field and 'id' not in field:
-        raise ValueError('Either id (bit-encoded) or seq_id must be provided.')
+    if "seq_id" not in field and "id" not in field:
+        raise ValueError("Either id (bit-encoded) or seq_id must be provided.")
 
-    if field['migratable'] and 'seq_id' in field and 'collection_id' not in field:
-        raise ValueError('If an entity is migratable, it must have a collection_id')
+    if field.get("migratable") is True and "seq_id" in field and "collection_id" not in field:
+        raise ValueError("If an entity is migratable, it must have a collection_id")
 
     return field
 

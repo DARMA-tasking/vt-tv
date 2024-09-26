@@ -9,14 +9,14 @@ from collections.abc import Iterable
 import json
 import logging
 import brotli
-import LBDatafile_schema
+from lb_datafile_schema import LBDatafile_schema
 
 try:
     project_path = f"{os.sep}".join(os.path.abspath(__file__).split(os.sep)[:-1])
     sys.path.append(project_path)
 except Exception as e:
     print(f"Can not add project path to system path! Exiting!\nERROR: {e}")
-    raise SystemExit(1)
+    sys.exit(1)
 
 
 from schema import And, Optional, Schema
@@ -45,7 +45,7 @@ class SchemaValidator:
     def _get_valid_schema(self) -> Schema:
         """ Returns representation of a valid schema
         """
-        valid_schema_data = LBDatafile_schema.LBDatafile_schema
+        valid_schema_data = LBDatafile_schema
         allowed_types_stats = "LBStatsfile"
         valid_schema_stats = Schema(
             {

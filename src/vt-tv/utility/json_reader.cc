@@ -285,17 +285,24 @@ std::unique_ptr<Info> JSONReader::parse() {
 
 bool JSONReader::validate_datafile(std::string file_path)
 {
+  // Init
   bool is_valid = true;
-  char cmd[256];
-  strcpy(cmd, "python ");
-  strcpy(cmd, " ");
-  strcat(cmd, SRC_DIR);
-  strcat(cmd, "/scripts/json_datafile_validator.py");
-  strcat(cmd, " ");
-  strcat(cmd, " --file_path=");
-  strcat(cmd, file_path.data());
 
-  if (!system(cmd)) {
+  // Prepare command line
+  std::string cmd;
+  cmd +="python";
+  cmd +=" ";
+  cmd +=SRC_DIR;
+  cmd +="/scripts/json_datafile_validator.py";
+  cmd +=" ";
+  cmd +=" --file_path=";
+  cmd +=file_path.data();
+
+  // Exit code
+  int exit_code = std::system(cmd.c_str());
+  
+  // Launch
+  if (exit_code > 0) {
     is_valid = false;
   }
 
