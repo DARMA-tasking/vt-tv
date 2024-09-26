@@ -52,6 +52,9 @@
 #include <fmt-vt/format.h>
 
 #include <fstream>
+#include <iostream>
+#include <stdlib.h>
+#include <string.h>
 
 namespace vt::tv::utility {
 
@@ -278,6 +281,25 @@ std::unique_ptr<Info> JSONReader::parse() {
   rank_info.try_emplace(rank_, std::move(r));
 
   return std::make_unique<Info>(std::move(object_info), std::move(rank_info));
+}
+
+bool JSONReader::validate_datafile(std::string file_path)
+{
+  bool is_valid = true;
+  char cmd[256];
+  strcpy(cmd, "python ");
+  strcpy(cmd, " ");
+  strcat(cmd, SRC_DIR);
+  strcat(cmd, "/scripts/json_datafile_validator.py");
+  strcat(cmd, " ");
+  strcat(cmd, " --file_path=");
+  strcat(cmd, file_path.data());
+
+  if (!system(cmd)) {
+    is_valid = false;
+  }
+
+  return is_valid;
 }
 
 } /* end namespace vt::tv::utility */

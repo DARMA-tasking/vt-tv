@@ -365,9 +365,18 @@ TEST_F(RenderTest, test_render_construct_from_info) {
 
   for (NodeType rank = 0; rank < n_ranks; rank++) {
     utility::JSONReader reader{rank};
-    reader.readFile(path + "/data." + std::to_string(rank) + ".json");
-    auto tmpInfo = reader.parse();
-    info->addInfo(tmpInfo->getObjectInfo(), tmpInfo->getRank(rank));
+    
+    // Validate the JSON data file
+    std::string data_file_path = path + "/data." + std::to_string(rank) + ".json";
+    if (reader.validate_datafile(data_file_path)) {
+      reader.readFile(data_file_path);
+      auto tmpInfo = reader.parse();
+      
+      info->addInfo(tmpInfo->getObjectInfo(), tmpInfo->getRank(rank));
+    } else {
+      ADD_FAILURE() << "JSON data file is invalid: " + data_file_path;
+    }
+
   }
 
   fmt::print("Num ranks={}\n", info->getNumRanks());

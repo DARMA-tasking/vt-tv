@@ -1,10 +1,10 @@
 """This module calls vttv module to test that vttv bindings work as expected"""
 import json
 import os
-
+import sys
+import subprocess
 import yaml
 import vttv
-
 
 # source dir is the directory a level above this file
 source_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -28,11 +28,33 @@ n_ranks = params["visualization"]["x_ranks"] * \
 rank_data = []
 
 for rank in range(n_ranks):
-    with open(f'{source_dir}/data/lb_test_data/data.{rank}.json', 'r', encoding='utf-8') as f:
-        data = json.load(f)
+    # JSON data file for rank
+    datafile = f'{source_dir}/data/lb_test_data/data.{rank}.json'
 
+    # Check JSON schema validity
+    IS_VALID: bool
+    try:
+        p = subprocess.run([
+                'python',
+                os.path.join(source_dir, 'scripts/json_datafile_validator.py'),
+                "--file_path=" + datafile
+            ], check=True, capture_output=True)
+        p.check_returncode()
+        IS_VALID = True
+    except subprocess.CalledProcessError as e:
+        IS_VALID = False
+        print(e.output.decode() + f"[JSON data file invalid] {datafile}")
+
+    # If validation failed
+    if IS_VALID is False:
+        sys.exit(1)
+
+    # Read JSON data file
+    with open(datafile, 'r', encoding='utf-8') as f:
+        data = json.load(f)
     data_serialized = json.dumps(data)
 
+    # Add the rank data line
     rank_data.append((data_serialized))
 
 vttv.tvFromJson(rank_data, params_serialized, n_ranks)
