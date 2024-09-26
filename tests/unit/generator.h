@@ -128,7 +128,7 @@ public:
     const std::unordered_map<ElementIDType, ObjectWork> object_work_map,
     bool migratable = true) {
     auto object_info_map = std::unordered_map<ElementIDType, ObjectInfo>();
-    std::vector<size_t> idx;
+    std::vector<UniqueIndexBitType> idx;
     for (auto& it : object_work_map) {
       ObjectInfo object_info = ObjectInfo(it.first, 0, migratable, idx);
       object_info_map.insert(std::make_pair(it.first, object_info));

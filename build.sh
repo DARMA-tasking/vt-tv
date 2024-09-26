@@ -5,7 +5,7 @@
 
 set -e
 
-CURRENT_DIR="$(dirname -- "$(realpath -- "$0")")" # Current directory
+CURRENT_DIR="$(dirname -- "$(realpath -- "$0")")"
 PARENT_DIR="$(dirname "$CURRENT_DIR")"
 
 
@@ -18,6 +18,21 @@ function on_off() {
     "") echo "ON" ;;
     *) exit 2 ;; # not supported
    esac
+}
+
+# A function to determine the number of available processors
+get_num_processors() {
+    case "$(uname)" in
+        Linux)
+            nproc
+            ;;
+        Darwin)
+            sysctl -n hw.ncpu
+            ;;
+        *)
+            getconf _NPROCESSORS_ONLN
+            ;;
+    esac
 }
 
 # Configuration
@@ -33,14 +48,13 @@ VT_TV_OUTPUT_DIR="${VT_TV_OUTPUT_DIR:-$CURRENT_DIR/output}"
 # >> Build settings
 VT_TV_BUILD=$(on_off ${VT_TV_BUILD:-ON}) # option to turn off the build to only run tests
 VT_TV_BUILD_TYPE=${VT_TV_BUILD_TYPE:-Release}
-VT_TV_CMAKE_JOBS=${VT_TV_CMAKE_JOBS:-$(nproc)}
+VT_TV_CMAKE_JOBS=${VT_TV_CMAKE_JOBS:-$(get_num_processors)}
 VT_TV_TESTS_ENABLED=$(on_off ${VT_TV_TESTS_ENABLED:-ON})
 VT_TV_TEST_REPORT=${VT_TV_TEST_REPORT:-"$VT_TV_OUTPUT_DIR/junit-report.xml"}
 VT_TV_COVERAGE_ENABLED=$(on_off ${VT_TV_COVERAGE_ENABLED:-OFF})
 VT_TV_CLEAN=$(on_off ${VT_TV_CLEAN:-ON})
 VT_TV_PYTHON_BINDINGS_ENABLED=$(on_off ${VT_TV_PYTHON_BINDINGS_ENABLED:-OFF})
 VT_TV_WERROR_ENABLED=$(on_off ${VT_TV_WERROR_ENABLED:-OFF})
-VT_TV_XVFB_ENABLED=$(on_off ${VT_TV_XVFB_ENABLED:-OFF})
 # >> Run tests settings
 VT_TV_RUN_TESTS=$(on_off ${VT_TV_RUN_TESTS:-OFF})
 VT_TV_RUN_TESTS_FILTER=${VT_TV_RUN_TESTS_FILTER:-""}
@@ -77,8 +91,6 @@ help() {
       -r   --tests-run=[bool]       Run unit tests (and build coverage report if coverage is enabled) (VT_TV_RUN_TESTS=$VT_TV_RUN_TESTS)
       -f   --tests-run-filter=[str] Filter unit test to run. (VT_TV_RUN_TESTS_FILTER=$VT_TV_RUN_TESTS_FILTER)
 
-      -x   --xvfb=[bool]            Use X Virtual Frame Buffer instead of default for rendering (VT_TV_XVFB_ENABLED=$VT_TV_XVFB_ENABLED)
-
       -h   --help                   Show help and default option values.
 
   Examples:
@@ -104,7 +116,7 @@ EOF
 
 while getopts btch-: OPT; do  # allow -b -t -c -h, and --long_attr=value"
   # support long options: https://stackoverflow.com/a/28466267/519360
-  if [ "$OPT" = "-" ]; then   # long option: reformulate OPT and OPTARG
+  if [ "$OPT" == "-" ]; then   # long option: reformulate OPT and OPTARG
     OPT="${OPTARG%%=*}"       # extract long option name
     OPTARG="${OPTARG#"$OPT"}" # extract long option argument (may be empty)
     OPTARG="${OPTARG#=}"      # if long option argument, remove assigning `=`
@@ -126,7 +138,6 @@ while getopts btch-: OPT; do  # allow -b -t -c -h, and --long_attr=value"
     r | tests-run )       VT_TV_RUN_TESTS=$(on_off $OPTARG) ;;
     f | tests-run-filter) VT_TV_RUN_TESTS_FILTER="$OPTARG" ;;
     k | vtk-dir )         VTK_DIR=$(realpath "$OPTARG") ;;
-    x | xvfb )            VT_TV_XVFB_ENABLED=$(on_off $OPTARG) ;;
     h | help )            help ;;
 
     \? )           exit 2 ;;  # bad short option (error reported via getopts)
@@ -146,7 +157,6 @@ echo VT_TV_PYTHON_BINDINGS_ENABLED=$VT_TV_PYTHON_BINDINGS_ENABLED
 echo VT_TV_RUN_TESTS=$VT_TV_RUN_TESTS
 echo VT_TV_TESTS_ENABLED=$VT_TV_TESTS_ENABLED
 echo VT_TV_TEST_REPORT=$VT_TV_TEST_REPORT
-echo VT_TV_XVFB_ENABLED=$VT_TV_XVFB_ENABLED
 echo VT_TV_RUN_TESTS_FILTER=$VT_TV_RUN_TESTS_FILTER
 echo VT_TV_COVERAGE_ENABLED=$VT_TV_COVERAGE_ENABLED
 echo VT_TV_COVERAGE_REPORT=$VT_TV_COVERAGE_REPORT
@@ -154,6 +164,7 @@ echo CC=$CC
 echo CXX=$CXX
 echo GCOV=$GCOV
 echo VTK_DIR=$VTK_DIR
+echo DISPLAY=$DISPLAY
 
 # Build
 if [[ "${VT_TV_BUILD}" == "ON" ]]; then
@@ -195,7 +206,7 @@ if [[ "${VT_TV_BUILD}" == "ON" ]]; then
 fi # End build
 
 # Run tests
-if [[ "$VT_TV_RUN_TESTS" == "ON" ]]; then
+if [ "$VT_TV_RUN_TESTS" == "ON" ]; then
   mkdir -p "$VT_TV_OUTPUT_DIR"
   pushd $VT_TV_OUTPUT_DIR
   # Tests
@@ -213,26 +224,14 @@ if [[ "$VT_TV_RUN_TESTS" == "ON" ]]; then
 
   gtest_cmd="\"$VT_TV_BUILD_DIR/tests/unit/AllTests\" $GTEST_OPTIONS"
   echo "Run GTest..."
-
-  CURRENT_DISPLAY=$(echo $DISPLAY)
-  if [[ "$VT_TV_RUN_TESTS" == "ON" ]]; then
-    export DISPLAY=:99.0
-    Xvfb :99 -screen 0 1024x768x24 -nolisten tcp > /dev/null 2>&1 &
-    sleep 1s
-  fi
   eval "$gtest_cmd" || true
-  if [[ "$VT_TV_RUN_TESTS" == "ON" ]]; then
-    pkill Xvfb
-    export DISPLAY=$CURRENT_DISPLAY
-    rm -rf /tmp/.X11-unix/X99
-  fi
-
   echo "Tests done."
+
   popd
 fi
 
 # Coverage
-if [[ "$VT_TV_COVERAGE_ENABLED" == "ON" ]]; then
+if [ "$VT_TV_COVERAGE_ENABLED" == "ON" ]; then
   mkdir -p "$VT_TV_OUTPUT_DIR"
   pushd $VT_TV_OUTPUT_DIR
   # base coverage files

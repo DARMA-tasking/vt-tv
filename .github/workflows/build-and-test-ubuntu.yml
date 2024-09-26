@@ -1,4 +1,4 @@
-name: Build and Test
+name: Build and Test (ubuntu)
 
 # Trigger the workflow on push or pull request
 on:
@@ -14,17 +14,43 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        image:
-        - ubuntu_22.04-gcc_11-vtk_9.2.2-py_3.8
-        - ubuntu_22.04-clang_11-vtk_9.2.2-py_3.8
-        - ubuntu_22.04-gcc_12-vtk_9.3.0-py_3.8
+        host: [
+          {
+            base: ubuntu-22.04,
+            compiler: { cc: gcc-11 },
+            python: ['3.8', '3.9', '3.10', '3.11', '3.12'],
+            vtk: '9.2.2',
+            image: ubuntu_22.04-gcc_11-vtk_9.2.2-py_3.all
+          },
+          {
+            base: ubuntu-22.04,
+            compiler: { cc: clang-11 },
+            python: ['3.8', '3.9', '3.10', '3.11', '3.12'],
+            vtk: '9.2.2',
+            image: ubuntu_22.04-clang_11-vtk_9.2.2-py_3.all
+          },
+          {
+            base: ubuntu-22.04,
+            compiler: { cc: gcc-12 },
+            python: ['3.8', '3.9', '3.10', '3.11', '3.12'],
+            vtk: '9.3.0',
+            image: ubuntu_22.04-gcc_12-vtk_9.3.0-py_3.all
+          },
+          {
+            base: ubuntu-24.04,
+            compiler: { cc: gcc-13 },
+            python: ['3.8', '3.9', '3.10', '3.11', '3.12'],
+            vtk: '9.3.1',
+            image: ubuntu_24.04-gcc_13-vtk_9.3.1-py_3.all
+          }
+        ]
     env:
       OUTPUT_DIR: '/tmp/artifacts'
-      VT_TV_TESTS_ENABLED: 'ON' # Build & Test in all configurations
-      VT_TV_COVERAGE_ENABLED: ${{ matrix.image == 'ubuntu_22.04-gcc_12-vtk_9.3.0-py_3.8' && 'ON' || 'OFF' }}  # Coverage only with main test image
-      VT_TV_PYTHON_BINDINGS_ENABLED: 'ON'
+      VT_TV_TESTS_ENABLED: 'ON'
+      VT_TV_COVERAGE_ENABLED: ${{ matrix.host.image == 'ubuntu_22.04-gcc_12-vtk_9.3.0-py_3.all' && 'ON' || 'OFF' }}  # Coverage only with main test image
       DOCKER_REPOSITORY: lifflander1/vt
-    name: vt-tv build and test
+      DOCKER_TAG: ~
+    name: vt-tv build and test (${{ matrix.host.base }}, ${{ matrix.host.compiler.cc }}, vtk-${{ matrix.host.vtk }}, py[${{ join(matrix.host.python, ', ') }}])
     steps:
       - uses: actions/checkout@v4
 
@@ -51,11 +77,11 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           push: false
-          tags: ${{ env.DOCKER_TAG }}
+          # tags: ${{ env.DOCKER_TAG }}
           context: .
-          file: ./ci/docker/build-and-test.dockerfile
+          file: ./ci/docker/build-and-test-ubuntu.dockerfile
           build-args: |
-            BASE_IMAGE=${{ env.DOCKER_REPOSITORY }}:${{ matrix.image }}
+            BASE_IMAGE=${{ env.DOCKER_REPOSITORY }}:${{ matrix.host.image }}
             VT_TV_TESTS_ENABLED=${{ env.VT_TV_TESTS_ENABLED }}
             VT_TV_COVERAGE_ENABLED=${{ env.VT_TV_COVERAGE_ENABLED }}
           outputs: type=local,dest=${{ env.OUTPUT_DIR }}
@@ -64,7 +90,7 @@ jobs:
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: vt-tv-Artifacts-${{ matrix.image }}
+          name: vt-tv-Artifacts-${{ matrix.host.image }}
           path: ${{ env.OUTPUT_DIR }}
 
       - name: Unit tests

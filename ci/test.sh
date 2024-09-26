@@ -2,19 +2,30 @@
 
 set -ex
 
-VT_TV_OUTPUT_DIR=/var/vt-tv/output
-VT_TV_TESTS_OUTPUT_DIR=/opt/src/vt-tv/output/tests
+CURRENT_DIR="$(dirname -- "$(realpath -- "$0")")"
+PARENT_DIR="$(dirname "$CURRENT_DIR")"
 
-# call build script with options to only run tests without building
-# (in CI the docker image define the build and the test stages separately).
-bash -c "VTK_DIR=/opt/build/vtk \
+VTK_DIR=${VTK_DIR:-"/opt/build/vtk"}
+
+VT_TV_SRC_DIR=${VT_TV_SRC_DIR:-$PARENT_DIR}
+VT_TV_BUILD_DIR=${VT_TV_BUILD_DIR:-"/opt/build/vt-tv"}
+VT_TV_OUTPUT_DIR=${VT_TV_OUTPUT_DIR:-"$VT_TV_SRC_DIR/output"}
+VT_TV_TESTS_OUTPUT_DIR=${VT_TV_TESTS_OUTPUT_DIR:-"$VT_TV_OUTPUT_DIR/tests"}
+
+VT_TV_TEST_CMD="VTK_DIR=/opt/build/vtk \
     VT_TV_BUILD=OFF \
-    VT_TV_BUILD_DIR=/opt/build/vt-tv \
+    VT_TV_BUILD_DIR=${VT_TV_BUILD_DIR} \
     VT_TV_COVERAGE_ENABLED=${VT_TV_COVERAGE_ENABLED:-OFF} \
     VT_TV_OUTPUT_DIR=$VT_TV_OUTPUT_DIR \
     VT_TV_RUN_TESTS=ON \
-    VT_TV_XVFB_ENABLED=ON \
-    /opt/src/vt-tv/build.sh"
+    $VT_TV_SRC_DIR/build.sh"
+
+# Run tests
+if [[ $(uname -a) != *"Darwin"* ]]; then
+    xvfb-run bash -c "$VT_TV_TEST_CMD"
+else
+    bash -c "$VT_TV_TEST_CMD"
+fi
 
 # Add artifacts
 VT_TV_ARTIFACTS_DIR="/tmp/artifacts"

@@ -4,7 +4,7 @@ To build image locally here is an example call using available build arguments:
 
 For the base image
 ```shell
-docker build -t vttv:latest --build-arg BASE_IMAGE="ubuntu:24.04" --build-arg GCOV=gcov-14 --build-arg BASE_IMAGE=ubuntu:24.04 --build-arg CC=gcc-14 --build-arg CXX=g++-14 --build-arg VTK=9.3.1 -f make-base.dockerfile .
+docker build -t vttv:latest --build-arg BASE_IMAGE="ubuntu:24.04" --build-arg GCOV=gcov-14 --build-arg BASE_IMAGE=ubuntu:24.04 --build-arg CC=gcc-14 --build-arg CXX=g++-14 --build-arg VTK=9.3.1 -f base-ubuntu.dockerfile .
 ```
 Then for the build & test image
 ```shell

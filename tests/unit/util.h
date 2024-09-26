@@ -45,59 +45,67 @@
 #define INCLUDED_VT_TV_TESTS_UNIT_UTIL_H
 
 // common includes for any tests
-#include <string>
+#include <array>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
-#include <variant>
-#include <set>
 #include <regex>
+#include <set>
+#include <string>
 #include <tuple>
+#include <variant>
 
 #include <fmt-vt/format.h>
 
-#include <gtest/gtest.h>
 #include <gmock/gmock.h>
+#include <gtest/gtest.h>
 
 namespace vt::tv::tests::unit {
 
 /**
  * Utility methods
  */
-struct Util {
+class Util {
 public:
   /**
-         * \brief Execute a command on the underlying system and returns exit code and output
-         * \throws {@link std::runtime_error} if an error occurs while opening the process
-         */
+   * \brief Execute a command on the underlying system and returns exit code and
+   * output \throws {@link std::runtime_error} if an error occurs while opening
+   * the process
+   */
   static std::tuple<int, std::string> exec(const char* cmd) {
     std::array<char, 128> buffer;
-    std::string output;
-    int status = 100;
+    std::string result;
 
-    FILE* pipe = popen(cmd, "r");
-    if (!pipe)
+    // Open the pipe
+    std::unique_ptr<FILE, int (*)(FILE*)> pipe(popen(cmd, "r"), pclose);
+    if (!pipe) {
       throw std::runtime_error("popen() failed!");
-    try {
-      while (fgets(buffer.data(), static_cast<int>(buffer.size()), pipe) !=
-             nullptr) {
-        output += buffer.data();
-      }
-    } catch (...) {
-      status = WEXITSTATUS(pclose(pipe));
-      throw;
     }
-    status = WEXITSTATUS(pclose(pipe));
 
-    return std::make_tuple(status, output);
+    // Read the output
+    while (fgets(buffer.data(), buffer.size(), pipe.get()) != nullptr) {
+      result += buffer.data();
+    }
+
+    // Close the pipe and get the exit status
+    int status = pclose(pipe.release());
+    int exit_status = 0;
+    if (WIFEXITED(status)) {
+      exit_status = WEXITSTATUS(status);
+    } else {
+      throw std::runtime_error("Command did not terminate normally.");
+    }
+
+    return std::make_tuple(exit_status, result);
   }
 
   /**
-     * \brief Resolves a directory absolute path.
-     * \param[in] base_path Prepends "{base_path}/" to the path if path is relative
-     * \param[in] path The path as either a relative or an absolute path
-     * \param[in] add_trailing_sep Appends a trailing "/" char at the end of the path if not exist
-     */
+   * \brief Resolves a directory absolute path.
+   * \param[in] base_path Prepends "{base_path}/" to the path if path is
+   * relative \param[in] path The path as either a relative or an absolute path
+   * \param[in] add_trailing_sep Appends a trailing "/" char at the end of the
+   * path if not exist
+   */
   static std::string resolveDir(
     std::string base_path, std::string path, bool add_trailing_sep = false) {
     std::filesystem::path abs_path(path);
@@ -118,8 +126,8 @@ public:
   }
 
   /**
-     * \brief Reads file content and returns it as a string
-     */
+   * \brief Reads file content and returns it as a string
+   */
   static std::string getFileContent(std::string filename) {
     std::ifstream ifs(filename);
     std::string content(
@@ -130,8 +138,8 @@ public:
   }
 
   /**
-     * \brief Formats a text with suport of null values
-     */
+   * \brief Formats a text with suport of null values
+   */
   static std::string formatNullable(const char* data) {
     if (data == nullptr) {
       return "<nullptr>";

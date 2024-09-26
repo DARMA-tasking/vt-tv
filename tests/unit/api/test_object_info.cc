@@ -56,13 +56,13 @@ public:
     6,     // id
     2,     // home
     false, // migratable
-    std::vector<size_t>({0, 1, 2}));
+    std::vector<UniqueIndexBitType>({0, 1, 2}));
 
   ObjectInfo object_1 = ObjectInfo(
     7,    // id
     1,    // home
     true, // migratable
-    std::vector<size_t>({3, 5, 6}));
+    std::vector<UniqueIndexBitType>({3, 5, 6}));
 };
 
 /**
