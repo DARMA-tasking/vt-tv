@@ -160,14 +160,14 @@ private:
    * \return object qoi range
    */
   std::variant<std::pair<double, double>, std::set<std::variant<double, int>>>
-  computeObjectQoiRange_();
+  computeObjectQOIRange_();
 
   /**
    * \brief Compute range of rank qoi.
    *
    * \return rank qoi range
    */
-  std::pair<double, double> computeRankQoiRange_();
+  std::pair<double, double> computeRankQOIRange_();
 
   /**
    * \brief Compute average of rank qoi.
@@ -176,7 +176,7 @@ private:
    *
    * \return rank qoi range
    */
-  double computeRankQoiAverage_(PhaseType phase, std::string qoi);
+  double computeRankQOIAverage_(PhaseType phase, std::string qoi);
 
   /**
    * \brief Create mapping of objects in ranks

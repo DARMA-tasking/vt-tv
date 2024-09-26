@@ -45,7 +45,7 @@ set(VT_TV_N_THREADS "2" CACHE STRING "Number of OpenMP threads to use")
 
 include(cmake/load_packages.cmake)
 
-if(APPLE)
+if(APPLE AND NOT CMAKE_CXX_COMPILER_ID MATCHES "AppleClang")
   add_compile_options(-ffat-lto-objects)
 endif()
 
@@ -78,7 +78,7 @@ include(CTest) #adds option BUILD_TESTING (default ON)
 message(STATUS "VT_TV_COVERAGE_ENABLED: ${VT_TV_COVERAGE_ENABLED}")
 if (VT_TV_COVERAGE_ENABLED)
   add_compile_options(-fprofile-arcs -ftest-coverage -O0)
-  add_link_options(-lgcov --coverage)
+  add_link_options(--coverage)
 endif()
 
 message(STATUS "VT_TV_TESTS_ENABLED: ${VT_TV_TESTS_ENABLED}")

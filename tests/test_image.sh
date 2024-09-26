@@ -14,6 +14,11 @@ if [ ! -f "$ACTUAL" ]; then
     exit 1
 fi
 
+if [ ! -f "$EXPECTED" ]; then
+    echo "Image not found at "$EXPECTED
+    exit 1
+fi
+
 pip install imgcompare --quiet 2>/dev/null
 
 DIFF=$(printf "%.2f" $(python -c 'import imgcompare; print(imgcompare.image_diff_percent("'$ACTUAL'", "'$EXPECTED'"));'))

@@ -1,14 +1,12 @@
 ARG BASE_IMAGE=lifflander1/vt:ubuntu_22.04-gcc_11-vtk_9.2.2-py_3.8
 ARG VT_TV_TESTS_ENABLED=OFF
 ARG VT_TV_COVERAGE_ENABLED=OFF
-ARG VT_TV_PYTHON_BINDINGS_ENABLED=ON
+ARG VT_TV_TEST_PYTHON_BINDINGS=OFF
 
 FROM ${BASE_IMAGE} AS base
 
-# setup requirements for rendering tests (xvfb) + coverage report (lcov)
-RUN apt-get update && apt-get install -y \
-    xvfb \
-    lcov
+ENV CONDA_PATH=/opt/conda
+ENV PATH=$PATH:$CONDA_PATH/bin
 
 COPY . /opt/src/vt-tv
 RUN mkdir -p /opt/build/vt-tv
@@ -23,15 +21,16 @@ RUN VT_TV_COVERAGE_ENABLED=$VT_TV_COVERAGE_ENABLED bash /opt/src/vt-tv/ci/build.
 FROM build AS test-cpp
 ARG VT_TV_COVERAGE_ENABLED=OFF
 ARG VT_TV_TESTS_ENABLED=OFF
-RUN VT_TV_COVERAGE_ENABLED=$VT_TV_COVERAGE_ENABLED bash /opt/src/vt-tv/ci/test_cpp.sh
+RUN VT_TV_COVERAGE_ENABLED=$VT_TV_COVERAGE_ENABLED bash /opt/src/vt-tv/ci/test.sh
 
 # Python tests (Builds VT-TV with Python bindings & test python package)
-FROM base AS test-python
-ARG VT_TV_PYTHON_BINDINGS_ENABLED=OFF
-RUN if [[ VT_TV_PYTHON_BINDINGS_ENABLED == "ON" ]]; then \n \
-    bash /opt/src/vt-tv/ci/test_python.sh \n \
-    fi
+FROM test-cpp AS test-python
+# Create vizualization output directory (required)
+RUN mkdir -p /opt/src/vt-tv/output/python_tests
+RUN VTK_DIR=/opt/build/vtk bash /opt/src/vt-tv/ci/python_build.sh
+RUN VTK_DIR=/opt/build/vtk bash /opt/src/vt-tv/ci/python_test.sh
 
 # Artifacts
 FROM scratch AS artifacts
 COPY --from=test-cpp /tmp/artifacts /tmp/artifacts
+COPY --from=test-python /opt/src/vt-tv/output/python_tests /tmp/python-artifacts

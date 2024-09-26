@@ -106,8 +106,8 @@ Render::Render(Info in_info)
     jitter_dims_.insert(std::make_pair(objectID, jitterDims));
   }
 
-  object_qoi_range_ = this->computeObjectQoiRange_();
-  rank_qoi_range_ = this->computeRankQoiRange_();
+  object_qoi_range_ = this->computeObjectQOIRange_();
+  rank_qoi_range_ = this->computeRankQOIRange_();
   object_volume_max_ = this->computeMaxObjectVolume_();
   object_load_max_ = this->info_.getMaxLoad();
 };
@@ -174,8 +174,8 @@ Render::Render(
     jitter_dims_.insert(std::make_pair(objectID, jitterDims));
   }
 
-  object_qoi_range_ = this->computeObjectQoiRange_();
-  rank_qoi_range_ = this->computeRankQoiRange_();
+  object_qoi_range_ = this->computeObjectQOIRange_();
+  rank_qoi_range_ = this->computeRankQOIRange_();
   object_volume_max_ = this->computeMaxObjectVolume_();
   object_load_max_ = this->info_.getMaxLoad();
 };
@@ -186,7 +186,7 @@ double Render::computeMaxObjectVolume_() {
 }
 
 std::variant<std::pair<double, double>, std::set<std::variant<double, int>>>
-Render::computeObjectQoiRange_() {
+Render::computeObjectQOIRange_() {
   // Initialize object QOI range attributes
   double oq_max = -1 * std::numeric_limits<double>::infinity();
   double oq_min = std::numeric_limits<double>::infinity();
@@ -194,10 +194,10 @@ Render::computeObjectQoiRange_() {
   std::set<std::variant<double, int>> oq_all;
 
   // Update the QOI range
-  auto updateQoiRange = [&](auto const& objects, PhaseType phase) {
+  auto updateQOIRange = [&](auto const& objects, PhaseType phase) {
     for (auto const& [obj_id, obj_work] : objects) {
       // Update maximum object qoi
-      oq = info_.getObjectQoi(obj_id, phase, this->object_qoi_);
+      oq = info_.getObjectQOIAtPhase(obj_id, phase, this->object_qoi_);
       if (!continuous_object_qoi_) {
         // Allow for integer categorical QOI (i.e. rank_id)
         if (oq == static_cast<int>(oq)) {
@@ -220,11 +220,11 @@ Render::computeObjectQoiRange_() {
   // Iterate over all ranks
   if (selected_phase_ != std::numeric_limits<PhaseType>::max()) {
     auto const& objects = this->info_.getPhaseObjects(selected_phase_);
-    updateQoiRange(objects, selected_phase_);
+    updateQOIRange(objects, selected_phase_);
   } else {
     for (PhaseType phase = 0; phase < this->n_phases_; phase++) {
       auto const& objects = this->info_.getPhaseObjects(phase);
-      updateQoiRange(objects, phase);
+      updateQOIRange(objects, phase);
     }
   }
 
@@ -240,7 +240,7 @@ Render::computeObjectQoiRange_() {
   }
 }
 
-std::pair<double, double> Render::computeRankQoiRange_() {
+std::pair<double, double> Render::computeRankQOIRange_() {
   // Initialize rank QOI range attributes
   double rq_max = -1 * std::numeric_limits<double>::infinity();
   double rq_min = std::numeric_limits<double>::infinity();
@@ -284,7 +284,7 @@ std::pair<double, double> Render::computeRankQoiRange_() {
   return std::make_pair(rq_min, rq_max);
 }
 
-double Render::computeRankQoiAverage_(PhaseType phase, std::string qoi) {
+double Render::computeRankQOIAverage_(PhaseType phase, std::string qoi) {
   // Initialize rank QOI range attributes
   double rq_sum = 0.0;
   auto const& rank_loads_at_phase =
@@ -463,7 +463,7 @@ vtkNew<vtkPolyData> Render::createObjectMesh_(PhaseType phase) {
 
       // Set object attributes
       ElementIDType obj_id = objectWork.getID();
-      auto oq = this->info_.getObjectQoi(obj_id, phase, this->object_qoi_);
+      auto oq = this->info_.getObjectQOIAtPhase(obj_id, phase, this->object_qoi_);
       q_arr->SetTuple1(point_index, oq);
       b_arr->SetTuple1(point_index, migratable);
       if (this->object_qoi_ != "load") {
