@@ -96,7 +96,7 @@ struct JSONReader {
 
   /**
    * \brief Check if a JSON data file is well formatted
-   * \param[in] file_path the data file path to validate 
+   * \param[in] file_path the data file path to validate
    */
   bool validate_datafile(std::string file_path);
 

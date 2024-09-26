@@ -300,7 +300,7 @@ bool JSONReader::validate_datafile(std::string file_path)
 
   // Exit code
   int exit_code = std::system(cmd.c_str());
-  
+
   // Launch
   if (exit_code > 0) {
     is_valid = false;

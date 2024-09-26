@@ -1,4 +1,4 @@
-""" JSON datafile validator 
+""" JSON datafile validator
 """
 import sys
 import os
