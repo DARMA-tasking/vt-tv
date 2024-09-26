@@ -8,6 +8,12 @@ FROM ${BASE_IMAGE} AS base
 ENV CONDA_PATH=/opt/conda
 ENV PATH=$PATH:$CONDA_PATH/bin
 
+# Setup python requirements for JSON datafile validation
+RUN pip install PyYAML
+RUN pip install Brotli
+RUN pip install schema
+RUN pip install nanobind
+
 COPY . /opt/src/vt-tv
 RUN mkdir -p /opt/build/vt-tv
 
