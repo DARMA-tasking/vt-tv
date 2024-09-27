@@ -40,7 +40,6 @@
 // *****************************************************************************
 //@HEADER
 */
-// A2DD.h
 #ifndef vt_tv_config_validator_h
 #define vt_tv_config_validator_h
 

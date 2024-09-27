@@ -4,19 +4,25 @@
 namespace vt::tv::bindings::python {
 
 void tvFromJson(const std::vector<std::string>& input_json_per_rank_list, const std::string& input_yaml_params_str, uint64_t num_ranks) {
-  std::string startup_logo = std::string("        __           __\n")
-                           + std::string(" _   __/ /_         / /__   __\n")
-                           + std::string("| | / / __/ _____  / __/ | / /\n")
-                           + std::string("| |/ / /   /____/ / /_ | |/ /\n")
-                           + std::string("|___/\\__/         \\__/ |___/\n");
-  fmt::print("==============================\n");
-  fmt::print(startup_logo);
-  fmt::print("==============================\n");
+    std::string startup_logo = std::string("        __           __\n")
+                             + std::string(" _   __/ /_         / /__   __\n")
+                             + std::string("| | / / __/ _____  / __/ | / /\n")
+                             + std::string("| |/ / /   /____/ / /_ | |/ /\n")
+                             + std::string("|___/\\__/         \\__/ |___/\n");
+    fmt::print("==============================\n");
+    fmt::print(startup_logo);
+    fmt::print("==============================\n");
 
-  // parse the input yaml parameters
-  try {
-    // Load the configuration from serialized YAML
-    YAML::Node viz_config = YAML::Load(input_yaml_params_str);
+    YAML::Node viz_config;
+    try {
+      // Load the configuration from serialized YAML
+      viz_config = YAML::Load(input_yaml_params_str);
+    } catch (std::exception const& e) {
+        throw std::runtime_error(fmt::format(
+            "vt-tv: Error reading the configuration file: {}", 
+            e.what()
+        ));
+    }
 
     // Config Validator
     ConfigValidator config_validator(viz_config);
@@ -26,7 +32,10 @@ void tvFromJson(const std::vector<std::string>& input_json_per_rank_list, const 
 
     // Throw error if configuration is invalid
     if (!is_config_valid) {
-      throw std::runtime_error("The YAML configuration file is not valid: missing required paramaters: " + config_validator.getMissingRequiredParameters());
+        throw std::runtime_error(fmt::format(
+            "vt-tv: Error validating the configuration file: {}", 
+            config_validator.getMissingRequiredParameters()
+        ));
     }
 
     std::array<std::string, 3> qoi_request = {
@@ -52,10 +61,16 @@ void tvFromJson(const std::vector<std::string>& input_json_per_rank_list, const 
 
     // Throw an error if the output directory does not exist or is not absolute
     if (!std::filesystem::exists(output_path)) {
-      throw std::runtime_error(fmt::format("Visualization output directory does not exist at {}", output_dir));
+        throw std::runtime_error(fmt::format(
+            "vt-tv: Visualization output directory does not exist at {}", 
+            output_dir
+        ));
     }
     if (!output_path.is_absolute()) {
-      throw std::runtime_error("Visualization output directory must be absolute.");
+        throw std::runtime_error(fmt::format(
+            "vt-tv: Visualization output directory must be absolute: {}",
+            output_dir
+        ));
     }
 
     // append / to avoid problems with file stems
@@ -134,11 +149,8 @@ void tvFromJson(const std::vector<std::string>& input_json_per_rank_list, const 
       output_dir, output_file_stem, 1.0, save_meshes, save_pngs, std::numeric_limits<PhaseType>::max()
     );
     render.generate(font_size, win_size);
-  } catch (std::exception const& e) {
-    throw std::runtime_error(fmt::format("vt-tv: Error reading the configuration file: {}", e.what()));
-  }
 
-  fmt::print("vt-tv: Done.\n");
+    fmt::print("vt-tv: Done.\n");
 }
 
 namespace nb = nanobind;

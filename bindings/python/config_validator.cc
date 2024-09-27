@@ -10,8 +10,8 @@ namespace vt::tv::bindings::python {
   bool ConfigValidator::isValid()
   {
       bool is_valid = true;
-      for (std::string requiredParameter: required_parameters) {
-        if (!config[requiredParameter]) {
+      for (std::string parameter: required_parameters) {
+        if (!config[parameter]) {
           is_valid = false;
           break;
         }
@@ -27,16 +27,14 @@ namespace vt::tv::bindings::python {
    */
   std::string ConfigValidator::getMissingRequiredParameters()
   {
-    int i = 0;
     std::string parameters;
-    for (std::string requiredParameter: required_parameters) {
-      if (!config[requiredParameter]) {
-        if (i == 0 ) {
-          parameters = parameters + requiredParameter;
+    for (std::string parameter: required_parameters) {
+      if (!config[parameter]) {
+        if (parameters.empty()) {
+          parameters = parameter;
         } else {
-          parameters = parameters + ", " + requiredParameter;
+          parameters = parameters + ", " + parameter;
         }
-        i++;
       }
     }
     return parameters;
