@@ -19,7 +19,7 @@ void tvFromJson(const std::vector<std::string>& input_json_per_rank_list, const 
       viz_config = YAML::Load(input_yaml_params_str);
     } catch (std::exception const& e) {
         throw std::runtime_error(fmt::format(
-            "vt-tv: Error reading the configuration file: {}", 
+            "vt-tv: Error reading the configuration file: {}",
             e.what()
         ));
     }
@@ -33,7 +33,7 @@ void tvFromJson(const std::vector<std::string>& input_json_per_rank_list, const 
     // Throw error if configuration is invalid
     if (!is_config_valid) {
         throw std::runtime_error(fmt::format(
-            "vt-tv: Error validating the configuration file: {}", 
+            "vt-tv: Error validating the configuration file: {}",
             config_validator.getMissingRequiredParameters()
         ));
     }
@@ -62,7 +62,7 @@ void tvFromJson(const std::vector<std::string>& input_json_per_rank_list, const 
     // Throw an error if the output directory does not exist or is not absolute
     if (!std::filesystem::exists(output_path)) {
         throw std::runtime_error(fmt::format(
-            "vt-tv: Visualization output directory does not exist at {}", 
+            "vt-tv: Visualization output directory does not exist at {}",
             output_dir
         ));
     }
