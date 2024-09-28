@@ -4,7 +4,7 @@
 TOKEN=${1:-}
 
 # Git information
-GIT_BRANCH="112-add-documentation"
+GIT_BRANCH="master"
 GIT_REPO_DOCS=DARMA-tasking.github.io
 GIT_OUTPUT_FOLDER=vt_tv_docs
 

@@ -3,14 +3,12 @@ name: Build Documentation
 on:
   push:
     branches:
-      - 112-add-documentation
+      - master
 
 jobs:
 
   build:
-
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@v4
 
