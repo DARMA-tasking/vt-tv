@@ -55,6 +55,10 @@
 #include <tuple>
 #include <variant>
 
+#if VT_TV_OPENMP_ENABLED
+#include <omp.h>
+#endif
+
 #include <fmt-vt/format.h>
 
 #include <gmock/gmock.h>
