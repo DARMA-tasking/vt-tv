@@ -290,13 +290,13 @@ bool JSONReader::validate_datafile(std::string file_path)
 
   // Prepare command line
   std::string cmd;
-  cmd +="python";
-  cmd +=" ";
-  cmd +=SRC_DIR;
-  cmd +="/scripts/json_datafile_validator.py";
-  cmd +=" ";
-  cmd +=" --file_path=";
-  cmd +=file_path.data();
+  cmd += "python";
+  cmd += " ";
+  cmd += SRC_DIR;
+  cmd += "/scripts/json_datafile_validator.py";
+  cmd += " ";
+  cmd += " --file_path=";
+  cmd += file_path.data();
 
   // Exit code
   int exit_code = std::system(cmd.c_str());
