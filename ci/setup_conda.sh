@@ -41,6 +41,10 @@ do
 
     . $CONDA_PATH/etc/profile.d/conda.sh && conda activate py${python_version}
     echo "Python version: $(python --version)"
+    pip install PyYAML
+    pip install Brotli
+    pip install schema
+    pip install nanobind
     conda deactivate
     echo "::endgroup::"
 done
