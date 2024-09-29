@@ -103,12 +103,21 @@ void ParseRender::parseAndRender(
 
         fmt::print("Reading file for rank {}\n", rank);
         utility::JSONReader reader{static_cast<NodeType>(rank)};
-        reader.readFile(filepath);
-        auto tmpInfo = reader.parse();
+
+        // Validate the JSON data file
+        std::string data_file_path = input_dir + "data." + std::to_string(rank) + ".json";
+        if (reader.validate_datafile(data_file_path)) {
+          reader.readFile(data_file_path);
+          auto tmpInfo = reader.parse();
+
 #if VT_TV_OPENMP_ENABLED
 #pragma omp critical
 #endif
         { info->addInfo(tmpInfo->getObjectInfo(), tmpInfo->getRank(rank)); }
+
+        } else {
+          throw std::runtime_error("JSON data file is invalid: " + data_file_path);
+        }
       }
       std::size_t n_ranks = config["input"]["n_ranks"].as<std::size_t>();
       if (info->getNumRanks() != n_ranks) {

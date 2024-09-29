@@ -184,14 +184,23 @@ public:
     for (int64_t rank = 0; rank < n_ranks; rank++) {
       fmt::print("Reading file for rank {}\n", rank);
       JSONReader reader{static_cast<NodeType>(rank)};
-      reader.readFile(input_dir + "data." + std::to_string(rank) + ".json");
-      auto tmpInfo = reader.parse();
+
+      // Validate the JSON data file
+      std::string data_file_path = input_dir + "data." + std::to_string(rank) + ".json";
+      if (reader.validate_datafile(data_file_path)) {
+        reader.readFile(data_file_path);
+        auto tmpInfo = reader.parse();
+
 #ifdef VT_TV_OPENMP_ENABLED
 #if VT_TV_OPENMP_ENABLED
 #pragma omp critical
 #endif
 #endif
       { info.addInfo(tmpInfo->getObjectInfo(), tmpInfo->getRank(rank)); }
+
+      } else {
+        throw std::runtime_error("JSON data file is invalid: " + data_file_path);
+      }
     }
     return info;
   }

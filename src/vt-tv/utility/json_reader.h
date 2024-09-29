@@ -94,6 +94,12 @@ struct JSONReader {
    */
   std::unique_ptr<Info> parse();
 
+  /**
+   * \brief Check if a JSON data file is well formatted
+   * \param[in] file_path the data file path to validate
+   */
+  bool validate_datafile(std::string file_path);
+
 private:
   NodeType rank_ = 0;
   std::unique_ptr<nlohmann::json> json_ = nullptr;

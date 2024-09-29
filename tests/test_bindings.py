@@ -1,5 +1,6 @@
 """This module calls vttv module to test that vttv bindings work as expected"""
 import os
+import subprocess
 import json
 import sys
 import yaml
@@ -9,7 +10,7 @@ import vttv
 source_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 # Read the YAML config file
-with open(f"{source_dir}/tests/test_bindings_conf.yaml", "r", encoding="utf-8") as stream:
+with open(f"{source_dir}/tests/test_bindings_conf.yaml", 'r', encoding="utf-8") as stream:
     try:
         params = yaml.safe_load(stream)
     except yaml.YAMLError as exc:
@@ -38,8 +39,31 @@ n_ranks = params["visualization"]["x_ranks"] * \
 
 rank_data = []
 for rank in range(n_ranks):
-    with open(f"{source_dir}/data/lb_test_data/data.{rank}.json", "r", encoding="utf-8") as f:
+    # JSON data file for rank
+    datafile = f'{source_dir}/data/lb_test_data/data.{rank}.json'
+
+    # Check JSON schema validity
+    IS_VALID: bool
+    try:
+        p = subprocess.run([
+                'python',
+                os.path.join(source_dir, 'scripts/json_datafile_validator.py'),
+                "--file_path=" + datafile
+            ], check=True, capture_output=True)
+        p.check_returncode()
+        IS_VALID = True
+    except subprocess.CalledProcessError as e:
+        IS_VALID = False
+        print(e.output.decode() + f"[JSON data file invalid] {datafile}")
+
+    # If validation failed
+    if IS_VALID is False:
+        sys.exit(1)
+
+    # Read JSON data file
+    with open(datafile, 'r', encoding="utf-8") as f:
         data = json.load(f)
+    data_serialized = json.dumps(data)
 
     # Add serialized data into the rank
     rank_data.append((json.dumps(data)))

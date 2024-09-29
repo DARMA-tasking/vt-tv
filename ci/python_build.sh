@@ -19,6 +19,9 @@ for env in $(conda env list | grep ^py | perl -lane 'print $F[-1]' | xargs ls -l
 
     # Build VT-TV python package
     pip install PyYAML
+    pip install Brotli
+    pip install schema
+    pip install nanobind
     pip install $VT_TV_SRC_DIR
 
     # Deactivate conda environment
