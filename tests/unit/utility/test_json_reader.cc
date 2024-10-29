@@ -147,6 +147,31 @@ TEST_F(JSONReaderTest, test_json_reader_metadata_attributes) {
   EXPECT_EQ("abc", std::get<std::string>(rank_attributes.at("stringSample")));
 }
 
+
+TEST_F(JSONReaderTest, test_json_reader_rank_user_defined) {
+  std::filesystem::path p =
+    std::filesystem::path(SRC_DIR) / "data/lb_test_data";
+  std::string path = std::filesystem::absolute(p).string();
+
+  NodeType rank = 0;
+  JSONReader reader{rank};
+
+  reader.readFile(path + "/reader_test_data.json");
+  auto info = reader.parse();
+  auto& rank_info = info->getRank(rank);
+  EXPECT_EQ(rank_info.getRankID(), rank);
+
+  auto& rank_user_defined = rank_info.getUserDefined();
+  EXPECT_TRUE(rank_user_defined.find("intSample") != rank_user_defined.end());
+  EXPECT_EQ(1, std::get<int>(rank_user_defined.at("intSample")));
+
+  EXPECT_TRUE(rank_user_defined.find("doubleSample") != rank_user_defined.end());
+  EXPECT_EQ(2.213, std::get<double>(rank_user_defined.at("doubleSample")));
+
+  EXPECT_TRUE(rank_user_defined.find("stringSample") != rank_user_defined.end());
+  EXPECT_EQ("abc", std::get<std::string>(rank_user_defined.at("stringSample")));
+}
+
 TEST_F(JSONReaderTest, test_json_reader_object_info_attributes) {
   std::filesystem::path p =
     std::filesystem::path(SRC_DIR) / "data/reader_test_data";

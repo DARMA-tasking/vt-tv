@@ -234,10 +234,6 @@ std::unique_ptr<Info> JSONReader::parse() {
             ElementIDType to_id = to.value("id", to["seq_id"]);
 
             assert(bytes.is_number() && "bytes must be a number");
-            // assert(from.is_number());
-            // assert(to.is_number());
-
-            // fmt::print(" From: {}, to: {}\n", from_id, to_id);
 
             // Object on this rank sent data
             auto from_it = objects.find(from_id);
@@ -262,20 +258,29 @@ std::unique_ptr<Info> JSONReader::parse() {
     }
   }
 
-  std::unordered_map<std::string, QOIVariantTypes> readed_metadata;
+  std::unordered_map<std::string, QOIVariantTypes> readed_attributes;
+  std::unordered_map<std::string, QOIVariantTypes> readed_user_defined;
   if (j.find("metadata") != j.end()) {
     auto metadata = j["metadata"];
     if (metadata.find("attributes") != metadata.end()) {
       auto attributes = metadata["attributes"];
       if (attributes.is_object()) {
         for (auto& [key, value] : attributes.items()) {
-          readed_metadata[key] = value;
+          readed_attributes[key] = value;
+        }
+      }
+    }
+    if (metadata.find("user_defined") != metadata.end()) {
+      auto user_defined = metadata["user_defined"];
+      if (user_defined.is_object()) {
+        for (auto& [key, value] : user_defined.items()) {
+          readed_user_defined[key] = value;
         }
       }
     }
   }
 
-  Rank r{rank_, std::move(phase_info), std::move(readed_metadata)};
+  Rank r{rank_, std::move(phase_info), std::move(readed_user_defined), std::move(readed_attributes)};
 
   std::unordered_map<NodeType, Rank> rank_info;
   rank_info.try_emplace(rank_, std::move(r));

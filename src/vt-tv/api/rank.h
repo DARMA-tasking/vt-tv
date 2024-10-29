@@ -65,9 +65,11 @@ struct Rank {
   Rank(
     NodeType in_rank,
     std::unordered_map<PhaseType, PhaseWork> in_phase_info,
+    std::unordered_map<std::string, QOIVariantTypes> in_user_defined = {},
     std::unordered_map<std::string, QOIVariantTypes> in_attributes = {})
     : rank_(in_rank),
       phase_info_(std::move(in_phase_info)),
+      user_defined_(std::move(in_user_defined)),
       attributes_(std::move(in_attributes)) { }
 
   /**
@@ -99,6 +101,13 @@ struct Rank {
   double getLoad(PhaseType phase) const {
     return phase_info_.at(phase).getLoad();
   }
+
+  /**
+   * \brief Get user_defined fields
+   *
+   * \return user_defined fields
+   */
+  auto const& getUserDefined() const { return user_defined_; }
 
   /**
    * \brief Get attribute fields
@@ -151,6 +160,7 @@ struct Rank {
   void serialize(SerializerT& s) {
     s | rank_;
     s | phase_info_;
+    s | user_defined_;
     s | attributes_;
   }
 
@@ -160,6 +170,7 @@ private:
   /// Work for each phase
   std::unordered_map<PhaseType, PhaseWork> phase_info_;
   /// QOIs to be visualized
+  std::unordered_map<std::string, QOIVariantTypes> user_defined_;
   std::unordered_map<std::string, QOIVariantTypes> attributes_;
 };
 
