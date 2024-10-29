@@ -219,7 +219,7 @@ struct Info {
       // Look in attributes (will throw an error if QOI doesn't exist)
       qoi_getter = [&](Rank rank, PhaseType phase) {
         (void)phase;
-        return convertQOIVariantTypeToDouble_(getRankAttribute(rank, rank_qoi));
+        return convertQOIVariantTypeToDouble_(getRankAttributeOrUserDefined(rank, rank_qoi));
       };
     }
     return qoi_getter;
@@ -907,18 +907,22 @@ struct Info {
   }
 
   /**
-    * \brief Get the specified attribute of a rank at a given phase
+    * \brief Get the specified attribute or user_defined QOI of a rank at a given phase
     *
     * \param[in] rank the current rank
-    * \param[in] rank_qoi the attribute
+    * \param[in] rank_qoi the attribute or user_defined QOI
     *
-    * \return the requested attribute
+    * \return the requested attribute or user_defined QOI
     */
-  QOIVariantTypes getRankAttribute(Rank rank, std::string rank_qoi) const {
+  QOIVariantTypes getRankAttributeOrUserDefined(Rank rank, std::string rank_qoi) const {
     auto rank_attributes = rank.getAttributes();
     if (rank_attributes.count(rank_qoi) > 0) {
       return rank_attributes.at(rank_qoi);
     } else {
+      auto rank_user_defined = rank.getUserDefined();
+      if (rank_user_defined.count(rank_qoi) > 0) {
+        return rank_user_defined.at(rank_qoi);
+      }
       throw std::runtime_error("Invalid Rank QOI: " + rank_qoi);
     }
   }

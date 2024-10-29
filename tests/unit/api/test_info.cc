@@ -476,13 +476,13 @@ TEST_F(InfoTest, test_get_rank_qoi) {
     }
   }
 
-  ASSERT_EQ(std::get<int>(info.getRankAttribute(rank_0, "attr1")), 12.0);
-  ASSERT_EQ(std::get<int>(info.getRankAttribute(rank_1, "attr1")), 13.0);
+  ASSERT_EQ(std::get<int>(info.getRankAttributeOrUserDefined(rank_0, "attr1")), 12.0);
+  ASSERT_EQ(std::get<int>(info.getRankAttributeOrUserDefined(rank_1, "attr1")), 13.0);
 
   ASSERT_EQ(
-    std::get<std::string>(info.getRankAttribute(rank_0, "attr2")), "ab");
+    std::get<std::string>(info.getRankAttributeOrUserDefined(rank_0, "attr2")), "ab");
   ASSERT_EQ(
-    std::get<std::string>(info.getRankAttribute(rank_1, "attr2")), "cd");
+    std::get<std::string>(info.getRankAttributeOrUserDefined(rank_1, "attr2")), "cd");
 
   // Test getRankQOIAtPhase method
   ASSERT_EQ(info.getRankQOIAtPhase(0, 0, "sent_volume"), 2.0);

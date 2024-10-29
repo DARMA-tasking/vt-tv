@@ -13,6 +13,12 @@
             "doubleSample": 2.213,
             "stringSample": "abc",
             "elementIDSample": 30000000000
+        },
+        "user_defined": {
+            "intSample": 1,
+            "doubleSample": 2.213,
+            "stringSample": "abc",
+            "elementIDSample": 30000000000
         }
     },
     "phases": [

@@ -15,6 +15,16 @@ def get_attributes_dict(id):
         "stringAttribute": f"id is {id}"
     }
 
+def get_user_defined_dict(id):
+    """Creates some user_defined list"""
+
+    return {
+        "doubleUserDefined": float(id) * 3.14,
+        "elementIDUserDefined": id + 30000000000,
+        "intUserDefined": id,
+        "stringUserDefined": f"id is {id}"
+    }
+
 project_dir = os.path.dirname(os.path.dirname(__file__))
 test_data_dir = os.path.join(project_dir, "data", "lb_test_data")
 
@@ -28,16 +38,16 @@ for rank_id in range(NUM_RANKS):
     with open(json_file, encoding="utf-8") as f:
         json_data = json.load(f)
 
-    # Add rank attributes
-    rank_attributes = get_attributes_dict(rank_id)
-    json_data["metadata"]["attributes"] = rank_attributes
+    # Add rank attributes and user_defined field
+    json_data["metadata"]["attributes"] = get_attributes_dict(rank_id)
+    json_data["metadata"]["user_defined"] = get_user_defined_dict(rank_id)
 
-    # Then object attributes
+    # Then object attributes and user_defined field
     for phase in json_data["phases"]:
         for task in phase["tasks"]:
             task_id = task["entity"]["id"]
-            attributes = get_attributes_dict(task_id)
-            task["attributes"] = attributes
+            task["attributes"] = get_attributes_dict(task_id)
+            task["user_defined"] = get_user_defined_dict(task_id)
 
     # Write out json
     output_file = os.path.join(output_dir, f"data.{rank_id}.json")
