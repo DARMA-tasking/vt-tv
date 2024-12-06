@@ -64,12 +64,17 @@ struct PhaseWork {
    *
    * \param[in] in_phase the phase
    * \param[in] in_objects objects' work for the phase
+   * \param[in] in_user_defined the user-defined fields in json
    */
   PhaseWork(
     PhaseType in_phase,
-    std::unordered_map<ElementIDType, ObjectWork> in_objects)
+    std::unordered_map<ElementIDType, ObjectWork> in_objects,
+    std::unordered_map<std::string, QOIVariantTypes> in_user_defined = {}
+  )
     : phase_(in_phase),
-      objects_(std::move(in_objects)) { }
+      objects_(std::move(in_objects)),
+      user_defined_(std::move(in_user_defined))
+  { }
 
   /**
    * \brief Get the phase ID
@@ -142,6 +147,13 @@ struct PhaseWork {
   }
 
   /**
+   * \brief Get user-defined fields
+   *
+   * \return user-defined fields
+   */
+  auto const& getUserDefined() const { return user_defined_; }
+
+  /**
    * \brief Serializer for data
    *
    * \param[in] s the serializer
@@ -150,6 +162,7 @@ struct PhaseWork {
   void serialize(SerializerT& s) {
     s | phase_;
     s | objects_;
+    s | user_defined_;
   }
 
 private:
@@ -157,6 +170,8 @@ private:
   PhaseType phase_ = 0;
   /// Object work for this phase
   std::unordered_map<ElementIDType, ObjectWork> objects_;
+  // User-defined field---used to populate the rank-level info
+  std::unordered_map<std::string, QOIVariantTypes> user_defined_;
 };
 
 } /* end namespace vt::tv */

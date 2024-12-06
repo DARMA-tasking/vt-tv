@@ -307,6 +307,24 @@ Render::createObjectMapping_(PhaseType phase) {
   return object_mapping;
 }
 
+template <typename T, typename U>
+void Render::addRankArray(
+  vtkNew<vtkPolyData>& pd_mesh, PhaseType phase, std::string const& key
+) {
+  vtkNew<U> array;
+  std::string array_name = key;
+  array->SetName(array_name.c_str());
+  array->SetNumberOfTuples(this->n_ranks_);
+
+  for (uint64_t rank_id = 0; rank_id < this->n_ranks_; rank_id++) {
+    auto const& cur_rank_info = info_.getRanks().at(rank_id);
+    auto const& value = info_.getRankUserDefined(cur_rank_info, phase, key);
+    //fmt::print("phase={}, key={}, rank_id={}\n", phase, key, rank_id);
+    array->SetTuple1(rank_id, std::get<T>(value));
+  }
+  pd_mesh->GetPointData()->AddArray(array);
+}
+
 vtkNew<vtkPolyData> Render::createRankMesh_(PhaseType phase) {
   fmt::print("\n\n");
   fmt::print("----- Creating rank mesh for phase {} -----\n", phase);
@@ -314,7 +332,7 @@ vtkNew<vtkPolyData> Render::createRankMesh_(PhaseType phase) {
   rank_points_->SetNumberOfPoints(this->n_ranks_);
 
   vtkNew<vtkDoubleArray> rank_arr;
-  std::string rank_array_name = "Rank " + this->rank_qoi_;
+  std::string rank_array_name = this->rank_qoi_;
   rank_arr->SetName(rank_array_name.c_str());
   rank_arr->SetNumberOfTuples(this->n_ranks_);
 
@@ -338,9 +356,26 @@ vtkNew<vtkPolyData> Render::createRankMesh_(PhaseType phase) {
   vtkNew<vtkPolyData> pd_mesh;
   pd_mesh->SetPoints(rank_points_);
   pd_mesh->GetPointData()->SetScalars(rank_arr);
+
+  auto const& rank_info = info_.getRanks().at(0);
+  auto const& keys = info_.getRankUserDefinedKeys(rank_info, phase);
+  for (auto const& key : keys) {
+    auto const& test_value = info_.getRankUserDefined(rank_info, phase, key);
+    if (std::holds_alternative<double>(test_value)) {
+      addRankArray<double, vtkDoubleArray>(pd_mesh, phase, key);
+    } else if (std::holds_alternative<int>(test_value)) {
+      addRankArray<int, vtkIntArray>(pd_mesh, phase, key);
+    }
+  }
+
   fmt::print("----- Finished creating rank mesh for phase {} -----\n", phase);
   return pd_mesh;
 }
+
+enum struct VtkTypeEnum : int {
+  TYPE_DOUBLE,
+  TYPE_INT
+};
 
 bool compareObjects(
   const std::pair<ObjectWork, uint64_t>& p1,
@@ -394,6 +429,8 @@ vtkNew<vtkPolyData> Render::createObjectMesh_(PhaseType phase) {
 
   auto object_mapping = this->createObjectMapping_(phase);
 
+  std::map<std::string, VtkTypeEnum> qoi_map;
+
   // Iterate through object mapping
   for (auto const& [rankID, objects] : object_mapping) {
     std::array<uint64_t, 3> ijk =
@@ -436,6 +473,14 @@ vtkNew<vtkPolyData> Render::createObjectMesh_(PhaseType phase) {
     for (auto const& [objectID, objectWork] : objects) {
       bool migratable = this->info_.getObjectInfo().at(objectID).isMigratable();
       ordered_objects.push_back(std::make_pair(objectWork, migratable));
+      for (auto const& [key, _] : objectWork.getUserDefined()) {
+        auto const& value = objectWork.getUserDefined().at(key);
+        VtkTypeEnum t = VtkTypeEnum::TYPE_DOUBLE;
+        if (std::holds_alternative<int>(value)) {
+          t = VtkTypeEnum::TYPE_INT;
+        }
+        qoi_map[key] = t;
+      }
     }
 
     // Sort objects
@@ -532,9 +577,56 @@ vtkNew<vtkPolyData> Render::createObjectMesh_(PhaseType phase) {
   }
   pd_mesh->GetCellData()->SetScalars(lineValuesArray);
 
+  for (auto const& [key, vtk_type] : qoi_map) {
+    if (vtk_type == VtkTypeEnum::TYPE_DOUBLE) {
+      addObjectArray<double, vtkDoubleArray>(pd_mesh, phase, key);
+    } else if (vtk_type == VtkTypeEnum::TYPE_INT) {
+      addObjectArray<int, vtkIntArray>(pd_mesh, phase, key);
+    }
+  }
+
   fmt::print("----- Finished creating object mesh -----\n");
 
   return pd_mesh;
+}
+
+template <typename T, typename U>
+void Render::addObjectArray(
+  vtkNew<vtkPolyData>& pd_mesh, PhaseType phase, std::string const& key
+) {
+  auto const num_objects = info_.getPhaseObjects(phase).size();
+
+  vtkNew<U> array;
+  array->SetName(key.c_str());
+  array->SetNumberOfTuples(num_objects);
+
+  int point_index = 0;
+  auto object_mapping = createObjectMapping_(phase);
+  for (auto const& [rankID, objects] : object_mapping) {
+    std::vector<std::pair<ObjectWork, uint64_t>> ordered_objects;
+    for (auto const& [objectID, objectWork] : objects) {
+      bool migratable = info_.getObjectInfo().at(objectID).isMigratable();
+      ordered_objects.push_back(std::make_pair(objectWork, migratable));
+    }
+    std::sort(ordered_objects.begin(), ordered_objects.end(), compareObjects);
+
+    // Add rank objects to point set
+    for (auto const& [objectWork, migratable] : ordered_objects) {
+      if (
+        auto it = objectWork.getUserDefined().find(key);
+        it != objectWork.getUserDefined().end()
+      ) {
+        //fmt::print("phase={}, key={}, id={}\n", phase, key, objectWork.getID());
+        auto const& value = it->second;
+        array->SetTuple1(point_index, std::get<T>(value));
+      } else {
+        array->SetTuple1(point_index, T{});
+      }
+      point_index++;
+    }
+  }
+
+  pd_mesh->GetPointData()->AddArray(array);
 }
 
 void Render::getRgbFromTab20Colormap_(

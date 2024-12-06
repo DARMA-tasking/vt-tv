@@ -790,6 +790,40 @@ struct Info {
   }
 
   /**
+   * \brief Get user-defined QOIs on a rank
+   *
+   * \param[in] rank the rank
+   * \param[in] phase the phase
+   * \param[in] key the key
+   *
+   * \return the value for a given user-defined key/value pair
+   */
+  QOIVariantTypes getRankUserDefined(
+    Rank rank, PhaseType phase, std::string const& key
+  ) const {
+    return rank.getPhaseWork().at(phase).getUserDefined().at(key);
+  }
+
+  /**
+   * \brief Get all the user-defined keys for a given rank on a phase
+   *
+   * \param[in] rank the rank
+   * \param[in] phase the phase
+   *
+   * \return vector of keys
+   */
+  std::vector<std::string> getRankUserDefinedKeys(
+    Rank rank, PhaseType phase
+  ) const {
+    std::vector<std::string> keys;
+    auto const& user_defined = rank.getPhaseWork().at(phase).getUserDefined();
+    for (auto const& [key, _] : user_defined) {
+      keys.push_back(key);
+    }
+    return keys;
+  }
+
+  /**
    * \brief Get load of a given rank
    *
    * \param[in] rank the rank

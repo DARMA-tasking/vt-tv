@@ -197,7 +197,34 @@ private:
    */
   vtkNew<vtkPolyData> createRankMesh_(PhaseType iteration);
 
+private:
   /**
+   * \brief Add rank array
+   *
+   * \param[in] pd_mesh the mesh
+   * \param[in] phase the phase
+   * \param[in] key the QOI key to add
+   */
+  template <typename T, typename U>
+  void addRankArray(
+    vtkNew<vtkPolyData>& pd_mesh, PhaseType phase, std::string const& key
+  );
+
+  /**
+   * \brief Add object array
+   *
+   * \param[in] pd_mesh the mesh
+   * \param[in] phase the phase
+   * \param[in] key the QOI key to add
+   */
+  template <typename T, typename U>
+  void addObjectArray(
+    vtkNew<vtkPolyData>& pd_mesh, PhaseType phase, std::string const& key
+  );
+
+
+public:
+    /**
    * \brief Map objects to polygonal mesh.
    *
    * \param[in] phase phase
