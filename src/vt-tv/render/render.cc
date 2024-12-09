@@ -190,14 +190,13 @@ Render::computeObjectQOIRange_() {
   // Initialize object QOI range attributes
   double oq_max = -1 * std::numeric_limits<double>::infinity();
   double oq_min = std::numeric_limits<double>::infinity();
-  double oq;
   std::set<std::variant<double, int>> oq_all;
 
   // Update the QOI range
   auto updateQOIRange = [&](auto const& objects, PhaseType phase) {
     for (auto const& [obj_id, obj_work] : objects) {
       // Update maximum object qoi
-      oq = info_.getObjectQOIAtPhase(obj_id, phase, this->object_qoi_);
+      auto oq = info_.getObjectQOIAtPhase<double>(obj_id, phase, this->object_qoi_);
       if (!continuous_object_qoi_) {
         // Allow for integer categorical QOI (i.e. rank_id)
         if (oq == static_cast<int>(oq)) {
@@ -538,7 +537,7 @@ vtkNew<vtkPolyData> Render::createObjectMesh_(PhaseType phase) {
 
       // Set object attributes
       ElementIDType obj_id = objectWork.getID();
-      auto oq = this->info_.getObjectQOIAtPhase(obj_id, phase, this->object_qoi_);
+      auto oq = info_.getObjectQOIAtPhase<double>(obj_id, phase, object_qoi_);
       q_arr->SetTuple1(point_index, oq);
       b_arr->SetTuple1(point_index, migratable);
       if (this->object_qoi_ != "load") {

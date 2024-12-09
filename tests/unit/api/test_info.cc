@@ -131,7 +131,7 @@ TEST_P(InfoTest, test_get_object_qoi_getter) {
      "rank_id",
      "non-existent"});
   for (auto const& qoi : qoi_list) {
-    auto qoi_getter = info.getObjectQOIGetter(qoi);
+    auto qoi_getter = info.getObjectQOIGetter<double>(qoi);
   }
 }
 
@@ -409,9 +409,9 @@ TEST_F(InfoTest, test_get_object_qoi) {
      "non-existent"});
   for (auto const& qoi : qoi_list) {
     if (qoi == "non-existent") {
-      EXPECT_THROW(info.getObjectQOIAtPhase(0, 0, qoi), std::runtime_error);
+      EXPECT_THROW(info.getObjectQOIAtPhase<double>(0, 0, qoi), std::runtime_error);
     } else {
-      ASSERT_NO_THROW(info.getObjectQOIAtPhase(0, 0, qoi));
+      ASSERT_NO_THROW(info.getObjectQOIAtPhase<double>(0, 0, qoi));
     }
   }
 }

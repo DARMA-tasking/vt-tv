@@ -245,37 +245,38 @@ struct Info {
   /**
    * \brief Returns a getter to a specified object QOI
    */
-  std::function<double(ObjectWork)>
-  getObjectQOIGetter(const std::string& object_qoi) const {
-    std::function<double(ObjectWork)> qoi_getter;
+  template <typename T>
+  std::function<T(ObjectWork)>
+  getObjectQOIGetter(std::string const& object_qoi) const {
+    std::function<T(ObjectWork)> qoi_getter;
     if (object_qoi == "load") {
       qoi_getter = [&](ObjectWork obj) {
-        return convertQOIVariantTypeToT_<double>(getObjectLoad(obj));
+        return convertQOIVariantTypeToT_<T>(getObjectLoad(obj));
       };
     } else if (object_qoi == "received_volume") {
       qoi_getter = [&](ObjectWork obj) {
-        return convertQOIVariantTypeToT_<double>(getObjectReceivedVolume(obj));
+        return convertQOIVariantTypeToT_<T>(getObjectReceivedVolume(obj));
       };
     } else if (object_qoi == "sent_volume") {
       qoi_getter = [&](ObjectWork obj) {
-        return convertQOIVariantTypeToT_<double>(getObjectSentVolume(obj));
+        return convertQOIVariantTypeToT_<T>(getObjectSentVolume(obj));
       };
     } else if (object_qoi == "max_volume") {
       qoi_getter = [&](ObjectWork obj) {
-        return convertQOIVariantTypeToT_<double>(getObjectMaxVolume(obj));
+        return convertQOIVariantTypeToT_<T>(getObjectMaxVolume(obj));
       };
     } else if (object_qoi == "id") {
       qoi_getter = [&](ObjectWork obj) {
-        return convertQOIVariantTypeToT_<double>(getObjectID(obj));
+        return convertQOIVariantTypeToT_<T>(getObjectID(obj));
       };
     } else if (object_qoi == "rank_id") {
       qoi_getter = [&](ObjectWork obj) {
-        return convertQOIVariantTypeToT_<double>(getObjectRankID(obj));
+        return convertQOIVariantTypeToT_<T>(getObjectRankID(obj));
       };
     } else {
       // Look in attributes and user_defined (will throw an error if QOI doesn't exist)
       qoi_getter = [&](ObjectWork obj) {
-        return convertQOIVariantTypeToT_<double>(
+        return convertQOIVariantTypeToT_<T>(
           getObjectAttributeOrUserDefined(obj, object_qoi));
       };
     }
@@ -383,11 +384,23 @@ struct Info {
    *
    * \return the object QOI
    */
-  double getObjectQOIAtPhase(
-    ElementIDType obj_id, PhaseType phase, std::string obj_qoi) const {
-    auto qoi_getter = getObjectQOIGetter(obj_qoi);
+  template <typename T>
+  T getObjectQOIAtPhase(
+    ElementIDType obj_id, PhaseType phase, std::string const& obj_qoi
+  ) const {
     auto const& objects = this->getPhaseObjects(phase);
     auto const& obj = objects.at(obj_id);
+    auto const& ud = obj.getUserDefined();
+
+    if (auto it = ud.find(obj_qoi); it != ud.end()) {
+      if (std::holds_alternative<double>(it->second)) {
+        return static_cast<T>(std::get<double>(it->second));
+      } else if (std::holds_alternative<int>(it->second)) {
+        return static_cast<T>(std::get<int>(it->second));
+      }
+    }
+
+    auto qoi_getter = getObjectQOIGetter<T>(obj_qoi);
     return qoi_getter(obj);
   }
 
