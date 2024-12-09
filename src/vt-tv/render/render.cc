@@ -249,29 +249,22 @@ std::pair<double, double> Render::computeRankQOIRange_() {
 
   // Iterate over all ranks
   for (uint64_t rank_id = 0; rank_id < this->n_ranks_; rank_id++) {
-    std::unordered_map<PhaseType, double> rank_qoi_map;
-    rank_qoi_map = this->info_.getAllQOIAtRank<double>(rank_id, this->rank_qoi_);
+    auto rank_qoi_map = info_.getAllQOIAtRank(rank_id, this->rank_qoi_);
 
     // Get max qoi for this rank across all phases
     auto prmax = std::max_element(
       std::begin(rank_qoi_map),
       std::end(rank_qoi_map),
-      [](
-        const std::pair<PhaseType, double>& p1,
-        const std::pair<PhaseType, double>& p2) {
-        return p1.second < p2.second;
-      });
+      [](auto const& p1, auto const& p2) { return p1.second < p2.second; }
+    );
     rqmax_for_phase = prmax->second;
 
     // Get min qoi for this rank across all phases
     auto prmin = std::max_element(
       std::begin(rank_qoi_map),
       std::end(rank_qoi_map),
-      [](
-        const std::pair<PhaseType, double>& p1,
-        const std::pair<PhaseType, double>& p2) {
-        return p1.second > p2.second;
-      });
+      [](auto const& p1, auto const& p2) { return p1.second > p2.second; }
+    );
     rqmin_for_phase = prmin->second;
 
     if (rqmax_for_phase > rq_max)

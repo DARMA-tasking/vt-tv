@@ -291,7 +291,8 @@ struct Info {
    */
   template <typename T = double>
   T getRankQOIAtPhase(
-    ElementIDType rank_id, PhaseType phase, std::string rank_qoi) const {
+    ElementIDType rank_id, PhaseType phase, std::string const& rank_qoi
+  ) const {
     auto qoi_getter = getRankQOIGetter<T>(rank_qoi);
     auto const& rank = this->ranks_.at(rank_id);
     return qoi_getter(rank, phase);
@@ -304,13 +305,34 @@ struct Info {
    */
   template <typename T = double>
   std::unordered_map<PhaseType, T>
-  getAllQOIAtRank(ElementIDType rank_id, std::string rank_qoi) const {
-    std::unordered_map<PhaseType, T> rank_qois;
-    auto qoi_getter = getRankQOIGetter<T>(rank_qoi);
-    auto const& rank = this->ranks_.at(rank_id);
+  getAllQOIAtRank(ElementIDType rank_id, std::string const& rank_qoi) const {
+    auto const& rank = ranks_.at(rank_id);
     auto const& phase_work = rank.getPhaseWork();
-    for (auto const& [phase, _] : phase_work) {
-      rank_qois.insert(std::make_pair(phase, qoi_getter(rank, phase)));
+
+    std::unordered_map<PhaseType, T> rank_qois;
+
+    if (hasRankUserDefined(rank_qoi)) {
+      auto const& test_value = getFirstRankUserDefined(rank_qoi);
+      for (auto const& [phase, _] : phase_work) {
+        if (std::holds_alternative<double>(test_value)) {
+          rank_qois.emplace(
+            phase, static_cast<T>(
+              std::get<double>(getRankUserDefined(rank, phase, rank_qoi))
+            )
+          );
+        } else if (std::holds_alternative<int>(test_value)) {
+          rank_qois.emplace(
+            phase, static_cast<T>(
+              std::get<int>(getRankUserDefined(rank, phase, rank_qoi))
+            )
+          );
+        }
+      }
+    } else {
+      auto qoi_getter = getRankQOIGetter<T>(rank_qoi);
+      for (auto const& [phase, _] : phase_work) {
+        rank_qois.emplace(phase, qoi_getter(rank, phase));
+      }
     }
 
     return rank_qois;
@@ -323,11 +345,32 @@ struct Info {
    */
   template <typename T = double>
   std::unordered_map<ElementIDType, T>
-  getAllRankQOIAtPhase(PhaseType phase, std::string rank_qoi) const {
+  getAllRankQOIAtPhase(PhaseType phase, std::string const& rank_qoi) const {
     std::unordered_map<ElementIDType, T> rank_qois;
-    auto qoi_getter = getRankQOIGetter<T>(rank_qoi);
-    for (auto const& [rank_id, rank] : this->ranks_) {
-      rank_qois.insert(std::make_pair(rank_id, qoi_getter(rank, phase)));
+
+    if (hasRankUserDefined(rank_qoi)) {
+      auto const& test_value = getFirstRankUserDefined(rank_qoi);
+      for (uint64_t rank_id = 0; rank_id < ranks_.size(); rank_id++) {
+        auto const& rank = ranks_.at(rank_id);
+        if (std::holds_alternative<double>(test_value)) {
+          rank_qois.emplace(
+            phase, static_cast<T>(
+              std::get<double>(getRankUserDefined(rank, phase, rank_qoi))
+            )
+          );
+        } else if (std::holds_alternative<int>(test_value)) {
+          rank_qois.emplace(
+            phase, static_cast<T>(
+              std::get<int>(getRankUserDefined(rank, phase, rank_qoi))
+            )
+          );
+        }
+      }
+    } else {
+      auto qoi_getter = getRankQOIGetter<T>(rank_qoi);
+      for (auto const& [rank_id, rank] : this->ranks_) {
+        rank_qois.emplace(rank_id, qoi_getter(rank, phase));
+      }
     }
 
     return rank_qois;
@@ -831,7 +874,7 @@ struct Info {
    *
    * \return whether it exists
    */
-  bool hasRankUserDefined(std::string const& key) {
+  bool hasRankUserDefined(std::string const& key) const {
     for (auto const& [id, rank] : ranks_) {
       auto const num_phases = rank.getNumPhases();
       for (std::size_t i = 0; i < num_phases; i++) {
@@ -851,7 +894,7 @@ struct Info {
    *
    * \return the value
    */
-  QOIVariantTypes getFirstRankUserDefined(std::string const& key) {
+  QOIVariantTypes getFirstRankUserDefined(std::string const& key) const {
     for (auto const& [id, rank] : ranks_) {
       auto const num_phases = rank.getNumPhases();
       for (std::size_t i = 0; i < num_phases; i++) {
