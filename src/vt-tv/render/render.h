@@ -107,6 +107,8 @@ namespace vt::tv {
  */
 struct Render {
 private:
+  using VtkTypeEnum = typename Info::VtkTypeEnum;
+
   enum struct ColorType : uint8_t {
     Default = 0,
     BlueToRed = 1,
@@ -199,16 +201,22 @@ private:
 
 private:
   /**
-   * \brief Add rank array
+   * \brief Create rank array from user-defined
    *
-   * \param[in] pd_mesh the mesh
    * \param[in] phase the phase
    * \param[in] key the QOI key to add
    */
   template <typename T, typename U>
-  void addRankArray(
-    vtkNew<vtkPolyData>& pd_mesh, PhaseType phase, std::string const& key
-  );
+  vtkNew<U> createRankArrayUserDefined(PhaseType phase, std::string const& key);
+
+  /**
+   * \brief Create rank array from computed QOI
+   *
+   * \param[in] phase the phase
+   * \param[in] key the QOI key to add
+   */
+  template <typename T, typename U>
+  vtkNew<U> createRankArrayComputed(PhaseType phase, std::string const& key);
 
   /**
    * \brief Add object array

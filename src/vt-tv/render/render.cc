@@ -250,7 +250,7 @@ std::pair<double, double> Render::computeRankQOIRange_() {
   // Iterate over all ranks
   for (uint64_t rank_id = 0; rank_id < this->n_ranks_; rank_id++) {
     std::unordered_map<PhaseType, double> rank_qoi_map;
-    rank_qoi_map = this->info_.getAllQOIAtRank(rank_id, this->rank_qoi_);
+    rank_qoi_map = this->info_.getAllQOIAtRank<double>(rank_id, this->rank_qoi_);
 
     // Get max qoi for this rank across all phases
     auto prmax = std::max_element(
@@ -288,7 +288,7 @@ double Render::computeRankQOIAverage_(PhaseType phase, std::string qoi) {
   // Initialize rank QOI range attributes
   double rq_sum = 0.0;
   auto const& rank_loads_at_phase =
-    this->info_.getAllRankQOIAtPhase(phase, qoi);
+    this->info_.getAllRankQOIAtPhase<double>(phase, qoi);
   for (auto const& [rank, rank_load] : rank_loads_at_phase) {
     rq_sum += rank_load;
   }
@@ -308,74 +308,111 @@ Render::createObjectMapping_(PhaseType phase) {
 }
 
 template <typename T, typename U>
-void Render::addRankArray(
-  vtkNew<vtkPolyData>& pd_mesh, PhaseType phase, std::string const& key
+vtkNew<U> Render::createRankArrayUserDefined(
+  PhaseType phase, std::string const& key
 ) {
   vtkNew<U> array;
   std::string array_name = key;
   array->SetName(array_name.c_str());
-  array->SetNumberOfTuples(this->n_ranks_);
+  array->SetNumberOfTuples(n_ranks_);
 
-  for (uint64_t rank_id = 0; rank_id < this->n_ranks_; rank_id++) {
+  for (uint64_t rank_id = 0; rank_id < n_ranks_; rank_id++) {
     auto const& cur_rank_info = info_.getRanks().at(rank_id);
     auto const& value = info_.getRankUserDefined(cur_rank_info, phase, key);
     //fmt::print("phase={}, key={}, rank_id={}\n", phase, key, rank_id);
     array->SetTuple1(rank_id, std::get<T>(value));
   }
-  pd_mesh->GetPointData()->AddArray(array);
+  return std::move(array);
+}
+
+template <typename T, typename U>
+vtkNew<U> Render::createRankArrayComputed(
+  PhaseType phase, std::string const& key
+) {
+  vtkNew<U> array;
+  std::string array_name = key;
+  array->SetName(array_name.c_str());
+  array->SetNumberOfTuples(n_ranks_);
+
+  for (uint64_t rank_id = 0; rank_id < n_ranks_; rank_id++) {
+    array->SetTuple1(rank_id, info_.getRankQOIAtPhase<T>(rank_id, phase, key));
+  }
+  return std::move(array);
 }
 
 vtkNew<vtkPolyData> Render::createRankMesh_(PhaseType phase) {
   fmt::print("\n\n");
   fmt::print("----- Creating rank mesh for phase {} -----\n", phase);
   vtkNew<vtkPoints> rank_points_;
-  rank_points_->SetNumberOfPoints(this->n_ranks_);
+  rank_points_->SetNumberOfPoints(n_ranks_);
 
-  vtkNew<vtkDoubleArray> rank_arr;
-  std::string rank_array_name = this->rank_qoi_;
-  rank_arr->SetName(rank_array_name.c_str());
-  rank_arr->SetNumberOfTuples(this->n_ranks_);
-
-  for (uint64_t rank_id = 0; rank_id < this->n_ranks_; rank_id++) {
+  for (uint64_t rank_id = 0; rank_id < n_ranks_; rank_id++) {
     std::array<uint64_t, 3> cartesian =
-      this->globalIDToCartesian_(rank_id, this->grid_size_);
+      globalIDToCartesian_(rank_id, grid_size_);
     std::array<double, 3> offsets = {
-      cartesian[0] * this->grid_resolution_,
-      cartesian[1] * this->grid_resolution_,
-      cartesian[2] * this->grid_resolution_};
+      cartesian[0] * grid_resolution_,
+      cartesian[1] * grid_resolution_,
+      cartesian[2] * grid_resolution_
+    };
+
     // Insert point based on cartesian coordinates
     rank_points_->SetPoint(rank_id, offsets[0], offsets[1], offsets[2]);
-
-    auto objects = this->info_.getRankObjects(rank_id, phase);
-
-    auto rank_qoi_val =
-      this->info_.getRankQOIAtPhase(rank_id, phase, this->rank_qoi_);
-    rank_arr->SetTuple1(rank_id, rank_qoi_val);
   }
 
   vtkNew<vtkPolyData> pd_mesh;
   pd_mesh->SetPoints(rank_points_);
-  pd_mesh->GetPointData()->SetScalars(rank_arr);
+
+  // First, check user-defined to see if we already have the QOI calculated, if
+  // so grab that first value to determine the type of the variant to allocate
+  // the VTK array
+  auto const has_user_defined_qoi = info_.hasRankUserDefined(rank_qoi_);
+  if (has_user_defined_qoi) {
+    auto const& test_value = info_.getFirstRankUserDefined(rank_qoi_);
+    if (std::holds_alternative<double>(test_value)) {
+      pd_mesh->GetPointData()->SetScalars(
+        createRankArrayUserDefined<double, vtkDoubleArray>(phase, rank_qoi_)
+      );
+    } else if (std::holds_alternative<int>(test_value)) {
+      pd_mesh->GetPointData()->SetScalars(
+        createRankArrayUserDefined<int, vtkIntArray>(phase, rank_qoi_)
+      );
+    }
+  } else {
+    // We need to calculate the QOI since it's not in user-defined
+    // Lookup the type in a map to determine which vtk type array to utilize
+    auto const& types = info_.computable_qoi_types;
+    if (auto iter = types.find(rank_qoi_); iter != types.end()) {
+      VtkTypeEnum type = iter->second;
+      if (type == VtkTypeEnum::TYPE_DOUBLE) {
+        pd_mesh->GetPointData()->SetScalars(
+          createRankArrayComputed<double, vtkDoubleArray>(phase, rank_qoi_)
+        );
+      } else if (type == VtkTypeEnum::TYPE_INT) {
+        pd_mesh->GetPointData()->SetScalars(
+          createRankArrayComputed<int, vtkIntArray>(phase, rank_qoi_)
+        );
+      }
+    }
+  }
 
   auto const& rank_info = info_.getRanks().at(0);
   auto const& keys = info_.getRankUserDefinedKeys(rank_info, phase);
   for (auto const& key : keys) {
     auto const& test_value = info_.getRankUserDefined(rank_info, phase, key);
     if (std::holds_alternative<double>(test_value)) {
-      addRankArray<double, vtkDoubleArray>(pd_mesh, phase, key);
+      pd_mesh->GetPointData()->AddArray(
+        createRankArrayUserDefined<double, vtkDoubleArray>(phase, key)
+      );
     } else if (std::holds_alternative<int>(test_value)) {
-      addRankArray<int, vtkIntArray>(pd_mesh, phase, key);
+      pd_mesh->GetPointData()->AddArray(
+        createRankArrayUserDefined<int, vtkIntArray>(phase, key)
+      );
     }
   }
 
   fmt::print("----- Finished creating rank mesh for phase {} -----\n", phase);
   return pd_mesh;
 }
-
-enum struct VtkTypeEnum : int {
-  TYPE_DOUBLE,
-  TYPE_INT
-};
 
 bool compareObjects(
   const std::pair<ObjectWork, uint64_t>& p1,

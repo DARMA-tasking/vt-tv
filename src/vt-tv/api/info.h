@@ -157,13 +157,14 @@ struct Info {
   /*  -----------------------------------  Getters  -----------------------------------  */
 
   /**
-   * \brief Converts a QOI from QOIVariantTypes to double
+   * \brief Converts a QOI from QOIVariantTypes to \c T
    */
-  double convertQOIVariantTypeToDouble_(const QOIVariantTypes& variant) const {
+  template <typename T>
+  T convertQOIVariantTypeToT_(QOIVariantTypes const& variant) const {
     if (std::holds_alternative<int>(variant)) {
-      return static_cast<double>(std::get<int>(variant));
+      return static_cast<T>(std::get<int>(variant));
     } else if (std::holds_alternative<double>(variant)) {
-      return std::get<double>(variant);
+      return static_cast<T>(std::get<double>(variant));
     } else if (std::holds_alternative<std::string>(variant)) {
       throw std::runtime_error(
         "QOI type must be numerical (received std::string).");
@@ -173,53 +174,69 @@ struct Info {
     }
   }
 
+  enum struct VtkTypeEnum : int {
+    TYPE_DOUBLE,
+    TYPE_INT
+  };
+
+  std::unordered_map<std::string, VtkTypeEnum> computable_qoi_types = {
+    {"load", VtkTypeEnum::TYPE_DOUBLE},
+    {"received_volume", VtkTypeEnum::TYPE_DOUBLE},
+    {"sent_volume", VtkTypeEnum::TYPE_DOUBLE},
+    {"max_volume", VtkTypeEnum::TYPE_DOUBLE},
+    {"number_of_objects", VtkTypeEnum::TYPE_INT},
+    {"number_of_migratable_objects", VtkTypeEnum::TYPE_INT},
+    {"migratable_load", VtkTypeEnum::TYPE_DOUBLE},
+    {"sentinel_load", VtkTypeEnum::TYPE_DOUBLE},
+    {"id", VtkTypeEnum::TYPE_INT},
+    {"rank_id", VtkTypeEnum::TYPE_INT}
+  };
+
   /**
    * \brief Returns a getter to a specified rank QOI
    */
-  std::function<double(Rank, PhaseType)>
-  getRankQOIGetter(const std::string& rank_qoi) const {
-    std::function<double(Rank, PhaseType)> qoi_getter;
+  template <typename T>
+  std::function<T(Rank, PhaseType)>
+  getRankQOIGetter(std::string const& rank_qoi) const {
+    std::function<T(Rank, PhaseType)> qoi_getter;
     if (rank_qoi == "load") {
       qoi_getter = [&](Rank rank, PhaseType phase) {
-        return convertQOIVariantTypeToDouble_(getRankLoad(rank, phase));
+        return convertQOIVariantTypeToT_<T>(getRankLoad(rank, phase));
       };
     } else if (rank_qoi == "received_volume") {
       qoi_getter = [&](Rank rank, PhaseType phase) {
-        return convertQOIVariantTypeToDouble_(
+        return convertQOIVariantTypeToT_<T>(
           getRankReceivedVolume(rank, phase));
       };
     } else if (rank_qoi == "sent_volume") {
       qoi_getter = [&](Rank rank, PhaseType phase) {
-        return convertQOIVariantTypeToDouble_(getRankSentVolume(rank, phase));
+        return convertQOIVariantTypeToT_<T>(getRankSentVolume(rank, phase));
       };
     } else if (rank_qoi == "number_of_objects") {
       qoi_getter = [&](Rank rank, PhaseType phase) {
-        return convertQOIVariantTypeToDouble_(getRankNumObjects(rank, phase));
+        return convertQOIVariantTypeToT_<T>(getRankNumObjects(rank, phase));
       };
     } else if (rank_qoi == "number_of_migratable_objects") {
       qoi_getter = [&](Rank rank, PhaseType phase) {
-        return convertQOIVariantTypeToDouble_(
+        return convertQOIVariantTypeToT_<T>(
           getRankNumMigratableObjects(rank, phase));
       };
     } else if (rank_qoi == "migratable_load") {
       qoi_getter = [&](Rank rank, PhaseType phase) {
-        return convertQOIVariantTypeToDouble_(
-          getRankMigratableLoad(rank, phase));
+        return convertQOIVariantTypeToT_<T>(getRankMigratableLoad(rank, phase));
       };
     } else if (rank_qoi == "sentinel_load") {
       qoi_getter = [&](Rank rank, PhaseType phase) {
-        return convertQOIVariantTypeToDouble_(getRankSentinelLoad(rank, phase));
+        return convertQOIVariantTypeToT_<T>(getRankSentinelLoad(rank, phase));
       };
     } else if (rank_qoi == "id") {
-      qoi_getter = [&](Rank rank, PhaseType phase) {
-        (void)phase; // unused for this qoi
-        return convertQOIVariantTypeToDouble_(getRankID(rank));
+      qoi_getter = [&](Rank rank, PhaseType) {
+        return convertQOIVariantTypeToT_<T>(getRankID(rank));
       };
     } else {
       // Look in attributes (will throw an error if QOI doesn't exist)
-      qoi_getter = [&](Rank rank, PhaseType phase) {
-        (void)phase;
-        return convertQOIVariantTypeToDouble_(getRankAttribute(rank, rank_qoi));
+      qoi_getter = [&](Rank rank, PhaseType) {
+        return convertQOIVariantTypeToT_<T>(getRankAttribute(rank, rank_qoi));
       };
     }
     return qoi_getter;
@@ -233,32 +250,32 @@ struct Info {
     std::function<double(ObjectWork)> qoi_getter;
     if (object_qoi == "load") {
       qoi_getter = [&](ObjectWork obj) {
-        return convertQOIVariantTypeToDouble_(getObjectLoad(obj));
+        return convertQOIVariantTypeToT_<double>(getObjectLoad(obj));
       };
     } else if (object_qoi == "received_volume") {
       qoi_getter = [&](ObjectWork obj) {
-        return convertQOIVariantTypeToDouble_(getObjectReceivedVolume(obj));
+        return convertQOIVariantTypeToT_<double>(getObjectReceivedVolume(obj));
       };
     } else if (object_qoi == "sent_volume") {
       qoi_getter = [&](ObjectWork obj) {
-        return convertQOIVariantTypeToDouble_(getObjectSentVolume(obj));
+        return convertQOIVariantTypeToT_<double>(getObjectSentVolume(obj));
       };
     } else if (object_qoi == "max_volume") {
       qoi_getter = [&](ObjectWork obj) {
-        return convertQOIVariantTypeToDouble_(getObjectMaxVolume(obj));
+        return convertQOIVariantTypeToT_<double>(getObjectMaxVolume(obj));
       };
     } else if (object_qoi == "id") {
       qoi_getter = [&](ObjectWork obj) {
-        return convertQOIVariantTypeToDouble_(getObjectID(obj));
+        return convertQOIVariantTypeToT_<double>(getObjectID(obj));
       };
     } else if (object_qoi == "rank_id") {
       qoi_getter = [&](ObjectWork obj) {
-        return convertQOIVariantTypeToDouble_(getObjectRankID(obj));
+        return convertQOIVariantTypeToT_<double>(getObjectRankID(obj));
       };
     } else {
       // Look in attributes and user_defined (will throw an error if QOI doesn't exist)
       qoi_getter = [&](ObjectWork obj) {
-        return convertQOIVariantTypeToDouble_(
+        return convertQOIVariantTypeToT_<double>(
           getObjectAttributeOrUserDefined(obj, object_qoi));
       };
     }
@@ -272,9 +289,10 @@ struct Info {
    *
    * \return a map of QOI per rank
    */
-  double getRankQOIAtPhase(
+  template <typename T = double>
+  T getRankQOIAtPhase(
     ElementIDType rank_id, PhaseType phase, std::string rank_qoi) const {
-    auto qoi_getter = getRankQOIGetter(rank_qoi);
+    auto qoi_getter = getRankQOIGetter<T>(rank_qoi);
     auto const& rank = this->ranks_.at(rank_id);
     return qoi_getter(rank, phase);
   }
@@ -284,10 +302,11 @@ struct Info {
    *
    * \return a map of QOI per rank
    */
-  std::unordered_map<PhaseType, double>
+  template <typename T = double>
+  std::unordered_map<PhaseType, T>
   getAllQOIAtRank(ElementIDType rank_id, std::string rank_qoi) const {
-    std::unordered_map<PhaseType, double> rank_qois;
-    auto qoi_getter = getRankQOIGetter(rank_qoi);
+    std::unordered_map<PhaseType, T> rank_qois;
+    auto qoi_getter = getRankQOIGetter<T>(rank_qoi);
     auto const& rank = this->ranks_.at(rank_id);
     auto const& phase_work = rank.getPhaseWork();
     for (auto const& [phase, _] : phase_work) {
@@ -302,10 +321,11 @@ struct Info {
    *
    * \return a map of QOI per rank
    */
-  std::unordered_map<ElementIDType, double>
+  template <typename T = double>
+  std::unordered_map<ElementIDType, T>
   getAllRankQOIAtPhase(PhaseType phase, std::string rank_qoi) const {
-    std::unordered_map<ElementIDType, double> rank_qois;
-    auto qoi_getter = getRankQOIGetter(rank_qoi);
+    std::unordered_map<ElementIDType, T> rank_qois;
+    auto qoi_getter = getRankQOIGetter<T>(rank_qoi);
     for (auto const& [rank_id, rank] : this->ranks_) {
       rank_qois.insert(std::make_pair(rank_id, qoi_getter(rank, phase)));
     }
@@ -799,9 +819,49 @@ struct Info {
    * \return the value for a given user-defined key/value pair
    */
   QOIVariantTypes getRankUserDefined(
-    Rank rank, PhaseType phase, std::string const& key
+    Rank const& rank, PhaseType phase, std::string const& key
   ) const {
     return rank.getPhaseWork().at(phase).getUserDefined().at(key);
+  }
+
+  /**
+   * \brief Check if a QOI exists in user-defined
+   *
+   * \param[in] key the key
+   *
+   * \return whether it exists
+   */
+  bool hasRankUserDefined(std::string const& key) {
+    for (auto const& [id, rank] : ranks_) {
+      auto const num_phases = rank.getNumPhases();
+      for (std::size_t i = 0; i < num_phases; i++) {
+        auto const& ud = rank.getPhaseWork().at(i).getUserDefined();
+        if (auto iter = ud.find(key); iter != ud.end()) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  /**
+   * \brief Get the first value for a QOI that matches
+   *
+   * \param[in] key the key
+   *
+   * \return the value
+   */
+  QOIVariantTypes getFirstRankUserDefined(std::string const& key) {
+    for (auto const& [id, rank] : ranks_) {
+      auto const num_phases = rank.getNumPhases();
+      for (std::size_t i = 0; i < num_phases; i++) {
+        auto const& ud = rank.getPhaseWork().at(i).getUserDefined();
+        if (auto iter = ud.find(key); iter != ud.end()) {
+          return iter->second;
+        }
+      }
+    }
+    return QOIVariantTypes{};
   }
 
   /**
@@ -941,6 +1001,17 @@ struct Info {
   }
 
   /**
+   * \brief Check if a rank attribute exists
+   *
+   * \param[in] rank_qoi the qoi name
+   *
+   * \return whether it exists
+   */
+  bool hasRankAttribute(Rank const& rank, std::string const& rank_qoi) const {
+    return rank.getAttributes().find(rank_qoi) != rank.getAttributes().end();
+  }
+
+  /**
     * \brief Get the specified attribute of a rank at a given phase
     *
     * \param[in] rank the current rank
@@ -948,10 +1019,12 @@ struct Info {
     *
     * \return the requested attribute
     */
-  QOIVariantTypes getRankAttribute(Rank rank, std::string rank_qoi) const {
-    auto rank_attributes = rank.getAttributes();
-    if (rank_attributes.count(rank_qoi) > 0) {
-      return rank_attributes.at(rank_qoi);
+  QOIVariantTypes getRankAttribute(Rank const& rank, std::string rank_qoi) const {
+    if (
+      auto iter = rank.getAttributes().find(rank_qoi);
+      iter != rank.getAttributes().end()
+    ) {
+      return iter->second;
     } else {
       throw std::runtime_error("Invalid Rank QOI: " + rank_qoi);
     }
