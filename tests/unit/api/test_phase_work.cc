@@ -119,25 +119,4 @@ TEST_F(PhaseWorkTest, test_communications) {
   EXPECT_EQ(phase_0.getMaxVolume(), 40.0);
 }
 
-// /**
-//  * Test PhaseWork::serialize correctly serialize PhaseWork instance members
-//  */
-// TEST_F(PhaseWorkTest, test_serialization) {
-//   BasicSerializer<std::variant<PhaseType, ObjectWorkMap>> s =
-//     BasicSerializer<std::variant<PhaseType, ObjectWorkMap>>();
-
-//   phase_0.serialize(s);
-//   EXPECT_EQ(s.items.size(), 2);
-
-//   auto actual_phase_id = std::get<PhaseType>(s.items[0]);
-//   EXPECT_EQ(actual_phase_id, phase_0.getPhase()); // phase id
-
-//   ObjectWorkMap actual_objects = std::get<ObjectWorkMap>(s.items[1]);
-//   for (auto const& [object_id, o] : phase_0.getObjectWork()) {
-//     EXPECT_EQ(actual_objects[object_id].getID(), o.getID());
-//     EXPECT_EQ(actual_objects[object_id].getLoad(), o.getLoad());
-//     EXPECT_EQ(actual_objects[object_id].getMaxVolume(), o.getMaxVolume());
-//   }
-// }
-
 } // namespace vt::tv::tests::unit::api
