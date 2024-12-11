@@ -368,44 +368,6 @@ struct Info {
     return rank_qois;
   }
 
-  // /**
-  //  * \brief Get QOI of all ranks at given phase
-  //  *
-  //  * \return a map of QOI per rank
-  //  */
-  // template <typename T = double>
-  // std::unordered_map<ElementIDType, T>
-  // getAllRankQOIAtPhase(PhaseType phase, std::string const& rank_qoi) const {
-  //   std::unordered_map<ElementIDType, T> rank_qois;
-
-  //   if (hasRankUserDefined(rank_qoi)) {
-  //     auto const& test_value = getFirstRankUserDefined(rank_qoi);
-  //     for (uint64_t rank_id = 0; rank_id < ranks_.size(); rank_id++) {
-  //       auto const& rank = ranks_.at(rank_id);
-  //       if (std::holds_alternative<double>(test_value)) {
-  //         rank_qois.emplace(
-  //           phase, static_cast<T>(
-  //             std::get<double>(getRankUserDefined(rank, phase, rank_qoi))
-  //           )
-  //         );
-  //       } else if (std::holds_alternative<int>(test_value)) {
-  //         rank_qois.emplace(
-  //           phase, static_cast<T>(
-  //             std::get<int>(getRankUserDefined(rank, phase, rank_qoi))
-  //           )
-  //         );
-  //       }
-  //     }
-  //   } else {
-  //     auto qoi_getter = getRankQOIGetter<T>(rank_qoi);
-  //     for (auto const& [rank_id, rank] : this->ranks_) {
-  //       rank_qois.emplace(rank_id, qoi_getter(rank, phase, no_lb_iter));
-  //     }
-  //   }
-
-  //   return rank_qois;
-  // }
-
   /*  --------------------------------  Object Getters  --------------------------------  */
 
   /**

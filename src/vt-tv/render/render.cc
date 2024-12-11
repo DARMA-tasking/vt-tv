@@ -288,17 +288,6 @@ std::pair<double, double> Render::computeRankQOIRange_() {
   return std::make_pair(rq_min, rq_max);
 }
 
-// double Render::computeRankQOIAverage_(PhaseType phase, std::string qoi) {
-//   // Initialize rank QOI range attributes
-//   double rq_sum = 0.0;
-//   auto const& rank_loads_at_phase =
-//     this->info_.getAllRankQOIAtPhase<double>(phase, qoi);
-//   for (auto const& [rank, rank_load] : rank_loads_at_phase) {
-//     rq_sum += rank_load;
-//   }
-//   return rq_sum / rank_loads_at_phase.size();
-// }
-
 std::map<NodeType, std::unordered_map<ElementIDType, ObjectWork>>
 Render::createObjectMapping_(PhaseType phase, LBIterationType lb_iter) {
   std::map<NodeType, std::unordered_map<ElementIDType, ObjectWork>>
