@@ -160,7 +160,7 @@ TEST_F(JSONReaderTest, test_json_reader_object_info_attributes) {
   auto& rank_info = info->getRank(rank);
   EXPECT_EQ(rank_info.getRankID(), rank);
 
-  auto const& objects = info->getRankObjects(0, 0);
+  auto const& objects = info->getRankObjects(0, 0, no_lb_iter);
   auto const& object_work = objects.at(3407875);
 
   auto& object_attributes = object_work.getAttributes();
@@ -211,7 +211,7 @@ TEST_F(JSONReaderTest, test_json_reader_object_work_user_defined) {
   auto& rank_info = info->getRank(rank);
   EXPECT_EQ(rank_info.getRankID(), rank);
 
-  auto const& objects = info->getRankObjects(0, 0);
+  auto const& objects = info->getRankObjects(0, 0, no_lb_iter);
   auto const& object_info = objects.at(3407875);
 
   auto& user_defined = object_info.getUserDefined();

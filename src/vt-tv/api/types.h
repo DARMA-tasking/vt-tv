@@ -51,6 +51,7 @@
 namespace vt::tv {
 
 using PhaseType = uint64_t;
+using LBIterationType = uint64_t;
 using NodeType = int16_t;
 using ElementIDType = uint64_t;
 using SubphaseType = uint16_t;
@@ -60,6 +61,8 @@ using CollectionObjGroupIDType = uint64_t;
 
 /// Possible QOIs types
 using QOIVariantTypes = std::variant<int, double, std::string>;
+
+constexpr LBIterationType no_lb_iter = static_cast<LBIterationType>(-1);
 
 } /* end namespace vt::tv */
 
