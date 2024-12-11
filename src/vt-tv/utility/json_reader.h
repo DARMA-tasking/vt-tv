@@ -101,6 +101,23 @@ struct JSONReader {
   bool validate_datafile(std::string file_path);
 
 private:
+  /**
+   * \brief Read in a phase or LB iteration in a JSON data file
+   *
+   * \param[in] phase_id the phase ID
+   * \param[in] j json input
+   * \param[in] object_info collection of object information
+   * \param[in] is_lb_iter whether we are parsing an LB iteration
+   *
+   * \return the \c WorkDistribution
+   */
+  std::unique_ptr<WorkDistribution> parsePhaseIter(
+    PhaseType phase_id, nlohmann::json j,
+    std::unordered_map<ElementIDType, ObjectInfo>& object_info,
+    bool is_lb_iter = false
+  );
+
+private:
   NodeType rank_ = 0;
   std::unique_ptr<nlohmann::json> json_ = nullptr;
 };

@@ -243,7 +243,7 @@ TEST_F(InfoTest, test_get_phase_objects) {
 
   Info info = Info(objects_info, {{0, rank_0}, {1, rank_1}, {2, rank_2}});
 
-  auto phase_0_objects = info.getPhaseObjects(0);
+  auto phase_0_objects = info.getPhaseObjects(0, no_lb_iter);
   for (auto& [key, val] : phase_0_objects) {
     fmt::print(
       "Phase 0 has object {} at key {} with load {}\n",
@@ -263,7 +263,7 @@ TEST_F(InfoTest, test_get_phase_objects) {
   ASSERT_EQ(phase_0_objects.at(4).getLoad(), 2.0);
   ASSERT_EQ(phase_0_objects.at(5).getLoad(), 2.0);
 
-  auto phase_1_objects = info.getPhaseObjects(1);
+  auto phase_1_objects = info.getPhaseObjects(1, no_lb_iter);
   for (auto& [key, val] : phase_1_objects) {
     fmt::print(
       "Phase 1 has object {} at key {} with load {}\n",
@@ -313,7 +313,8 @@ TEST_F(InfoTest, test_get_max_load_after_changing_selected_phase) {
     info.getMaxLoad();
   } catch (std::exception& e) {
     fmt::print(
-      "Authorized exception (unitialized selected phase): {}\n", e.what());
+      "Authorized exception (uninitialized selected phase): {}\n", e.what()
+    );
   }
 
   info.setSelectedPhase(1);
@@ -409,9 +410,14 @@ TEST_F(InfoTest, test_get_object_qoi) {
      "non-existent"});
   for (auto const& qoi : qoi_list) {
     if (qoi == "non-existent") {
-      EXPECT_THROW(info.getObjectQOIAtPhase<double>(0, 0, qoi), std::runtime_error);
+      EXPECT_THROW(
+        info.getObjectQOIAtPhase<double>(0, 0, no_lb_iter, qoi),
+        std::runtime_error
+      );
     } else {
-      ASSERT_NO_THROW(info.getObjectQOIAtPhase<double>(0, 0, qoi));
+      ASSERT_NO_THROW(
+        info.getObjectQOIAtPhase<double>(0, 0, no_lb_iter, qoi)
+      );
     }
   }
 }
@@ -465,14 +471,14 @@ TEST_F(InfoTest, test_get_rank_qoi) {
     auto qoi_getter = info.getRankQOIGetter<double>(qoi);
 
     if (qoi == "id") {
-      ASSERT_EQ(qoi_getter(rank_0, 0), 0);
-      ASSERT_EQ(qoi_getter(rank_1, 0), 1);
+      ASSERT_EQ(qoi_getter(rank_0, 0, no_lb_iter), 0);
+      ASSERT_EQ(qoi_getter(rank_1, 0, no_lb_iter), 1);
     } else if (qoi == "sent_volume") {
-      ASSERT_EQ(qoi_getter(rank_0, 0), 2.0);
-      ASSERT_EQ(qoi_getter(rank_1, 1), 3.6);
+      ASSERT_EQ(qoi_getter(rank_0, 0, no_lb_iter), 2.0);
+      ASSERT_EQ(qoi_getter(rank_1, 1, no_lb_iter), 3.6);
     } else if (qoi == "received_volume") {
-      ASSERT_EQ(qoi_getter(rank_0, 0), 0.0);
-      ASSERT_EQ(qoi_getter(rank_1, 1), 2.0);
+      ASSERT_EQ(qoi_getter(rank_0, 0, no_lb_iter), 0.0);
+      ASSERT_EQ(qoi_getter(rank_1, 1, no_lb_iter), 2.0);
     }
   }
 
@@ -485,16 +491,16 @@ TEST_F(InfoTest, test_get_rank_qoi) {
     std::get<std::string>(info.getRankAttribute(rank_1, "attr2")), "cd");
 
   // Test getRankQOIAtPhase method
-  ASSERT_EQ(info.getRankQOIAtPhase(0, 0, "sent_volume"), 2.0);
-  ASSERT_EQ(info.getRankQOIAtPhase(0, 0, "received_volume"), 0.0);
-  ASSERT_EQ(info.getRankQOIAtPhase(1, 1, "received_volume"), 2.0);
-  ASSERT_EQ(info.getRankQOIAtPhase(0, 0, "number_of_objects"), 2.0);
-  ASSERT_EQ(info.getRankQOIAtPhase(1, 0, "number_of_objects"), 0.0);
-  ASSERT_EQ(info.getRankQOIAtPhase(0, 0, "number_of_migratable_objects"), 2.0);
-  ASSERT_EQ(info.getRankQOIAtPhase(0, 0, "migratable_load"), 3.0);
-  ASSERT_EQ(info.getRankQOIAtPhase(1, 1, "sentinel_load"), 3.6);
-  ASSERT_EQ(info.getRankQOIAtPhase(1, 0, "id"), 1.0);
-  ASSERT_EQ(info.getRankQOIAtPhase(0, 0, "attr1"), 12.0);
+  ASSERT_EQ(info.getRankQOIAtPhase(0, 0, no_lb_iter, "sent_volume"), 2.0);
+  ASSERT_EQ(info.getRankQOIAtPhase(0, 0, no_lb_iter, "received_volume"), 0.0);
+  ASSERT_EQ(info.getRankQOIAtPhase(1, 1, no_lb_iter, "received_volume"), 2.0);
+  ASSERT_EQ(info.getRankQOIAtPhase(0, 0, no_lb_iter, "number_of_objects"), 2.0);
+  ASSERT_EQ(info.getRankQOIAtPhase(1, 0, no_lb_iter, "number_of_objects"), 0.0);
+  ASSERT_EQ(info.getRankQOIAtPhase(0, 0, no_lb_iter, "number_of_migratable_objects"), 2.0);
+  ASSERT_EQ(info.getRankQOIAtPhase(0, 0, no_lb_iter, "migratable_load"), 3.0);
+  ASSERT_EQ(info.getRankQOIAtPhase(1, 1, no_lb_iter, "sentinel_load"), 3.6);
+  ASSERT_EQ(info.getRankQOIAtPhase(1, 0, no_lb_iter, "id"), 1.0);
+  ASSERT_EQ(info.getRankQOIAtPhase(0, 0, no_lb_iter, "attr1"), 12.0);
 }
 
 TEST_F(

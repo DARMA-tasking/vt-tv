@@ -171,75 +171,89 @@ private:
    */
   std::pair<double, double> computeRankQOIRange_();
 
-  /**
-   * \brief Compute average of rank qoi.
-   *
-   * @param qoi quantity of interest on which to compute average
-   *
-   * \return rank qoi range
-   */
-  double computeRankQOIAverage_(PhaseType phase, std::string qoi);
+  // /**
+  //  * \brief Compute average of rank qoi.
+  //  *
+  //  * @param qoi quantity of interest on which to compute average
+  //  *
+  //  * \return rank qoi range
+  //  */
+  // double computeRankQOIAverage_(PhaseType phase, std::string qoi);
 
   /**
    * \brief Create mapping of objects in ranks
    *
    * \param[in] phase phase index
+   * \param[in] lb_iter the LB iteration
    *
    * \return mapping
    */
   std::map<NodeType, std::unordered_map<ElementIDType, ObjectWork>>
-  createObjectMapping_(PhaseType phase);
+  createObjectMapping_(PhaseType phase, LBIterationType lb_iter);
 
   /**
    * \brief Map ranks to polygonal mesh.
    *
    * \param[in] iteration phase index
+   * \param[in] lb_iter LB iteration
    *
    * \return rank mesh
    */
-  vtkNew<vtkPolyData> createRankMesh_(PhaseType iteration);
+  vtkNew<vtkPolyData> createRankMesh_(
+    PhaseType iteration, LBIterationType lb_iter
+  );
 
 private:
   /**
    * \brief Create rank array from user-defined
    *
    * \param[in] phase the phase
+   * \param[in] lb_iter the LB iteration
    * \param[in] key the QOI key to add
    */
   template <typename T, typename U>
-  vtkNew<U> createRankArrayUserDefined(PhaseType phase, std::string const& key);
+  vtkNew<U> createRankArrayUserDefined(
+    PhaseType phase, LBIterationType lb_iter, std::string const& key
+  );
 
   /**
    * \brief Create rank array from computed QOI
    *
    * \param[in] phase the phase
+   * \param[in] lb_iter the LB iteration
    * \param[in] key the QOI key to add
    */
   template <typename T, typename U>
-  vtkNew<U> createRankArrayComputed(PhaseType phase, std::string const& key);
+  vtkNew<U> createRankArrayComputed(
+    PhaseType phase, LBIterationType lb_iter, std::string const& key
+  );
 
   /**
    * \brief Add object array
    *
    * \param[in] pd_mesh the mesh
    * \param[in] phase the phase
+   * \param[in] lb_iter the LB iteration
    * \param[in] key the QOI key to add
-   */
+  */
   template <typename T, typename U>
   void addObjectArray(
-    vtkNew<vtkPolyData>& pd_mesh, PhaseType phase, std::string const& key
+    vtkNew<vtkPolyData>& pd_mesh, PhaseType phase, LBIterationType lb_iter,
+    std::string const& key
   );
-
 
 public:
     /**
    * \brief Map objects to polygonal mesh.
    *
    * \param[in] phase phase
+   * \param[in] lb_iter the LB iteration
    *
    * \return object mesh
    */
-  vtkNew<vtkPolyData> createObjectMesh_(PhaseType phase);
+  vtkNew<vtkPolyData> createObjectMesh_(
+    PhaseType phase, LBIterationType lb_iter
+  );
 
   static void
   getRgbFromTab20Colormap_(int index, double& r, double& g, double& b);
@@ -314,6 +328,8 @@ public:
    * @brief Export a visualization PNG from meshes.
    *
    * @param phase Phase to render.
+   * @param lb_iter LB iteration to render
+   * @param cur_frame the current frame number being rendered
    * @param rank_mesh Mesh data for the ranks.
    * @param object_mesh Mesh data for the objects.
    * @param edge_width Width of the edges in the visualization.
@@ -326,6 +342,8 @@ public:
    */
   void renderPNG(
     PhaseType phase,
+    LBIterationType lb_iter,
+    int cur_frame,
     vtkPolyData* rank_mesh,
     vtkPolyData* object_mesh,
     uint64_t edge_width,
@@ -333,7 +351,8 @@ public:
     uint64_t win_size,
     uint64_t font_size,
     std::string output_dir,
-    std::string output_file_stem);
+    std::string output_file_stem
+  );
 
   void generate(uint64_t font_size = 50, uint64_t win_size = 2000);
 };
