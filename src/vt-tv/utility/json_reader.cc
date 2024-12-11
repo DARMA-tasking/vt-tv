@@ -108,6 +108,172 @@ void JSONReader::readString(std::string const& in_json_string) {
   json_ = std::make_unique<json>(std::move(j));
 }
 
+std::unique_ptr<WorkDistribution> JSONReader::parsePhaseIter(
+  PhaseType phase_id, nlohmann::json elm,
+  std::unordered_map<ElementIDType, ObjectInfo>& object_info, bool is_lb_iter
+) {
+  std::unordered_map<std::string, QOIVariantTypes> whole_iter_phase_user_defined;
+  if (elm.find("user_defined") != elm.end()) {
+    auto phase_user_defined = elm["user_defined"];
+    if (phase_user_defined.is_object()) {
+      for (auto& [key, value] : phase_user_defined.items()) {
+        whole_iter_phase_user_defined[key] = value;
+      }
+    }
+  }
+  auto tasks = elm.value("tasks", elm.array());
+
+  std::unordered_map<ElementIDType, ObjectWork> objects;
+
+  if (tasks.is_array()) {
+    for (auto const& task : tasks) {
+      auto node = task["node"];
+      auto time = task["time"];
+      auto etype = task["entity"]["type"];
+      assert(time.is_number() && "task time must be a number");
+      assert(node.is_number() && "task node must be a number");
+
+      if (etype == "object") {
+        auto object = task["entity"].value("id", task["entity"]["seq_id"]);
+        auto home = task["entity"]["home"];
+        bool migratable = task["entity"]["migratable"];
+
+        assert(object.is_number() && "task id or seq_id must be provided and be a number");
+        assert(home.is_number() && "task home must be a number");
+
+        std::vector<UniqueIndexBitType> index_arr;
+
+        if (
+          task["entity"].find("collection_id") != task["entity"].end() and
+          task["entity"].find("index") != task["entity"].end()) {
+          auto cid = task["entity"]["collection_id"];
+          auto idx = task["entity"]["index"];
+          if (cid.is_number() && idx.is_array()) {
+            std::vector<UniqueIndexBitType> arr = idx;
+            index_arr = std::move(arr);
+          }
+        }
+
+        ObjectInfo oi{object, home, migratable, std::move(index_arr)};
+
+        if (task["entity"].find("collection_id") != task["entity"].end()) {
+          oi.setIsCollection(true);
+          oi.setMetaID(task["entity"]["collection_id"]);
+        }
+
+        if (task["entity"].find("objgroup_id") != task["entity"].end()) {
+          oi.setIsObjGroup(true);
+          oi.setMetaID(task["entity"]["objgroup_id"]);
+        }
+
+        object_info.try_emplace(object, std::move(oi));
+
+        std::unordered_map<SubphaseType, TimeType> subphase_loads;
+
+        if (task.find("subphases") != task.end()) {
+          auto subphases = task["subphases"];
+          if (subphases.is_array()) {
+            for (auto const& s : subphases) {
+              auto sid = s["id"];
+              auto stime = s["time"];
+
+              assert(sid.is_number() && "sid must be a number");
+              assert(stime.is_number() && "stime must be a number");
+
+              subphase_loads[sid] = stime;
+            }
+          }
+        }
+
+        std::unordered_map<std::string, QOIVariantTypes>
+          task_user_defined;
+        if (task.find("user_defined") != task.end()) {
+          auto user_defined = task["user_defined"];
+          if (user_defined.is_object()) {
+            for (auto& [key, value] : user_defined.items()) {
+              task_user_defined[key] = value;
+            }
+          }
+        }
+
+        std::unordered_map<std::string, QOIVariantTypes> task_attributes;
+        if (task.find("attributes") != task.end()) {
+          auto attributes = task["attributes"];
+          if (attributes.is_object()) {
+            for (auto& [key, value] : attributes.items()) {
+              task_attributes[key] = value;
+            }
+          }
+        }
+
+        // fmt::print(" Add object {}\n", (ElementIDType)object);
+        objects.try_emplace(
+          object,
+          ObjectWork{
+            object,
+            time,
+            std::move(subphase_loads),
+            std::move(task_user_defined),
+            std::move(task_attributes)
+          }
+        );
+      }
+    }
+  }
+
+  auto communications = elm.value("communications", elm.array());
+  if (communications.is_array()) {
+    for (auto const& comm : communications) {
+      auto type = comm["type"];
+      if (type == "SendRecv") {
+        auto bytes = comm["bytes"];
+        auto messages = comm["messages"];
+
+        auto from = comm["from"];
+        auto to = comm["to"];
+
+        ElementIDType from_id = from.value("id", from["seq_id"]);
+        ElementIDType to_id = to.value("id", to["seq_id"]);
+
+        assert(bytes.is_number() && "bytes must be a number");
+        // assert(from.is_number());
+        // assert(to.is_number());
+
+        // fmt::print(" From: {}, to: {}\n", from_id, to_id);
+
+        // Object on this rank sent data
+        auto from_it = objects.find(from_id);
+        if (from_it != objects.end()) {
+          from_it->second.addSentCommunications(to_id, bytes);
+        } else {
+          auto to_it = objects.find(to_id);
+          if (to_it != objects.end()) {
+            to_it->second.addReceivedCommunications(from_id, bytes);
+          } else {
+            fmt::print(
+              "Warning: Communication {} -> {}: neither sender nor "
+              "recipient was found in objects.\n",
+              from_id,
+              to_id);
+          }
+        }
+      }
+    }
+  }
+
+  if (is_lb_iter) {
+    auto lb_iter_id = elm["id"];
+    return std::make_unique<LBIteration>(
+      phase_id, lb_iter_id,
+      std::move(objects), std::move(whole_iter_phase_user_defined)
+    );
+  } else {
+    return std::make_unique<PhaseWork>(
+      phase_id, std::move(objects), std::move(whole_iter_phase_user_defined)
+    );
+  }
+}
+
 std::unique_ptr<Info> JSONReader::parse() {
   using json = nlohmann::json;
 
@@ -121,174 +287,42 @@ std::unique_ptr<Info> JSONReader::parse() {
   auto phases = j["phases"];
   if (phases.is_array()) {
     for (auto const& phase : phases) {
-      std::unordered_map<std::string, QOIVariantTypes> read_phase_user_defined;
-      auto id = phase["id"];
-      if (phase.find("user_defined") != phase.end()) {
-        auto phase_user_defined = phase["user_defined"];
-        if (phase_user_defined.is_object()) {
-          for (auto& [key, value] : phase_user_defined.items()) {
-            read_phase_user_defined[key] = value;
-          }
-        }
-      }
-      auto tasks = phase.value("tasks", j.array());
-
-      std::unordered_map<ElementIDType, ObjectWork> objects;
-
-      if (tasks.is_array()) {
-        for (auto const& task : tasks) {
-          auto node = task["node"];
-          auto time = task["time"];
-          auto etype = task["entity"]["type"];
-          assert(time.is_number() && "task time must be a number");
-          assert(node.is_number() && "task node must be a number");
-
-          if (etype == "object") {
-            auto object = task["entity"].value("id", task["entity"]["seq_id"]);
-            auto home = task["entity"]["home"];
-            bool migratable = task["entity"]["migratable"];
-
-            assert(object.is_number() && "task id or seq_id must be provided and be a number");
-            assert(home.is_number() && "task home must be a number");
-
-            std::vector<UniqueIndexBitType> index_arr;
-
-            if (
-              task["entity"].find("collection_id") != task["entity"].end() and
-              task["entity"].find("index") != task["entity"].end()) {
-              auto cid = task["entity"]["collection_id"];
-              auto idx = task["entity"]["index"];
-              if (cid.is_number() && idx.is_array()) {
-                std::vector<UniqueIndexBitType> arr = idx;
-                index_arr = std::move(arr);
-              }
-            }
-
-            ObjectInfo oi{object, home, migratable, std::move(index_arr)};
-
-            if (task["entity"].find("collection_id") != task["entity"].end()) {
-              oi.setIsCollection(true);
-              oi.setMetaID(task["entity"]["collection_id"]);
-            }
-
-            if (task["entity"].find("objgroup_id") != task["entity"].end()) {
-              oi.setIsObjGroup(true);
-              oi.setMetaID(task["entity"]["objgroup_id"]);
-            }
-
-            object_info.try_emplace(object, std::move(oi));
-
-            std::unordered_map<SubphaseType, TimeType> subphase_loads;
-
-            if (task.find("subphases") != task.end()) {
-              auto subphases = task["subphases"];
-              if (subphases.is_array()) {
-                for (auto const& s : subphases) {
-                  auto sid = s["id"];
-                  auto stime = s["time"];
-
-                  assert(sid.is_number() && "sid must be a number");
-                  assert(stime.is_number() && "stime must be a number");
-
-                  subphase_loads[sid] = stime;
-                }
-              }
-            }
-
-            std::unordered_map<std::string, QOIVariantTypes>
-              readed_user_defined;
-            if (task.find("user_defined") != task.end()) {
-              auto user_defined = task["user_defined"];
-              if (user_defined.is_object()) {
-                for (auto& [key, value] : user_defined.items()) {
-                  readed_user_defined[key] = value;
-                }
-              }
-            }
-
-            std::unordered_map<std::string, QOIVariantTypes> readed_attributes;
-            if (task.find("attributes") != task.end()) {
-              auto attributes = task["attributes"];
-              if (attributes.is_object()) {
-                for (auto& [key, value] : attributes.items()) {
-                  readed_attributes[key] = value;
-                }
-              }
-            }
-
-            // fmt::print(" Add object {}\n", (ElementIDType)object);
-            objects.try_emplace(
-              object,
-              ObjectWork{
-                object,
-                time,
-                std::move(subphase_loads),
-                std::move(readed_user_defined),
-                std::move(readed_attributes)});
-          }
-        }
-      }
-
-      auto communications = phase.value("communications", j.array());
-      if (communications.is_array()) {
-        for (auto const& comm : communications) {
-          auto type = comm["type"];
-          if (type == "SendRecv") {
-            auto bytes = comm["bytes"];
-            auto messages = comm["messages"];
-
-            auto from = comm["from"];
-            auto to = comm["to"];
-
-            ElementIDType from_id = from.value("id", from["seq_id"]);
-            ElementIDType to_id = to.value("id", to["seq_id"]);
-
-            assert(bytes.is_number() && "bytes must be a number");
-            // assert(from.is_number());
-            // assert(to.is_number());
-
-            // fmt::print(" From: {}, to: {}\n", from_id, to_id);
-
-            // Object on this rank sent data
-            auto from_it = objects.find(from_id);
-            if (from_it != objects.end()) {
-              from_it->second.addSentCommunications(to_id, bytes);
-            } else {
-              auto to_it = objects.find(to_id);
-              if (to_it != objects.end()) {
-                to_it->second.addReceivedCommunications(from_id, bytes);
-              } else {
-                fmt::print(
-                  "Warning: Communication {} -> {}: neither sender nor "
-                  "recipient was found in objects.\n",
-                  from_id,
-                  to_id);
-              }
-            }
-          }
-        }
-      }
+      auto phase_id = phase["id"];
+      auto pw = parsePhaseIter(phase_id, phase, object_info);
       phase_info.try_emplace(
-        id,
-        PhaseWork{id, std::move(objects), std::move(read_phase_user_defined)}
+        phase_id,
+        *static_cast<PhaseWork*>(pw.release())
       );
+      if (phase.find("lb_iterations") != phase.end()) {
+        auto lb_iters = j["lb_iterations"];
+        if (lb_iters.is_array()) {
+          for (auto const& iter : lb_iters) {
+            auto lb_iter = parsePhaseIter(phase_id, iter, object_info);
+            auto lb_id = static_cast<LBIteration*>(lb_iter.get())->getLBIterationID();
+            phase_info[phase_id].addLBIteration(
+              lb_id,
+              *static_cast<LBIteration*>(lb_iter.release())
+            );
+          }
+        }
+      }
     }
   }
 
-  std::unordered_map<std::string, QOIVariantTypes> readed_metadata;
+  std::unordered_map<std::string, QOIVariantTypes> read_metadata;
   if (j.find("metadata") != j.end()) {
     auto metadata = j["metadata"];
     if (metadata.find("attributes") != metadata.end()) {
       auto attributes = metadata["attributes"];
       if (attributes.is_object()) {
         for (auto& [key, value] : attributes.items()) {
-          readed_metadata[key] = value;
+          read_metadata[key] = value;
         }
       }
     }
   }
 
-  Rank r{rank_, std::move(phase_info), std::move(readed_metadata)};
+  Rank r{rank_, std::move(phase_info), std::move(read_metadata)};
 
   std::unordered_map<NodeType, Rank> rank_info;
   rank_info.try_emplace(rank_, std::move(r));

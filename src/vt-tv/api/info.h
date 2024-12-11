@@ -196,46 +196,46 @@ struct Info {
    * \brief Returns a getter to a specified rank QOI
    */
   template <typename T>
-  std::function<T(Rank, PhaseType)>
+  std::function<T(Rank, PhaseType, LBIterationType)>
   getRankQOIGetter(std::string const& rank_qoi) const {
-    std::function<T(Rank, PhaseType)> qoi_getter;
+    std::function<T(Rank, PhaseType, LBIterationType)> qoi_getter;
     if (rank_qoi == "load") {
-      qoi_getter = [&](Rank rank, PhaseType phase) {
-        return convertQOIVariantTypeToT_<T>(getRankLoad(rank, phase));
+      qoi_getter = [&](Rank rank, PhaseType phase, LBIterationType lb_iter) {
+        return convertQOIVariantTypeToT_<T>(getRankLoad(rank, phase, lb_iter));
       };
     } else if (rank_qoi == "received_volume") {
-      qoi_getter = [&](Rank rank, PhaseType phase) {
+      qoi_getter = [&](Rank rank, PhaseType phase, LBIterationType lb_iter) {
         return convertQOIVariantTypeToT_<T>(
-          getRankReceivedVolume(rank, phase));
+          getRankReceivedVolume(rank, phase, lb_iter));
       };
     } else if (rank_qoi == "sent_volume") {
-      qoi_getter = [&](Rank rank, PhaseType phase) {
-        return convertQOIVariantTypeToT_<T>(getRankSentVolume(rank, phase));
+      qoi_getter = [&](Rank rank, PhaseType phase, LBIterationType lb_iter) {
+        return convertQOIVariantTypeToT_<T>(getRankSentVolume(rank, phase, lb_iter));
       };
     } else if (rank_qoi == "number_of_objects") {
-      qoi_getter = [&](Rank rank, PhaseType phase) {
-        return convertQOIVariantTypeToT_<T>(getRankNumObjects(rank, phase));
+      qoi_getter = [&](Rank rank, PhaseType phase, LBIterationType lb_iter) {
+        return convertQOIVariantTypeToT_<T>(getRankNumObjects(rank, phase, lb_iter));
       };
     } else if (rank_qoi == "number_of_migratable_objects") {
-      qoi_getter = [&](Rank rank, PhaseType phase) {
+      qoi_getter = [&](Rank rank, PhaseType phase, LBIterationType lb_iter) {
         return convertQOIVariantTypeToT_<T>(
-          getRankNumMigratableObjects(rank, phase));
+          getRankNumMigratableObjects(rank, phase, lb_iter));
       };
     } else if (rank_qoi == "migratable_load") {
-      qoi_getter = [&](Rank rank, PhaseType phase) {
-        return convertQOIVariantTypeToT_<T>(getRankMigratableLoad(rank, phase));
+      qoi_getter = [&](Rank rank, PhaseType phase, LBIterationType lb_iter) {
+        return convertQOIVariantTypeToT_<T>(getRankMigratableLoad(rank, phase, lb_iter));
       };
     } else if (rank_qoi == "sentinel_load") {
-      qoi_getter = [&](Rank rank, PhaseType phase) {
-        return convertQOIVariantTypeToT_<T>(getRankSentinelLoad(rank, phase));
+      qoi_getter = [&](Rank rank, PhaseType phase, LBIterationType lb_iter) {
+        return convertQOIVariantTypeToT_<T>(getRankSentinelLoad(rank, phase, lb_iter));
       };
     } else if (rank_qoi == "id") {
-      qoi_getter = [&](Rank rank, PhaseType) {
+      qoi_getter = [&](Rank rank, PhaseType, LBIterationType) {
         return convertQOIVariantTypeToT_<T>(getRankID(rank));
       };
     } else {
       // Look in attributes (will throw an error if QOI doesn't exist)
-      qoi_getter = [&](Rank rank, PhaseType) {
+      qoi_getter = [&](Rank rank, PhaseType, LBIterationType) {
         return convertQOIVariantTypeToT_<T>(getRankAttribute(rank, rank_qoi));
       };
     }
@@ -292,11 +292,12 @@ struct Info {
    */
   template <typename T = double>
   T getRankQOIAtPhase(
-    ElementIDType rank_id, PhaseType phase, std::string const& rank_qoi
+    ElementIDType rank_id, PhaseType phase, LBIterationType lb_iter,
+    std::string const& rank_qoi
   ) const {
     auto qoi_getter = getRankQOIGetter<T>(rank_qoi);
     auto const& rank = this->ranks_.at(rank_id);
-    return qoi_getter(rank, phase);
+    return qoi_getter(rank, phase, lb_iter);
   }
 
   /**
@@ -305,77 +306,105 @@ struct Info {
    * \return a map of QOI per rank
    */
   template <typename T = double>
-  std::unordered_map<PhaseType, T>
+  std::vector<T>
   getAllQOIAtRank(ElementIDType rank_id, std::string const& rank_qoi) const {
     auto const& rank = ranks_.at(rank_id);
     auto const& phase_work = rank.getPhaseWork();
 
-    std::unordered_map<PhaseType, T> rank_qois;
+    std::vector<T> rank_qois;
 
     if (hasRankUserDefined(rank_qoi)) {
       auto const& test_value = getFirstRankUserDefined(rank_qoi);
-      for (auto const& [phase, _] : phase_work) {
+      for (auto const& [phase, pw] : phase_work) {
         if (std::holds_alternative<double>(test_value)) {
-          rank_qois.emplace(
-            phase, static_cast<T>(
-              std::get<double>(getRankUserDefined(rank, phase, rank_qoi))
+          rank_qois.push_back(
+            static_cast<T>(
+              std::get<double>(
+                getRankUserDefined(rank, phase, no_lb_iter, rank_qoi)
+              )
             )
           );
         } else if (std::holds_alternative<int>(test_value)) {
-          rank_qois.emplace(
-            phase, static_cast<T>(
-              std::get<int>(getRankUserDefined(rank, phase, rank_qoi))
+          rank_qois.push_back(
+            static_cast<T>(
+              std::get<int>(
+                getRankUserDefined(rank, phase, no_lb_iter, rank_qoi)
+              )
             )
           );
+        }
+
+        // Now, loop through all the LB iterations
+        for (auto const& [lb_iter, lb_iter_work] : pw.getLBIterations()) {
+          if (std::holds_alternative<double>(test_value)) {
+            rank_qois.push_back(
+              static_cast<T>(
+                std::get<double>(
+                  getRankUserDefined(rank, phase, lb_iter, rank_qoi)
+                )
+              )
+            );
+          } else if (std::holds_alternative<int>(test_value)) {
+            rank_qois.push_back(
+              static_cast<T>(
+                std::get<int>(
+                  getRankUserDefined(rank, phase, lb_iter, rank_qoi)
+                )
+              )
+            );
+          }
         }
       }
     } else {
       auto qoi_getter = getRankQOIGetter<T>(rank_qoi);
-      for (auto const& [phase, _] : phase_work) {
-        rank_qois.emplace(phase, qoi_getter(rank, phase));
+      for (auto const& [phase, pw] : phase_work) {
+        rank_qois.push_back(qoi_getter(rank, phase, -1));
+        for (auto const& [lb_iter, lb_iter_work] : pw.getLBIterations()) {
+          rank_qois.push_back(qoi_getter(rank, phase, lb_iter));
+        }
       }
     }
 
     return rank_qois;
   }
 
-  /**
-   * \brief Get QOI of all ranks at given phase
-   *
-   * \return a map of QOI per rank
-   */
-  template <typename T = double>
-  std::unordered_map<ElementIDType, T>
-  getAllRankQOIAtPhase(PhaseType phase, std::string const& rank_qoi) const {
-    std::unordered_map<ElementIDType, T> rank_qois;
+  // /**
+  //  * \brief Get QOI of all ranks at given phase
+  //  *
+  //  * \return a map of QOI per rank
+  //  */
+  // template <typename T = double>
+  // std::unordered_map<ElementIDType, T>
+  // getAllRankQOIAtPhase(PhaseType phase, std::string const& rank_qoi) const {
+  //   std::unordered_map<ElementIDType, T> rank_qois;
 
-    if (hasRankUserDefined(rank_qoi)) {
-      auto const& test_value = getFirstRankUserDefined(rank_qoi);
-      for (uint64_t rank_id = 0; rank_id < ranks_.size(); rank_id++) {
-        auto const& rank = ranks_.at(rank_id);
-        if (std::holds_alternative<double>(test_value)) {
-          rank_qois.emplace(
-            phase, static_cast<T>(
-              std::get<double>(getRankUserDefined(rank, phase, rank_qoi))
-            )
-          );
-        } else if (std::holds_alternative<int>(test_value)) {
-          rank_qois.emplace(
-            phase, static_cast<T>(
-              std::get<int>(getRankUserDefined(rank, phase, rank_qoi))
-            )
-          );
-        }
-      }
-    } else {
-      auto qoi_getter = getRankQOIGetter<T>(rank_qoi);
-      for (auto const& [rank_id, rank] : this->ranks_) {
-        rank_qois.emplace(rank_id, qoi_getter(rank, phase));
-      }
-    }
+  //   if (hasRankUserDefined(rank_qoi)) {
+  //     auto const& test_value = getFirstRankUserDefined(rank_qoi);
+  //     for (uint64_t rank_id = 0; rank_id < ranks_.size(); rank_id++) {
+  //       auto const& rank = ranks_.at(rank_id);
+  //       if (std::holds_alternative<double>(test_value)) {
+  //         rank_qois.emplace(
+  //           phase, static_cast<T>(
+  //             std::get<double>(getRankUserDefined(rank, phase, rank_qoi))
+  //           )
+  //         );
+  //       } else if (std::holds_alternative<int>(test_value)) {
+  //         rank_qois.emplace(
+  //           phase, static_cast<T>(
+  //             std::get<int>(getRankUserDefined(rank, phase, rank_qoi))
+  //           )
+  //         );
+  //       }
+  //     }
+  //   } else {
+  //     auto qoi_getter = getRankQOIGetter<T>(rank_qoi);
+  //     for (auto const& [rank_id, rank] : this->ranks_) {
+  //       rank_qois.emplace(rank_id, qoi_getter(rank, phase, no_lb_iter));
+  //     }
+  //   }
 
-    return rank_qois;
-  }
+  //   return rank_qois;
+  // }
 
   /*  --------------------------------  Object Getters  --------------------------------  */
 
@@ -386,9 +415,10 @@ struct Info {
    */
   template <typename T>
   T getObjectQOIAtPhase(
-    ElementIDType obj_id, PhaseType phase, std::string const& obj_qoi
+    ElementIDType obj_id, PhaseType phase, LBIterationType lb_iter,
+    std::string const& obj_qoi
   ) const {
-    auto const& objects = this->getPhaseObjects(phase);
+    auto const& objects = getPhaseObjects(phase, lb_iter);
     auto const& obj = objects.at(obj_id);
     auto const& ud = obj.getUserDefined();
 
@@ -405,6 +435,31 @@ struct Info {
   }
 
   /**
+   * \brief Get a work distribution
+   *
+   * \param[in] phase the phase
+   * \param[in] lb_iter the LB iteration
+   *
+   * \return the work distribution
+   */
+  WorkDistribution const& getWorkDistribution(
+    Rank const& rank, PhaseType phase, LBIterationType lb_iter
+  ) const {
+    auto const& pw = rank.getPhaseWork();
+    if (auto iter = pw.find(phase); iter == pw.end()) {
+      auto ex = "info::getPhaseObjects: Phase " + std::to_string(phase) +
+        " doesn't exist for rank " + std::to_string(rank.getRankID());
+      throw std::runtime_error(ex);
+    }
+
+    if (lb_iter == no_lb_iter) {
+      return pw.at(phase);
+    } else {
+      return pw.at(phase).getLBIteration(lb_iter);
+    }
+  }
+
+  /**
    * \brief Get all objects for a given rank and phase
    *
    * \param[in] rank_id the rank
@@ -413,21 +468,22 @@ struct Info {
    * \return the objects
    */
   std::unordered_map<ElementIDType, ObjectWork>
-  getRankObjects(ElementIDType rank_id, PhaseType phase) const {
+  getRankObjects(
+    ElementIDType rank_id, PhaseType phase, LBIterationType lb_iter
+  ) const {
     std::unordered_map<ElementIDType, ObjectWork> objects;
 
     // Get Rank info for specified rank
     auto const& rank_info = ranks_.at(rank_id);
 
-    // Get history of phases for this rank
-    auto const& phase_history_at_rank = rank_info.getPhaseWork();
-
     // Get phase work at specified phase
-    auto const& phase_work_at_rank = phase_history_at_rank.find(phase);
+    auto const& phase_work_at_rank = getWorkDistribution(
+      rank_info, phase, lb_iter
+    );
 
     // Get all objects at specified phase
     auto const& object_work_at_phase_at_rank =
-      phase_work_at_rank->second.getObjectWork();
+      phase_work_at_rank.getObjectWork();
 
     for (auto const& [elm_id, obj_work] : object_work_at_phase_at_rank) {
       objects.insert(std::make_pair(elm_id, obj_work));
@@ -437,38 +493,31 @@ struct Info {
   }
 
   /**
-   * \brief Get all objects in all ranks for a given phase
+   * \brief Get all objects in all ranks for a given phase and LB iteration
    *
    * \param[in] phase the phase
+   * \param[in] lb_iter the LB iterations
    *
    * \return the objects
    */
   std::unordered_map<ElementIDType, ObjectWork>
-  getPhaseObjects(PhaseType phase) const {
+  getPhaseObjects(PhaseType phase, LBIterationType lb_iter) const {
     // fmt::print("Phase: {}\n", phase);
 
     // Map of objects at given phase
     std::unordered_map<ElementIDType, ObjectWork> objects_at_phase;
 
     // Go through all ranks and get all objects at given phase
-    for (uint64_t rank = 0; rank < this->ranks_.size(); rank++) {
+    for (uint64_t rank = 0; rank < ranks_.size(); rank++) {
       // fmt::print("  Rank: {}\n",rank);
       // Get Rank info for specified rank
       auto const& rank_info = ranks_.at(rank);
 
       // Get history of phases for this rank
-      auto const& phase_history = rank_info.getPhaseWork();
-
-      // Get phase work at specified phase
-      auto const& phase_work = phase_history.find(phase);
-      if (phase_work == phase_history.end()) {
-        auto ex = "info::getPhaseObjects: Phase " + std::to_string(phase) +
-          " doesn't exist for rank " + std::to_string(rank);
-        throw std::runtime_error(ex);
-      }
+      auto const& phase_work = getWorkDistribution(rank_info, phase, lb_iter);
 
       // Get all objects at specified phase
-      auto const& object_work_at_phase = phase_work->second.getObjectWork();
+      auto const& object_work_at_phase = phase_work.getObjectWork();
 
       for (auto const& [elm_id, obj_work] : object_work_at_phase) {
         // fmt::print("    Object Id: {}\n", elm_id);
@@ -479,33 +528,53 @@ struct Info {
   }
 
   /**
-   * \brief Get maximum inter-object communication volume across all ranks and phases
+   * \brief Get maximum inter-object communication volume across all ranks and
+   * phases
    *
    * \return the maximum volume
    */
   double getMaxVolume() const {
     double ov_max = 0.;
 
-    /* Iterate over all phases: each object is re-initialized when
-    advancing to the next phase (in the JSON-reader), thus different memory spaces
-    are used for an object of the same id but of a different phase.
-    This means the object communications are not phase persistent, so one can't obtain
-    the maximum volume by iterated through object ids.
+    /*
+     * Iterate over all phases: each object is re-initialized when advancing to
+     * the next phase (in the JSON-reader), thus different memory spaces are
+     * used for an object of the same id but of a different phase. This means
+     * the object communications are not phase persistent, so one can't obtain
+     * the maximum volume by iterated through object ids.
     */
-    auto n_phases = this->getNumPhases();
+    auto const n_phases = getNumPhases();
 
     if (selected_phase_ != std::numeric_limits<PhaseType>::max()) {
-      auto const& objects = this->getPhaseObjects(selected_phase_);
+      auto const& objects = getPhaseObjects(selected_phase_, no_lb_iter);
       for (auto const& [obj_id, obj_work] : objects) {
         auto obj_max_v = obj_work.getMaxVolume();
         if (obj_max_v > ov_max)
           ov_max = obj_max_v;
       }
+      auto const& lb_iters =
+        getRank(0).getPhaseWork().at(selected_phase_).getLBIterations();
+      for (auto const& [lb_iter_id, _] : lb_iters) {
+        auto const& objects2 = getPhaseObjects(selected_phase_, lb_iter_id);
+        for (auto const& [obj_id, obj_work] : objects2) {
+          auto obj_max_v = obj_work.getMaxVolume();
+          if (obj_max_v > ov_max)
+            ov_max = obj_max_v;
+        }
+      }
     } else {
       for (PhaseType phase = 0; phase < n_phases; phase++) {
-        {
-          auto const& objects = this->getPhaseObjects(phase);
-          for (auto const& [obj_id, obj_work] : objects) {
+        auto const& objects = getPhaseObjects(phase, no_lb_iter);
+        for (auto const& [obj_id, obj_work] : objects) {
+          auto obj_max_v = obj_work.getMaxVolume();
+          if (obj_max_v > ov_max)
+            ov_max = obj_max_v;
+        }
+        auto const& lb_iters =
+          getRank(0).getPhaseWork().at(phase).getLBIterations();
+        for (auto const& [lb_iter_id, _] : lb_iters) {
+          auto const& objects2 = getPhaseObjects(phase, lb_iter_id);
+          for (auto const& [obj_id, obj_work] : objects2) {
             auto obj_max_v = obj_work.getMaxVolume();
             if (obj_max_v > ov_max)
               ov_max = obj_max_v;
@@ -524,22 +593,42 @@ struct Info {
   double getMaxLoad() const {
     double ol_max = 0.;
 
-    auto n_phases = this->getNumPhases();
+    auto const n_phases = getNumPhases();
 
     if (selected_phase_ != std::numeric_limits<PhaseType>::max()) {
-      auto const& objects = this->getPhaseObjects(selected_phase_);
+      auto const& objects = getPhaseObjects(selected_phase_, no_lb_iter);
       for (auto const& [obj_id, obj_work] : objects) {
         auto obj_load = obj_work.getLoad();
         if (obj_load > ol_max)
           ol_max = obj_load;
       }
+      auto const& lb_iters =
+        getRank(0).getPhaseWork().at(selected_phase_).getLBIterations();
+      for (auto const& [lb_iter_id, _] : lb_iters) {
+        auto const& objects2 = getPhaseObjects(selected_phase_, lb_iter_id);
+        for (auto const& [obj_id, obj_work] : objects2) {
+          auto obj_load = obj_work.getLoad();
+          if (obj_load > ol_max)
+            ol_max = obj_load;
+        }
+      }
     } else {
       for (PhaseType phase = 0; phase < n_phases; phase++) {
-        auto const& objects = this->getPhaseObjects(phase);
+        auto const& objects = getPhaseObjects(phase, no_lb_iter);
         for (auto const& [obj_id, obj_work] : objects) {
           auto obj_load = obj_work.getLoad();
           if (obj_load > ol_max)
             ol_max = obj_load;
+        }
+        auto const& lb_iters =
+          getRank(0).getPhaseWork().at(phase).getLBIterations();
+        for (auto const& [lb_iter_id, _] : lb_iters) {
+          auto const& objects2 = getPhaseObjects(phase, lb_iter_id);
+          for (auto const& [obj_id, obj_work] : objects2) {
+            auto obj_load = obj_work.getLoad();
+            if (obj_load > ol_max)
+              ol_max = obj_load;
+          }
         }
       }
     }
@@ -547,7 +636,8 @@ struct Info {
   }
 
   /**
-   * \brief Create mapping of all objects in all ranks for a given phase (made for allowing changes to these objects)
+   * \brief Create mapping of all objects in all ranks for a given phase (made
+   * for allowing changes to these objects)
    *
    * \param[in] phase the phase
    *
@@ -561,7 +651,7 @@ struct Info {
     std::unordered_map<ElementIDType, ObjectWork> objects_at_phase;
 
     // Go through all ranks and get all objects at given phase
-    for (uint64_t rank = 0; rank < this->ranks_.size(); rank++) {
+    for (uint64_t rank = 0; rank < ranks_.size(); rank++) {
       // fmt::print("  Rank: {}\n",rank);
       // Get Rank info for specified rank
       auto& rank_info = ranks_.at(rank);
@@ -593,10 +683,10 @@ struct Info {
     std::set<ElementIDType> objects;
 
     // Go through all ranks and get all objects at given phase
-    for (uint64_t rank = 0; rank < this->ranks_.size(); rank++) {
+    for (uint64_t rank = 0; rank < ranks_.size(); rank++) {
       // fmt::print("Rank: {}\n",rank);
       // Get Rank info for specified rank
-      auto const& rank_info = this->ranks_.at(rank);
+      auto const& rank_info = ranks_.at(rank);
 
       // Get history of phases for this rank
       auto const& phase_history = rank_info.getPhaseWork();
@@ -610,6 +700,15 @@ struct Info {
         for (auto const& [elm_id, obj_work] : object_work_at_phase) {
           // fmt::print("|    |-> Object Id: {}\n", elm_id);
           objects.insert(elm_id);
+        }
+
+        for (auto const& [lb_id, lb_iter] : phase_work.getLBIterations()) {
+          auto const& object_work_at_lb_iter = lb_iter.getObjectWork();
+
+          for (auto const& [elm_id, obj_work] : object_work_at_lb_iter) {
+            // fmt::print("|    |-> Object Id: {}\n", elm_id);
+            objects.insert(elm_id);
+          }
         }
       }
     }
@@ -737,20 +836,21 @@ struct Info {
    * \brief Compute imbalance across ranks at phase
    *
    * \param[in] phase the phase
+   * \param[in] lb_iter the LB iterations
    *
    * \return the imbalance
    */
-  double getImbalance(PhaseType phase) const {
+  double getImbalance(PhaseType phase, LBIterationType lb_iter) const {
     double load_sum = 0.;
     double max_load = 0.;
 
-    for (uint64_t rank = 0; rank < this->ranks_.size(); rank++) {
-      auto rank_max_load = this->getRank(rank).getLoad(phase);
-      if (rank_max_load > max_load)
-        max_load = rank_max_load;
-      load_sum += this->getRank(rank).getLoad(phase);
+    for (uint64_t rank = 0; rank < ranks_.size(); rank++) {
+      auto const rank_load = getRank(rank).getLoad(phase, lb_iter);
+      if (rank_load > max_load)
+        max_load = rank_load;
+      load_sum += rank_load;
     }
-    double load_avg = load_sum / this->ranks_.size();
+    double load_avg = load_sum / ranks_.size();
     double imbalance = std::numeric_limits<double>::quiet_NaN();
     if (load_avg != 0) {
       imbalance = (max_load / load_avg) - 1.;
@@ -836,7 +936,8 @@ struct Info {
     * \return the requested attribute or user_defined QOI
     */
   QOIVariantTypes getObjectAttributeOrUserDefined(
-    ObjectWork object, std::string object_qoi) const {
+    ObjectWork object, std::string object_qoi
+  ) const {
     auto obj_attributes = object.getAttributes();
     if (obj_attributes.count(object_qoi) > 0) {
       return obj_attributes.at(object_qoi);
@@ -875,9 +976,15 @@ struct Info {
    * \return the value for a given user-defined key/value pair
    */
   QOIVariantTypes getRankUserDefined(
-    Rank const& rank, PhaseType phase, std::string const& key
+    Rank const& rank, PhaseType phase, LBIterationType lb_iter,
+    std::string const& key
   ) const {
-    return rank.getPhaseWork().at(phase).getUserDefined().at(key);
+    if (lb_iter == no_lb_iter) {
+      return rank.getPhaseWork().at(phase).getUserDefined().at(key);
+    } else {
+      return rank.getPhaseWork().at(phase).getLBIteration(lb_iter)
+        .getUserDefined().at(key);
+    }
   }
 
   /**
@@ -894,6 +1001,13 @@ struct Info {
         auto const& ud = rank.getPhaseWork().at(i).getUserDefined();
         if (auto iter = ud.find(key); iter != ud.end()) {
           return true;
+        }
+        auto const& lb_iters = rank.getPhaseWork().at(i).getLBIterations();
+        for (auto const& [_, lb_iter] : lb_iters) {
+          auto const& ud2 = lb_iter.getUserDefined();
+          if (auto iter = ud2.find(key); iter != ud2.end()) {
+            return true;
+          }
         }
       }
     }
@@ -944,11 +1058,14 @@ struct Info {
    *
    * \param[in] rank the rank
    * \param[in] phase the phase
+   * \param[in] lb_iter the lb iteration
    *
    * \return the rank load
    */
-  QOIVariantTypes getRankLoad(Rank rank, PhaseType phase) const {
-    return rank.getLoad(phase);
+  QOIVariantTypes getRankLoad(
+    Rank rank, PhaseType phase, LBIterationType lb_iter
+  ) const {
+    return rank.getLoad(phase, lb_iter);
   }
 
   /**
@@ -956,12 +1073,17 @@ struct Info {
    *
    * \param[in] rank the rank
    * \param[in] phase the phase
+   * \param[in] lb_iter the lb iteration
    *
    * \return the received volume
    */
-  QOIVariantTypes getRankReceivedVolume(Rank rank, PhaseType phase) const {
+  QOIVariantTypes getRankReceivedVolume(
+    Rank rank, PhaseType phase, LBIterationType lb_iter
+  ) const {
     auto received_volume = 0.;
-    auto const& phase_objects = rank.getPhaseWork().at(phase).getObjectWork();
+    auto const& phase_objects = lb_iter == no_lb_iter ?
+      rank.getPhaseWork().at(phase).getObjectWork() :
+      rank.getPhaseWork().at(phase).getLBIteration(lb_iter).getObjectWork();
     for (auto const& [obj_id, obj_work] : phase_objects) {
       received_volume += obj_work.getReceivedVolume();
     }
@@ -973,12 +1095,17 @@ struct Info {
    *
    * \param[in] rank the rank
    * \param[in] phase the phase
+   * \param[in] lb_iter the lb iteration
    *
    * \return the sent volume
    */
-  QOIVariantTypes getRankSentVolume(Rank rank, PhaseType phase) const {
+  QOIVariantTypes getRankSentVolume(
+    Rank rank, PhaseType phase, LBIterationType lb_iter
+  ) const {
     auto sent_volume = 0.;
-    auto const& phase_objects = rank.getPhaseWork().at(phase).getObjectWork();
+    auto const& phase_objects = lb_iter == no_lb_iter ?
+      rank.getPhaseWork().at(phase).getObjectWork() :
+      rank.getPhaseWork().at(phase).getLBIteration(lb_iter).getObjectWork();
     for (auto const& [obj_id, obj_work] : phase_objects) {
       sent_volume += obj_work.getSentVolume();
     }
@@ -990,11 +1117,14 @@ struct Info {
    *
    * \param[in] rank the rank
    * \param[in] phase the phase
+   * \param[in] lb_iter the lb iteration
    *
    * \return the number of objects
    */
-  QOIVariantTypes getRankNumObjects(Rank rank, PhaseType phase) const {
-    auto num_objects = static_cast<int>(rank.getNumObjects(phase));
+  QOIVariantTypes getRankNumObjects(
+    Rank rank, PhaseType phase, LBIterationType lb_iter
+  ) const {
+    auto num_objects = static_cast<int>(rank.getNumObjects(phase, lb_iter));
     return num_objects;
   }
 
@@ -1003,13 +1133,17 @@ struct Info {
    *
    * \param[in] rank the rank
    * \param[in] phase the phase
+   * \param[in] lb_iter the lb iteration
    *
    * \return the number of migratable objects
    */
-  QOIVariantTypes
-  getRankNumMigratableObjects(Rank rank, PhaseType phase) const {
+  QOIVariantTypes getRankNumMigratableObjects(
+    Rank rank, PhaseType phase, LBIterationType lb_iter
+  ) const {
     auto num_migratable_objects = 0;
-    auto const& phase_objects = rank.getPhaseWork().at(phase).getObjectWork();
+    auto const& phase_objects = lb_iter == no_lb_iter ?
+      rank.getPhaseWork().at(phase).getObjectWork() :
+      rank.getPhaseWork().at(phase).getLBIteration(lb_iter).getObjectWork();
     for (auto const& [obj_id, _] : phase_objects) {
       if (object_info_.at(obj_id).isMigratable()) {
         num_migratable_objects++;
@@ -1023,12 +1157,17 @@ struct Info {
    *
    * \param[in] rank the rank
    * \param[in] phase the phase
+   * \param[in] lb_iter the lb iteration
    *
    * \return the total load of migratable objects
    */
-  QOIVariantTypes getRankMigratableLoad(Rank rank, PhaseType phase) const {
+  QOIVariantTypes getRankMigratableLoad(
+    Rank rank, PhaseType phase, LBIterationType lb_iter
+  ) const {
     auto migratable_load = 0.;
-    auto const& phase_objects = rank.getPhaseWork().at(phase).getObjectWork();
+    auto const& phase_objects = lb_iter == no_lb_iter ?
+      rank.getPhaseWork().at(phase).getObjectWork() :
+      rank.getPhaseWork().at(phase).getLBIteration(lb_iter).getObjectWork();
     for (auto const& [obj_id, obj_work] : phase_objects) {
       if (object_info_.at(obj_id).isMigratable()) {
         migratable_load += obj_work.getLoad();
@@ -1042,12 +1181,17 @@ struct Info {
    *
    * \param[in] rank the rank
    * \param[in] phase the phase
+   * \param[in] lb_iter the lb iteration
    *
    * \return the total load of sentinel objects
    */
-  QOIVariantTypes getRankSentinelLoad(Rank rank, PhaseType phase) const {
+  QOIVariantTypes getRankSentinelLoad(
+    Rank rank, PhaseType phase, LBIterationType lb_iter
+  ) const {
     auto sentinel_load = 0.;
-    auto const& phase_objects = rank.getPhaseWork().at(phase).getObjectWork();
+    auto const& phase_objects = lb_iter == no_lb_iter ?
+      rank.getPhaseWork().at(phase).getObjectWork() :
+      rank.getPhaseWork().at(phase).getLBIteration(lb_iter).getObjectWork();
     for (auto const& [obj_id, obj_work] : phase_objects) {
       if (object_info_.at(obj_id).isSentinel()) {
         sentinel_load += obj_work.getLoad();
