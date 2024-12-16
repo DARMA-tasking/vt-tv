@@ -294,10 +294,10 @@ std::unique_ptr<Info> JSONReader::parse() {
         *static_cast<PhaseWork*>(pw.release())
       );
       if (phase.find("lb_iterations") != phase.end()) {
-        auto lb_iters = j["lb_iterations"];
+        auto lb_iters = phase["lb_iterations"];
         if (lb_iters.is_array()) {
           for (auto const& iter : lb_iters) {
-            auto lb_iter = parsePhaseIter(phase_id, iter, object_info);
+            auto lb_iter = parsePhaseIter(phase_id, iter, object_info, true);
             auto lb_id = static_cast<LBIteration*>(lb_iter.get())->getLBIterationID();
             phase_info[phase_id].addLBIteration(
               lb_id,
