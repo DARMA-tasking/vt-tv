@@ -296,7 +296,7 @@ struct PhaseWork : WorkDistribution {
 
 private:
   /// LB iterations for this phase
-  std::unordered_map<LBIterationType, LBIteration> lb_iters_;
+  std::map<LBIterationType, LBIteration> lb_iters_;
 };
 
 
