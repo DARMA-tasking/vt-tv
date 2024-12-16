@@ -55,7 +55,8 @@ Render::Render(Info in_info)
   : info_(in_info) // std:move ?
     ,
     n_ranks_(in_info.getNumRanks()),
-    n_phases_(in_info.getNumPhases()) {
+    n_phases_(in_info.getNumPhases())
+{
   // If selected_phase is not provided, use all phases
   selected_phase_ = std::numeric_limits<PhaseType>::max();
 
@@ -110,7 +111,15 @@ Render::Render(Info in_info)
   rank_qoi_range_ = computeRankQOIRange_();
   object_volume_max_ = computeMaxObjectVolume_();
   object_load_max_ = info_.getMaxLoad();
-};
+}
+
+std::string printLBIter(LBIterationType lb_iter) {
+  if (lb_iter == no_lb_iter) {
+    return "<none>";
+  } else {
+    return std::to_string(lb_iter);
+  }
+}
 
 Render::Render(
   std::array<std::string, 3> in_qoi_request,
@@ -441,7 +450,7 @@ vtkNew<vtkPolyData> Render::createObjectMesh_(
   fmt::print("\n\n");
   fmt::print(
     "----- Creating object mesh for (phase,lb_iter) ({},{}) -----\n",
-    phase, lb_iter
+    phase, printLBIter(lb_iter)
   );
   // Retrieve number of mesh points and bail out early if empty set
   uint64_t n_o = info_.getPhaseObjects(phase, lb_iter).size();
@@ -1207,7 +1216,8 @@ void Render::generate(uint64_t font_size, uint64_t win_size) {
 
     if (save_meshes_) {
       fmt::print(
-        "== Writing object mesh for (phase,lb_iter)= ({},{})\n", phase, lb_iter
+        "== Writing object mesh for (phase,lb_iter)= ({},{})\n",
+        phase, printLBIter(lb_iter)
       );
       vtkNew<vtkXMLPolyDataWriter> writer;
       std::string object_mesh_filename = output_dir_ + output_file_stem_ +
@@ -1217,7 +1227,8 @@ void Render::generate(uint64_t font_size, uint64_t win_size) {
       writer->Write();
 
       fmt::print(
-        "== Writing rank mesh for (phase,lb_iter)= ({},{})\n", phase, lb_iter
+        "== Writing rank mesh for (phase,lb_iter)= ({},{})\n", phase,
+        printLBIter(lb_iter)
       );
       vtkNew<vtkXMLPolyDataWriter> writer2;
       std::string rank_mesh_filneame = output_dir_ + output_file_stem_ +
@@ -1230,7 +1241,7 @@ void Render::generate(uint64_t font_size, uint64_t win_size) {
     if (save_pngs_) {
       fmt::print(
         "== Rendering visualization PNG for (phase,lb_iter)= ({},{})\n",
-        phase, lb_iter
+        phase, printLBIter(lb_iter)
       );
 
       std::pair<double, double> obj_qoi_range;
