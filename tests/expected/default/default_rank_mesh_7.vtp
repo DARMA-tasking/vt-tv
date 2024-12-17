@@ -2,8 +2,8 @@
 <VTKFile type="PolyData" version="0.1" byte_order="LittleEndian" header_type="UInt32" compressor="vtkZLibDataCompressor">
   <PolyData>
     <Piece NumberOfPoints="4"                    NumberOfVerts="0"                    NumberOfLines="0"                    NumberOfStrips="0"                    NumberOfPolys="0"                   >
-      <PointData Scalars="Rank load">
-        <DataArray type="Float64" Name="Rank load" format="appended" RangeMin="0.00083972699986"     RangeMax="0.311755221"          offset="0"                   />
+      <PointData Scalars="load">
+        <DataArray type="Float64" Name="load" format="appended" RangeMin="0.00083972699986"     RangeMax="0.311755221"          offset="0"                   />
       </PointData>
       <CellData>
       </CellData>
