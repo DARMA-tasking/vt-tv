@@ -314,7 +314,7 @@ vtkNew<U> Render::createRankArrayUserDefined(
     //fmt::print("phase={}, key={}, rank_id={}\n", phase, key, rank_id);
     array->SetTuple1(rank_id, std::get<T>(value));
   }
-  return std::move(array);
+  return array;
 }
 
 template <typename T, typename U>
@@ -329,7 +329,7 @@ vtkNew<U> Render::createRankArrayComputed(
   for (uint64_t rank_id = 0; rank_id < n_ranks_; rank_id++) {
     array->SetTuple1(rank_id, info_.getRankQOIAtPhase<T>(rank_id, phase, key));
   }
-  return std::move(array);
+  return array;
 }
 
 vtkNew<vtkPolyData> Render::createRankMesh_(PhaseType phase) {
