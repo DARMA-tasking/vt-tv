@@ -38,8 +38,9 @@ for python_version in "${versions[@]}"
 do
     echo "::group::Create conda environment (py${python_version})"
     conda create -y -n py${python_version} python=${python_version}
+    conda env list
 
-    source $CONDA_PATH/etc/profile.d/conda.sh
+    # source $CONDA_PATH/etc/profile.d/conda.sh
     conda activate py${python_version}
 
     echo "Python version: $(python --version)"
