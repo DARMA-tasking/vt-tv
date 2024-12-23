@@ -40,16 +40,13 @@ do
     conda create -y -n py${python_version} python=${python_version}
     conda env list
 
-    # source $CONDA_PATH/etc/profile.d/conda.sh
-    conda activate py${python_version}
+    echo "Python version: $(conda run -n py${python_version} python --version)"
+    echo "Python:$(conda run -n py${python_version} which python)"
+    echo "pip: $(conda run -n py${python_version} which pip)"
+    conda run -n py${python_version} pip install PyYAML
+    conda run -n py${python_version} pip install Brotli
+    conda run -n py${python_version} pip install schema
+    conda run -n py${python_version} pip install nanobind
 
-    echo "Python: $(which python)"
-    echo "Python version: $(python --version)"
-    echo "pip: $(which pip)"
-    pip install PyYAML
-    pip install Brotli
-    pip install schema
-    pip install nanobind
-    conda deactivate
     echo "::endgroup::"
 done
