@@ -39,7 +39,9 @@ do
     echo "::group::Create conda environment (py${python_version})"
     conda create -y -n py${python_version} python=${python_version}
 
-    . $CONDA_PATH/etc/profile.d/conda.sh && conda activate py${python_version}
+    source $CONDA_PATH/etc/profile.d/conda.sh
+    conda activate py${python_version}
+
     echo "Python version: $(python --version)"
     pip install PyYAML
     pip install Brotli
