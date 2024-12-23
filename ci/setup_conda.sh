@@ -32,7 +32,7 @@ echo "Conda path: $(which conda)"
 echo "Conda version: $(conda --version)"
 
 echo "::endgroup::"
-
+ß
 versions=(`echo $PYTHON_VERSIONS | sed 's/,/\n/g'`)
 for python_version in "${versions[@]}"
 do
@@ -43,7 +43,9 @@ do
     # source $CONDA_PATH/etc/profile.d/conda.sh
     conda activate py${python_version}
 
+    echo "Python: $(which python)"
     echo "Python version: $(python --version)"
+    echo "pip: $(which pip)"
     pip install PyYAML
     pip install Brotli
     pip install schema
