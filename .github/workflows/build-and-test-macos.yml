@@ -77,14 +77,13 @@ jobs:
           path: |
             ${{ env.VTK_SRC_DIR }}
             ${{ env.VTK_BUILD_DIR }}
-            ${{ env.CONDA_PATH }}
             ~/.zshrc
             ~/.bash_profile
           key: ${{ env.CACHE_KEY }}
           save-always: true
 
       - name: Setup Conda
-        if: ${{steps.base-cache.outputs.cache-hit != 'true'}}
+        # if: ${{steps.base-cache.outputs.cache-hit != 'true'}}
         run: |
           sudo CONDA_PATH=${{ env.CONDA_PATH }} bash ./ci/setup_conda.sh ${{ join(matrix.host.python) }}
 
