@@ -30,6 +30,7 @@ if [ -f ~/.bashrc ]; then . ~/.bashrc; fi
 
 echo "Conda path: $(which conda)"
 echo "Conda version: $(conda --version)"
+conda deactivate
 
 echo "::endgroup::"
 
