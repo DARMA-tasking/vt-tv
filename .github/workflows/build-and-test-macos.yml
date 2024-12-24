@@ -54,6 +54,10 @@ jobs:
         GCOV: ~
     steps:
       - uses: actions/checkout@v4
+      - name: Setup tmate session
+        uses: mxschmitt/action-tmate@v3
+        with:
+          detached: true
 
       - name: Set folder permissions
         run: |

@@ -32,7 +32,7 @@ echo "Conda path: $(which conda)"
 echo "Conda version: $(conda --version)"
 
 echo "::endgroup::"
-ß
+
 versions=(`echo $PYTHON_VERSIONS | sed 's/,/\n/g'`)
 for python_version in "${versions[@]}"
 do
