@@ -54,10 +54,6 @@ jobs:
         GCOV: ~
     steps:
       - uses: actions/checkout@v4
-      - name: Setup tmate session
-        uses: mxschmitt/action-tmate@v3
-        with:
-          detached: true
 
       - name: Set folder permissions
         run: |
@@ -90,6 +86,9 @@ jobs:
         # if: ${{steps.base-cache.outputs.cache-hit != 'true'}}
         run: |
           sudo CONDA_PATH=${{ env.CONDA_PATH }} bash ./ci/setup_conda.sh ${{ join(matrix.host.python) }}
+
+      - name: Setup tmate session
+        uses: mxschmitt/action-tmate@v3
 
       - name: Reload shell variables
         run: |
