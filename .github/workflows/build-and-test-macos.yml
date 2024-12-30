@@ -87,9 +87,6 @@ jobs:
         run: |
           sudo CONDA_PATH=${{ env.CONDA_PATH }} bash ./ci/setup_conda.sh ${{ join(matrix.host.python) }}
 
-      - name: Setup tmate session
-        uses: mxschmitt/action-tmate@v3
-
       - name: Reload shell variables
         run: |
           if [ -f ~/.zshrc ]; then . ~/.zshrc; fi
