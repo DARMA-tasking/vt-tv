@@ -13,16 +13,19 @@ VT_TV_OUTPUT_DIR=${VT_TV_OUTPUT_DIR:-"$VT_TV_SRC_DIR/output"}
 VT_TV_TESTS_OUTPUT_DIR=${VT_TV_TESTS_OUTPUT_DIR:-"$VT_TV_OUTPUT_DIR/tests"}
 
 VT_TV_TEST_CMD="\
-    pwd;
+    pwd
     echo ------------------------------
-    ls -ltra; \
+    echo $CURRENT_DIR
+    echo ------------------------------
+    ls -ltra ci
+    chmod +x $CURRENT_DIR/ci/build.sh
     VTK_DIR=/opt/build/vtk \
     VT_TV_BUILD=OFF \
     VT_TV_BUILD_DIR=${VT_TV_BUILD_DIR} \
     VT_TV_COVERAGE_ENABLED=${VT_TV_COVERAGE_ENABLED:-OFF} \
     VT_TV_OUTPUT_DIR=$VT_TV_OUTPUT_DIR \
     VT_TV_RUN_TESTS=ON \
-    $CURRENT_DIR/build.sh"
+    $CURRENT_DIR/ci/build.sh"
 
 # Run tests
 if [[ $(uname -a) != *"Darwin"* ]]; then
