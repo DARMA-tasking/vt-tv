@@ -1,0 +1,167 @@
+name: Build and Test
+
+# Trigger the workflow on push or pull request
+on:
+  push:
+    branches:
+      - master
+      - develop
+  pull_request:
+    types: [opened, reopened, synchronize, converted_to_draft, ready_for_review]
+
+env:
+  GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  WF_REPO: DARMA-tasking/workflows
+  WF_BRANCH: master
+
+jobs:
+  get-matrix:
+    name: Get matrix
+    runs-on: ubuntu-latest
+    steps:
+      # Note: Filtering the test environments
+      # A jq query can be used to filter the matrix of test environments
+      # - All (default):           `matrix=$(cat github.json | jq '.matrix')`
+      # - CLang only:              `matrix=$(cat github.json | jq '.matrix | map(select(.label | contains("clang")))')`
+      # - gcc>=11:                 `matrix=$(cat github.json | jq '.matrix | map(select(.name | test("gcc-[1-9][1-9]+")))')`
+      # - gcc>=11|clang>=14        `matrix=$(cat github.json | jq '.matrix | map(select(.name | test("gcc-[1-9][1-9]+-|clang-[1-9][2-9]+")))')`
+      - name: Get matrix
+        id: get-matrix
+        run: |
+          wget https://raw.githubusercontent.com/${{ env.WF_REPO }}/refs/heads/${{ env.WF_BRANCH }}/ci/shared/matrix/github.json
+          matrix=$(cat github.json | jq '.matrix | map(select(.label | contains("vtk")))')
+          echo "runner=$(echo $matrix)" >> $GITHUB_OUTPUT
+    outputs:
+      matrix: ${{ steps.get-matrix.outputs.runner }}
+
+  run:
+    name: Run ${{ matrix.runner.name }}
+    runs-on: ${{ matrix.runner.runs-on }}
+    needs: get-matrix
+    env:
+      TS_YEAR: ~
+      TS_MONTH: ~
+      TS_DAY: ~
+      TS: ~
+      BUILD_DIR: /opt/build/vt-tv
+      OUTPUT_DIR: /tmp/artifacts
+      CCACHE_DIR: /opt/build/vt-tv/ccache
+      COVERAGE_ENABLED: ${{  matrix.runner.name == 'wf-amd64-ubuntu-22.04-gcc-12-vtk-cpp' && 1 || 0 }}
+      JUNIT_REPORT_PATH: /tmp/artifacts/junit.xml
+      VT_TV_TESTS_ENABLED: 'ON'
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: ${{ fromJson(needs.get-matrix.outputs.matrix ) }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Display configuration
+        run: |
+          echo "Environment=${{ matrix.runner.name }}"
+          echo "Runner=${{ matrix.runner.runs-on }}"
+          if [ "${{ matrix.runner.image }}" != "" ]
+          then
+            echo "> With Docker Image=${{ matrix.runner.image }}"
+          else
+            echo "> With Runner Setup=${{ matrix.runner.setup }}"
+          fi
+      - name: Set up dependencies
+        run: |
+          if [[ "${{ matrix.runner.image }}" == "" ]]; then
+            echo "::group::Setup in runner"
+            echo "Set setup permissions..."
+            sudo mkdir -p /opt
+            sudo chown $(whoami) /opt
+            wget -O setup.sh https://raw.githubusercontent.com/${{ env.WF_REPO }}/refs/heads/${{ env.WF_BRANCH }}/ci/shared/scripts/setup-${{ matrix.runner.setup }}.sh
+            chmod +x setup.sh
+            export WF_SETUP_ID=${{ matrix.runner.setup }}
+            ./setup.sh
+            echo "::endgroup::"
+          elif [ "${{ matrix.runner.image }}" != "" ]; then
+            echo "::group::Pull Docker image"
+            docker image pull ${{ matrix.runner.image }}
+            echo "::endgroup::"
+          fi
+      - name: Display System Information
+        run: |
+          CMD="uname -a"
+          if [[ "${{ matrix.runner.image }}" == "" ]]
+          then
+            echo "Runner System Information:"
+            $CMD
+          else
+            echo "Docker System Information:"
+            docker run ${{ matrix.runner.image }} $CMD
+          fi
+      - name: Build timestamp for caching
+        continue-on-error: true
+        run: |
+          echo "TS_YEAR=$(date -u +%Y)" >> $GITHUB_ENV
+          echo "TS_MONTH=$(date -u +%m)" >> $GITHUB_ENV
+          echo "TS_DAY=$(date -u +%d)" >> $GITHUB_ENV
+          echo "TS=$(date -u +%H%M%S)" >> $GITHUB_ENV
+      - name: Update cache
+        continue-on-error: true
+        uses: actions/cache@v3
+        env:
+          cache_name: ${{ matrix.runner.name }}
+        with:
+          path: ${{ env.CCACHE_DIR }}
+          key: ${{ runner.os }}-${{ env.cache_name }}-${{ env.TS_YEAR }}-${{ env.TS_MONTH }}-${{ env.TS_DAY }}-${{ env.TS }}
+          restore-keys: |
+            ${{ runner.os }}-${{ env.cache_name }}-${{ env.TS_YEAR }}-${{ env.TS_MONTH }}-${{ env.TS_DAY }}-
+            ${{ runner.os }}-${{ env.cache_name }}-${{ env.TS_YEAR }}-${{ env.TS_MONTH }}-
+            ${{ runner.os }}-${{ env.cache_name }}-${{ env.TS_YEAR }}-
+            ${{ runner.os }}-${{ env.cache_name }}-
+      - name: PR tests
+        run: |
+          WORKSPACE=${{ github.workspace }}
+          if [[ "${{ matrix.runner.image }}" != "" ]]; then
+            WORKSPACE=/workspace
+          fi
+          CMD='
+            cd '${WORKSPACE}'; \
+            ls -l; \
+            chmod +x ./ci/build.sh; \
+            chmod +x ./ci/test.sh; \
+            \
+            VT_TV_COVERAGE_ENABLED="${{ env.COVERAGE_ENABLED }}" \
+            VTTV_TEST_REPORT="{{ env.JUNIT_REPORT_PATH }}" \
+            ./ci/test.sh;'
+          echo "Running ${CMD}"
+          if [[ "${{ matrix.runner.image }}" == "" ]]; then
+            bash -c "export $(cat .env | sed '/^[[:blank:]]*#/d;s/#.*//' | xargs) && $CMD";
+          else
+            docker run \
+              --name build-and-test-vttv \
+              -w $WORKSPACE \
+              -v ${{ github.workspace }}:/workspace \
+              -v ${{ env.BUILD_DIR }}:/opt/build/vt-tv \
+              -v ${{ env.OUTPUT_DIR }}:/tmp/artifacts \
+              -e CI="1" \
+              -e https_proxy="" \
+              -e http_proxy="" \
+              ${{ matrix.runner.image }} \
+              bash -c "$CMD"
+            exit $(docker container inspect --format '{{.State.ExitCode}}' build-and-test-vttv)
+          fi
+          if [ -f "$VTTV_TEST_REPORT" ]; then
+            echo "JUNIT_REPORT_PATH=${VTTV_TEST_REPORT}" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Unit tests
+        if: (success() || failure()) && ${{ env.JUNIT_REPORT_PATH != '' }}
+        uses: phoenix-actions/test-reporting@v15
+        with:
+          name: Tests report
+          path: ${{ env.JUNIT_REPORT_PATH }}
+          reporter: java-junit
+          output-to: step-summary
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: vttv-output-${{ matrix.runner.name }}
+          path: ${{ env.OUTPUT_DIR }}
