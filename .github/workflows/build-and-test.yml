@@ -124,6 +124,7 @@ jobs:
           CMD='
             cd '${WORKSPACE}'; \
             ls -l; \
+            chmod +x ./ci/build.sh; \
             chmod +x ./ci/test.sh; \
             \
             VT_TV_COVERAGE_ENABLED="${{ env.COVERAGE_ENABLED }}" \
