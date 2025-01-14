@@ -20,7 +20,7 @@ VT_TV_TEST_CMD="\
     ls -ltra ci
     chmod +x $CURRENT_DIR/build.sh
     VTK_DIR=/opt/build/vtk \
-    VT_TV_BUILD=OFF \
+    VT_TV_BUILD=ON \
     VT_TV_BUILD_DIR=${VT_TV_BUILD_DIR} \
     VT_TV_COVERAGE_ENABLED=${VT_TV_COVERAGE_ENABLED:-OFF} \
     VT_TV_OUTPUT_DIR=$VT_TV_OUTPUT_DIR \
