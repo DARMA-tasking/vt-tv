@@ -81,12 +81,32 @@ void ParseRender::parseAndRender(
       std::regex pattern(R"(data\.\d+\.json)");
 
       for (const auto& entry : std::filesystem::directory_iterator(input_dir)) {
-          if (entry.is_regular_file()) {
-              const std::string filename = entry.path().filename().string();
-              if (std::regex_match(filename, pattern)) {
-                  data_files.push_back(entry.path());
-              }
+        if (entry.is_regular_file()) {
+          const std::string filename = entry.path().filename().string();
+          if (std::regex_match(filename, pattern)) {
+            data_files.push_back(entry.path());
           }
+        }
+      }
+
+      std::size_t n_ranks = config["input"]["n_ranks"].as<std::size_t>();
+      std::size_t x_ranks = config["viz"]["x_ranks"].as<std::size_t>();
+      std::size_t y_ranks = config["viz"]["y_ranks"].as<std::size_t>();
+      std::size_t z_ranks = config["viz"]["z_ranks"].as<std::size_t>(1);
+
+      std::size_t expected_ranks = x_ranks * y_ranks * z_ranks;
+
+      // Validate the number of files matches n_ranks and expected_ranks
+      if (data_files.size() != n_ranks) {
+        throw std::runtime_error(
+          "Number of data files (" + std::to_string(data_files.size()) +
+          ") does not match the specified n_ranks (" + std::to_string(n_ranks) + ").");
+      }
+
+      if (n_ranks != expected_ranks) {
+        throw std::runtime_error(
+          "n_ranks (" + std::to_string(n_ranks) + ") does not match the product of x_ranks, y_ranks, and z_ranks (" +
+          std::to_string(expected_ranks) + ").");
       }
 
       info = std::make_unique<Info>();
@@ -127,10 +147,11 @@ void ParseRender::parseAndRender(
           throw std::runtime_error("JSON data file is invalid: " + data_file_path);
         }
       }
-      std::size_t n_ranks = config["input"]["n_ranks"].as<std::size_t>();
+
       if (info->getNumRanks() != n_ranks) {
         throw std::runtime_error("Number of ranks does not match expected value.");
       }
+
       fmt::print("Num ranks={}\n", info->getNumRanks());
     }
 
@@ -213,5 +234,6 @@ void ParseRender::parseAndRender(
               << std::endl;
   }
 }
+
 
 } /* end namespace vt::tv::utility */
