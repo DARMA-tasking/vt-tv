@@ -70,6 +70,10 @@ jobs:
         run: |
           brew update && brew install coreutils lcov xquartz
 
+      - name: Setup python requirements for JSON datafile validation
+        run: |
+          pip install PyYAML && pip install Brotli && pip install schema && pip install nanobind
+
       - name: Load cache (VTK, Miniconda3)
         id: base-cache
         uses: actions/cache@v4
