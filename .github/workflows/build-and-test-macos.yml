@@ -80,7 +80,7 @@ jobs:
           save-always: true
 
       - name: Setup Conda
-        # if: ${{steps.base-cache.outputs.cache-hit != 'true'}}
+        if: ${{steps.base-cache.outputs.cache-hit != 'true'}}
         run: |
           sudo CONDA_PATH=${{ env.CONDA_PATH }} bash ./ci/setup_conda.sh ${{ join(matrix.host.python) }}
 
