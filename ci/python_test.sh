@@ -15,6 +15,16 @@ pushd $VT_TV_SRC_DIR
 # Create vizualization output directory (required).
 mkdir -p $VT_TV_OUTPUT_DIR/python_tests
 
+$CONDA_PATH/bin/conda init bash
+$CONDA_PATH/bin/conda init zsh
+if [ -f ~/.zshrc ]; then . ~/.zshrc; fi
+if [ -f ~/.profile ]; then . ~/.profile; fi
+if [ -f ~/.bashrc ]; then . ~/.bashrc; fi
+
+echo "Conda path: $(which conda)"
+echo "Conda version: $(conda --version)"
+conda deactivate
+
 for env in $(conda env list | grep -E '^py' | perl -lane 'print $F[-1]' | xargs ls -ld | perl -lane 'print $F[-1]' | sed -E 's|^.*/(.*)$|\1|'); do
     # Clear vizualization output directory
     rm -rf $VT_TV_OUTPUT_DIR/python_tests/*
