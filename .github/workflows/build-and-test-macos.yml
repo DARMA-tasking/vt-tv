@@ -74,6 +74,7 @@ jobs:
           path: |
             ${{ env.VTK_SRC_DIR }}
             ${{ env.VTK_BUILD_DIR }}
+            ${{ env.CONDA_PATH }}
             ~/.zshrc
             ~/.bash_profile
           key: ${{ env.CACHE_KEY }}
