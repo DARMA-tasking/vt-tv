@@ -47,6 +47,7 @@
 #include "vt-tv/api/info.h"
 
 #include <filesystem>
+#include <regex>
 
 namespace vt::tv::utility {
 
@@ -77,8 +78,15 @@ void ParseRender::parseAndRender(
 
       // Collect all file paths into a vector
       std::vector<std::filesystem::path> data_files;
+      std::regex pattern(R"(data\.\d+\.json)");
+
       for (const auto& entry : std::filesystem::directory_iterator(input_dir)) {
-        data_files.push_back(entry.path());
+          if (entry.is_regular_file()) {
+              const std::string filename = entry.path().filename().string();
+              if (std::regex_match(filename, pattern)) {
+                  data_files.push_back(entry.path());
+              }
+          }
       }
 
       info = std::make_unique<Info>();
