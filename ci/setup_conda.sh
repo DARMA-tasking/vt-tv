@@ -30,6 +30,7 @@ if [ -f ~/.bashrc ]; then . ~/.bashrc; fi
 
 echo "Conda path: $(which conda)"
 echo "Conda version: $(conda --version)"
+conda deactivate
 
 echo "::endgroup::"
 
@@ -38,13 +39,15 @@ for python_version in "${versions[@]}"
 do
     echo "::group::Create conda environment (py${python_version})"
     conda create -y -n py${python_version} python=${python_version}
+    conda env list
 
-    . $CONDA_PATH/etc/profile.d/conda.sh && conda activate py${python_version}
-    echo "Python version: $(python --version)"
-    pip install PyYAML
-    pip install Brotli
-    pip install schema
-    pip install nanobind
-    conda deactivate
+    echo "Python version: $(conda run -n py${python_version} python --version)"
+    echo "Python:$(conda run -n py${python_version} which python)"
+    echo "pip: $(conda run -n py${python_version} which pip)"
+    conda run -n py${python_version} pip install PyYAML
+    conda run -n py${python_version} pip install Brotli
+    conda run -n py${python_version} pip install schema
+    conda run -n py${python_version} pip install nanobind
+
     echo "::endgroup::"
 done

@@ -15,13 +15,6 @@ jobs:
       matrix:
         host: [
           {
-            base: macos-12,
-            compiler: { cc: clang, cxx: clang++ },
-            gcov: llvm-gcov,
-            python: ['3.8', '3.9', '3.10', '3.11', '3.12'],
-            vtk: '9.3.1'
-          },
-          {
             base: macos-13,
             compiler: { cc: clang, cxx: clang++ },
             gcov: llvm-gcov,
@@ -69,6 +62,10 @@ jobs:
       - name: Install dependencies
         run: |
           brew update && brew install coreutils lcov xquartz
+
+      - name: Setup python requirements for JSON datafile validation
+        run: |
+          pip install PyYAML && pip install Brotli && pip install schema && pip install nanobind
 
       - name: Load cache (VTK, Miniconda3)
         id: base-cache
