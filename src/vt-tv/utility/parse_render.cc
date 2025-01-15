@@ -59,6 +59,7 @@ void ParseRender::parseAndRender(
 
     if (info == nullptr) {
       std::string input_dir = config["input"]["directory"].as<std::string>();
+      std::string data_file_stem = config["input"]["file_stem"].as<std::string>("data");
       std::filesystem::path input_path(input_dir);
 
       // If it's a relative path, prepend the SRC_DIR
@@ -78,7 +79,7 @@ void ParseRender::parseAndRender(
 
       // Collect all file paths into a vector
       std::vector<std::filesystem::path> data_files;
-      std::regex pattern(R"(data\.\d+\.json)");
+      std::regex pattern(data_file_stem + R"(\.\d+\.json)");
 
       for (const auto& entry : std::filesystem::directory_iterator(input_dir)) {
         if (entry.is_regular_file()) {
@@ -133,7 +134,7 @@ void ParseRender::parseAndRender(
         utility::JSONReader reader{static_cast<NodeType>(rank)};
 
         // Validate the JSON data file
-        std::string data_file_path = input_dir + "data." + std::to_string(rank) + ".json";
+        std::string data_file_path = input_dir + data_file_stem + "." + std::to_string(rank) + ".json";
         if (reader.validate_datafile(data_file_path)) {
           reader.readFile(data_file_path);
           auto tmpInfo = reader.parse();
