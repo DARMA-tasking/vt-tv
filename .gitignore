@@ -6,3 +6,5 @@
 /python-build
 output
 Testing
+
+__pycache__/

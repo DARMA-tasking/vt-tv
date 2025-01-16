@@ -121,7 +121,16 @@ std::unique_ptr<Info> JSONReader::parse() {
   auto phases = j["phases"];
   if (phases.is_array()) {
     for (auto const& phase : phases) {
+      std::unordered_map<std::string, QOIVariantTypes> read_phase_user_defined;
       auto id = phase["id"];
+      if (phase.find("user_defined") != phase.end()) {
+        auto phase_user_defined = phase["user_defined"];
+        if (phase_user_defined.is_object()) {
+          for (auto& [key, value] : phase_user_defined.items()) {
+            read_phase_user_defined[key] = value;
+          }
+        }
+      }
       auto tasks = phase.value("tasks", j.array());
 
       std::unordered_map<ElementIDType, ObjectWork> objects;
@@ -138,6 +147,7 @@ std::unique_ptr<Info> JSONReader::parse() {
             auto object = task["entity"].value("id", task["entity"]["seq_id"]);
             auto home = task["entity"]["home"];
             bool migratable = task["entity"]["migratable"];
+
             assert(object.is_number() && "task id or seq_id must be provided and be a number");
             assert(home.is_number() && "task home must be a number");
 
@@ -258,7 +268,10 @@ std::unique_ptr<Info> JSONReader::parse() {
           }
         }
       }
-      phase_info.try_emplace(id, PhaseWork{id, std::move(objects)});
+      phase_info.try_emplace(
+        id,
+        PhaseWork{id, std::move(objects), std::move(read_phase_user_defined)}
+      );
     }
   }
 

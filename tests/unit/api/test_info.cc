@@ -131,7 +131,7 @@ TEST_P(InfoTest, test_get_object_qoi_getter) {
      "rank_id",
      "non-existent"});
   for (auto const& qoi : qoi_list) {
-    auto qoi_getter = info.getObjectQOIGetter(qoi);
+    auto qoi_getter = info.getObjectQOIGetter<double>(qoi);
   }
 }
 
@@ -409,9 +409,9 @@ TEST_F(InfoTest, test_get_object_qoi) {
      "non-existent"});
   for (auto const& qoi : qoi_list) {
     if (qoi == "non-existent") {
-      EXPECT_THROW(info.getObjectQOIAtPhase(0, 0, qoi), std::runtime_error);
+      EXPECT_THROW(info.getObjectQOIAtPhase<double>(0, 0, qoi), std::runtime_error);
     } else {
-      ASSERT_NO_THROW(info.getObjectQOIAtPhase(0, 0, qoi));
+      ASSERT_NO_THROW(info.getObjectQOIAtPhase<double>(0, 0, qoi));
     }
   }
 }
@@ -462,7 +462,7 @@ TEST_F(InfoTest, test_get_rank_qoi) {
      "attr1",
      "attr2"});
   for (auto const& qoi : qoi_list) {
-    auto qoi_getter = info.getRankQOIGetter(qoi);
+    auto qoi_getter = info.getRankQOIGetter<double>(qoi);
 
     if (qoi == "id") {
       ASSERT_EQ(qoi_getter(rank_0, 0), 0);
@@ -502,7 +502,7 @@ TEST_F(
   test_convert_qoi_variant_type_to_double_throws_runtime_error_for_string) {
   auto info = Info();
   EXPECT_THROW(
-    info.convertQOIVariantTypeToDouble_("some_string_value"),
+    info.convertQOIVariantTypeToT_<double>("some_string_value"),
     std::runtime_error);
 }
 
