@@ -96,6 +96,57 @@ A YAML configuration exemplar can be found in `${VTTV_SOURCE_DIR}/config/conf.ya
 ${VTTV_BUILD_DIR}/apps/vt_standalone -c config/conf.yaml
 ```
 
+The following is a complete description of possible keys that can be used in a configuration file:
+
+```yaml
+input:
+  # Directory containing the input data files
+  directory: data/lb_test_data
+  # (Optional) Stem of the data file names. Default is "data"
+  data_file_stem: data
+  # Number of ranks (data files) expected
+  n_ranks: 4
+
+viz:
+  # Number of ranks along the X-axis
+  x_ranks: 2
+  # Number of ranks along the Y-axis
+  y_ranks: 2
+  # (Optional) Number of ranks along the Z-axis. Default is 1
+  z_ranks: 1
+  # (Optional) Adds jitter to the object positions. Default is 0.5
+  object_jitter: 0.5
+  # (Optional) Quantity of interest for ranks. Default is "load"
+  rank_qoi: load
+  # (Optional) Quantity of interest for objects. Default is "load"
+  object_qoi: load
+  # (Optional) Enable or disable saving of 3D meshes. Default is true
+  save_meshes: true
+  # (Optional) Enable or disable saving of PNG visualizations. Default is true
+  save_pngs: true
+  # (Optional) Force continuous quantities of interest for objects. Default is true
+  force_continuous_object_qoi: true
+
+output:
+  # (Optional) Directory for saving output files. Default is "output"
+  directory: output
+  # (Optional) Base name for output files. Default is "vttv"
+  file_stem: lb_test
+  # (Optional) Visualization window size in pixels. Default is 2000
+  window_size: 2000
+  # (Optional) Font size for visualizations. Default is 2.5% of the window size
+  font_size: 50
+```
+
+**Additional Notes:**
+
+- Output Directory:
+    The directory specified in `output.directory` must already exist. If it does not, `vt-tv` will fail during runtime.
+
+- Validation:
+    The number of files matching the pattern `input.data_file_stem.[integer].json` (with `[integer]` indicating the rank the file was generated for) in the `input.directory` must match the value of `input.n_ranks`.
+    The product of `viz.x_ranks`, `viz.y_ranks`, and `viz.z_ranks` must equal `input.n_ranks`.
+
 #### JSON Data Files
 
 Sample JSON data files are provided in `${VTTV_SOURCE_DIR}/tests/unit/lb_test_data`.
