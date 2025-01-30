@@ -79,7 +79,7 @@ void ParseRender::parseAndRender(
 
       // Collect all file paths into a vector
       std::vector<std::filesystem::path> data_files;
-      std::regex pattern(data_file_stem + R"(\.\d+\.json)");
+      std::regex pattern(data_file_stem + R"(\.\d+\.json(\.br)?)");
 
       for (const auto& entry : std::filesystem::directory_iterator(input_dir)) {
         if (entry.is_regular_file()) {
@@ -134,9 +134,8 @@ void ParseRender::parseAndRender(
         utility::JSONReader reader{static_cast<NodeType>(rank)};
 
         // Validate the JSON data file
-        std::string data_file_path = input_dir + data_file_stem + "." + std::to_string(rank) + ".json";
-        if (reader.validate_datafile(data_file_path)) {
-          reader.readFile(data_file_path);
+        if (reader.validate_datafile(filepath)) {
+          reader.readFile(filepath);
           auto tmpInfo = reader.parse();
 
 #if VT_TV_OPENMP_ENABLED
@@ -145,7 +144,7 @@ void ParseRender::parseAndRender(
         { info->addInfo(tmpInfo->getObjectInfo(), tmpInfo->getRank(rank)); }
 
         } else {
-          throw std::runtime_error("JSON data file is invalid: " + data_file_path);
+          throw std::runtime_error("JSON data file is invalid: " + filepath);
         }
       }
 
