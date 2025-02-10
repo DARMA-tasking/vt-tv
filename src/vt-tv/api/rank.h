@@ -96,8 +96,12 @@ struct Rank {
    *
    * \return the load
    */
-  double getLoad(PhaseType phase) const {
-    return phase_info_.at(phase).getLoad();
+  double getLoad(PhaseType phase, LBIterationType lb_iter) const {
+    if (lb_iter == no_lb_iter) {
+      return phase_info_.at(phase).getLoad();
+    } else {
+      return phase_info_.at(phase).getLBIteration(lb_iter).getLoad();
+    }
   }
 
   /**
@@ -114,8 +118,12 @@ struct Rank {
    *
    * \return the number of objects
    */
-  uint64_t getNumObjects(PhaseType phase) const {
-    return phase_info_.at(phase).getObjectWork().size();
+  uint64_t getNumObjects(PhaseType phase, LBIterationType lb_iter) const {
+    if (lb_iter == no_lb_iter) {
+      return phase_info_.at(phase).getObjectWork().size();
+    } else {
+      return phase_info_.at(phase).getLBIteration(lb_iter).getObjectWork().size();
+    }
   }
 
   /**

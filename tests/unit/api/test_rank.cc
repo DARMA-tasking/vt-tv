@@ -83,12 +83,12 @@ TEST_F(RankTest, test_initial_state) {
   // Assertions for rank_0
   EXPECT_EQ(rank_0.getRankID(), 2);
   EXPECT_EQ(rank_0.getNumPhases(), 3);
-  EXPECT_EQ(rank_0.getLoad(0), phase_0.getLoad());
-  EXPECT_EQ(rank_0.getLoad(1), phase_1.getLoad());
-  EXPECT_EQ(rank_0.getLoad(2), phase_2.getLoad());
-  EXPECT_EQ(rank_0.getNumObjects(0), phase_0.getObjectWork().size());
-  EXPECT_EQ(rank_0.getNumObjects(1), phase_1.getObjectWork().size());
-  EXPECT_EQ(rank_0.getNumObjects(2), phase_2.getObjectWork().size());
+  EXPECT_EQ(rank_0.getLoad(0, no_lb_iter), phase_0.getLoad());
+  EXPECT_EQ(rank_0.getLoad(1, no_lb_iter), phase_1.getLoad());
+  EXPECT_EQ(rank_0.getLoad(2, no_lb_iter), phase_2.getLoad());
+  EXPECT_EQ(rank_0.getNumObjects(0, no_lb_iter), phase_0.getObjectWork().size());
+  EXPECT_EQ(rank_0.getNumObjects(1, no_lb_iter), phase_1.getObjectWork().size());
+  EXPECT_EQ(rank_0.getNumObjects(2, no_lb_iter), phase_2.getObjectWork().size());
   EXPECT_EQ(rank_0.getPhaseWork().size(), phase_info_0.size());
   EXPECT_EQ(rank_0.getPhaseWork().at(0).getPhase(), 0);
   EXPECT_EQ(rank_0.getPhaseWork().at(1).getPhase(), 1);
