@@ -456,6 +456,32 @@ struct Info {
   }
 
   /**
+   * \brief Get the minimum phase in the data
+   *
+   * \return the minimim phase in the data
+   */
+  PhaseType getMinPhase() const {
+    PhaseType min_phase = std::numeric_limits<PhaseType>::max();
+    // Go through all ranks and get all objects at given phase
+    for (uint64_t rank = 0; rank < ranks_.size(); rank++) {
+      // Get Rank info for specified rank
+      auto const& rank_info = ranks_.at(rank);
+
+      // Get the phase work map
+      auto const& pw = rank_info.getPhaseWork();
+
+      std::set<PhaseType> keys;
+      for (auto& [key, _] : pw) {
+        keys.insert(key);
+      }
+
+      min_phase = std::min(*keys.begin(), min_phase);
+    }
+
+    return min_phase;
+  }
+
+  /**
    * \brief Get all objects in all ranks for a given phase and LB iteration
    *
    * \param[in] phase the phase
@@ -526,7 +552,7 @@ struct Info {
         }
       }
     } else {
-      for (PhaseType phase = 0; phase < n_phases; phase++) {
+      for (PhaseType phase = getMinPhase(); phase < getMinPhase() + n_phases; phase++) {
         auto const& objects = getPhaseObjects(phase, no_lb_iter);
         for (auto const& [obj_id, obj_work] : objects) {
           auto obj_max_v = obj_work.getMaxVolume();
@@ -576,7 +602,7 @@ struct Info {
         }
       }
     } else {
-      for (PhaseType phase = 0; phase < n_phases; phase++) {
+      for (PhaseType phase = getMinPhase(); phase < getMinPhase() + n_phases; phase++) {
         auto const& objects = getPhaseObjects(phase, no_lb_iter);
         for (auto const& [obj_id, obj_work] : objects) {
           auto obj_load = obj_work.getLoad();
@@ -623,14 +649,16 @@ struct Info {
       auto& phase_history = rank_info.getPhaseWork();
 
       // Get phase work at specified phase
-      auto phase_work = phase_history.find(phase);
+      if (auto phase_work = phase_history.find(phase);
+          phase_work != phase_history.end()) {
 
-      // Get all objects at specified phase
-      auto& object_work_at_phase = phase_work->second.getObjectWork();
+        // Get all objects at specified phase
+        auto& object_work_at_phase = phase_work->second.getObjectWork();
 
-      for (auto const& [elm_id, obj_work] : object_work_at_phase) {
-        // fmt::print("    Object Id: {}\n", elm_id);
-        objects_at_phase.insert(std::make_pair(elm_id, obj_work));
+        for (auto const& [elm_id, obj_work] : object_work_at_phase) {
+          // fmt::print("    Object Id: {}\n", elm_id);
+          objects_at_phase.insert(std::make_pair(elm_id, obj_work));
+        }
       }
     }
     return objects_at_phase;
@@ -764,32 +792,34 @@ struct Info {
     for (auto& [rank_id, rank] : ranks_) {
       // fmt::print(" Checking objects in rank {}.\n", rank_id);
       auto& phaseWork = rank.getPhaseWork();
-      auto& phaseWorkAtPhase = phaseWork.at(phase);
-      auto& objects = phaseWorkAtPhase.getObjectWork();
-      for (auto& [obj_id, obj_work] : objects) {
-        // fmt::print("  Checking if object {} needs to be updated.\n", obj_id);
-        // fmt::print("  Communications to update:\n");
-        uint64_t i = 0;
-        for (auto& [object_to_update, sender_id, recipient_id, bytes] :
-             communications_to_add) {
-          // fmt::print("    {} needs to be updated in {} -> {} communication of {} bytes.\n", object_to_update,
-          //  sender_id, recipient_id, bytes);
-          if (object_to_update == "sender" && sender_id == obj_id) {
-            // fmt::print("    Sender to be updated is object on this rank. Updating.\n");
-            rank.addObjectSentCommunicationAtPhase(
-              phase, obj_id, recipient_id, bytes);
-            communications_to_add.erase(communications_to_add.begin() + i);
-          } else if (
-            object_to_update == "recipient" && recipient_id == obj_id) {
-            // fmt::print("    Recipient to be updated is object on this rank. Updating.\n");
-            rank.addObjectReceivedCommunicationAtPhase(
-              phase, obj_id, sender_id, bytes);
-            communications_to_add.erase(communications_to_add.begin() + i);
+      if (phaseWork.find(phase) != phaseWork.end()) {
+        auto& phaseWorkAtPhase = phaseWork.at(phase);
+        auto& objects = phaseWorkAtPhase.getObjectWork();
+        for (auto& [obj_id, obj_work] : objects) {
+          // fmt::print("  Checking if object {} needs to be updated.\n", obj_id);
+          // fmt::print("  Communications to update:\n");
+          uint64_t i = 0;
+          for (auto& [object_to_update, sender_id, recipient_id, bytes] :
+                 communications_to_add) {
+            // fmt::print("    {} needs to be updated in {} -> {} communication of {} bytes.\n", object_to_update,
+            //  sender_id, recipient_id, bytes);
+            if (object_to_update == "sender" && sender_id == obj_id) {
+              // fmt::print("    Sender to be updated is object on this rank. Updating.\n");
+              rank.addObjectSentCommunicationAtPhase(
+                phase, obj_id, recipient_id, bytes);
+              communications_to_add.erase(communications_to_add.begin() + i);
+            } else if (
+              object_to_update == "recipient" && recipient_id == obj_id) {
+              // fmt::print("    Recipient to be updated is object on this rank. Updating.\n");
+              rank.addObjectReceivedCommunicationAtPhase(
+                phase, obj_id, sender_id, bytes);
+              communications_to_add.erase(communications_to_add.begin() + i);
+            }
+            if (communications_to_add.empty()) {
+              return;
+            }
+            i++;
           }
-          if (communications_to_add.empty()) {
-            return;
-          }
-          i++;
         }
       }
     }
@@ -960,7 +990,7 @@ struct Info {
   bool hasRankUserDefined(std::string const& key) const {
     for (auto const& [id, rank] : ranks_) {
       auto const num_phases = rank.getNumPhases();
-      for (std::size_t i = 0; i < num_phases; i++) {
+      for (std::size_t i = getMinPhase(); i < getMinPhase()+num_phases; i++) {
         auto const& ud = rank.getPhaseWork().at(i).getUserDefined();
         if (auto iter = ud.find(key); iter != ud.end()) {
           return true;
@@ -987,7 +1017,7 @@ struct Info {
   QOIVariantTypes getFirstRankUserDefined(std::string const& key) const {
     for (auto const& [id, rank] : ranks_) {
       auto const num_phases = rank.getNumPhases();
-      for (std::size_t i = 0; i < num_phases; i++) {
+      for (std::size_t i = getMinPhase(); i < getMinPhase()+num_phases; i++) {
         auto const& ud = rank.getPhaseWork().at(i).getUserDefined();
         if (auto iter = ud.find(key); iter != ud.end()) {
           return iter->second;
