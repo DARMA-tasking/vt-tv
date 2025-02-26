@@ -68,9 +68,11 @@ namespace vt::tv {
 struct Info {
   Info(
     std::unordered_map<ElementIDType, ObjectInfo> in_object_info,
-    std::unordered_map<NodeType, Rank> in_ranks)
-    : object_info_(std::move(in_object_info)),
-      ranks_(std::move(in_ranks)) { }
+    std::unordered_map<NodeType, Rank> in_ranks
+  ) : object_info_(std::move(in_object_info)),
+      ranks_(std::move(in_ranks)),
+      min_phase_(getMinPhase())
+  { }
 
   Info() = default;
 
@@ -88,6 +90,10 @@ struct Info {
 
     assert(ranks_.find(r.getRankID()) == ranks_.end() && "Rank must not exist");
     ranks_.try_emplace(r.getRankID(), std::move(r));
+
+    if (min_phase_ == std::numeric_limits<PhaseType>::max()) {
+      min_phase_ = getMinPhase();
+    }
   }
 
   void setSelectedPhase(PhaseType selected_phase) {
@@ -461,24 +467,23 @@ struct Info {
    * \return the minimim phase in the data
    */
   PhaseType getMinPhase() const {
-    PhaseType min_phase = std::numeric_limits<PhaseType>::max();
-    // Go through all ranks and get all objects at given phase
-    for (uint64_t rank = 0; rank < ranks_.size(); rank++) {
-      // Get Rank info for specified rank
-      auto const& rank_info = ranks_.at(rank);
+    if (min_phase_ != std::numeric_limits<PhaseType>::max()) {
+      return min_phase_;
+    }
+    // Otherwise, we have to calculate it
 
-      // Get the phase work map
-      auto const& pw = rank_info.getPhaseWork();
+    // Get the rank info for any rank (all ranks should have the same phases)
+    auto const& rank_info = ranks_.begin()->second;
 
-      std::set<PhaseType> keys;
-      for (auto& [key, _] : pw) {
-        keys.insert(key);
-      }
+    // Get the phase work map
+    auto const& pw = rank_info.getPhaseWork();
 
-      min_phase = std::min(*keys.begin(), min_phase);
+    std::set<PhaseType> keys;
+    for (auto& [key, _] : pw) {
+      keys.insert(key);
     }
 
-    return min_phase;
+    return keys.size() > 0 ? *keys.begin() : 0;
   }
 
   /**
@@ -1245,6 +1250,9 @@ private:
 
   /// The current phase (or indication to use all phases)
   PhaseType selected_phase_ = std::numeric_limits<PhaseType>::max();
+
+  /// The min phase found in the data (could start at non-zero)
+  PhaseType min_phase_ = std::numeric_limits<PhaseType>::max();
 };
 
 } /* end namespace vt::tv */
