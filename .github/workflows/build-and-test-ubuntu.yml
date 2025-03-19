@@ -86,6 +86,25 @@ jobs:
             VT_TV_COVERAGE_ENABLED=${{ env.VT_TV_COVERAGE_ENABLED }}
           outputs: type=local,dest=${{ env.OUTPUT_DIR }}
 
+      - name: Prepare Debian Package Structure
+        run: |
+          mkdir -p pkg/DEBIAN
+          mkdir -p pkg/usr/local/bin
+          cp /tmp/pkg-artifacts/bin/vttv pkg/usr/bin/
+          cat <<EOF > pkg/DEBIAN/control
+          Package: vttv
+          Version: 1.5.0
+          Section: base
+          Priority: optional
+          Architecture: amd64
+          Maintainer: Pierre Pébay <pierre.pebay@ng-analytics.com>
+          Description: DARMA vt task visualizer.
+          EOF
+
+      - name: Build the Debian Package
+        run: |
+          dpkg-deb --build pkg vttv-amd64-1-5-0.deb
+
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         if: always()
