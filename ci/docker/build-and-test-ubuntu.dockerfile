@@ -40,4 +40,4 @@ RUN VTK_DIR=/opt/build/vtk bash /opt/src/vt-tv/ci/python_test.sh
 FROM scratch AS artifacts
 COPY --from=test-cpp /tmp/artifacts /tmp/artifacts
 COPY --from=test-python /opt/src/vt-tv/output/python_tests /tmp/python-artifacts
-COPY --from=build /opt/build/vt-tv/build/install /tmp/pkg-artifacts
+COPY --from=build /opt/build/vt-tv/install /tmp/pkg-artifacts
