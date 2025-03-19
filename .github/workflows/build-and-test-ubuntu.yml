@@ -90,7 +90,7 @@ jobs:
         run: |
           mkdir -p pkg/DEBIAN
           mkdir -p pkg/usr/local/bin
-          cp /tmp/pkg-artifacts/bin/vttv pkg/usr/bin/
+          cp ${{ env.OUTPUT_DIR }}/tmp/pkg-artifacts/bin/vttv pkg/usr/local/bin/
           cat <<EOF > pkg/DEBIAN/control
           Package: vttv
           Version: 1.5.0
