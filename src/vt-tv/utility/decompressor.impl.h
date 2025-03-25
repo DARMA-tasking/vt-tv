@@ -128,7 +128,12 @@ std::size_t Decompressor<Readable>::read(
       // we have hit an unknown error, print the code and corresponding message!
       auto error_code = BrotliDecoderGetErrorCode(dec_);
       auto error_str = fmt::format(
-        "code={}, msg={}\n", error_code, BrotliDecoderErrorString(error_code));
+        "code={}, msg={}\n",
+        static_cast<typename std::underlying_type<decltype(error_code)>::type>(
+          error_code
+        ),
+        BrotliDecoderErrorString(error_code)
+      );
       fmt::print(error_str);
       assert(false);
       break;
