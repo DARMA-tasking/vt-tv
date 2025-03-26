@@ -43,6 +43,7 @@
 #if !defined INCLUDED_VT_TV_API_OBJECT_COMMUNICATOR_H
 #define INCLUDED_VT_TV_API_OBJECT_COMMUNICATOR_H
 
+#include <algorithm>
 #include <string>
 #include <iostream>
 #include <list>

@@ -52,6 +52,7 @@
 
 #include <unordered_map>
 #include <cassert>
+#include <functional>
 #include <set>
 
 namespace vt::tv {
