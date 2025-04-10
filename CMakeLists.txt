@@ -71,6 +71,7 @@ set(PROJECT_APP_DIR      ${CMAKE_CURRENT_SOURCE_DIR}/apps)
 set(PROJECT_BINDINGS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/bindings)
 
 add_subdirectory(src)
+link_openmp()
 add_subdirectory(examples)
 
 add_subdirectory(apps)
