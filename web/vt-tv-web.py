@@ -41,6 +41,7 @@ configure_serializer(encode_lut=True, skip_light=True)
 
 # Global variables
 dataset_arrays = []
+rank_glyph = vtkGlyphSource2D()
 rank_actor = vtkActor()
 rank_bar = vtkScalarBarActor()
 rank_mapper = vtkPolyDataMapper()
@@ -70,6 +71,7 @@ class ColorMap:
 server = get_server(client_type="vue2")
 state, ctrl = server.state, server.controller
 state.setdefault("active_ui", None)
+state.ranks = vtkTransformPolyDataFilter()
 
 def actives_change(ids):
     """ Selection change"""
@@ -180,13 +182,19 @@ def update_mesh_colormap(mesh_colormap, **kwargs):
     use_colormap(rank_actor, mesh_colormap)
     ctrl.view_update()
 
-
-# Opacity Callbacks
-@state.change("mesh_opacity")
-def update_mesh_opacity(mesh_opacity, **kwargs):
-    rank_actor.GetProperty().SetOpacity(mesh_opacity)
+@state.change("mesh_scale")
+def update_mesh_scale(mesh_scale, **kwargs):
+    """ Mesh scale callback"""
+    rank_glyph.SetScale(mesh_scale)
+    state.ranks.Update()
+    state.ranks.GetOutput().GetCellData().ShallowCopy(state.rank_data)
     ctrl.view_update()
 
+@state.change("mesh_opacity")
+def update_mesh_opacity(mesh_opacity, **kwargs):
+    """ Opacity callback"""
+    rank_actor.GetProperty().SetOpacity(mesh_opacity)
+    ctrl.view_update()
 
 def standard_buttons():
     """ Define standard buttons"""
@@ -261,8 +269,7 @@ def mesh_card():
                     hide_details=True,
                     dense=True,
                     outlined=True,
-                    classes="pt-1",
-                )
+                    classes="pt-1")
             with vuetify.VCol(cols="6"):
                 vuetify.VSelect(
                     # Color Map
@@ -276,19 +283,27 @@ def mesh_card():
                     hide_details=True,
                     dense=True,
                     outlined=True,
-                    classes="pt-1",
-                )
+                    classes="pt-1")
+        vuetify.VSlider(
+            # Scale
+            v_model=("mesh_scale", 0.95),
+            min=0,
+            max=1,
+            step=0.05,
+            label="Scale",
+            classes="mt-1",
+            hide_details=True,
+            dense=True)
         vuetify.VSlider(
             # Opacity
             v_model=("mesh_opacity", 1.0),
             min=0,
             max=1,
-            step=0.1,
+            step=0.05,
             label="Opacity",
             classes="mt-1",
             hide_details=True,
-            dense=True,
-        )
+            dense=True)
 
 
 def get_mesh(filename):
@@ -306,9 +321,9 @@ def create_rendering_pipeline():
     # Extract rank data information
     default_id = 0
     rank_mesh = get_mesh("../data/synthetic-dataset-blocks_rank_mesh_0.vtp")
-    rank_data = rank_mesh.GetPointData()
-    for i in range(rank_data.GetNumberOfArrays()):
-        array = rank_data.GetArray(i)
+    state.rank_data = rank_mesh.GetPointData()
+    for i in range(state.rank_data.GetNumberOfArrays()):
+        array = state.rank_data.GetArray(i)
         array_range = array.GetRange()
         if (qoi := array.GetName()) == "load":
             default_id = i
@@ -319,9 +334,7 @@ def create_rendering_pipeline():
     state.array = dataset_arrays[default_id]
 
     # Create square glyphs at ranks
-    rank_glyph = vtkGlyphSource2D()
     rank_glyph.SetGlyphTypeToSquare()
-    rank_glyph.SetScale(.95)
     rank_glyph.FilledOn()
     rank_glyph.CrossOff()
     rank_glypher = vtkGlyph2D()
@@ -332,16 +345,11 @@ def create_rendering_pipeline():
     # Lower glyphs slightly for visibility and pass point data
     z_lower = vtkTransform()
     z_lower.Translate(0.0, 0.0, -0.01)
-    trans = vtkTransformPolyDataFilter()
-    trans.SetTransform(z_lower)
-    trans.SetInputConnection(rank_glypher.GetOutputPort())
-    trans.Update()
-    trans_data = trans.GetOutput().GetCellData()
-    for i in range(rank_data.GetNumberOfArrays()):
-        trans_data.AddArray(rank_data.GetArray(i))
+    state.ranks.SetTransform(z_lower)
+    state.ranks.SetInputConnection(rank_glypher.GetOutputPort())
 
     # Initialize mapper for rank glyphs
-    rank_mapper.SetInputConnection(trans.GetOutputPort())
+    rank_mapper.SetInputConnection(state.ranks.GetOutputPort())
     rank_mapper.SelectColorArray(state.array.get("text"))
     rank_mapper.SetScalarModeToUseCellFieldData()
     rank_mapper.SetScalarVisibility(True)
