@@ -41,6 +41,8 @@ configure_serializer(encode_lut=True, skip_light=True)
 
 # Global variables
 dataset_arrays = []
+rank_glyph = vtkGlyphSource2D()
+ranks = vtkTransformPolyDataFilter()
 rank_actor = vtkActor()
 rank_bar = vtkScalarBarActor()
 rank_mapper = vtkPolyDataMapper()
@@ -70,8 +72,6 @@ class ColorMap:
 server = get_server(client_type="vue2")
 state, ctrl = server.state, server.controller
 state.setdefault("active_ui", None)
-state.rank_glyph = vtkGlyphSource2D()
-state.ranks = vtkTransformPolyDataFilter()
 
 def actives_change(ids):
     """ Selection change"""
@@ -185,11 +185,11 @@ def update_mesh_colormap(mesh_colormap, **kwargs):
 @state.change("mesh_scale")
 def update_mesh_scale(mesh_scale, **kwargs):
     """ Mesh scale callback"""
-    state.rank_glyph.SetScale(mesh_scale)
+    rank_glyph.SetScale(mesh_scale)
 
     # Forcing passing of data which cannot be done earlier due to glyphing
-    state.ranks.Update()
-    state.ranks.GetOutput().GetCellData().ShallowCopy(state.rank_data)
+    ranks.Update()
+    ranks.GetOutput().GetCellData().ShallowCopy(state.rank_data)
     ctrl.view_update()
 
 @state.change("mesh_opacity")
@@ -336,22 +336,22 @@ def create_rendering_pipeline():
     state.array = dataset_arrays[default_id]
 
     # Create square glyphs at ranks
-    state.rank_glyph.SetGlyphTypeToSquare()
-    state.rank_glyph.FilledOn()
-    state.rank_glyph.CrossOff()
+    rank_glyph.SetGlyphTypeToSquare()
+    rank_glyph.FilledOn()
+    rank_glyph.CrossOff()
     rank_glypher = vtkGlyph2D()
-    rank_glypher.SetSourceConnection(state.rank_glyph.GetOutputPort())
+    rank_glypher.SetSourceConnection(rank_glyph.GetOutputPort())
     rank_glypher.SetInputData(rank_mesh)
     rank_glypher.SetScaleModeToDataScalingOff()
 
     # Lower glyphs slightly for visibility and pass point data
     z_lower = vtkTransform()
     z_lower.Translate(0.0, 0.0, -0.01)
-    state.ranks.SetTransform(z_lower)
-    state.ranks.SetInputConnection(rank_glypher.GetOutputPort())
+    ranks.SetTransform(z_lower)
+    ranks.SetInputConnection(rank_glypher.GetOutputPort())
 
     # Initialize mapper for rank glyphs
-    rank_mapper.SetInputConnection(state.ranks.GetOutputPort())
+    rank_mapper.SetInputConnection(ranks.GetOutputPort())
     rank_mapper.SelectColorArray(state.array.get("text"))
     rank_mapper.SetScalarModeToUseCellFieldData()
     rank_mapper.SetScalarVisibility(True)
