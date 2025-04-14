@@ -133,7 +133,7 @@ def update_mesh_color_by_name(mesh_color_array_idx, **kwargs):
 # Color map callbacks
 def use_colormap(actor, colormap):
     # Retrieve current array range and midpoint
-    rng = state.array.get("range")        
+    rng = state.array.get("range")
     midpoint = (rng[0] + rng[1]) * .5
 
     # Build desired color transfer function
@@ -298,11 +298,11 @@ def get_mesh(filename):
     reader.SetFileName(os.path.join(CURRENT_DIRECTORY, filename))
     reader.Update()
     return reader.GetOutput()
-    
+
 def create_rendering_pipeline():
     # Initialize render window and interactor
     render_window.AddRenderer(renderer)
-    
+
     # Extract rank data information
     default_id = 0
     rank_mesh = get_mesh("../data/synthetic-dataset-blocks_rank_mesh_0.vtp")
