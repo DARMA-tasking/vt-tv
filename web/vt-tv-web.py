@@ -41,7 +41,6 @@ configure_serializer(encode_lut=True, skip_light=True)
 
 # Global variables
 dataset_arrays = []
-rank_glyph = vtkGlyphSource2D()
 rank_actor = vtkActor()
 rank_bar = vtkScalarBarActor()
 rank_mapper = vtkPolyDataMapper()
@@ -71,6 +70,7 @@ class ColorMap:
 server = get_server(client_type="vue2")
 state, ctrl = server.state, server.controller
 state.setdefault("active_ui", None)
+state.rank_glyph = vtkGlyphSource2D()
 state.ranks = vtkTransformPolyDataFilter()
 
 def actives_change(ids):
@@ -185,7 +185,9 @@ def update_mesh_colormap(mesh_colormap, **kwargs):
 @state.change("mesh_scale")
 def update_mesh_scale(mesh_scale, **kwargs):
     """ Mesh scale callback"""
-    rank_glyph.SetScale(mesh_scale)
+    state.rank_glyph.SetScale(mesh_scale)
+
+    # Forcing passing of data which cannot be done earlier due to glyphing
     state.ranks.Update()
     state.ranks.GetOutput().GetCellData().ShallowCopy(state.rank_data)
     ctrl.view_update()
@@ -334,11 +336,11 @@ def create_rendering_pipeline():
     state.array = dataset_arrays[default_id]
 
     # Create square glyphs at ranks
-    rank_glyph.SetGlyphTypeToSquare()
-    rank_glyph.FilledOn()
-    rank_glyph.CrossOff()
+    state.rank_glyph.SetGlyphTypeToSquare()
+    state.rank_glyph.FilledOn()
+    state.rank_glyph.CrossOff()
     rank_glypher = vtkGlyph2D()
-    rank_glypher.SetSourceConnection(rank_glyph.GetOutputPort())
+    rank_glypher.SetSourceConnection(state.rank_glyph.GetOutputPort())
     rank_glypher.SetInputData(rank_mesh)
     rank_glypher.SetScaleModeToDataScalingOff()
 
