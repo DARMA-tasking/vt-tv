@@ -1,5 +1,6 @@
 # General imports
 import os
+import re
 
 # Trame imports
 from trame.app import get_server
@@ -33,7 +34,8 @@ import vtkmodules.vtkRenderingOpenGL2  # noqa
 import matplotlib.pyplot as plt
 
 # Constants
-CURRENT_DIRECTORY = os.path.abspath(os.path.dirname(__file__))
+BASE_DIR = os.path.join(
+    os.path.abspath(os.path.dirname(__file__)), "../data")
 N_COLORS = 256
 
 # Configure scene encoder
@@ -41,6 +43,7 @@ configure_serializer(encode_lut=True, skip_light=True)
 
 # Global variables
 dataset_arrays = []
+rank_data = None
 rank_glyph = vtkGlyphSource2D()
 ranks = vtkTransformPolyDataFilter()
 rank_actor = vtkActor()
@@ -71,6 +74,8 @@ class ColorMap:
 # Trame
 server = get_server(client_type="vue2")
 state, ctrl = server.state, server.controller
+
+# GUI state variable
 state.setdefault("active_ui", None)
 
 def actives_change(ids):
@@ -189,7 +194,7 @@ def update_mesh_scale(mesh_scale, **kwargs):
 
     # Forcing passing of data which cannot be done earlier due to glyphing
     ranks.Update()
-    ranks.GetOutput().GetCellData().ShallowCopy(state.rank_data)
+    ranks.GetOutput().GetCellData().ShallowCopy(rank_data)
     ctrl.view_update()
 
 @state.change("mesh_opacity")
@@ -307,12 +312,41 @@ def mesh_card():
             hide_details=True,
             dense=True)
 
+def get_subdirectories(path):
+    try:
+        return sorted(
+            [f for f in os.listdir(path) if os.path.isdir(os.path.join(path, f))]
+        )
+    except Exception:
+        return []
+
+def find_file_stems():
+    """Retrieve list of unique file stems from data directory"""
+    # Return empty list if directory does not exist
+    try:
+        # Retrieve all files
+        files = os.listdir(BASE_DIR)
+    except FileNotFoundError:
+        return []
+
+    # Pattern to be matched as regular expression
+    pattern = re.compile(r"^(.*?)(_\d+)?\.vtp$", re.IGNORECASE)
+
+    # Iterate over files and keep those matching pattern
+    stems = set()
+    for filename in files:
+        match = pattern.match(filename)
+        if match:
+            stems.add(match.group(1))
+
+    # Return sorted list of matching stems
+    return sorted(list(stems))
 
 def get_mesh(filename):
     """ Read mesg from filename"""
     # Read Data
     reader = vtkXMLPolyDataReader()
-    reader.SetFileName(os.path.join(CURRENT_DIRECTORY, filename))
+    reader.SetFileName(os.path.join(BASE_DIR, filename))
     reader.Update()
     return reader.GetOutput()
 
@@ -322,10 +356,10 @@ def create_rendering_pipeline():
 
     # Extract rank data information
     default_id = 0
-    rank_mesh = get_mesh("../data/synthetic-dataset-blocks_rank_mesh_0.vtp")
-    state.rank_data = rank_mesh.GetPointData()
-    for i in range(state.rank_data.GetNumberOfArrays()):
-        array = state.rank_data.GetArray(i)
+    rank_mesh = get_mesh("synthetic-dataset-blocks_rank_mesh_0.vtp")
+    rank_data = rank_mesh.GetPointData()
+    for i in range(rank_data.GetNumberOfArrays()):
+        array = rank_data.GetArray(i)
         array_range = array.GetRange()
         if (qoi := array.GetName()) == "load":
             default_id = i
@@ -383,32 +417,37 @@ def create_rendering_pipeline():
     # Initialize renderer
     renderer.ResetCamera()
 
+    # Return rank data
+    return rank_data
 
 if __name__ == "__main__":
     # Create rendering pipeline
-    create_rendering_pipeline()
+    rank_data = create_rendering_pipeline()
 
     # Launch GUI
     with SinglePageWithDrawerLayout(server) as layout:
         # Layout title
         layout.title.set_text("vt-tv-web")
 
-        # Layout toolbar
+        # Create toolbar layout
         with layout.toolbar:
-            # toolbar components
+            # Set up toolbar components
             vuetify.VSpacer()
             vuetify.VDivider(vertical=True, classes="mx-2")
             standard_buttons()
 
-        # Layout drawer
+
+        # Create drawer layout
         with layout.drawer as drawer:
-            # drawer components
-            drawer.width = 325
+            # InserInsert drawer components
+            drawer.width = 320
             pipeline_widget()
             vuetify.VDivider(classes="mb-2")
+
+            # Insert rank mesh card
             mesh_card()
 
-        # Layout footer
+        # Create footer layout
         layout.footer.hide()
 
         with layout.content:
