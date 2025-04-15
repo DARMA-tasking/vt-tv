@@ -1,10 +1,12 @@
 # General imports
 import os
 import re
+from tkinter import filedialog, Tk
 
 # Trame imports
 from trame.app import get_server
 from trame.ui.vuetify import SinglePageWithDrawerLayout
+from trame.ui.html import DivLayout
 from trame.widgets import vtk, html, vuetify, trame
 from trame_vtk.modules.vtk.serializers import configure_serializer
 
@@ -26,9 +28,7 @@ from vtkmodules.vtkRenderingCore import (
     vtkRenderWindow,
     vtkRenderWindowInteractor)
 from vtkmodules.vtkRenderingAnnotation import vtkScalarBarActor
-# Required for rendering initialization, not necessary for
-# local rendering, but doesn't hurt to include it
-import vtkmodules.vtkRenderingOpenGL2  # noqa
+import vtkmodules.vtkRenderingOpenGL2
 
 # MatPlotLib imports
 import matplotlib.pyplot as plt
@@ -71,13 +71,31 @@ class ColorMap:
     Blue_to_Red = 1
     White_to_Black = 2
 
+# Tkinter
+root = Tk()
+root.withdraw()
+root.lift()
+root.attributes("-topmost", True)
+root.wm_attributes("-topmost", True)
+
 # Trame
 server = get_server(client_type="vue2")
 state, ctrl = server.state, server.controller
 
+# Keep track of the currently selected directory
+state.data_dir = os.path.join(
+    os.path.abspath(os.path.dirname(__file__)), "../data")
+
 # GUI state variable
 state.setdefault("active_ui", None)
 
+@ctrl.set("open_directory")
+def open_directory():
+    kwargs = {
+        "title": "Select Directory",
+    }
+    state.data_dir = filedialog.askdirectory(initialdir=state.data_dir, **kwargs)
+    print(state.data_dir)
 def actives_change(ids):
     """ Selection change"""
     _id = ids[0]
@@ -203,8 +221,15 @@ def update_mesh_opacity(mesh_opacity, **kwargs):
     rank_actor.GetProperty().SetOpacity(mesh_opacity)
     ctrl.view_update()
 
-def standard_buttons():
-    """ Define standard buttons"""
+def left_buttons():
+    """ Define left-side buttons"""
+    with vuetify.VBtn(icon=True, click=ctrl.open_directory):
+        vuetify.VIcon("mdi-folder-open")
+    with vuetify.VBtn(icon=True, click="$refs.view.resetCamera()"):
+        vuetify.VIcon("mdi-crop-free")
+
+def right_buttons():
+    """ Define right-side buttons"""
     vuetify.VCheckbox(
         v_model="$vuetify.theme.dark",
         on_icon="mdi-lightbulb-off-outline",
@@ -223,8 +248,6 @@ def standard_buttons():
         hide_details=True,
         dense=True,
     )
-    with vuetify.VBtn(icon=True, click="$refs.view.resetCamera()"):
-        vuetify.VIcon("mdi-crop-free")
 
 
 def pipeline_widget():
@@ -432,10 +455,12 @@ if __name__ == "__main__":
         # Create toolbar layout
         with layout.toolbar:
             # Set up toolbar components
+            vuetify.VDivider(vertical=True, classes="mx-4")
+            left_buttons()
+            vuetify.VDivider(vertical=True, classes="mx-4")
             vuetify.VSpacer()
-            vuetify.VDivider(vertical=True, classes="mx-2")
-            standard_buttons()
-
+            vuetify.VDivider(vertical=True, classes="mx-4")
+            right_buttons()
 
         # Create drawer layout
         with layout.drawer as drawer:
