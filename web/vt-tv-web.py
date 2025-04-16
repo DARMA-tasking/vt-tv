@@ -473,7 +473,7 @@ def create_rendering_pipeline(rank_mesh):
 
     # Initialize renderer
     renderer.ResetCamera()
-    
+
     # Return rank data
     return rank_data
 
