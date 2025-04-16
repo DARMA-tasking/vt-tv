@@ -42,23 +42,26 @@ N_COLORS = 256
 configure_serializer(encode_lut=True, skip_light=True)
 
 # Global variables
-dataset_arrays = []
+view = None
 rank_data = None
 rank_glyph = vtkGlyphSource2D()
 ranks = vtkTransformPolyDataFilter()
 rank_actor = vtkActor()
 rank_bar = vtkScalarBarActor()
 rank_mapper = vtkPolyDataMapper()
-render_window = vtkRenderWindow()
-interactor = vtkRenderWindowInteractor()
-interactor.SetRenderWindow(render_window)
 
 # Create global renderer with parallel projection
 renderer = vtkRenderer()
 renderer.AddActor(rank_actor)
-renderer.AddActor(rank_bar)
+#renderer.AddActor(rank_bar)
 renderer.SetBackground(1.0, 1.0, 1.0)
 renderer.GetActiveCamera().ParallelProjectionOn()
+
+# Create global render window and interactor
+render_window = vtkRenderWindow()
+render_window.AddRenderer(renderer)
+interactor = vtkRenderWindowInteractor()
+interactor.SetRenderWindow(render_window)
 
 # Enumeration of representation types
 class Representation:
@@ -85,17 +88,14 @@ state, ctrl = server.state, server.controller
 # Keep track of the currently selected directory
 state.data_dir = os.path.join(
     os.path.abspath(os.path.dirname(__file__)), "../data")
+state.vtp_files = []
+state.rank_file = None
+state.dataset_arrays = []
+state.array = None
 
 # GUI state variable
 state.setdefault("active_ui", None)
 
-@ctrl.set("open_directory")
-def open_directory():
-    kwargs = {
-        "title": "Select Directory",
-    }
-    state.data_dir = filedialog.askdirectory(initialdir=state.data_dir, **kwargs)
-    print(state.data_dir)
 def actives_change(ids):
     """ Selection change"""
     _id = ids[0]
@@ -104,17 +104,55 @@ def actives_change(ids):
     else:
         state.active_ui = "nothing"
 
-
 def visibility_change(event):
     """ Visibility change"""
     _id = event["id"]
     _visibility = event["visible"]
 
+    # Rank mesh
     if _id == "1":
-        # Rank mesh
         rank_actor.SetVisibility(_visibility)
     ctrl.view_update()
 
+@ctrl.set("open_directory")
+def open_directory():
+    state.data_dir = filedialog.askdirectory(
+        title="Select Directory",
+        initialdir=state.data_dir)
+
+@state.change("data_dir")
+def find_vtp_files(**kwargs):
+    """ Find all VTP files in current data folder"""
+    if not os.path.exists(state.data_dir):
+        state.vtp_files = []
+        return
+    state.vtp_files = sorted([
+        f for f in os.listdir(state.data_dir) if f.lower().endswith(".vtp")])
+
+@state.change("rank_file")
+def on_file_selected(**kwargs):
+    # Punt if no rank file is provided
+    if not state.rank_file:
+        return
+
+    # Retrieve rank mesh and data
+    rank_mesh = get_mesh(os.path.join(
+        state.data_dir, state.rank_file))
+    pd = rank_mesh.GetPointData()
+
+    # Recreate dataset arrays de novo to ensure detection by Trame
+    state.dataset_arrays = [
+        {"text": pd.GetArray(i).GetName(),
+         "value": i,
+         "range": list(pd.GetArray(i).GetRange())}
+        for i in range(pd.GetNumberOfArrays())
+        if pd.GetArray(i) and pd.GetArray(i).GetName()]
+
+    # Invoke pipeline with data obtained from file
+    global rank_data
+    rank_data = create_rendering_pipeline(rank_mesh)
+    state.mesh_color_array_idx = 0 if state.dataset_arrays else None
+    ctrl.view_update()
 
 def update_representation(actor, mode):
     """ Define supported representation types"""
@@ -128,13 +166,13 @@ def update_representation(actor, mode):
         property.SetPointSize(1)
         property.EdgeVisibilityOn()
 
-
 @state.change("mesh_representation")
 def update_mesh_representation(mesh_representation, **kwargs):
     """ Representation callback"""
+    if not state.rank_file:
+        return
     update_representation(rank_actor, mesh_representation)
     ctrl.view_update()
-
 
 # Color By Callbacks
 def color_by_array(actor, scalar_bar, array):
@@ -150,15 +188,16 @@ def color_by_array(actor, scalar_bar, array):
 
 @state.change("mesh_color_array_idx")
 def update_mesh_color_by_name(mesh_color_array_idx, **kwargs):
-    array = dataset_arrays[mesh_color_array_idx]
+    if not state.rank_file:
+        return
+    array = state.dataset_arrays[mesh_color_array_idx]
     color_by_array(rank_actor, rank_bar, array)
     ctrl.view_update()
-
 
 # Color map callbacks
 def use_colormap(actor, colormap):
     # Retrieve current array range and midpoint
-    rng = state.array.get("range")
+    rng = state.array.get("range") if state.array else [0., 1.]
     midpoint = (rng[0] + rng[1]) * .5
 
     # Build desired color transfer function
@@ -187,7 +226,9 @@ def use_colormap(actor, colormap):
         ctf.SetAboveRangeColor(1.0, 0.0, 0.0)
 
     # Convert and pass to mapper as lookup table
-    lut = actor.GetMapper().GetLookupTable()
+    if not( mapper := actor.GetMapper()):
+        return
+    lut = mapper.GetLookupTable()
     lut.SetRange(rng)
     lut.SetNumberOfTableValues(N_COLORS)
     lut.SetNanColor(1., 1., 1., 0.)
@@ -202,14 +243,17 @@ def use_colormap(actor, colormap):
 
 @state.change("mesh_colormap")
 def update_mesh_colormap(mesh_colormap, **kwargs):
+    if not state.rank_file:
+        return
     use_colormap(rank_actor, mesh_colormap)
     ctrl.view_update()
 
 @state.change("mesh_scale")
 def update_mesh_scale(mesh_scale, **kwargs):
     """ Mesh scale callback"""
+    if not state.rank_file:
+        return
     rank_glyph.SetScale(mesh_scale)
-
     # Forcing passing of data which cannot be done earlier due to glyphing
     ranks.Update()
     ranks.GetOutput().GetCellData().ShallowCopy(rank_data)
@@ -218,6 +262,8 @@ def update_mesh_scale(mesh_scale, **kwargs):
 @state.change("mesh_opacity")
 def update_mesh_opacity(mesh_opacity, **kwargs):
     """ Opacity callback"""
+    if not state.rank_file:
+        return
     rank_actor.GetProperty().SetOpacity(mesh_opacity)
     ctrl.view_update()
 
@@ -236,8 +282,7 @@ def right_buttons():
         off_icon="mdi-lightbulb-outline",
         classes="mx-1",
         hide_details=True,
-        dense=True,
-    )
+        dense=True)
     vuetify.VCheckbox(
         v_model=("viewMode", "local"),
         on_icon="mdi-lan-disconnect",
@@ -246,22 +291,16 @@ def right_buttons():
         false_value="remote",
         classes="mx-1",
         hide_details=True,
-        dense=True,
-    )
-
+        dense=True)
 
 def pipeline_widget():
     trame.GitTree(
         sources=(
             "pipeline",
-            [
-                {"id": "1", "parent": "0", "visible": 1, "name": "Rank Mesh"},
-            ],
-        ),
+            [{"id": "1", "parent": "0", "visible": 1, "name": "Rank Mesh"}]),
         actives_change=(actives_change, "[$event]"),
         visibility_change=(visibility_change, "[$event]"),
     )
-
 
 def ui_card(title, ui_name):
     with vuetify.VCard(v_show=f"active_ui == '{ui_name}'"):
@@ -274,9 +313,15 @@ def ui_card(title, ui_name):
         content = vuetify.VCardText(classes="py-2")
     return content
 
-
 def mesh_card():
     with ui_card(title="Mesh", ui_name="mesh"):
+        find_vtp_files()
+        vuetify.VSelect(
+            label="Rank Mesh File",
+            items=("vtp_files",),
+            v_model=("rank_file", None),
+            outlined=True,
+            dense=True)
         vuetify.VSelect(
             # Representation
             v_model=("mesh_representation", Representation.Surface),
@@ -284,7 +329,7 @@ def mesh_card():
                 "representations",
                 [{"text": "Surface", "value": 0},
                  {"text": "SurfaceWithEdges", "value": 1}]),
-            label="Representation",
+            label="Mesh Representation",
             hide_details=True,
             dense=True,
             outlined=True,
@@ -295,7 +340,7 @@ def mesh_card():
                     # Color By
                     label="Color by",
                     v_model=("mesh_color_array_idx", 0),
-                    items=("array_list", dataset_arrays),
+                    items=("dataset_arrays", []),
                     hide_details=True,
                     dense=True,
                     outlined=True,
@@ -335,14 +380,6 @@ def mesh_card():
             hide_details=True,
             dense=True)
 
-def get_subdirectories(path):
-    try:
-        return sorted(
-            [f for f in os.listdir(path) if os.path.isdir(os.path.join(path, f))]
-        )
-    except Exception:
-        return []
-
 def find_file_stems():
     """Retrieve list of unique file stems from data directory"""
     # Return empty list if directory does not exist
@@ -373,24 +410,20 @@ def get_mesh(filename):
     reader.Update()
     return reader.GetOutput()
 
-def create_rendering_pipeline():
-    # Initialize render window and interactor
-    render_window.AddRenderer(renderer)
-
+def create_rendering_pipeline(rank_mesh):
     # Extract rank data information
-    default_id = 0
-    rank_mesh = get_mesh("synthetic-dataset-blocks_rank_mesh_0.vtp")
+    global rank_data
     rank_data = rank_mesh.GetPointData()
     for i in range(rank_data.GetNumberOfArrays()):
         array = rank_data.GetArray(i)
         array_range = array.GetRange()
         if (qoi := array.GetName()) == "load":
             default_id = i
-        dataset_arrays.append({
+        state.dataset_arrays.append({
             "text": qoi,
             "value": i,
             "range": list(array_range)})
-    state.array = dataset_arrays[default_id]
+    state.array = state.dataset_arrays[default_id]
 
     # Create square glyphs at ranks
     rank_glyph.SetGlyphTypeToSquare()
@@ -406,6 +439,7 @@ def create_rendering_pipeline():
     z_lower.Translate(0.0, 0.0, -0.01)
     ranks.SetTransform(z_lower)
     ranks.SetInputConnection(rank_glypher.GetOutputPort())
+    ranks.Update()
 
     # Initialize mapper for rank glyphs
     rank_mapper.SetInputConnection(ranks.GetOutputPort())
@@ -421,31 +455,32 @@ def create_rendering_pipeline():
     rank_actor.GetProperty().EdgeVisibilityOff()
 
     # Scalar bar actor
-    rank_bar.SetLookupTable(rank_mapper.GetLookupTable())
-    rank_bar.SetTitle(state.array.get("text"))
-    rank_bar.SetNumberOfLabels(6)
-    rank_bar.DrawTickLabelsOn()
-    rank_bar.UnconstrainedFontSizeOn()
-    rank_bar.SetHeight(0.08)
-    rank_bar.SetWidth(0.42)
-    rank_bar.SetBarRatio(0.3)
-    rank_bar.DrawTickLabelsOn()
-    rank_bar.GetTitleTextProperty().SetColor(0.0, 0.0, 0.0)
-    rank_bar.GetLabelTextProperty().SetColor(0.0, 0.0, 0.0)
-    rank_bar_widget = vtkScalarBarWidget()
-    rank_bar_widget.SetInteractor(interactor)
-    rank_bar_widget.SetScalarBarActor(rank_bar)
-    rank_bar_widget.On()
+    # rank_bar.SetLookupTable(rank_mapper.GetLookupTable())
+    # rank_bar.SetTitle(state.array.get("text"))
+    # rank_bar.SetNumberOfLabels(6)
+    # rank_bar.DrawTickLabelsOn()
+    # rank_bar.UnconstrainedFontSizeOn()
+    # rank_bar.SetHeight(0.08)
+    # rank_bar.SetWidth(0.42)
+    # rank_bar.SetBarRatio(0.3)
+    # rank_bar.DrawTickLabelsOn()
+    # rank_bar.GetTitleTextProperty().SetColor(0.0, 0.0, 0.0)
+    # rank_bar.GetLabelTextProperty().SetColor(0.0, 0.0, 0.0)
+    # rank_bar_widget = vtkScalarBarWidget()
+    # rank_bar_widget.SetInteractor(interactor)
+    # rank_bar_widget.SetScalarBarActor(rank_bar)
+    # rank_bar_widget.On()
 
     # Initialize renderer
     renderer.ResetCamera()
-
+    
     # Return rank data
     return rank_data
 
 if __name__ == "__main__":
     # Create rendering pipeline
-    rank_data = create_rendering_pipeline()
+    #if state.rank_file:
+    #    rank_data = create_rendering_pipeline()
 
     # Launch GUI
     with SinglePageWithDrawerLayout(server) as layout:
@@ -474,7 +509,6 @@ if __name__ == "__main__":
 
         # Create footer layout
         layout.footer.hide()
-
         with layout.content:
             # Content components
             with vuetify.VContainer(
@@ -482,7 +516,8 @@ if __name__ == "__main__":
                 classes="pa-0 fill-height",
             ):
                 view = vtk.VtkRemoteLocalView(
-                    render_window, interactor, namespace="view", mode="local", interactive_ratio=1)
+                    render_window, interactor,
+                    namespace="view", mode="local", interactive_ratio=1)
                 ctrl.view_update = view.update
                 ctrl.view_reset_camera = view.reset_camera
 
