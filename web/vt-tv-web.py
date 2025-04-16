@@ -42,26 +42,27 @@ N_COLORS = 256
 configure_serializer(encode_lut=True, skip_light=True)
 
 # Global variables
-view = None
-rank_data = None
-rank_glyph = vtkGlyphSource2D()
-ranks = vtkTransformPolyDataFilter()
-rank_actor = vtkActor()
-rank_bar = vtkScalarBarActor()
-rank_mapper = vtkPolyDataMapper()
+_ui = {
+    "view": None}
+_pipeline = {
+    "rank_glyph": vtkGlyphSource2D(),
+    "ranks": vtkTransformPolyDataFilter(),
+    "rank_actor": vtkActor(),
+    "rank_bar": vtkScalarBarActor(),
+    "rank_mapper": vtkPolyDataMapper(),
+    "renderer": vtkRenderer(),
+    "render_window": vtkRenderWindow(),
+    "interactor": vtkRenderWindowInteractor()}
+_data = {
+    "rank_data": None}
 
-# Create global renderer with parallel projection
-renderer = vtkRenderer()
-renderer.AddActor(rank_actor)
-#renderer.AddActor(rank_bar)
-renderer.SetBackground(1.0, 1.0, 1.0)
-renderer.GetActiveCamera().ParallelProjectionOn()
-
-# Create global render window and interactor
-render_window = vtkRenderWindow()
-render_window.AddRenderer(renderer)
-interactor = vtkRenderWindowInteractor()
-interactor.SetRenderWindow(render_window)
+# Global VTK pipeline settings
+_pipeline["renderer"].AddActor(_pipeline["rank_actor"])
+#_pipeline["renderer"].AddActor(_pipeline["rank_bar"])
+_pipeline["renderer"].SetBackground(1.0, 1.0, 1.0)
+_pipeline["renderer"].GetActiveCamera().ParallelProjectionOn()
+_pipeline["render_window"].AddRenderer(_pipeline["renderer"])
+_pipeline["interactor"].SetRenderWindow(_pipeline["render_window"])
 
 # Enumeration of representation types
 class Representation:
@@ -111,7 +112,7 @@ def visibility_change(event):
 
     # Rank mesh
     if _id == "1":
-        rank_actor.SetVisibility(_visibility)
+        _pipeline["rank_actor"].SetVisibility(_visibility)
     ctrl.view_update()
 
 @ctrl.set("open_directory")
@@ -149,8 +150,7 @@ def on_file_selected(**kwargs):
         if pd.GetArray(i) and pd.GetArray(i).GetName()]
 
     # Invoke pipeline with data obtained from file
-    global rank_data
-    rank_data = create_rendering_pipeline(rank_mesh)
+    create_rendering_pipeline(rank_mesh)
     state.mesh_color_array_idx = 0 if state.dataset_arrays else None
     ctrl.view_update()
 
@@ -171,7 +171,7 @@ def update_mesh_representation(mesh_representation, **kwargs):
     """ Representation callback"""
     if not state.rank_file:
         return
-    update_representation(rank_actor, mesh_representation)
+    update_representation(_pipeline["rank_actor"], mesh_representation)
     ctrl.view_update()
 
 # Color By Callbacks
@@ -191,7 +191,7 @@ def update_mesh_color_by_name(mesh_color_array_idx, **kwargs):
     if not state.rank_file:
         return
     array = state.dataset_arrays[mesh_color_array_idx]
-    color_by_array(rank_actor, rank_bar, array)
+    color_by_array(_pipeline["rank_actor"], _pipeline["rank_bar"], array)
     ctrl.view_update()
 
 # Color map callbacks
@@ -245,7 +245,7 @@ def use_colormap(actor, colormap):
 def update_mesh_colormap(mesh_colormap, **kwargs):
     if not state.rank_file:
         return
-    use_colormap(rank_actor, mesh_colormap)
+    use_colormap(_pipeline["rank_actor"], mesh_colormap)
     ctrl.view_update()
 
 @state.change("mesh_scale")
@@ -253,10 +253,10 @@ def update_mesh_scale(mesh_scale, **kwargs):
     """ Mesh scale callback"""
     if not state.rank_file:
         return
-    rank_glyph.SetScale(mesh_scale)
+    _pipeline["rank_glyph"].SetScale(mesh_scale)
     # Forcing passing of data which cannot be done earlier due to glyphing
-    ranks.Update()
-    ranks.GetOutput().GetCellData().ShallowCopy(rank_data)
+    _pipeline["ranks"].Update()
+    _pipeline["ranks"].GetOutput().GetCellData().ShallowCopy(_data["rank_data"])
     ctrl.view_update()
 
 @state.change("mesh_opacity")
@@ -264,7 +264,7 @@ def update_mesh_opacity(mesh_opacity, **kwargs):
     """ Opacity callback"""
     if not state.rank_file:
         return
-    rank_actor.GetProperty().SetOpacity(mesh_opacity)
+    _pipeline["rank_actor"].GetProperty().SetOpacity(mesh_opacity)
     ctrl.view_update()
 
 def left_buttons():
@@ -412,10 +412,9 @@ def get_mesh(filename):
 
 def create_rendering_pipeline(rank_mesh):
     # Extract rank data information
-    global rank_data
-    rank_data = rank_mesh.GetPointData()
-    for i in range(rank_data.GetNumberOfArrays()):
-        array = rank_data.GetArray(i)
+    _data["rank_data"] = rank_mesh.GetPointData()
+    for i in range(_data["rank_data"].GetNumberOfArrays()):
+        array = _data["rank_data"].GetArray(i)
         array_range = array.GetRange()
         if (qoi := array.GetName()) == "load":
             default_id = i
@@ -426,56 +425,53 @@ def create_rendering_pipeline(rank_mesh):
     state.array = state.dataset_arrays[default_id]
 
     # Create square glyphs at ranks
-    rank_glyph.SetGlyphTypeToSquare()
-    rank_glyph.FilledOn()
-    rank_glyph.CrossOff()
+    _pipeline["rank_glyph"].SetGlyphTypeToSquare()
+    _pipeline["rank_glyph"].FilledOn()
+    _pipeline["rank_glyph"].CrossOff()
     rank_glypher = vtkGlyph2D()
-    rank_glypher.SetSourceConnection(rank_glyph.GetOutputPort())
+    rank_glypher.SetSourceConnection(_pipeline["rank_glyph"].GetOutputPort())
     rank_glypher.SetInputData(rank_mesh)
     rank_glypher.SetScaleModeToDataScalingOff()
 
     # Lower glyphs slightly for visibility and pass point data
     z_lower = vtkTransform()
     z_lower.Translate(0.0, 0.0, -0.01)
-    ranks.SetTransform(z_lower)
-    ranks.SetInputConnection(rank_glypher.GetOutputPort())
-    ranks.Update()
+    _pipeline["ranks"].SetTransform(z_lower)
+    _pipeline["ranks"].SetInputConnection(rank_glypher.GetOutputPort())
+    _pipeline["ranks"].Update()
 
     # Initialize mapper for rank glyphs
-    rank_mapper.SetInputConnection(ranks.GetOutputPort())
-    rank_mapper.SelectColorArray(state.array.get("text"))
-    rank_mapper.SetScalarModeToUseCellFieldData()
-    rank_mapper.SetScalarVisibility(True)
-    rank_mapper.SetUseLookupTableScalarRange(True)
+    _pipeline["rank_mapper"].SetInputConnection(_pipeline["ranks"].GetOutputPort())
+    _pipeline["rank_mapper"].SelectColorArray(state.array.get("text"))
+    _pipeline["rank_mapper"].SetScalarModeToUseCellFieldData()
+    _pipeline["rank_mapper"].SetScalarVisibility(True)
+    _pipeline["rank_mapper"].SetUseLookupTableScalarRange(True)
 
     # Set up rank actor
-    rank_actor.SetMapper(rank_mapper)
-    rank_actor.GetProperty().SetRepresentationToSurface()
-    rank_actor.GetProperty().SetPointSize(1)
-    rank_actor.GetProperty().EdgeVisibilityOff()
+    _pipeline["rank_actor"].SetMapper(_pipeline["rank_mapper"])
+    _pipeline["rank_actor"].GetProperty().SetRepresentationToSurface()
+    _pipeline["rank_actor"].GetProperty().SetPointSize(1)
+    _pipeline["rank_actor"].GetProperty().EdgeVisibilityOff()
 
     # Scalar bar actor
-    # rank_bar.SetLookupTable(rank_mapper.GetLookupTable())
-    # rank_bar.SetTitle(state.array.get("text"))
-    # rank_bar.SetNumberOfLabels(6)
-    # rank_bar.DrawTickLabelsOn()
-    # rank_bar.UnconstrainedFontSizeOn()
-    # rank_bar.SetHeight(0.08)
-    # rank_bar.SetWidth(0.42)
-    # rank_bar.SetBarRatio(0.3)
-    # rank_bar.DrawTickLabelsOn()
-    # rank_bar.GetTitleTextProperty().SetColor(0.0, 0.0, 0.0)
-    # rank_bar.GetLabelTextProperty().SetColor(0.0, 0.0, 0.0)
-    # rank_bar_widget = vtkScalarBarWidget()
-    # rank_bar_widget.SetInteractor(interactor)
-    # rank_bar_widget.SetScalarBarActor(rank_bar)
-    # rank_bar_widget.On()
+    # _pipeline["rank_bar"].SetLookupTable(_pipeline["rank_mapper"].GetLookupTable())
+    # _pipeline["rank_bar"].SetTitle(state.array.get("text"))
+    # _pipeline["rank_bar"].SetNumberOfLabels(6)
+    # _pipeline["rank_bar"].DrawTickLabelsOn()
+    # _pipeline["rank_bar"].UnconstrainedFontSizeOn()
+    # _pipeline["rank_bar"].SetHeight(0.08)
+    # _pipeline["rank_bar"].SetWidth(0.42)
+    # _pipeline["rank_bar"].SetBarRatio(0.3)
+    # _pipeline["rank_bar"].DrawTickLabelsOn()
+    # _pipeline["rank_bar"].GetTitleTextProperty().SetColor(0.0, 0.0, 0.0)
+    # _pipeline["rank_bar"].GetLabelTextProperty().SetColor(0.0, 0.0, 0.0)
+    # _pipeline["rank_bar"]_widget = vtkScalarBarWidget()
+    # _pipeline["rank_bar"]_widget.SetInteractor(_pipeline["interactor"])
+    # _pipeline["rank_bar"]_widget.SetScalarBarActor(_pipeline["rank_bar"])
+    # _pipeline["rank_bar"]_widget.On()
 
     # Initialize renderer
-    renderer.ResetCamera()
-
-    # Return rank data
-    return rank_data
+    _pipeline["renderer"].ResetCamera()
 
 if __name__ == "__main__":
     # Create rendering pipeline
@@ -515,11 +511,11 @@ if __name__ == "__main__":
                 fluid=True,
                 classes="pa-0 fill-height",
             ):
-                view = vtk.VtkRemoteLocalView(
-                    render_window, interactor,
+                _ui["view"] = vtk.VtkRemoteLocalView(
+                    _pipeline["render_window"], _pipeline["interactor"],
                     namespace="view", mode="local", interactive_ratio=1)
-                ctrl.view_update = view.update
-                ctrl.view_reset_camera = view.reset_camera
+                ctrl.view_update = _ui["view"].update
+                ctrl.view_reset_camera = _ui["view"].reset_camera
 
     # Start server
     server.start()
