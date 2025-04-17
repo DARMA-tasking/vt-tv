@@ -54,7 +54,9 @@ _pipeline = {
     "render_window": vtkRenderWindow(),
     "interactor": vtkRenderWindowInteractor()}
 _data = {
-    "rank_data": None}
+    # vtkPointData instances
+    "rank_data": None,
+    "object_data": None}
 
 # Global VTK pipeline settings
 _pipeline["renderer"].AddActor(_pipeline["rank_actor"])
@@ -91,7 +93,7 @@ state.data_dir = os.path.join(
     os.path.abspath(os.path.dirname(__file__)), "../data")
 state.vtp_files = []
 state.rank_file = None
-state.dataset_arrays = []
+state.rank_arrays = []
 state.array = None
 
 # GUI state variable
@@ -142,7 +144,7 @@ def on_file_selected(**kwargs):
     pd = rank_mesh.GetPointData()
 
     # Recreate dataset arrays de novo to ensure detection by Trame
-    state.dataset_arrays = [
+    state.rank_arrays = [
         {"text": pd.GetArray(i).GetName(),
          "value": i,
          "range": list(pd.GetArray(i).GetRange())}
@@ -151,12 +153,12 @@ def on_file_selected(**kwargs):
 
     # Invoke pipeline with data obtained from file
     create_rendering_pipeline(rank_mesh)
-    state.mesh_color_array_idx = 0 if state.dataset_arrays else None
+    state.mesh_color_array_idx = 0 if state.rank_arrays else None
     ctrl.view_update()
 
-def update_representation(actor, mode):
+def update_representation(mode):
     """ Define supported representation types"""
-    property = actor.GetProperty()
+    property = _pipeline["rank_actor"].GetProperty()
     if mode == Representation.Surface:
         property.SetRepresentationToSurface()
         property.SetPointSize(1)
@@ -171,31 +173,30 @@ def update_mesh_representation(mesh_representation, **kwargs):
     """ Representation callback"""
     if not state.rank_file:
         return
-    update_representation(_pipeline["rank_actor"], mesh_representation)
+    update_representation(mesh_representation)
     ctrl.view_update()
 
 # Color By Callbacks
-def color_by_array(actor, scalar_bar, array):
+def color_by_array(array):
     # Change QOI to which mapper maps color
-    mapper = actor.GetMapper()
-    qoi = array.get("text")
-    mapper.SelectColorArray(qoi)
+    mapper = _pipeline["rank_actor"].GetMapper()
+    mapper.SelectColorArray(array.get("text"))
     mapper.SetScalarRange(array.get("range"))
     mapper.GetLookupTable().SetRange(array.get("range"))
 
     # Cleanly update scalar bar title
-    scalar_bar.SetTitle(qoi.title().replace('_', ' '))
+    _pipeline["rank_bar"].SetTitle(qoi.title().replace('_', ' '))
 
 @state.change("mesh_color_array_idx")
 def update_mesh_color_by_name(mesh_color_array_idx, **kwargs):
     if not state.rank_file:
         return
-    array = state.dataset_arrays[mesh_color_array_idx]
-    color_by_array(_pipeline["rank_actor"], _pipeline["rank_bar"], array)
+    array = state.rank_arrays[mesh_color_array_idx]
+    color_by_array(array)
     ctrl.view_update()
 
 # Color map callbacks
-def use_colormap(actor, colormap):
+def use_colormap(colormap):
     # Retrieve current array range and midpoint
     rng = state.array.get("range") if state.array else [0., 1.]
     midpoint = (rng[0] + rng[1]) * .5
@@ -226,7 +227,7 @@ def use_colormap(actor, colormap):
         ctf.SetAboveRangeColor(1.0, 0.0, 0.0)
 
     # Convert and pass to mapper as lookup table
-    if not( mapper := actor.GetMapper()):
+    if not( mapper := _pipeline["rank_actor"].GetMapper()):
         return
     lut = mapper.GetLookupTable()
     lut.SetRange(rng)
@@ -245,7 +246,7 @@ def use_colormap(actor, colormap):
 def update_mesh_colormap(mesh_colormap, **kwargs):
     if not state.rank_file:
         return
-    use_colormap(_pipeline["rank_actor"], mesh_colormap)
+    use_colormap(mesh_colormap)
     ctrl.view_update()
 
 @state.change("mesh_scale")
@@ -340,7 +341,7 @@ def mesh_card():
                     # Color By
                     label="Color by",
                     v_model=("mesh_color_array_idx", 0),
-                    items=("dataset_arrays", []),
+                    items=("rank_arrays", []),
                     hide_details=True,
                     dense=True,
                     outlined=True,
@@ -413,17 +414,8 @@ def get_mesh(filename):
 def create_rendering_pipeline(rank_mesh):
     # Extract rank data information
     _data["rank_data"] = rank_mesh.GetPointData()
-    for i in range(_data["rank_data"].GetNumberOfArrays()):
-        array = _data["rank_data"].GetArray(i)
-        array_range = array.GetRange()
-        if (qoi := array.GetName()) == "load":
-            default_id = i
-        state.dataset_arrays.append({
-            "text": qoi,
-            "value": i,
-            "range": list(array_range)})
-    state.array = state.dataset_arrays[default_id]
-
+    state.array = state.rank_arrays[0]
+    print("state.array:", state.array)
     # Create square glyphs at ranks
     _pipeline["rank_glyph"].SetGlyphTypeToSquare()
     _pipeline["rank_glyph"].FilledOn()
