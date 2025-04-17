@@ -49,7 +49,6 @@ _pipeline = {
     "ranks": vtkTransformPolyDataFilter(),
     "rank_actor": vtkActor(),
     "rank_bar": vtkScalarBarActor(),
-    "rank_mapper": vtkPolyDataMapper(),
     "renderer": vtkRenderer(),
     "render_window": vtkRenderWindow(),
     "interactor": vtkRenderWindowInteractor()}
@@ -156,43 +155,43 @@ def on_file_selected(**kwargs):
     state.mesh_color_array_idx = 0 if state.rank_arrays else None
     ctrl.view_update()
 
-def update_representation(mode):
+def update_representation(actor, representation):
     """ Define supported representation types"""
-    property = _pipeline["rank_actor"].GetProperty()
-    if mode == Representation.Surface:
+    property = actor.GetProperty()
+    if representation == Representation.Surface:
         property.SetRepresentationToSurface()
         property.SetPointSize(1)
         property.EdgeVisibilityOff()
-    elif mode == Representation.SurfaceWithEdges:
+    elif representation == Representation.SurfaceWithEdges:
         property.SetRepresentationToSurface()
         property.SetPointSize(1)
         property.EdgeVisibilityOn()
 
-@state.change("mesh_representation")
-def update_mesh_representation(mesh_representation, **kwargs):
+@state.change("rank_representation")
+def update_rank_representation(rank_representation, **kwargs):
     """ Representation callback"""
     if not state.rank_file:
         return
-    update_representation(mesh_representation)
+    update_representation(_pipeline["rank_actor"], rank_representation)
     ctrl.view_update()
 
-# Color By Callbacks
-def color_by_array(array):
+def color_by_array(actor, array):
     # Change QOI to which mapper maps color
-    mapper = _pipeline["rank_actor"].GetMapper()
-    mapper.SelectColorArray(array.get("text"))
+    qoi = array.get("text")
+    mapper = actor.GetMapper()
+    mapper.SelectColorArray(qoi)
     mapper.SetScalarRange(array.get("range"))
     mapper.GetLookupTable().SetRange(array.get("range"))
 
     # Cleanly update scalar bar title
     _pipeline["rank_bar"].SetTitle(qoi.title().replace('_', ' '))
 
-@state.change("mesh_color_array_idx")
-def update_mesh_color_by_name(mesh_color_array_idx, **kwargs):
+@state.change("rank_color_array_idx")
+def update_rank_color_by_name(rank_color_array_idx, **kwargs):
     if not state.rank_file:
         return
-    array = state.rank_arrays[mesh_color_array_idx]
-    color_by_array(array)
+    array = state.rank_arrays[rank_color_array_idx]
+    color_by_array(_pipeline["rank_actor"],array)
     ctrl.view_update()
 
 # Color map callbacks
@@ -325,7 +324,7 @@ def mesh_card():
             dense=True)
         vuetify.VSelect(
             # Representation
-            v_model=("mesh_representation", Representation.Surface),
+            v_model=("rank_representation", Representation.Surface),
             items=(
                 "representations",
                 [{"text": "Surface", "value": 0},
@@ -340,7 +339,7 @@ def mesh_card():
                 vuetify.VSelect(
                     # Color By
                     label="Color by",
-                    v_model=("mesh_color_array_idx", 0),
+                    v_model=("rank_color_array_idx", 0),
                     items=("rank_arrays", []),
                     hide_details=True,
                     dense=True,
@@ -415,7 +414,7 @@ def create_rendering_pipeline(rank_mesh):
     # Extract rank data information
     _data["rank_data"] = rank_mesh.GetPointData()
     state.array = state.rank_arrays[0]
-    print("state.array:", state.array)
+
     # Create square glyphs at ranks
     _pipeline["rank_glyph"].SetGlyphTypeToSquare()
     _pipeline["rank_glyph"].FilledOn()
@@ -431,22 +430,25 @@ def create_rendering_pipeline(rank_mesh):
     _pipeline["ranks"].SetTransform(z_lower)
     _pipeline["ranks"].SetInputConnection(rank_glypher.GetOutputPort())
     _pipeline["ranks"].Update()
+    # Forcing passing of data which cannot be done earlier due to glyphing
+    _pipeline["ranks"].GetOutput().GetCellData().ShallowCopy(_data["rank_data"])
 
     # Initialize mapper for rank glyphs
-    _pipeline["rank_mapper"].SetInputConnection(_pipeline["ranks"].GetOutputPort())
-    _pipeline["rank_mapper"].SelectColorArray(state.array.get("text"))
-    _pipeline["rank_mapper"].SetScalarModeToUseCellFieldData()
-    _pipeline["rank_mapper"].SetScalarVisibility(True)
-    _pipeline["rank_mapper"].SetUseLookupTableScalarRange(True)
+    mapper = vtkPolyDataMapper()
+    mapper.SetInputConnection(_pipeline["ranks"].GetOutputPort())
+    mapper.SelectColorArray(state.array.get("text"))
+    mapper.SetScalarModeToUseCellFieldData()
+    mapper.SetScalarVisibility(True)
+    mapper.SetUseLookupTableScalarRange(True)
 
     # Set up rank actor
-    _pipeline["rank_actor"].SetMapper(_pipeline["rank_mapper"])
+    _pipeline["rank_actor"].SetMapper(mapper)
     _pipeline["rank_actor"].GetProperty().SetRepresentationToSurface()
     _pipeline["rank_actor"].GetProperty().SetPointSize(1)
     _pipeline["rank_actor"].GetProperty().EdgeVisibilityOff()
 
     # Scalar bar actor
-    # _pipeline["rank_bar"].SetLookupTable(_pipeline["rank_mapper"].GetLookupTable())
+    # _pipeline["rank_bar"].SetLookupTable(mapper.GetLookupTable())
     # _pipeline["rank_bar"].SetTitle(state.array.get("text"))
     # _pipeline["rank_bar"].SetNumberOfLabels(6)
     # _pipeline["rank_bar"].DrawTickLabelsOn()
@@ -466,10 +468,6 @@ def create_rendering_pipeline(rank_mesh):
     _pipeline["renderer"].ResetCamera()
 
 if __name__ == "__main__":
-    # Create rendering pipeline
-    #if state.rank_file:
-    #    rank_data = create_rendering_pipeline()
-
     # Launch GUI
     with SinglePageWithDrawerLayout(server) as layout:
         # Layout title
