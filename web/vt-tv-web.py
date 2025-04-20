@@ -94,6 +94,7 @@ state.vtp_files = []
 state.rank_file = None
 state.rank_arrays = []
 state.array = None
+state.mesh_scale = 0.95
 
 # GUI state variable
 state.setdefault("active_ui", None)
@@ -254,6 +255,7 @@ def update_mesh_scale(mesh_scale, **kwargs):
     if not state.rank_file:
         return
     _pipeline["rank_glyph"].SetScale(mesh_scale)
+
     # Forcing passing of data which cannot be done earlier due to glyphing
     _pipeline["ranks"].Update()
     _pipeline["ranks"].GetOutput().GetCellData().ShallowCopy(_data["rank_data"])
@@ -361,7 +363,7 @@ def mesh_card():
                     classes="pt-1")
         vuetify.VSlider(
             # Scale
-            v_model=("mesh_scale", 0.95),
+            v_model=("mesh_scale", state.mesh_scale),
             min=0,
             max=1,
             step=0.05,
@@ -419,6 +421,7 @@ def create_rendering_pipeline(rank_mesh):
     _pipeline["rank_glyph"].SetGlyphTypeToSquare()
     _pipeline["rank_glyph"].FilledOn()
     _pipeline["rank_glyph"].CrossOff()
+    _pipeline["rank_glyph"].SetScale(state.mesh_scale)
     rank_glypher = vtkGlyph2D()
     rank_glypher.SetSourceConnection(_pipeline["rank_glyph"].GetOutputPort())
     rank_glypher.SetInputData(rank_mesh)
