@@ -50,13 +50,14 @@ _pipeline = {
     "rank_actor": vtkActor(),
     "rank_bar": vtkScalarBarActor(),
     #"rank_bar_widget": vtkScalarBarWidget(),
+    "object_actor": vtkActor(),
     "renderer": vtkRenderer(),
     "render_window": vtkRenderWindow(),
     "interactor": vtkRenderWindowInteractor()}
 _data = {
     # vtkPointData instances
-    "rank_data": None,
-    "object_data": None}
+    "rank_mesh": None,
+    "object_mesh": None}
 
 # Global VTK pipeline settings
 _pipeline["renderer"].AddActor(_pipeline["rank_actor"])
@@ -82,17 +83,23 @@ state.data_dir = os.path.join(
 state.vtp_files = []
 state.rank_file = None
 state.rank_arrays = []
-state.array = None
-state.mesh_scale = 0.95
+state.rank_qoi = None
+state.rank_scale = 0.95
+state.object_file = None
+state.object_arrays = []
+state.object_qoi = None
+state.object_scale = 1.0
 class ColorMap:
     Default = 0
     Blue_to_Red = 1
     White_to_Black = 2
 state.rank_colormap = ColorMap.Default
+state.object_colormap = ColorMap.Blue_to_Red
 class Representation:
     Surface = 0
     SurfaceWithEdges = 1
 state.rank_representation = Representation.Surface
+state.object_representation = Representation.SurfaceWithEdges
 
 # GUI state variable
 state.setdefault("active_ui", None)
@@ -100,8 +107,10 @@ state.setdefault("active_ui", None)
 def actives_change(ids):
     """ Selection change"""
     _id = ids[0]
-    if _id == "1":  # Mesh
-        state.active_ui = "mesh"
+    if _id == "1":
+        state.active_ui = "ranks"
+    elif _id == "2":
+        state.active_ui = "objects"
     else:
         state.active_ui = "nothing"
 
@@ -110,9 +119,10 @@ def visibility_change(event):
     _id = event["id"]
     _visibility = event["visible"]
 
-    # Rank mesh
     if _id == "1":
         _pipeline["rank_actor"].SetVisibility(_visibility)
+    elif _id == "2":
+        _pipeline["object_actor"].SetVisibility(_visibility)
     ctrl.view_update()
 
 @ctrl.set("open_directory")
@@ -131,15 +141,14 @@ def find_vtp_files(**kwargs):
         f for f in os.listdir(state.data_dir) if f.lower().endswith(".vtp")])
 
 @state.change("rank_file")
-def on_file_selected(**kwargs):
+def on_rank_file_selected(**kwargs):
     # Punt if no rank file is provided
     if not state.rank_file:
         return
 
     # Retrieve rank mesh and data
-    rank_mesh = get_mesh(os.path.join(
-        state.data_dir, state.rank_file))
-    pd = rank_mesh.GetPointData()
+    _data["rank_mesh"] = get_mesh(os.path.join(state.data_dir, state.rank_file))
+    pd = _data["rank_mesh"].GetPointData()
 
     # Recreate dataset arrays de novo to ensure detection by Trame
     state.rank_arrays = [
@@ -150,8 +159,31 @@ def on_file_selected(**kwargs):
         if pd.GetArray(i) and pd.GetArray(i).GetName()]
 
     # Invoke pipeline with data obtained from file
-    create_rendering_pipeline(rank_mesh)
-    state.mesh_color_array_idx = 0 if state.rank_arrays else None
+    create_rendering_pipeline()
+    state.rank_color_array_idx = 0 if state.rank_arrays else None
+    ctrl.view_update()
+
+@state.change("object_file")
+def on_object_file_selected(**kwargs):
+    # Punt if no object file is provided
+    if not state.object_file:
+        return
+
+    # Retrieve object mesh and data
+    object_mesh = get_mesh(os.path.join(state.data_dir, state.object_file))
+    pd = object_mesh.GetPointData()
+
+    # Recreate dataset arrays de novo to ensure detection by Trame
+    state.object_arrays = [
+        {"text": pd.GetArray(i).GetName(),
+         "value": i,
+         "range": list(pd.GetArray(i).GetRange())}
+        for i in range(pd.GetNumberOfArrays())
+        if pd.GetArray(i) and pd.GetArray(i).GetName()]
+
+    # Invoke pipeline with data obtained from file
+    create_rendering_pipeline()
+    state.object_color_array_idx = 0 if state.object_arrays else None
     ctrl.view_update()
 
 def update_representation(actor, representation):
@@ -192,13 +224,12 @@ def update_rank_color_by_name(rank_color_array_idx, **kwargs):
         return
     array = state.rank_arrays[rank_color_array_idx]
     color_by_array(_pipeline["rank_actor"],array)
-    print(_pipeline["rank_bar"].GetPositionCoordinate())
     ctrl.view_update()
 
 # Color map callbacks
 def apply_colormap(colormap, mapper):
     # Retrieve current array range and midpoint
-    rng = state.array.get("range") if state.array else [0., 1.]
+    rng = state.rank_qoi.get("range") if state.rank_qoi else [0., 1.]
     midpoint = (rng[0] + rng[1]) * .5
 
     # Build desired color transfer function
@@ -242,31 +273,32 @@ def apply_colormap(colormap, mapper):
 
 @state.change("rank_colormap")
 def update_rank_colormap(rank_colormap, **kwargs):
-    """ Rank mesh colormap callback"""
+    """ Rank rank colormap callback"""
     if not(mapper := _pipeline["rank_actor"].GetMapper()):
         return
     apply_colormap(state.rank_colormap, mapper)
     ctrl.view_update()
 
 
-@state.change("mesh_scale")
-def update_mesh_scale(mesh_scale, **kwargs):
-    """ Mesh scale callback"""
+@state.change("rank_scale")
+def update_rank_scale(rank_scale, **kwargs):
+    """ Rank mesh scale callback"""
     if not state.rank_file:
         return
-    _pipeline["rank_glyph"].SetScale(mesh_scale)
+    _pipeline["rank_glyph"].SetScale(rank_scale)
 
     # Forcing passing of data which cannot be done earlier due to glyphing
     _pipeline["ranks"].Update()
-    _pipeline["ranks"].GetOutput().GetCellData().ShallowCopy(_data["rank_data"])
+    _pipeline["ranks"].GetOutput().GetCellData().ShallowCopy(
+        _data["rank_mesh"].GetPointData())
     ctrl.view_update()
 
-@state.change("mesh_opacity")
-def update_mesh_opacity(mesh_opacity, **kwargs):
+@state.change("rank_opacity")
+def update_rank_opacity(rank_opacity, **kwargs):
     """ Opacity callback"""
     if not state.rank_file:
         return
-    _pipeline["rank_actor"].GetProperty().SetOpacity(mesh_opacity)
+    _pipeline["rank_actor"].GetProperty().SetOpacity(rank_opacity)
     ctrl.view_update()
 
 def left_buttons():
@@ -298,8 +330,9 @@ def right_buttons():
 def pipeline_widget():
     trame.GitTree(
         sources=(
-            "pipeline",
-            [{"id": "1", "parent": "0", "visible": 1, "name": "Rank Mesh"}]),
+            "pipeline", [
+                {"id": "1", "parent": "0", "visible": 1, "name": "Ranks"},
+                {"id": "2", "parent": "0", "visible": 1, "name": "Objects"}]),
         actives_change=(actives_change, "[$event]"),
         visibility_change=(visibility_change, "[$event]"),
     )
@@ -315,11 +348,11 @@ def ui_card(title, ui_name):
         content = vuetify.VCardText(classes="py-2")
     return content
 
-def mesh_card():
-    with ui_card(title="Mesh", ui_name="mesh"):
+def rank_card():
+    with ui_card(title="Ranks", ui_name="ranks"):
         find_vtp_files()
         vuetify.VSelect(
-            label="Rank Mesh File",
+            label="Mesh File",
             items=("vtp_files",),
             v_model=("rank_file", None),
             outlined=True,
@@ -363,7 +396,7 @@ def mesh_card():
                     classes="pt-1")
         vuetify.VSlider(
             # Scale
-            v_model=("mesh_scale", state.mesh_scale),
+            v_model=("rank_scale", state.rank_scale),
             min=0,
             max=1,
             step=0.05,
@@ -373,7 +406,74 @@ def mesh_card():
             dense=True)
         vuetify.VSlider(
             # Opacity
-            v_model=("mesh_opacity", 1.0),
+            v_model=("rank_opacity", 1.0),
+            min=0,
+            max=1,
+            step=0.05,
+            label="Opacity",
+            classes="mt-1",
+            hide_details=True,
+            dense=True)
+
+def object_card():
+    with ui_card(title="Objects", ui_name="objects"):
+        find_vtp_files()
+        vuetify.VSelect(
+            label="Mesh File",
+            items=("vtp_files",),
+            v_model=("object_file", None),
+            outlined=True,
+            dense=True)
+        vuetify.VSelect(
+            # Representation
+            v_model=("object_representation", Representation.Surface),
+            items=(
+                "representations",
+                [{"text": "Surface", "value": Representation.Surface},
+                 {"text": "SurfaceWithEdges", "value": Representation.SurfaceWithEdges}]),
+            label="Mesh Representation",
+            hide_details=True,
+            dense=True,
+            outlined=True,
+            classes="pt-1")
+        with vuetify.VRow(classes="pt-2", dense=True):
+            with vuetify.VCol(cols="6"):
+                vuetify.VSelect(
+                    # Color By
+                    label="Color by",
+                    v_model=("object_color_array_idx", 0),
+                    items=("object_arrays", []),
+                    hide_details=True,
+                    dense=True,
+                    outlined=True,
+                    classes="pt-1")
+            with vuetify.VCol(cols="6"):
+                vuetify.VSelect(
+                    # Color Map
+                    label="Colormap",
+                    v_model=("object_colormap", ColorMap.Default),
+                    items=(
+                        "colormaps",
+                        [{"text": "Default", "value": ColorMap.Default},
+                         {"text": "Blue to Red", "value": ColorMap.Blue_to_Red},
+                         {"text": "White to Black", "value": ColorMap.White_to_Black}]),
+                    hide_details=True,
+                    dense=True,
+                    outlined=True,
+                    classes="pt-1")
+        vuetify.VSlider(
+            # Scale
+            v_model=("object_scale", state.object_scale),
+            min=0,
+            max=1,
+            step=0.05,
+            label="Scale",
+            classes="mt-1",
+            hide_details=True,
+            dense=True)
+        vuetify.VSlider(
+            # Opacity
+            v_model=("object_opacity", 1.0),
             min=0,
             max=1,
             step=0.05,
@@ -412,19 +512,18 @@ def get_mesh(filename):
     reader.Update()
     return reader.GetOutput()
 
-def create_rendering_pipeline(rank_mesh):
+def create_rendering_pipeline():
     # Extract rank data information
-    _data["rank_data"] = rank_mesh.GetPointData()
-    state.array = state.rank_arrays[0]
+    state.rank_qoi = state.rank_arrays[0]
 
     # Create square glyphs at ranks
     _pipeline["rank_glyph"].SetGlyphTypeToSquare()
     _pipeline["rank_glyph"].FilledOn()
     _pipeline["rank_glyph"].CrossOff()
-    _pipeline["rank_glyph"].SetScale(state.mesh_scale)
+    _pipeline["rank_glyph"].SetScale(state.rank_scale)
     rank_glypher = vtkGlyph2D()
     rank_glypher.SetSourceConnection(_pipeline["rank_glyph"].GetOutputPort())
-    rank_glypher.SetInputData(rank_mesh)
+    rank_glypher.SetInputData(_data["rank_mesh"])
     rank_glypher.SetScaleModeToDataScalingOff()
 
     # Lower glyphs slightly for visibility and pass point data
@@ -434,13 +533,14 @@ def create_rendering_pipeline(rank_mesh):
     _pipeline["ranks"].SetInputConnection(rank_glypher.GetOutputPort())
     _pipeline["ranks"].Update()
     # Forcing passing of data which cannot be done earlier due to glyphing
-    _pipeline["ranks"].GetOutput().GetCellData().ShallowCopy(_data["rank_data"])
+    _pipeline["ranks"].GetOutput().GetCellData().ShallowCopy(
+        _data["rank_mesh"].GetPointData())
 
     # Initialize mapper for rank glyphs
     mapper = vtkPolyDataMapper()
     mapper.SetInputConnection(_pipeline["ranks"].GetOutputPort())
-    mapper.SelectColorArray(state.array.get("text"))
-    mapper.SetScalarRange(state.array.get("range"))
+    mapper.SelectColorArray(state.rank_qoi.get("text"))
+    mapper.SetScalarRange(state.rank_qoi.get("range"))
     mapper.SetScalarModeToUseCellFieldData()
     mapper.SetScalarVisibility(True)
     mapper.SetUseLookupTableScalarRange(True)
@@ -454,7 +554,7 @@ def create_rendering_pipeline(rank_mesh):
     # Set up rank scalar bar actor
     _pipeline["rank_bar"].SetLookupTable(mapper.GetLookupTable())
     _pipeline["rank_bar"].SetOrientationToHorizontal()
-    _pipeline["rank_bar"].SetTitle(state.array.get("text"))
+    _pipeline["rank_bar"].SetTitle(state.rank_qoi.get("text"))
     _pipeline["rank_bar"].GetPositionCoordinate().SetValue(0.5, 0.9, 0.0)
     _pipeline["rank_bar"].SetNumberOfLabels(6)
     _pipeline["rank_bar"].DrawTickLabelsOn()
@@ -499,7 +599,10 @@ if __name__ == "__main__":
             vuetify.VDivider(classes="mb-2")
 
             # Insert rank mesh card
-            mesh_card()
+            rank_card()
+
+            # Insert objects mesh card
+            object_card()
 
         # Create footer layout
         layout.footer.hide()
