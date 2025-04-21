@@ -587,7 +587,7 @@ def update_rendering_pipeline():
 if __name__ == "__main__":
     # Initialize VTK pipeline settings
     initialize_rendering_pipeline()
-    
+
     # Launch GUI
     with SinglePageWithDrawerLayout(server) as layout:
         # Layout title
