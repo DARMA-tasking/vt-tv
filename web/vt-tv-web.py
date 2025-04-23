@@ -48,21 +48,9 @@ OBJECT_GLYPHS = {"square": 0.0, "circle": 1.0}
 configure_serializer(encode_lut=True, skip_light=True)
 
 # Global variables
+_pipeline = {}
 _ui = {
     "view": None}
-_pipeline = {
-    "rank_glyph": vtkGlyphSource2D(),
-    "ranks": vtkTransformPolyDataFilter(),
-    "rank_actor": vtkActor(),
-    "rank_bar": vtkScalarBarActor(),
-    #"rank_bar_widget": vtkScalarBarWidget(),
-    "renderer": vtkRenderer(),
-    "render_window": vtkRenderWindow(),
-    "interactor": vtkRenderWindowInteractor()}
-for k in OBJECT_GLYPHS:
-    _pipeline[f"{k}_object_glyph"] = vtkGlyphSource2D()
-    _pipeline[f"{k}_objects"] = vtkTransformPolyDataFilter()
-    _pipeline[f"{k}_object_actor"] = vtkActor()
 _data = {
     # vtkPointData instances
     "rank_mesh": None,
@@ -82,6 +70,7 @@ state, ctrl = server.state, server.controller
 # Initialize state
 state.data_dir = os.path.join(
     os.path.abspath(os.path.dirname(__file__)), "../data")
+state.dark_mode = False
 state.vtp_files = []
 state.rank_file = None
 state.rank_arrays = []
@@ -102,8 +91,8 @@ state.object_colormap = ColorMap.Default
 class Representation:
     Surface = 0
     SurfaceWithEdges = 1
-state.rank_representation = Representation.Surface
-state.object_representation = Representation.SurfaceWithEdges
+state.rank_representation = Representation.SurfaceWithEdges
+state.object_representation = Representation.Surface
 
 # GUI state variable
 state.setdefault("active_ui", None)
@@ -197,16 +186,16 @@ def on_object_file_selected(**kwargs):
     state.object_color_array_id = 0 if state.object_arrays else None
     ctrl.view_update()
 
-def update_representation(actor, representation):
+def apply_representation(actor, representation):
     """ Define supported representation types"""
     property = actor.GetProperty()
     if representation == Representation.Surface:
-        property.SetRepresentationToSurface()
         property.SetPointSize(1)
+        property.SetRepresentationToSurface()
         property.EdgeVisibilityOff()
     elif representation == Representation.SurfaceWithEdges:
-        property.SetRepresentationToSurface()
         property.SetPointSize(1)
+        property.SetRepresentationToSurface()
         property.EdgeVisibilityOn()
 
 @state.change("rank_representation")
@@ -214,7 +203,7 @@ def update_rank_representation(rank_representation, **kwargs):
     """ Rank representation callback"""
     if not state.rank_file:
         return
-    update_representation(_pipeline["rank_actor"], rank_representation)
+    apply_representation(_pipeline["rank_actor"], rank_representation)
     ctrl.view_update()
 
 @state.change("object_representation")
@@ -223,7 +212,7 @@ def update_object_representation(object_representation, **kwargs):
     if not state.object_file:
         return
     for k in OBJECT_GLYPHS:
-        update_representation(_pipeline[f"{k}_object_actor"], object_representation)
+        apply_representation(_pipeline[f"{k}_object_actor"], object_representation)
     ctrl.view_update()
 
 def color_by_array(actor, array):
@@ -420,7 +409,7 @@ def rank_card():
             dense=True)
         vuetify.VSelect(
             # Representation
-            v_model=("rank_representation", Representation.Surface),
+            v_model=("rank_representation", state.rank_representation),
             items=(
                 "representations",
                 [{"text": "Surface", "value": Representation.Surface},
@@ -487,7 +476,7 @@ def object_card():
             dense=True)
         vuetify.VSelect(
             # Representation
-            v_model=("object_representation", Representation.Surface),
+            v_model=("object_representation", state.object_representation),
             items=(
                 "representations",
                 [{"text": "Surface", "value": Representation.Surface},
@@ -575,17 +564,20 @@ def get_mesh(filename):
 
 def initialize_rendering_pipeline():
     """ Initialize VTK pipeline settings once and for all"""
+    _pipeline["ranks"] = vtkTransformPolyDataFilter()
 
-    # Rank glyph settings
+    # Rank glyph source
+    _pipeline["rank_glyph"] = vtkGlyphSource2D()
     _pipeline["rank_glyph"].SetGlyphTypeToSquare()
     _pipeline["rank_glyph"].FilledOn()
     _pipeline["rank_glyph"].SetScale(state.rank_scale)
 
-    # Rank actor settings
-    _pipeline["rank_actor"].GetProperty().SetRepresentationToSurface()
-    _pipeline["rank_actor"].GetProperty().SetPointSize(1)
-    _pipeline["rank_actor"].GetProperty().EdgeVisibilityOff()
+    # Actor for rank glyphs
+    _pipeline["rank_actor"] = vtkActor()
+    apply_representation(_pipeline["rank_actor"], state.rank_representation)
 
+    # Rank scalar bar settings
+    _pipeline["rank_bar"] = vtkScalarBarActor()
     _pipeline["rank_bar"].SetOrientationToHorizontal()
     _pipeline["rank_bar"].GetPositionCoordinate().SetValue(0.5, 0.9, 0.0)
     _pipeline["rank_bar"].SetNumberOfLabels(6)
@@ -597,14 +589,23 @@ def initialize_rendering_pipeline():
     _pipeline["rank_bar"].GetTitleTextProperty().SetColor(0.0, 0.0, 0.0)
     _pipeline["rank_bar"].GetLabelTextProperty().SetColor(0.0, 0.0, 0.0)
 
-    # Object glyph settings
+    # Iterate over object glyph types
     for k in OBJECT_GLYPHS:
-        k = f"{k}_object_glyph"
-        _pipeline[k].SetResolution(CIRCLE_RES)
-        _pipeline[k].FilledOn()
-        _pipeline[k].SetScale(state.object_scale)
+        # Source for current object glyph type
+        _pipeline[f"{k}_object_glyph"] = vtkGlyphSource2D()
+        _pipeline[f"{k}_object_glyph"].SetResolution(CIRCLE_RES)
+        _pipeline[f"{k}_object_glyph"].FilledOn()
+        _pipeline[f"{k}_object_glyph"].SetScale(state.object_scale)
+
+        _pipeline[f"{k}_objects"] = vtkTransformPolyDataFilter()
+        # Actor for current object glyph type
+        _pipeline[f"{k}_object_actor"] = vtkActor()
+        apply_representation(
+            _pipeline[f"{k}_object_actor"],
+            state.object_representation)
 
     # Renderer settings
+    _pipeline["renderer"] = vtkRenderer()
     _pipeline["renderer"].SetBackground(1.0, 1.0, 1.0)
     _pipeline["renderer"].GetActiveCamera().ParallelProjectionOn()
     _pipeline["renderer"].AddActor(_pipeline["rank_actor"])
@@ -612,7 +613,12 @@ def initialize_rendering_pipeline():
         _pipeline["renderer"].AddActor(_pipeline[f"{k}_object_actor"])
 
     # Render window and interactor
+    _pipeline["render_window"] = vtkRenderWindow()
     _pipeline["render_window"].AddRenderer(_pipeline["renderer"])
+    _pipeline["render_window"].OffScreenRenderingOn()
+
+    # Interactor
+    _pipeline["interactor"] = vtkRenderWindowInteractor()
     _pipeline["interactor"].SetRenderWindow(_pipeline["render_window"])
 
 def update_rendering_pipeline():
@@ -646,14 +652,18 @@ def update_rendering_pipeline():
         rank_mapper.SetScalarVisibility(True)
         rank_mapper.SetUseLookupTableScalarRange(True)
         _pipeline["rank_actor"].SetMapper(rank_mapper)
-
-        # Set up rank scalar bar actor
-        _pipeline["rank_bar"].SetLookupTable(rank_mapper.GetLookupTable())
-        _pipeline["rank_bar"].SetTitle(state.rank_qoi.get("text"))
+        apply_representation(
+            _pipeline["rank_actor"],
+            state.rank_representation)
         apply_colormap(
             state.rank_qoi.get("range"),
             state.rank_colormap,
             _pipeline["rank_actor"].GetMapper())
+        apply_representation(_pipeline["rank_actor"], state.rank_representation)
+
+        # Set up rank scalar bar actor
+        _pipeline["rank_bar"].SetLookupTable(rank_mapper.GetLookupTable())
+        _pipeline["rank_bar"].SetTitle(state.rank_qoi.get("text"))
         _pipeline["renderer"].AddActor(_pipeline["rank_bar"])
 
         # Rank bar widget
@@ -714,7 +724,7 @@ def update_rendering_pipeline():
                 glyphs.SetTransform(z_raise)
                 glyphs.SetInputConnection(object_glypher.GetOutputPort())
                 glyphs.Update()
-                #print(glyphs.GetOutput())
+
                 # Set up mapper for rank glyphs
                 glyph_mapper.SetInputConnection(glyphs.GetOutputPort())
                 glyph_mapper.SelectColorArray(state.object_qoi.get("text"))
@@ -722,6 +732,10 @@ def update_rendering_pipeline():
                 glyph_mapper.SetScalarVisibility(True)
                 glyph_mapper.SetUseLookupTableScalarRange(True)
                 _pipeline[f"{glyph_type}_object_actor"].SetMapper(glyph_mapper)
+                apply_colormap(
+                    state.object_qoi.get("range"),
+                    state.object_colormap,
+                    _pipeline[f"{glyph_type}_object_actor"].GetMapper())
             else:
                 # Use empty threshold output when nothing to be glyphed
                 glyph_mapper.SetInputData(thresh_out)
@@ -767,13 +781,18 @@ if __name__ == "__main__":
             # Content components
             with vuetify.VContainer(
                 fluid=True,
-                classes="pa-0 fill-height",
-            ):
+                classes="pa-0 fill-height"):
                 _ui["view"] = vtk.VtkRemoteLocalView(
                     _pipeline["render_window"], _pipeline["interactor"],
                     namespace="view", mode="local", interactive_ratio=1)
-                ctrl.view_update = _ui["view"].update
+
+                # Store control actions
                 ctrl.view_reset_camera = _ui["view"].reset_camera
+                ctrl.view_update = _ui["view"].update
+
+        # Ensure the layout view is updated
+        ctrl.view_reset_camera()
+        ctrl.view_update()
 
     # Start server
     server.start()
