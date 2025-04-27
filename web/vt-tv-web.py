@@ -8,6 +8,7 @@ from trame.app import get_server
 from trame.ui.vuetify import SinglePageWithDrawerLayout
 from trame.ui.html import DivLayout
 from trame.widgets import vtk, html, vuetify, trame
+from trame_vtklocal.widgets import vtklocal 
 from trame_vtk.modules.vtk.serializers import configure_serializer
 
 # VTK imports
@@ -215,38 +216,8 @@ def update_object_representation(object_representation, **kwargs):
         apply_representation(_pipeline[f"{k}_object_actor"], object_representation)
     ctrl.view_update()
 
-def color_by_array(actor, array):
-    # Change QOI to which mapper maps color
-    qoi = array.get("text")
-    mapper = actor.GetMapper()
-    mapper.SelectColorArray(qoi)
-    qoi_range = array.get("range")
-    mapper.SetScalarRange(qoi_range)
-    mapper.GetLookupTable().SetRange(qoi_range)
-
-    # Cleanly update scalar bar title
-    _pipeline["rank_bar"] = vtkScalarBarActor()
-    _pipeline["rank_bar"].SetTitle(qoi.title().replace('_', ' '))
-
-@state.change("rank_color_array_id")
-def update_rank_color_by_name(rank_color_array_id, **kwargs):
-    if not state.rank_file:
-        return
-    color_by_array(
-        _pipeline["rank_actor"], state.rank_arrays[rank_color_array_id])
-    ctrl.view_update()
-
-@state.change("object_color_array_id")
-def update_object_color_by_name(object_color_array_id, **kwargs):
-    if not state.object_file:
-        return
-    for k in OBJECT_GLYPHS:
-        color_by_array(
-            _pipeline[f"{k}_object_actor"], state.object_arrays[object_color_array_id])
-    ctrl.view_update()
-
-# Color map callbacks
 def apply_colormap(qoi_range, colormap, mapper):
+    """ Apply to mapper a lookup table for given range and colormap"""
     # Retrieve current array range and midpoint
     midpoint = (qoi_range[0] + qoi_range[1]) * .5
 
@@ -310,6 +281,45 @@ def update_object_colormap(object_colormap, **kwargs):
             state.object_qoi.get("range"),
             state.object_colormap,
             _pipeline[f"{k}_object_actor"].GetMapper())
+    ctrl.view_update()
+
+def color_by_array(actor, array):
+    # Change QOI to which mapper maps color
+    mapper = actor.GetMapper()
+    mapper.SelectColorArray(array.get("text"))
+    qoi_range = array.get("range")
+    mapper.SetScalarRange(qoi_range)
+    mapper.GetLookupTable().SetRange(qoi_range)
+    
+@state.change("rank_color_array_id")
+def update_rank_color_by_name(rank_color_array_id, **kwargs):
+    if not state.rank_file:
+        return
+
+    # Update state rank QOI and attendant coloring
+    state.rank_qoi = state.rank_arrays[rank_color_array_id]
+    color_by_array(_pipeline["rank_actor"], state.rank_qoi)
+    update_rank_colormap(state.rank_colormap)
+
+    # Cleanly update scalar bar title
+    _pipeline["rank_bar"].SetTitle(
+        "Rank " + state.rank_qoi.get("text").title().replace('_', ' '))
+    ctrl.view_update()
+
+@state.change("object_color_array_id")
+def update_object_color_by_name(object_color_array_id, **kwargs):
+    if not state.object_file:
+        return
+
+    # Update state object QOI and attendant coloring
+    state.object_qoi = state.object_arrays[object_color_array_id]
+    for k in OBJECT_GLYPHS:
+        color_by_array(_pipeline[f"{k}_object_actor"], state.object_qoi)
+    update_object_colormap(state.object_colormap)
+
+    # Cleanly update scalar bar title
+    _pipeline["object_bar"].SetTitle(
+        "Object " + state.object_qoi.get("text").title().replace('_', ' '))
     ctrl.view_update()
 
 @state.change("rank_scale")
@@ -576,18 +586,20 @@ def initialize_rendering_pipeline():
     _pipeline["rank_actor"] = vtkActor()
     apply_representation(_pipeline["rank_actor"], state.rank_representation)
 
-    # Rank scalar bar settings
-    _pipeline["rank_bar"] = vtkScalarBarActor()
-    _pipeline["rank_bar"].SetOrientationToHorizontal()
-    _pipeline["rank_bar"].GetPositionCoordinate().SetValue(0.5, 0.9, 0.0)
-    _pipeline["rank_bar"].SetNumberOfLabels(6)
-    _pipeline["rank_bar"].DrawTickLabelsOn()
-    _pipeline["rank_bar"].UnconstrainedFontSizeOn()
-    _pipeline["rank_bar"].SetHeight(0.15)
-    _pipeline["rank_bar"].SetBarRatio(0.3)
-    _pipeline["rank_bar"].DrawTickLabelsOn()
-    _pipeline["rank_bar"].GetTitleTextProperty().SetColor(0.0, 0.0, 0.0)
-    _pipeline["rank_bar"].GetLabelTextProperty().SetColor(0.0, 0.0, 0.0)
+    # Scalar bar settings
+    for bar in ("rank_bar", "object_bar"):
+        _pipeline[bar] = vtkScalarBarActor()
+        _pipeline[bar].SetOrientationToHorizontal()
+        _pipeline[bar].GetPositionCoordinate().SetValue(0.5, 0.9, 0.0)
+        _pipeline[bar].SetNumberOfLabels(6)
+        _pipeline[bar].DrawTickLabelsOn()
+        _pipeline[bar].UnconstrainedFontSizeOn()
+        _pipeline[bar].SetHeight(0.15)
+        _pipeline[bar].SetBarRatio(0.3)
+        _pipeline[bar].DrawTickLabelsOn()
+        _pipeline[bar].GetTitleTextProperty().SetColor(0.0, 0.0, 0.0)
+        _pipeline[bar].GetLabelTextProperty().SetColor(0.0, 0.0, 0.0)
+    _pipeline["rank_bar"].GetPositionCoordinate().SetValue(0.1, 0.5, 0.0)
 
     # Iterate over object glyph types
     for k in OBJECT_GLYPHS:
@@ -661,9 +673,10 @@ def update_rendering_pipeline():
             _pipeline["rank_actor"].GetMapper())
         apply_representation(_pipeline["rank_actor"], state.rank_representation)
 
-        # Set up rank scalar bar actor
+        # Update rank scalar bar actor
         _pipeline["rank_bar"].SetLookupTable(rank_mapper.GetLookupTable())
-        _pipeline["rank_bar"].SetTitle(state.rank_qoi.get("text"))
+        _pipeline["rank_bar"].SetTitle(
+            "Rank " + state.rank_qoi.get("text").title().replace('_', ' '))
         _pipeline["renderer"].AddActor(_pipeline["rank_bar"])
 
         # Rank bar widget
@@ -689,6 +702,7 @@ def update_rendering_pipeline():
         sqrtL_calc_out.GetPointData().SetActiveScalars("migratable")
 
         # Glyph sentinel and migratable objects separately
+        show_object_bar = True
         for glyph_type, glyph_value in OBJECT_GLYPHS.items():
             # Threshold by migratable status
             thresh = vtkThresholdPoints()
@@ -736,9 +750,18 @@ def update_rendering_pipeline():
                     state.object_qoi.get("range"),
                     state.object_colormap,
                     _pipeline[f"{glyph_type}_object_actor"].GetMapper())
+                show_object_bar = True
             else:
                 # Use empty threshold output when nothing to be glyphed
                 glyph_mapper.SetInputData(thresh_out)
+                show_object_bar = False
+
+        # Show unique object scalar bar when glyphs are present
+        if show_object_bar:
+            _pipeline["object_bar"].SetLookupTable(glyph_mapper.GetLookupTable())
+            _pipeline["object_bar"].SetTitle(
+                "Object " + state.object_qoi.get("text").title().replace('_', ' '))
+            _pipeline["renderer"].AddActor(_pipeline["object_bar"])
 
     # Update renderer
     _pipeline["renderer"].ResetCamera()
@@ -785,7 +808,7 @@ if __name__ == "__main__":
                 _ui["view"] = vtk.VtkRemoteLocalView(
                     _pipeline["render_window"], _pipeline["interactor"],
                     namespace="view", mode="local", interactive_ratio=1)
-
+                configure_serializer()
                 # Store control actions
                 ctrl.view_reset_camera = _ui["view"].reset_camera
                 ctrl.view_update = _ui["view"].update
