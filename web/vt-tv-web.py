@@ -8,7 +8,7 @@ from trame.app import get_server
 from trame.ui.vuetify import SinglePageWithDrawerLayout
 from trame.ui.html import DivLayout
 from trame.widgets import vtk, html, vuetify, trame
-from trame_vtklocal.widgets import vtklocal 
+from trame_vtklocal.widgets import vtklocal
 from trame_vtk.modules.vtk.serializers import configure_serializer
 
 # VTK imports
@@ -290,7 +290,7 @@ def color_by_array(actor, array):
     qoi_range = array.get("range")
     mapper.SetScalarRange(qoi_range)
     mapper.GetLookupTable().SetRange(qoi_range)
-    
+
 @state.change("rank_color_array_id")
 def update_rank_color_by_name(rank_color_array_id, **kwargs):
     if not state.rank_file:
