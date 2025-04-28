@@ -99,7 +99,7 @@ state.object_representation = Representation.Surface
 state.setdefault("active_ui", None)
 
 def actives_change(ids):
-    """ Selection change"""
+    """ Card selection change"""
     _id = ids[0]
     if _id == "1":
         state.active_ui = "ranks"
@@ -109,7 +109,7 @@ def actives_change(ids):
         state.active_ui = "nothing"
 
 def visibility_change(event):
-    """ Visibility change"""
+    """ Card visibility change"""
     _id = event["id"]
     _visibility = event["visible"]
 
@@ -677,7 +677,7 @@ def update_rendering_pipeline():
         _pipeline["rank_bar"].SetLookupTable(rank_mapper.GetLookupTable())
         _pipeline["rank_bar"].SetTitle(
             "Rank " + state.rank_qoi.get("text").title().replace('_', ' '))
-        _pipeline["renderer"].AddActor(_pipeline["rank_bar"])
+        _pipeline["renderer"].AddActor2D(_pipeline["rank_bar"])
 
         # Rank bar widget
         #_pipeline["rank_bar_widget"].SetInteractor(_pipeline["interactor"])
@@ -761,7 +761,7 @@ def update_rendering_pipeline():
             _pipeline["object_bar"].SetLookupTable(glyph_mapper.GetLookupTable())
             _pipeline["object_bar"].SetTitle(
                 "Object " + state.object_qoi.get("text").title().replace('_', ' '))
-            _pipeline["renderer"].AddActor(_pipeline["object_bar"])
+            _pipeline["renderer"].AddActor2D(_pipeline["object_bar"])
 
     # Update renderer
     _pipeline["renderer"].ResetCamera()
@@ -807,7 +807,8 @@ if __name__ == "__main__":
                 classes="pa-0 fill-height"):
                 _ui["view"] = vtk.VtkRemoteLocalView(
                     _pipeline["render_window"], _pipeline["interactor"],
-                    namespace="view", mode="local", interactive_ratio=1)
+                    namespace="view", mode="local",
+                    interactive_ratio=1)
                 configure_serializer()
                 # Store control actions
                 ctrl.view_reset_camera = _ui["view"].reset_camera
