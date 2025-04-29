@@ -45,6 +45,8 @@ GCOV="${GCOV:-gcov}"
 VT_TV_DIR="${VT_TV_DIR:-$CURRENT_DIR}"
 VT_TV_BUILD_DIR="${VT_TV_BUILD_DIR:-$PARENT_DIR/vt-tv/build}"
 VT_TV_OUTPUT_DIR="${VT_TV_OUTPUT_DIR:-$CURRENT_DIR/output}"
+VT_TV_INSTALL="${VT_TV_INSTALL:-OFF}"
+VT_TV_INSTALL_DIR="${VT_TV_INSTALL_DIR:-$VT_TV_BUILD_DIR/install}"
 # >> Build settings
 VT_TV_BUILD=$(on_off ${VT_TV_BUILD:-ON}) # option to turn off the build to only run tests
 VT_TV_BUILD_TYPE=${VT_TV_BUILD_TYPE:-Release}
@@ -76,6 +78,8 @@ help() {
 
       -b   --build=[bool]           Build vt-tv. Can be turned off for example to run tests without rebuilding. (VT_TV_BUILD=$VT_TV_BUILD)
       -d   --build-dir=[str]        Build directory (VT_TV_BUILD_DIR=$VT_TV_BUILD_DIR)
+      -i   --install                Enable installation after build (VT_TV_INSTALL=$VT_TV_INSTALL)
+      -l   --install-dir=[str]      Installation directory (VT_TV_INSTALL_DIR=$VT_TV_INSTALL_DIR)
       -m   --build-type=[str]       Set the CMAKE_BUILD_TYPE value (Debug|Release|...) (VT_TV_BUILD_TYPE=$VT_TV_BUILD_TYPE)
       -y   --clean=[bool]           Clean the output directory and the CMake cache. (VT_TV_CLEAN=$VT_TV_CLEAN)
       -p   --bindings               Build with Python bindings (VT_TV_PYTHON_BINDINGS_ENABLED=$VT_TV_PYTHON_BINDINGS_ENABLED)
@@ -124,6 +128,8 @@ while getopts btch-: OPT; do  # allow -b -t -c -h, and --long_attr=value"
   case "$OPT" in
     b | build )           VT_TV_BUILD=$(on_off $OPTARG) ;;
     d | build-dir )       VT_TV_BUILD_DIR=$(realpath "$OPTARG") ;;
+    i | install)          VT_TV_INSTALL=$(on_off $OPTARG) ;;
+    l | install-dir)      VT_TV_INSTALL_DIR=$(realpath "$OPTARG") ;;
     m | build-type)       VT_TV_BUILD_TYPE=$(on_off $OPTARG) ;;
     p | bindings )        VT_TV_PYTHON_BINDINGS_ENABLED=$(on_off $OPTARG) ;;
     c | cc)               CC="$OPTARG" ;;
@@ -185,6 +191,7 @@ if [[ "${VT_TV_BUILD}" == "ON" ]]; then
     \
     -DCMAKE_C_COMPILER="${CC}" \
     -DCMAKE_CXX_COMPILER="${CXX}" \
+    -DCMAKE_INSTALL_PREFIX="${VT_TV_INSTALL_DIR}" \
     \
     -DVT_TV_WERROR_ENABLED="${VT_TV_WERROR_ENABLED}" \
     \
@@ -200,6 +207,11 @@ if [[ "${VT_TV_BUILD}" == "ON" ]]; then
     "${VT_TV_DIR}"
 
   time cmake --build . --parallel -j "${VT_TV_CMAKE_JOBS}"
+
+  if [[ "$VT_TV_INSTALL" == "ON" ]]; then
+    echo "> Installing to ${VT_TV_INSTALL_DIR}..."
+    cmake --install . --prefix "${VT_TV_INSTALL_DIR}"
+  fi
 
   popd
 
