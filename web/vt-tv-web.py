@@ -90,6 +90,7 @@ class ColorMap:
     White_to_Black = 2
 state.rank_colormap = ColorMap.Blue_to_Red
 state.object_colormap = ColorMap.Default
+state.edge_colormap = ColorMap.White_to_Black
 class Representation:
     Surface = 0
     SurfaceWithEdges = 1
@@ -685,13 +686,12 @@ def update_rendering_pipeline():
 
         # Create mapper for rank glyphs
         rank_mapper = vtkPolyDataMapper()
+        _pipeline["rank_actor"].SetMapper(rank_mapper)
         rank_mapper.SetInputConnection(_pipeline["ranks"].GetOutputPort())
         rank_mapper.SelectColorArray(state.rank_qoi.get("text"))
-        rank_mapper.SetScalarRange(state.rank_qoi.get("range"))
         rank_mapper.SetScalarModeToUseCellFieldData()
         rank_mapper.SetScalarVisibility(True)
         rank_mapper.SetUseLookupTableScalarRange(True)
-        _pipeline["rank_actor"].SetMapper(rank_mapper)
         apply_representation(
             _pipeline["rank_actor"],
             state.rank_representation)
@@ -770,7 +770,6 @@ def update_rendering_pipeline():
                 # Set up mapper for rank glyphs
                 glyph_mapper.SetInputConnection(glyphs.GetOutputPort())
                 glyph_mapper.SelectColorArray(state.object_qoi.get("text"))
-                glyph_mapper.SetScalarRange(state.object_qoi.get("range"))
                 glyph_mapper.SetScalarVisibility(True)
                 glyph_mapper.SetUseLookupTableScalarRange(True)
                 _pipeline[f"{glyph_type}_object_actor"].SetMapper(glyph_mapper)
@@ -784,12 +783,25 @@ def update_rendering_pipeline():
                 glyph_mapper.SetInputData(thresh_out)
                 show_object_bar = False
 
+        # Show unique object scalar bar when glyphs are present
+        if show_object_bar:
+            _pipeline["object_bar"].SetLookupTable(glyph_mapper.GetLookupTable())
+            _pipeline["object_bar"].SetTitle(
+                "Object " + state.object_qoi.get("text").title().replace('_', ' '))
+            _pipeline["renderer"].AddActor2D(_pipeline["object_bar"])
+
         # Create mapper for inter-object edges
         edge_mapper = vtkPolyDataMapper()
+        _pipeline["edge_actor"].SetMapper(edge_mapper)
         edge_mapper.SetInputData(_data["object_mesh"])
         edge_mapper.SetScalarModeToUseCellData()
-        #edge_mapper.SetScalarRange((0.0, self.__object_volume_max))
-        #edge_mapper.SetLookupTable(bw_lut)
+        edge_mapper.SetScalarVisibility(True)
+        edge_mapper.SetUseLookupTableScalarRange(True)
+        apply_colormap(
+            (0.0,
+             _data["object_mesh"].GetCellData().GetScalars().GetRange()[1]),
+            state.edge_colormap,
+            _pipeline["edge_actor"].GetMapper())
 
         # Create communication volume and its scalar bar actors
         _pipeline["edge_actor"].SetMapper(edge_mapper)
@@ -797,13 +809,6 @@ def update_rendering_pipeline():
         #volume_actor = self.create_scalar_bar_actor(
         #    edge_mapper, "Inter-Object Volume", 0.04, 0.04)
         #renderer.AddActor2D(volume_actor)
-
-        # Show unique object scalar bar when glyphs are present
-        if show_object_bar:
-            _pipeline["object_bar"].SetLookupTable(glyph_mapper.GetLookupTable())
-            _pipeline["object_bar"].SetTitle(
-                "Object " + state.object_qoi.get("text").title().replace('_', ' '))
-            _pipeline["renderer"].AddActor2D(_pipeline["object_bar"])
 
     # Update renderer
     _pipeline["renderer"].ResetCamera()
