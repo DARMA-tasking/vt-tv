@@ -83,12 +83,14 @@ state.object_arrays = []
 state.object_qoi = None
 state.object_scale = 1.0
 state.object_opacity = 1.0
+state.edge_width = 3.0
 class ColorMap:
     Default = 0
     Blue_to_Red = 1
     White_to_Black = 2
 state.rank_colormap = ColorMap.Blue_to_Red
 state.object_colormap = ColorMap.Default
+state.edge_colormap = ColorMap.White_to_Black
 class Representation:
     Surface = 0
     SurfaceWithEdges = 1
@@ -324,7 +326,7 @@ def update_object_color_by_name(object_color_array_id, **kwargs):
 
 @state.change("rank_scale")
 def update_rank_scale(rank_scale, **kwargs):
-    """ Rank mesh scale callback"""
+    """ Rank scale callback"""
     if not state.rank_file:
         return
     _pipeline["rank_glyph"].SetScale(rank_scale)
@@ -335,30 +337,38 @@ def update_rank_scale(rank_scale, **kwargs):
         _data["rank_mesh"].GetPointData())
     ctrl.view_update()
 
+@state.change("rank_opacity")
+def update_rank_opacity(rank_opacity, **kwargs):
+    """ Rank opacity callback"""
+    if not state.rank_file:
+        return
+    _pipeline["rank_actor"].GetProperty().SetOpacity(rank_opacity)
+    ctrl.view_update()
+
 @state.change("object_scale")
 def update_object_scale(object_scale, **kwargs):
-    """ Object mesh scale callback"""
+    """ Object scale callback"""
     if not state.object_file:
         return
     for k in OBJECT_GLYPHS:
         _pipeline[f"{k}_object_glyph"].SetScale(object_scale)
     ctrl.view_update()
 
-@state.change("rank_opacity")
-def update_rank_opacity(rank_opacity, **kwargs):
-    """ Opacity callback"""
-    if not state.rank_file:
-        return
-    _pipeline["rank_actor"].GetProperty().SetOpacity(rank_opacity)
-    ctrl.view_update()
-
 @state.change("object_opacity")
 def update_object_opacity(object_opacity, **kwargs):
-    """ Opacity callback"""
+    """ Object opacity callback"""
     if not state.object_file:
         return
     for k in OBJECT_GLYPHS:
         _pipeline[f"{k}_object_actor"].GetProperty().SetOpacity(object_opacity)
+    ctrl.view_update()
+
+@state.change("edge_width")
+def update_edge_width(edge_width, **kwargs):
+    """ Edge width callback"""
+    if not state.object_file:
+        return
+    _pipeline["edge_actor"].GetProperty().SetLineWidth(state.edge_width)
     ctrl.view_update()
 
 def left_buttons():
@@ -454,8 +464,9 @@ def rank_card():
                     dense=True,
                     outlined=True,
                     classes="pt-1")
+
+        # Set rank scale
         vuetify.VSlider(
-            # Scale
             v_model=("rank_scale", state.rank_scale),
             min=0,
             max=1,
@@ -464,8 +475,9 @@ def rank_card():
             classes="mt-1",
             hide_details=True,
             dense=True)
+
+        # Set rank opacity
         vuetify.VSlider(
-            # Opacity
             v_model=("rank_opacity", state.rank_opacity),
             min=0,
             max=1,
@@ -521,23 +533,36 @@ def object_card():
                     dense=True,
                     outlined=True,
                     classes="pt-1")
+
+        # Set object scale
         vuetify.VSlider(
-            # Scale
             v_model=("object_scale", state.object_scale),
             min=0,
             max=1,
             step=0.02,
-            label="Scale",
+            label="Object Scale",
             classes="mt-1",
             hide_details=True,
             dense=True)
+
+        # Set object opacity
         vuetify.VSlider(
-            # Opacity
             v_model=("object_opacity", state.object_opacity),
             min=0,
             max=1,
             step=0.02,
-            label="Opacity",
+            label="Object Opacity",
+            classes="mt-1",
+            hide_details=True,
+            dense=True)
+
+        # Set edge width
+        vuetify.VSlider(
+            v_model=("edge_width", state.edge_width),
+            min=0,
+            max=20,
+            step=0.5,
+            label="Edge Width",
             classes="mt-1",
             hide_details=True,
             dense=True)
@@ -616,6 +641,9 @@ def initialize_rendering_pipeline():
             _pipeline[f"{k}_object_actor"],
             state.object_representation)
 
+    # Actor for edges
+    _pipeline["edge_actor"] = vtkActor()
+
     # Renderer settings
     _pipeline["renderer"] = vtkRenderer()
     _pipeline["renderer"].SetBackground(1.0, 1.0, 1.0)
@@ -623,6 +651,7 @@ def initialize_rendering_pipeline():
     _pipeline["renderer"].AddActor(_pipeline["rank_actor"])
     for k in OBJECT_GLYPHS:
         _pipeline["renderer"].AddActor(_pipeline[f"{k}_object_actor"])
+    _pipeline["renderer"].AddActor(_pipeline["edge_actor"])
 
     # Render window and interactor
     _pipeline["render_window"] = vtkRenderWindow()
@@ -657,13 +686,12 @@ def update_rendering_pipeline():
 
         # Create mapper for rank glyphs
         rank_mapper = vtkPolyDataMapper()
+        _pipeline["rank_actor"].SetMapper(rank_mapper)
         rank_mapper.SetInputConnection(_pipeline["ranks"].GetOutputPort())
         rank_mapper.SelectColorArray(state.rank_qoi.get("text"))
-        rank_mapper.SetScalarRange(state.rank_qoi.get("range"))
         rank_mapper.SetScalarModeToUseCellFieldData()
         rank_mapper.SetScalarVisibility(True)
         rank_mapper.SetUseLookupTableScalarRange(True)
-        _pipeline["rank_actor"].SetMapper(rank_mapper)
         apply_representation(
             _pipeline["rank_actor"],
             state.rank_representation)
@@ -742,7 +770,6 @@ def update_rendering_pipeline():
                 # Set up mapper for rank glyphs
                 glyph_mapper.SetInputConnection(glyphs.GetOutputPort())
                 glyph_mapper.SelectColorArray(state.object_qoi.get("text"))
-                glyph_mapper.SetScalarRange(state.object_qoi.get("range"))
                 glyph_mapper.SetScalarVisibility(True)
                 glyph_mapper.SetUseLookupTableScalarRange(True)
                 _pipeline[f"{glyph_type}_object_actor"].SetMapper(glyph_mapper)
@@ -762,6 +789,26 @@ def update_rendering_pipeline():
             _pipeline["object_bar"].SetTitle(
                 "Object " + state.object_qoi.get("text").title().replace('_', ' '))
             _pipeline["renderer"].AddActor2D(_pipeline["object_bar"])
+
+        # Create mapper for inter-object edges
+        edge_mapper = vtkPolyDataMapper()
+        _pipeline["edge_actor"].SetMapper(edge_mapper)
+        edge_mapper.SetInputData(_data["object_mesh"])
+        edge_mapper.SetScalarModeToUseCellData()
+        edge_mapper.SetScalarVisibility(True)
+        edge_mapper.SetUseLookupTableScalarRange(True)
+        apply_colormap(
+            (0.0,
+             _data["object_mesh"].GetCellData().GetScalars().GetRange()[1]),
+            state.edge_colormap,
+            _pipeline["edge_actor"].GetMapper())
+
+        # Create communication volume and its scalar bar actors
+        _pipeline["edge_actor"].SetMapper(edge_mapper)
+        _pipeline["edge_actor"].GetProperty().SetLineWidth(state.edge_width)
+        #volume_actor = self.create_scalar_bar_actor(
+        #    edge_mapper, "Inter-Object Volume", 0.04, 0.04)
+        #renderer.AddActor2D(volume_actor)
 
     # Update renderer
     _pipeline["renderer"].ResetCamera()
