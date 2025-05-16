@@ -99,7 +99,7 @@ jobs:
           context: .
           file: ./ci/docker/build-and-test-ubuntu.dockerfile
           build-args: | # TEMPORARY change: switch back BASE_IMAGE later
-            BASE_IMAGE=${{ matrix.host.image }}-pr-${{ github.sha }}
+            BASE_IMAGE=vt-base:${{ matrix.host.image }}-pr-${{ github.sha }}
             VT_TV_TESTS_ENABLED=${{ env.VT_TV_TESTS_ENABLED }}
             VT_TV_COVERAGE_ENABLED=${{ env.VT_TV_COVERAGE_ENABLED }}
           outputs: type=local,dest=${{ env.OUTPUT_DIR }}
