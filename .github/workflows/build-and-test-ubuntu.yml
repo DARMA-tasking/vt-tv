@@ -102,8 +102,10 @@ jobs:
           EOF
 
       - name: Build the Debian Package
-        run: |
-          dpkg-deb --build pkg vttv-amd64-1-5-0.deb
+        run: dpkg-deb --build pkg "${OUTPUT_DIR}/vttv-amd64-1-5-0.deb"
+
+      - name: Clean out pkg-artifacts
+        run: rm -rf "${OUTPUT_DIR}/tmp/pkg-artifacts"
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
