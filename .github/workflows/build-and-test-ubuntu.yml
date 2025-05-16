@@ -15,27 +15,27 @@ jobs:
       fail-fast: false
       matrix:
         host: [
-          {
-            base: ubuntu-22.04,
-            compiler: { cc: gcc-11 },
-            python: ['3.8', '3.9', '3.10', '3.11', '3.12'],
-            vtk: '9.2.2',
-            image: ubuntu_22.04-gcc_11-vtk_9.2.2-py_3.all
-          },
-          {
-            base: ubuntu-22.04,
-            compiler: { cc: clang-11 },
-            python: ['3.8', '3.9', '3.10', '3.11', '3.12'],
-            vtk: '9.2.2',
-            image: ubuntu_22.04-clang_11-vtk_9.2.2-py_3.all
-          },
-          {
-            base: ubuntu-22.04,
-            compiler: { cc: gcc-12 },
-            python: ['3.8', '3.9', '3.10', '3.11', '3.12'],
-            vtk: '9.3.0',
-            image: ubuntu_22.04-gcc_12-vtk_9.3.0-py_3.all
-          },
+          # {
+          #   base: ubuntu-22.04,
+          #   compiler: { cc: gcc-11 },
+          #   python: ['3.8', '3.9', '3.10', '3.11', '3.12'],
+          #   vtk: '9.2.2',
+          #   image: ubuntu_22.04-gcc_11-vtk_9.2.2-py_3.all
+          # },
+          # {
+          #   base: ubuntu-22.04,
+          #   compiler: { cc: clang-11 },
+          #   python: ['3.8', '3.9', '3.10', '3.11', '3.12'],
+          #   vtk: '9.2.2',
+          #   image: ubuntu_22.04-clang_11-vtk_9.2.2-py_3.all
+          # },
+          # {
+          #   base: ubuntu-22.04,
+          #   compiler: { cc: gcc-12 },
+          #   python: ['3.8', '3.9', '3.10', '3.11', '3.12'],
+          #   vtk: '9.3.0',
+          #   image: ubuntu_22.04-gcc_12-vtk_9.3.0-py_3.all
+          # },
           {
             base: ubuntu-24.04,
             compiler: { cc: gcc-13 },
@@ -80,7 +80,7 @@ jobs:
           context: .
           file: ci/docker/base-ubuntu.dockerfile
           build-args: |
-            BASE_IMAGE=${{ matrix.host.base }}     # ubuntu:22.04, etc.
+            BASE_IMAGE=ubuntu:24.04
             CC=${{ matrix.host.compiler.cc }}
             VTK_VERSION=${{ matrix.host.vtk }}
             PYTHON_VERSIONS=3.8,3.9,3.10,3.11,3.12
