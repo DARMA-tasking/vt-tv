@@ -71,6 +71,24 @@ jobs:
           echo "Platforms: ${{ steps.buildx.outputs.platforms }}"
           echo "DOCKER_TAG: ${{ env.DOCKER_TAG }}"
 
+
+##### DELETE THIS LATER
+      - name: TEMPORARY - Build modified base image - TEMPORARY
+        id: build_base_local
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ci/docker/base-ubuntu.dockerfile
+          build-args: |
+            BASE_IMAGE=${{ matrix.host.base }}     # ubuntu:22.04, etc.
+            CC=${{ matrix.host.compiler.cc }}
+            VTK_VERSION=${{ matrix.host.vtk }}
+            PYTHON_VERSIONS=3.8,3.9,3.10,3.11,3.12
+          push: false
+          load: true
+          tags: vt-base:${{ matrix.host.image }}-pr-${{ github.sha }}
+#######################
+
       - name: Build the Docker Image; build and test vt-tv
         id: docker_build
         continue-on-error: false
@@ -80,8 +98,8 @@ jobs:
           # tags: ${{ env.DOCKER_TAG }}
           context: .
           file: ./ci/docker/build-and-test-ubuntu.dockerfile
-          build-args: |
-            BASE_IMAGE=${{ env.DOCKER_REPOSITORY }}:${{ matrix.host.image }}
+          build-args: | # TEMPORARY change: switch back BASE_IMAGE later
+            BASE_IMAGE=${{ matrix.host.image }}-pr-${{ github.sha }}
             VT_TV_TESTS_ENABLED=${{ env.VT_TV_TESTS_ENABLED }}
             VT_TV_COVERAGE_ENABLED=${{ env.VT_TV_COVERAGE_ENABLED }}
           outputs: type=local,dest=${{ env.OUTPUT_DIR }}
