@@ -73,9 +73,9 @@ TEST_P(StandaloneAppTest, test_run) {
     fmt::format("{}/tests/config/{}", SRC_DIR, std::get<0>(GetParam()));
   int expected_phases = std::get<1>(GetParam());
 
-  // Run vt-tv_standalone process
+  // Run vttv process
   auto cmd =
-    fmt::format("{}/apps/vt-tv_standalone --conf={}", BUILD_DIR, config_file);
+    fmt::format("{}/apps/vttv --conf={}", BUILD_DIR, config_file);
   const auto [status, output] = Util::exec(cmd.c_str());
   fmt::print(output);
 
