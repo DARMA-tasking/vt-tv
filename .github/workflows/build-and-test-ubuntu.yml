@@ -118,6 +118,7 @@ jobs:
           Priority: optional
           Architecture: amd64
           Maintainer: Pierre Pébay <pierre.pebay@ng-analytics.com>
+          Depends: libx11-dev, libgl1-mesa-dev, libgomp1
           Description: DARMA vt task visualizer.
           EOF
 
