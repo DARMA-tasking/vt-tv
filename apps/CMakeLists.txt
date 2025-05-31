@@ -52,6 +52,8 @@ foreach(APP_FULL ${PROJECT_APPS})
     ${VT_TV_LIBRARY_NS}
   )
 
+  add_vttv_definitions(${APP})
+
   vtk_module_autoinit(
     TARGETS ${APP}
     MODULES ${VTK_LIBRARIES}

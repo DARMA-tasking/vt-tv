@@ -14,6 +14,7 @@ nanobind_add_module(vttv ${PYTHON_BINDING_SRCS} tv.cc)
 
 # .. Link it to necessary libraries
 target_link_libraries(vttv PUBLIC ${VT_TV_LIBRARY_NS} ${JSON_LIBRARY} ${FMT_LIBRARY})
+add_vttv_definitions(vttv)
 
 vtk_module_autoinit(
   TARGETS vttv

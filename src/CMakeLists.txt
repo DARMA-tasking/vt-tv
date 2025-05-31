@@ -108,6 +108,8 @@ target_include_directories(
   $<INSTALL_INTERFACE:include>
 )
 
+add_vttv_definitions(${VT_TV_LIBRARY})
+
 install(
   TARGETS                   ${VT_TV_LIBRARY}
   EXPORT                    ${VT_TV_LIBRARY}
