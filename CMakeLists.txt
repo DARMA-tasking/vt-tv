@@ -48,11 +48,18 @@ if(APPLE AND NOT CMAKE_CXX_COMPILER_ID MATCHES "AppleClang")
   add_compile_options(-ffat-lto-objects)
 endif()
 
+set(PROJECT_BIN_DIR      ${CMAKE_CURRENT_BINARY_DIR})
+set(PROJECT_BASE_DIR     ${CMAKE_CURRENT_SOURCE_DIR})
+set(PROJECT_LIB_DIR      ${CMAKE_CURRENT_SOURCE_DIR}/lib)
+set(PROJECT_EXAMPLE_DIR  ${CMAKE_CURRENT_SOURCE_DIR}/examples)
+set(PROJECT_APP_DIR      ${CMAKE_CURRENT_SOURCE_DIR}/apps)
+set(PROJECT_BINDINGS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/bindings)
+
 function(add_vttv_definitions TARGET)
   target_compile_definitions(${TARGET}
     PRIVATE
       VT_TV_N_THREADS=${VT_TV_N_THREADS}
-      SRC_DIR="${CMAKE_CURRENT_SOURCE_DIR}"
+      SRC_DIR="${PROJECT_BASE_DIR}"
       BUILD_DIR="${CMAKE_BINARY_DIR}"
   )
 
@@ -62,13 +69,6 @@ function(add_vttv_definitions TARGET)
     target_compile_definitions(${TARGET} PRIVATE VT_TV_OPENMP_ENABLED=0)
   endif()
 endfunction(add_vttv_definitions TARGET)
-
-set(PROJECT_BIN_DIR      ${CMAKE_CURRENT_BINARY_DIR})
-set(PROJECT_BASE_DIR     ${CMAKE_CURRENT_SOURCE_DIR})
-set(PROJECT_LIB_DIR      ${CMAKE_CURRENT_SOURCE_DIR}/lib)
-set(PROJECT_EXAMPLE_DIR  ${CMAKE_CURRENT_SOURCE_DIR}/examples)
-set(PROJECT_APP_DIR      ${CMAKE_CURRENT_SOURCE_DIR}/apps)
-set(PROJECT_BINDINGS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/bindings)
 
 add_subdirectory(src)
 link_openmp()
