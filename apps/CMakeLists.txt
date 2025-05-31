@@ -1,6 +1,6 @@
 
 macro(add_test_for_app_vt_tv test_name test_exec)
-  if(${test_name} STREQUAL "vt-tv:vt-tv_standalone")
+  if(${test_name} STREQUAL "vt-tv:vttv")
     add_test(
       NAME ${test_name}
       COMMAND ${test_exec} -c tests/config/conf.yaml
@@ -55,6 +55,11 @@ foreach(APP_FULL ${PROJECT_APPS})
   vtk_module_autoinit(
     TARGETS ${APP}
     MODULES ${VTK_LIBRARIES}
+  )
+
+  install(
+    TARGETS ${APP}
+    DESTINATION bin
   )
 
 endforeach()

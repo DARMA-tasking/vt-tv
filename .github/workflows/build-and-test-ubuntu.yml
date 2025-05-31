@@ -15,27 +15,27 @@ jobs:
       fail-fast: false
       matrix:
         host: [
-          {
-            base: ubuntu-22.04,
-            compiler: { cc: gcc-11 },
-            python: ['3.8', '3.9', '3.10', '3.11', '3.12'],
-            vtk: '9.2.2',
-            image: ubuntu_22.04-gcc_11-vtk_9.2.2-py_3.all
-          },
-          {
-            base: ubuntu-22.04,
-            compiler: { cc: clang-11 },
-            python: ['3.8', '3.9', '3.10', '3.11', '3.12'],
-            vtk: '9.2.2',
-            image: ubuntu_22.04-clang_11-vtk_9.2.2-py_3.all
-          },
-          {
-            base: ubuntu-22.04,
-            compiler: { cc: gcc-12 },
-            python: ['3.8', '3.9', '3.10', '3.11', '3.12'],
-            vtk: '9.3.0',
-            image: ubuntu_22.04-gcc_12-vtk_9.3.0-py_3.all
-          },
+          # {
+          #   base: ubuntu-22.04,
+          #   compiler: { cc: gcc-11 },
+          #   python: ['3.8', '3.9', '3.10', '3.11', '3.12'],
+          #   vtk: '9.2.2',
+          #   image: ubuntu_22.04-gcc_11-vtk_9.2.2-py_3.all
+          # },
+          # {
+          #   base: ubuntu-22.04,
+          #   compiler: { cc: clang-11 },
+          #   python: ['3.8', '3.9', '3.10', '3.11', '3.12'],
+          #   vtk: '9.2.2',
+          #   image: ubuntu_22.04-clang_11-vtk_9.2.2-py_3.all
+          # },
+          # {
+          #   base: ubuntu-22.04,
+          #   compiler: { cc: gcc-12 },
+          #   python: ['3.8', '3.9', '3.10', '3.11', '3.12'],
+          #   vtk: '9.3.0',
+          #   image: ubuntu_22.04-gcc_12-vtk_9.3.0-py_3.all
+          # },
           {
             base: ubuntu-24.04,
             compiler: { cc: gcc-13 },
@@ -61,6 +61,8 @@ jobs:
       - name: Set up Docker Buildx
         id: buildx
         uses: docker/setup-buildx-action@v3
+        with:
+          driver: docker
 
       - name: Inspect Builder
         run: |
@@ -71,6 +73,24 @@ jobs:
           echo "Platforms: ${{ steps.buildx.outputs.platforms }}"
           echo "DOCKER_TAG: ${{ env.DOCKER_TAG }}"
 
+
+##### DELETE THIS LATER
+      - name: TEMPORARY - Build modified base image - TEMPORARY
+        id: build_base_local
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ci/docker/base-ubuntu.dockerfile
+          build-args: |
+            BASE_IMAGE=ubuntu:24.04
+            CC=${{ matrix.host.compiler.cc }}
+            VTK_VERSION=${{ matrix.host.vtk }}
+            PYTHON_VERSIONS=3.8,3.9,3.10,3.11,3.12
+          push: false
+          load: true
+          tags: vt-base:${{ matrix.host.image }}-pr-${{ github.sha }}
+#######################
+
       - name: Build the Docker Image; build and test vt-tv
         id: docker_build
         continue-on-error: false
@@ -80,11 +100,33 @@ jobs:
           # tags: ${{ env.DOCKER_TAG }}
           context: .
           file: ./ci/docker/build-and-test-ubuntu.dockerfile
-          build-args: |
-            BASE_IMAGE=${{ env.DOCKER_REPOSITORY }}:${{ matrix.host.image }}
+          build-args: | # TEMPORARY change: switch back BASE_IMAGE later
+            BASE_IMAGE=vt-base:${{ matrix.host.image }}-pr-${{ github.sha }}
             VT_TV_TESTS_ENABLED=${{ env.VT_TV_TESTS_ENABLED }}
             VT_TV_COVERAGE_ENABLED=${{ env.VT_TV_COVERAGE_ENABLED }}
           outputs: type=local,dest=${{ env.OUTPUT_DIR }}
+
+      - name: Prepare Debian Package Structure
+        run: |
+          mkdir -p pkg/DEBIAN
+          mkdir -p pkg/usr/local/bin
+          cp ${{ env.OUTPUT_DIR }}/tmp/pkg-artifacts/bin/vttv pkg/usr/local/bin/
+          cat <<EOF > pkg/DEBIAN/control
+          Package: vttv
+          Version: 1.5.0
+          Section: base
+          Priority: optional
+          Architecture: amd64
+          Maintainer: Pierre Pébay <pierre.pebay@ng-analytics.com>
+          Depends: libx11-dev, libgl1-mesa-dev, libgomp1
+          Description: DARMA vt task visualizer.
+          EOF
+
+      - name: Build the Debian Package
+        run: dpkg-deb --build pkg "${OUTPUT_DIR}/vttv-amd64-1-5-0.deb"
+
+      - name: Clean out pkg-artifacts
+        run: rm -rf "${OUTPUT_DIR}/tmp/pkg-artifacts"
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
