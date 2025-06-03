@@ -48,27 +48,27 @@ if(APPLE AND NOT CMAKE_CXX_COMPILER_ID MATCHES "AppleClang")
   add_compile_options(-ffat-lto-objects)
 endif()
 
-add_definitions(-DVT_TV_N_THREADS=${VT_TV_N_THREADS})
-add_compile_definitions(SRC_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
-add_compile_definitions(BUILD_DIR="${CMAKE_BINARY_DIR}")
-if(VT_TV_OPENMP_ENABLED)
-  add_definitions(-DVT_TV_OPENMP_ENABLED=1)
-else()
-  add_definitions(-DVT_TV_OPENMP_ENABLED=0)
-endif()
-
-add_custom_target(vt_tv_examples)
-if (VT_TV_TESTS_ENABLED)
-  add_custom_target(vt_tv_tests)
-endif()
-add_custom_target(vt_tv_apps)
-
 set(PROJECT_BIN_DIR      ${CMAKE_CURRENT_BINARY_DIR})
 set(PROJECT_BASE_DIR     ${CMAKE_CURRENT_SOURCE_DIR})
 set(PROJECT_LIB_DIR      ${CMAKE_CURRENT_SOURCE_DIR}/lib)
 set(PROJECT_EXAMPLE_DIR  ${CMAKE_CURRENT_SOURCE_DIR}/examples)
 set(PROJECT_APP_DIR      ${CMAKE_CURRENT_SOURCE_DIR}/apps)
 set(PROJECT_BINDINGS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/bindings)
+
+function(add_vttv_definitions TARGET)
+  target_compile_definitions(${TARGET}
+    PRIVATE
+      VT_TV_N_THREADS=${VT_TV_N_THREADS}
+      SRC_DIR="${PROJECT_BASE_DIR}"
+      BUILD_DIR="${CMAKE_BINARY_DIR}"
+  )
+
+  if(VT_TV_OPENMP_ENABLED)
+    target_compile_definitions(${TARGET} PRIVATE VT_TV_OPENMP_ENABLED=1)
+  else()
+    target_compile_definitions(${TARGET} PRIVATE VT_TV_OPENMP_ENABLED=0)
+  endif()
+endfunction(add_vttv_definitions TARGET)
 
 add_subdirectory(src)
 link_openmp()

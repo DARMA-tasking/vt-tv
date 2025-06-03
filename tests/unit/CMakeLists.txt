@@ -65,3 +65,4 @@ vtk_module_autoinit(
 
 vt_tv_link_target(AllTests)
 gtest_discover_tests(AllTests)
+add_vttv_definitions(AllTests)
