@@ -88,12 +88,13 @@ jobs:
 
       - name: Prepare Debian Package Structure
         run: |
+          COMMIT_HASH=$(echo "${GITHUB_SHA}" | cut -c1-7)
           mkdir -p pkg/DEBIAN
           mkdir -p pkg/usr/local/bin
           cp ${{ env.OUTPUT_DIR }}/tmp/pkg-artifacts/bin/vttv pkg/usr/local/bin/
           cat <<EOF > pkg/DEBIAN/control
           Package: vttv
-          Version: 1.5.0
+          Version: 1.6.0-${COMMIT_HASH}
           Section: base
           Priority: optional
           Architecture: amd64
@@ -103,7 +104,9 @@ jobs:
           EOF
 
       - name: Build the Debian Package
-        run: dpkg-deb --build pkg "${OUTPUT_DIR}/vttv-amd64-1-5-0.deb"
+        run: |
+          COMMIT_HASH=$(echo "${GITHUB_SHA}" | cut -c1-7)
+          dpkg-deb --build pkg "${OUTPUT_DIR}/vttv-amd64-${COMMIT_HASH}.deb"
 
       - name: Clean out pkg-artifacts
         run: rm -rf "${OUTPUT_DIR}/tmp/pkg-artifacts"
