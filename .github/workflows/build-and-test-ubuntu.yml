@@ -86,6 +86,31 @@ jobs:
             VT_TV_COVERAGE_ENABLED=${{ env.VT_TV_COVERAGE_ENABLED }}
           outputs: type=local,dest=${{ env.OUTPUT_DIR }}
 
+      - name: Prepare Debian Package Structure
+        run: |
+          COMMIT_HASH=$(echo "${GITHUB_SHA}" | cut -c1-7)
+          mkdir -p pkg/DEBIAN
+          mkdir -p pkg/usr/local/bin
+          cp ${{ env.OUTPUT_DIR }}/tmp/pkg-artifacts/bin/vttv pkg/usr/local/bin/
+          cat <<EOF > pkg/DEBIAN/control
+          Package: vttv
+          Version: 1.6.0-${COMMIT_HASH}
+          Section: base
+          Priority: optional
+          Architecture: amd64
+          Maintainer: Pierre Pébay <pierre.pebay@ng-analytics.com>
+          Depends: libx11-dev, libgl1-mesa-dev, libgomp1
+          Description: DARMA vt task visualizer.
+          EOF
+
+      - name: Build the Debian Package
+        run: |
+          COMMIT_HASH=$(echo "${GITHUB_SHA}" | cut -c1-7)
+          dpkg-deb --build pkg "${OUTPUT_DIR}/vttv-amd64-${COMMIT_HASH}.deb"
+
+      - name: Clean out pkg-artifacts
+        run: rm -rf "${OUTPUT_DIR}/tmp/pkg-artifacts"
+
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         if: always()
