@@ -30,7 +30,7 @@ You need the following dependencies:
 
 1. A C++ compiler that supports C++17
 2. [`cmake`](https://cmake.org/cmake/help/latest/) >= 3.17
-3. [`VTK`](https://docs.vtk.org/en/latest/index.html) (build instructions [here](https://gitlab.kitware.com/vtk/vtk/-/blob/master/Documentation/docs/build_instructions/build.md))
+3. [`VTK`](https://docs.vtk.org/en/latest/index.html) (build instructions [here](https://gitlab.kitware.com/vtk/vtk/-/blob/master/Documentation/docs/build_instructions/build.md)) ⚠️ `VTK` 9.4 is not supported (see [#165](https://github.com/DARMA-tasking/vt-tv/issues/165#issue-3273097362))
 
 Begin by cloning `vt-tv`:
 
