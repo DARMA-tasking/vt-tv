@@ -3,53 +3,61 @@
 set -euo pipefail
 
 # This script installs Conda and setup conda environments on the host machine for the given python versions
-# Example: `setup_conda.sh 3.8,3.9,3.10,3.11,3.12` will
-# 1. Setup conda
-# 2. Create conda environments py3.8, py3.9, py3.10, py3.11, py3.12 (with python version and nanobind package)
+# Example: `setup_conda.sh 3.8,3.9,3.10,3.11,3.12`
 
 CONDA_PATH=${CONDA_PATH:-"/opt/conda"}
 PYTHON_VERSIONS=${1:-"3.8,3.9,3.10,3.11,3.12"}
+PACKAGES=${PACKAGES:-"PyYAML Brotli schema nanobind"}
 
 echo "::group::Install conda"
 mkdir -p ~/miniconda3
+
+# Detect platform
 if [[ $(uname -a) == *"Darwin"* ]]; then
     if [[ $(arch) == 'arm64' ]]; then
-        curl https://repo.anaconda.com/miniconda/Miniconda3-latest-MacOSX-arm64.sh -o ~/miniconda.sh
+        INSTALLER_URL="https://repo.anaconda.com/miniconda/Miniconda3-latest-MacOSX-arm64.sh"
     else
-        curl https://repo.anaconda.com/miniconda/Miniconda3-latest-MacOSX-x86_64.sh -o ~/miniconda.sh
+        INSTALLER_URL="https://repo.anaconda.com/miniconda/Miniconda3-latest-MacOSX-x86_64.sh"
     fi
 else
-    curl https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -o ~/miniconda.sh
+    INSTALLER_URL="https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh"
 fi
-bash ~/miniconda.sh -b -u -p $CONDA_PATH
-rm -rf ~/miniconda.sh
+
+curl -fsSL "$INSTALLER_URL" -o ~/miniconda.sh
+bash ~/miniconda.sh -b -u -p "$CONDA_PATH"
+rm -f ~/miniconda.sh
 
 "$CONDA_PATH/bin/conda" tos accept --override-channels --channel https://repo.anaconda.com/pkgs/main
 "$CONDA_PATH/bin/conda" tos accept --override-channels --channel https://repo.anaconda.com/pkgs/r
 
+"$CONDA_PATH/bin/conda" config --set always_yes yes
+"$CONDA_PATH/bin/conda" config --set changeps1 no
+
 "$CONDA_PATH/bin/conda" init bash
-"$CONDA_PATH/bin/conda" init zsh
+"$CONDA_PATH/bin/conda" init zsh 2>/dev/null || true
 
-echo "Conda path: $(which conda)"
+export PATH="$CONDA_PATH/bin:$PATH"
+source "$CONDA_PATH/etc/profile.d/conda.sh" 2>/dev/null || true
+
 echo "Conda version: $(conda --version)"
-conda deactivate
-
+conda deactivate || true
 echo "::endgroup::"
 
-versions=(`echo $PYTHON_VERSIONS | sed 's/,/\n/g'`)
-for python_version in "${versions[@]}"
-do
-    echo "::group::Create conda environment (py${python_version})"
-    conda create -y -n py${python_version} python=${python_version}
-    conda env list
+IFS=',' read -ra versions <<< "$PYTHON_VERSIONS"
+for python_version in "${versions[@]}"; do
+    python_version=$(echo "$python_version" | xargs)
 
-    echo "Python version: $(conda run -n py${python_version} python --version)"
-    echo "Python:$(conda run -n py${python_version} which python)"
-    echo "pip: $(conda run -n py${python_version} which pip)"
-    conda run -n py${python_version} pip install PyYAML
-    conda run -n py${python_version} pip install Brotli
-    conda run -n py${python_version} pip install schema
-    conda run -n py${python_version} pip install nanobind
+    echo "::group::Create conda environment (py${python_version})"
+    conda create -y -n "py${python_version}" "python=${python_version}"
+
+    echo "Python: $(conda run -n py${python_version} which python)"
+    echo "Version: $(conda run -n py${python_version} python --version)"
+
+    for package in $PACKAGES; do
+        conda run -n "py${python_version}" pip install --no-cache-dir "$package"
+    done
 
     echo "::endgroup::"
 done
+
+echo "Created environments: $(echo $PYTHON_VERSIONS | tr ',' ' ' | sed 's/[0-9.]\+/py&/g')"

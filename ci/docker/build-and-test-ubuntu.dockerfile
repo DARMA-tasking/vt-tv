@@ -14,7 +14,7 @@ COPY . /opt/src/vt-tv
 ENV CONDA_PATH=/opt/conda
 ENV PATH=$CONDA_PATH/bin:$PATH
 
-RUN /opt/src/vt-tv/ci/setup_conda.sh "$CONDA_PATH"
+RUN /opt/src/vt-tv/ci/setup_conda.sh
 
 RUN mkdir -p /opt/build/vt-tv
 
