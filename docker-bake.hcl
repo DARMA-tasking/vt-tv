@@ -45,7 +45,7 @@ function "vt-tv-werror" {
 }
 
 target "vt-tv-build" {
-  target = "build"
+  target = "test-python"
   context = "."
   dockerfile = "ci/docker/build-and-test-ubuntu.dockerfile"
 
