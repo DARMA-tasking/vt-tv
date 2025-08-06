@@ -19,6 +19,31 @@ function "target_suffix" {
   result = variant(item) == "" ? "" : "-${variant(item)}"
 }
 
+function "vt-tv-python-bindings" {
+  params = [item]
+  result = lookup(item, "vt-tv-python-bindings", "0")
+}
+
+function "vt-tv-openmp" {
+  params = [item]
+  result = lookup(item, "vt-tv-openmp", "1")
+}
+
+function "vt-tv-tests" {
+  params = [item]
+  result = lookup(item, "vt-tv-tests", "1")
+}
+
+function "vt-tv-coverage" {
+  params = [item]
+  result = lookup(item, "vt-tv-coverage", "0")
+}
+
+function "vt-tv-werror" {
+  params = [item]
+  result = lookup(item, "vt-tv-werror", "0")
+}
+
 target "vt-tv-build" {
   target = "build"
   context = "."
@@ -44,6 +69,10 @@ target "vt-tv-build-all" {
     GIT_BRANCH = "${GIT_BRANCH}"
     IMAGE = "wf-${item.image}"
     REPO = REPO
+    VT_TV_PYTHON_BINDINGS_ENABLED = vt-tv-python-bindings(item)
+    VT_TV_OPENMP_ENABLED = vt-tv-openmp(item)
+    VT_TV_TESTS_ENABLED = vt-tv-tests(item)
+    VT_TV_COVERAGE_ENABLED = vt-tv-coverage(item)
   }
 
   matrix = {
