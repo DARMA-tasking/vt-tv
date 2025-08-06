@@ -6,29 +6,29 @@ ARG BASE_IMAGE=${REPO}:${IMAGE}
 
 FROM --platform=${ARCH} ${BASE_IMAGE} AS base
 
-ENV CONDA_PATH=/opt/conda
-ENV PATH=$PATH:$CONDA_PATH/bin
-ENV VTK_DIR=/opt/vtk/build/
-
-# Setup python requirements for JSON datafile validation
-RUN apt-get update && apt-get install -y python3-pip \
- && python3 -m pip install --upgrade --no-cache-dir pip \
- && pip install --no-cache-dir PyYAML Brotli schema nanobind
+ARG VT_TV_COVERAGE_ENABLED=OFF
+ENV VT_TV_COVERAGE_ENABLED=$VT_TV_COVERAGE_ENABLED
 
 COPY . /opt/src/vt-tv
+
+ENV CONDA_PATH=/opt/conda
+ENV PATH=$CONDA_PATH/bin:$PATH
+
+RUN /opt/src/vt-tv/ci/setup_conda.sh "$CONDA_PATH"
+
 RUN mkdir -p /opt/build/vt-tv
 
 # Build
 FROM base AS build
-ARG VT_TV_COVERAGE_ENABLED=OFF
+
 ARG VT_TV_TESTS_ENABLED=OFF
-RUN VT_TV_COVERAGE_ENABLED=$VT_TV_COVERAGE_ENABLED bash /opt/src/vt-tv/ci/build.sh
+RUN /opt/src/vt-tv/ci/build.sh
 
 # Unit tests
 FROM build AS test-cpp
-ARG VT_TV_COVERAGE_ENABLED=OFF
+
 ARG VT_TV_TESTS_ENABLED=OFF
-RUN VT_TV_COVERAGE_ENABLED=$VT_TV_COVERAGE_ENABLED bash /opt/src/vt-tv/ci/test.sh
+RUN /opt/src/vt-tv/ci/test.sh
 
 # Python tests (Builds VT-TV with Python bindings & test python package)
 FROM test-cpp AS test-python

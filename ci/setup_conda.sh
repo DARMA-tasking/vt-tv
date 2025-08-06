@@ -30,10 +30,6 @@ rm -rf ~/miniconda.sh
 "$CONDA_PATH/bin/conda" init bash
 "$CONDA_PATH/bin/conda" init zsh
 
-if [ -f ~/.zshrc ]; then . ~/.zshrc; fi
-if [ -f ~/.profile ]; then . ~/.profile; fi
-if [ -f ~/.bashrc ]; then . ~/.bashrc; fi
-
 echo "Conda path: $(which conda)"
 echo "Conda version: $(conda --version)"
 conda deactivate
