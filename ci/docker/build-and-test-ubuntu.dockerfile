@@ -1,6 +1,6 @@
 ARG REPO=lifflander1/vt
 ARG ARCH=amd64
-ARG IMAGE=wf-amd64-ubuntu-22.04-gcc-12-cpp
+ARG IMAGE=wf-amd64-ubuntu-22.04-gcc-12-vtk-cpp
 
 ARG BASE_IMAGE=${REPO}:${IMAGE}
 
@@ -10,10 +10,8 @@ ENV CONDA_PATH=/opt/conda
 ENV PATH=$PATH:$CONDA_PATH/bin
 
 # Setup python requirements for JSON datafile validation
-RUN pip install PyYAML
-RUN pip install Brotli
-RUN pip install schema
-RUN pip install nanobind
+RUN conda install -y pip && \
+    pip install --no-cache-dir PyYAML Brotli schema nanobind
 
 COPY . /opt/src/vt-tv
 RUN mkdir -p /opt/build/vt-tv

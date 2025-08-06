@@ -2,7 +2,7 @@
 
 # This script builds and install vt-tv as a pip package
 
-set -ex
+set -euo pipefail
 
 CURRENT_DIR="$(dirname -- "$(realpath -- "$0")")"
 PARENT_DIR="$(dirname "$CURRENT_DIR")"

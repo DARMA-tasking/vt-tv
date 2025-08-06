@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -euo pipefail
+
 # This script installs Conda and setup conda environments on the host machine for the given python versions
 # Example: `setup_conda.sh 3.8,3.9,3.10,3.11,3.12` will
 # 1. Setup conda
@@ -20,16 +22,14 @@ else
     curl https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -o ~/miniconda.sh
 fi
 bash ~/miniconda.sh -b -u -p $CONDA_PATH
-
-"$CONDA_PATH"/bin/conda config --set accept_anaconda_terms yes
-"$CONDA_PATH"/bin/conda config --remove channels defaults
-"$CONDA_PATH"/bin/conda config --add channels conda-forge
-"$CONDA_PATH"/bin/conda config --set channel_priority strict
-
 rm -rf ~/miniconda.sh
 
-"$CONDA_PATH"/bin/conda init bash
-"$CONDA_PATH"/bin/conda init zsh
+"$CONDA_PATH/bin/conda" tos accept --override-channels --channel https://repo.anaconda.com/pkgs/main
+"$CONDA_PATH/bin/conda" tos accept --override-channels --channel https://repo.anaconda.com/pkgs/r
+
+"$CONDA_PATH/bin/conda" init bash
+"$CONDA_PATH/bin/conda" init zsh
+
 if [ -f ~/.zshrc ]; then . ~/.zshrc; fi
 if [ -f ~/.profile ]; then . ~/.profile; fi
 if [ -f ~/.bashrc ]; then . ~/.bashrc; fi
