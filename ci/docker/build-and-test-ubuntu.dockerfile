@@ -8,10 +8,12 @@ FROM --platform=${ARCH} ${BASE_IMAGE} AS base
 
 ENV CONDA_PATH=/opt/conda
 ENV PATH=$PATH:$CONDA_PATH/bin
+ENV VTK_DIR=/opt/vtk/build/
 
 # Setup python requirements for JSON datafile validation
-RUN apt-get update && apt-get install -y python3-full python3-pip
-RUN pip install --no-cache-dir PyYAML Brotli schema nanobind
+RUN apt-get update && apt-get install -y python3-pip \
+ && python3 -m pip install --upgrade --no-cache-dir pip \
+ && pip install --no-cache-dir PyYAML Brotli schema nanobind
 
 COPY . /opt/src/vt-tv
 RUN mkdir -p /opt/build/vt-tv
@@ -32,8 +34,8 @@ RUN VT_TV_COVERAGE_ENABLED=$VT_TV_COVERAGE_ENABLED bash /opt/src/vt-tv/ci/test.s
 FROM test-cpp AS test-python
 # Create vizualization output directory (required)
 RUN mkdir -p /opt/src/vt-tv/output/python_tests
-RUN VTK_DIR=/opt/build/vtk bash /opt/src/vt-tv/ci/python_build.sh
-RUN VTK_DIR=/opt/build/vtk bash /opt/src/vt-tv/ci/python_test.sh
+RUN /opt/src/vt-tv/ci/python_build.sh
+RUN /opt/src/vt-tv/ci/python_test.sh
 
 # Artifacts
 FROM scratch AS artifacts
