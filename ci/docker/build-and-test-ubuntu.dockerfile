@@ -10,8 +10,8 @@ ENV CONDA_PATH=/opt/conda
 ENV PATH=$PATH:$CONDA_PATH/bin
 
 # Setup python requirements for JSON datafile validation
-RUN conda install -y pip && \
-    pip install --no-cache-dir PyYAML Brotli schema nanobind
+RUN apt-get update && apt-get install -y python3-full python3-pip
+RUN pip install --no-cache-dir PyYAML Brotli schema nanobind
 
 COPY . /opt/src/vt-tv
 RUN mkdir -p /opt/build/vt-tv
