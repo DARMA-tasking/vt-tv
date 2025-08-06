@@ -78,7 +78,6 @@ jobs:
             ~/.zshrc
             ~/.bash_profile
           key: ${{ env.CACHE_KEY }}
-          save-always: true
 
       - name: Setup Conda
         if: ${{steps.base-cache.outputs.cache-hit != 'true'}}

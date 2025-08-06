@@ -81,7 +81,8 @@ target "vt-tv-build-all" {
         image = "amd64-ubuntu-24-04-clang-16-vtk-cpp"
       },
       {
-        image = "amd64-ubuntu-22-04-gcc-12-vtk-cpp"
+        image = "amd64-ubuntu-22-04-gcc-12-vtk-cpp",
+        vt-tv-coverage = 1
       },
     ]
   }
