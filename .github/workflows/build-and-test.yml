@@ -57,6 +57,8 @@ jobs:
           targets: ${{ matrix.target }}
           files: docker-bake.hcl
           push: ${{ github.ref == 'refs/heads/master' }}
+          set: |
+            *.args.CACHE_ID=${{ matrix.target }}
 
       - name: Retrieve build artifacts
         run: |
@@ -71,8 +73,6 @@ jobs:
           " >> tmp_dockerfile
 
           docker buildx build --builder ${{ steps.setup-buildx.outputs.name }} -f tmp_dockerfile --output type=local,dest=build .
-
-          ls build/vt-tv
 
       - name: Upload coverage
         if: ${{ matrix.target == 'vt-tv-build-amd64-ubuntu-22-04-gcc-12-vtk-cpp' }}
