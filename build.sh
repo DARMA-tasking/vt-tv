@@ -240,16 +240,11 @@ if [ "$VT_TV_RUN_TESTS" == "ON" ]; then
   eval "$gtest_cmd" || true
   echo "Tests done."
 
-  popd
-fi
-
-if [ "$VT_TV_COVERAGE_ENABLED" == "ON" ]; then
-  mkdir -p "$VT_TV_OUTPUT_DIR"
-  pushd "$VT_TV_OUTPUT_DIR"
-
-  lcov --gcov-tool /usr/bin/gcov-12 --directory "$VT_TV_BUILD_DIR" --capture --output-file coverage.info
-  lcov --remove coverage.info '/usr/*' --output-file coverage.info
-  lcov --list coverage.info
+  if [ "$VT_TV_COVERAGE_ENABLED" == "ON" ]; then
+    lcov --gcov-tool /usr/bin/gcov-12 --directory "$VT_TV_BUILD_DIR" --capture --output-file coverage.info
+    lcov --remove coverage.info '/usr/*' '/opt/vtk/*' --output-file coverage.info
+    lcov --list coverage.info
+  fi
 
   popd
 fi
