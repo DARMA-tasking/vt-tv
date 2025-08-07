@@ -57,3 +57,24 @@ jobs:
           targets: ${{ matrix.target }}
           files: docker-bake.hcl
           push: ${{ github.ref == 'refs/heads/master' }}
+
+      - name: Retrieve build artifacts
+        run: |
+          # We rely on the persistence of data on cache mounts with identical IDs and builders.
+          # This allows us to copy build artifacts from the "bake" step and use the Codecov action within the GitHub environment.
+
+          echo "
+          FROM ubuntu:latest
+          RUN --mount=type=cache,id=BUILD-${{ matrix.target }},target=/opt/src/vt-tv/output \
+          mkdir -p /vt-tv \
+          && cp -p -R /opt/src/vt-tv/output/. /vt-tv/ || true
+          " >> tmp_dockerfile
+
+          docker buildx build --builder ${{ steps.setup-buildx.outputs.name }} -f tmp_dockerfile --output type=local,dest=build .
+
+      - name: Upload coverage
+        if: ${{ matrix.target == 'vt-tv-build-amd64-ubuntu-22-04-gcc-12-vtk-cpp' }}
+        uses: codecov/codecov-action@v5
+        with:
+          files: build/vt-tv/coverage.info
+          token: ${{ secrets.CODECOV_TOKEN }}

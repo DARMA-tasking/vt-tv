@@ -247,8 +247,6 @@ if [ "$VT_TV_COVERAGE_ENABLED" == "ON" ]; then
   mkdir -p "$VT_TV_OUTPUT_DIR"
   pushd "$VT_TV_OUTPUT_DIR"
 
-  # TODO: Move this to workflows
-  apt-get update && apt-get install -y gcov-12
   lcov --gcov-tool /usr/bin/gcov-12 --directory "$VT_TV_BUILD_DIR" --capture --output-file coverage.info
   lcov --remove coverage.info '/usr/*' --output-file coverage.info
   lcov --list coverage.info

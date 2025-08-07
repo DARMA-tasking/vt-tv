@@ -21,21 +21,31 @@ RUN mkdir -p /opt/build/vt-tv
 # Build
 FROM base AS build
 
+ARG IMAGE
+ARG CACHE_ID=${IMAGE}
 ARG VT_TV_TESTS_ENABLED=OFF
-RUN /opt/src/vt-tv/ci/build.sh
+
+RUN --mount=type=cache,id=BUILD-${CACHE_ID},target=/opt/src/vt-tv/output \
+    /opt/src/vt-tv/ci/build.sh
 
 # Unit tests
 FROM build AS test-cpp
 
+ARG IMAGE
+ARG CACHE_ID=${IMAGE}
 ARG VT_TV_TESTS_ENABLED=OFF
-RUN /opt/src/vt-tv/ci/test.sh
+
+RUN --mount=type=cache,id=BUILD-${CACHE_ID},target=/opt/src/vt-tv/output \
+    /opt/src/vt-tv/ci/test.sh
 
 # Python tests (Builds VT-TV with Python bindings & test python package)
 FROM test-cpp AS test-python
+
 # Create vizualization output directory (required)
-RUN mkdir -p /opt/src/vt-tv/output/python_tests
-RUN /opt/src/vt-tv/ci/python_build.sh
-RUN /opt/src/vt-tv/ci/python_test.sh
+RUN --mount=type=cache,id=BUILD-${CACHE_ID},target=/opt/src/vt-tv/output \
+    mkdir -p /opt/src/vt-tv/output/python_tests && \
+    /opt/src/vt-tv/ci/python_build.sh && \
+    /opt/src/vt-tv/ci/python_test.sh
 
 # Artifacts
 FROM scratch AS artifacts
