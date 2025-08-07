@@ -20,9 +20,7 @@ echo "Conda version: $(conda --version)"
 
 conda deactivate || true
 
-mapfile -t envs < <(conda env list | awk '/^py/ { print $1 }')
-
-for env in "${envs[@]}"; do
+for env in $(conda env list | grep -E '^py' | perl -lane 'print $F[-1]' | xargs ls -ld | perl -lane 'print $F[-1]' | sed -E 's|^.*/(.*)$|\1|'); do
   echo "::group::Build Python Bindings ($env)"
 
   conda activate "$env"

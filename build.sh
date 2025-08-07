@@ -178,7 +178,7 @@ if [[ "${VT_TV_BUILD}" == "ON" ]]; then
     echo "> Cleaning"
     # Remove CMakeCache for fresh build
     rm -rf CMakeCache.txt
-    rm -rf ${VT_TV_BUILD_DIR} # recreate clean and build
+    rm -rf ${VT_TV_BUILD_DIR}/* # recreate clean and build
   fi
 
   mkdir -p ${VT_TV_BUILD_DIR}
