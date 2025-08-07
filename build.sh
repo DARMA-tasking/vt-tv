@@ -220,7 +220,6 @@ fi # End build
 # Run tests
 if [ "$VT_TV_RUN_TESTS" == "ON" ]; then
   mkdir -p "$VT_TV_OUTPUT_DIR"
-  pushd "$VT_TV_OUTPUT_DIR"
 
   # Tests
   echo "> Running tests..."
@@ -228,7 +227,7 @@ if [ "$VT_TV_RUN_TESTS" == "ON" ]; then
   GTEST_OPTIONS=""
   if [ "$VT_TV_TEST_REPORT" != "" ]; then
     echo "Generating JUnit report..."
-    GTEST_OPTIONS="$GTEST_OPTIONS --gtest_output=\"xml:$VT_TV_TEST_REPORT\""
+    GTEST_OPTIONS="$GTEST_OPTIONS --gtest_output=\"xml:$VT_TV_OUTPUT_DIR/$VT_TV_TEST_REPORT\""
   fi
   if [ "$VT_TV_RUN_TESTS_FILTER" != "" ]; then
     echo "Filtering Tests ($VT_TV_RUN_TESTS_FILTER)..."
@@ -245,6 +244,4 @@ if [ "$VT_TV_RUN_TESTS" == "ON" ]; then
     lcov --remove coverage.info '/usr/*' '/opt/vtk/*' --output-file coverage.info
     lcov --list coverage.info
   fi
-
-  popd
 fi

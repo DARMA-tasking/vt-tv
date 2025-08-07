@@ -1,8 +1,8 @@
-#!/bin/bash
-
-# This script tests vt-tv pip package
-
+#!/usr/bin/env bash
 set -euo pipefail
+
+export CONDA_PATH=${CONDA_PATH:-/opt/conda}
+export debian_chroot=""
 
 CURRENT_DIR="$(dirname -- "$(realpath -- "$0")")"
 PARENT_DIR="$(dirname "$CURRENT_DIR")"
@@ -10,42 +10,32 @@ PARENT_DIR="$(dirname "$CURRENT_DIR")"
 VT_TV_SRC_DIR=${VT_TV_SRC_DIR:-$PARENT_DIR}
 VT_TV_OUTPUT_DIR=${VT_TV_OUTPUT_DIR:-"$VT_TV_SRC_DIR/output"}
 
-pushd $VT_TV_SRC_DIR
+mkdir -p "$VT_TV_OUTPUT_DIR/python_tests"
+cd "$VT_TV_SRC_DIR"
 
-# Create vizualization output directory (required).
-mkdir -p $VT_TV_OUTPUT_DIR/python_tests
+export PATH="$CONDA_PATH/bin:$PATH"
+eval "$("$CONDA_PATH/bin/conda" shell.bash hook)"
 
-$CONDA_PATH/bin/conda init bash
-$CONDA_PATH/bin/conda init zsh
-if [ -f ~/.zshrc ]; then . ~/.zshrc; fi
-if [ -f ~/.profile ]; then . ~/.profile; fi
-if [ -f ~/.bashrc ]; then . ~/.bashrc; fi
-
-echo "Conda path: $(which conda)"
+echo "Conda path: $(command -v conda)"
 echo "Conda version: $(conda --version)"
-conda deactivate
 
-for env in $(conda env list | grep -E '^py' | perl -lane 'print $F[-1]' | xargs ls -ld | perl -lane 'print $F[-1]' | sed -E 's|^.*/(.*)$|\1|'); do
-    # Clear vizualization output directory
-    rm -rf $VT_TV_OUTPUT_DIR/python_tests/*
+conda deactivate || true
 
-    echo "::group::Test Python Bindings (${env})"
+mapfile -t envs < <(conda env list | awk '/^py/ { print $1 }')
 
-    # Activate conda environment
-    . $CONDA_PATH/etc/profile.d/conda.sh && conda activate $env
+for env in "${envs[@]}"; do
+  echo "::group::Test Python Bindings (${env})"
 
-    # Run test
-    if [[ $(uname -a) != *"Darwin"* ]]; then
-        # Start virtual display (Linux)
-        xvfb-run python $VT_TV_SRC_DIR/tests/test_bindings.py
-    else
-        python $VT_TV_SRC_DIR/tests/test_bindings.py
-    fi
+  conda activate "$env"
 
-    # Deactivate conda environment
-    conda deactivate
+  rm -rf "$VT_TV_OUTPUT_DIR/python_tests"/*
 
-    echo "::endgroup::"
+  if [[ $(uname -s) == Linux ]]; then
+    xvfb-run python "$VT_TV_SRC_DIR/tests/test_bindings.py"
+  else
+    python "$VT_TV_SRC_DIR/tests/test_bindings.py"
+  fi
+
+  conda deactivate
+  echo "::endgroup::"
 done
-
-popd

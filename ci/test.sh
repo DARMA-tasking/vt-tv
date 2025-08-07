@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -ex
+set -euo pipefail
 
 CURRENT_DIR="$(dirname -- "$(realpath -- "$0")")"
 PARENT_DIR="$(dirname "$CURRENT_DIR")"
@@ -13,7 +13,7 @@ VT_TV_OUTPUT_DIR=${VT_TV_OUTPUT_DIR:-"$VT_TV_SRC_DIR/output"}
 VT_TV_TESTS_OUTPUT_DIR=${VT_TV_TESTS_OUTPUT_DIR:-"$VT_TV_OUTPUT_DIR/tests"}
 
 # Active conda env that contains needed python packages
-source /opt/conda/etc/profile.d/conda.sh
+eval "$("$CONDA_PATH/bin/conda" shell.bash hook)"
 conda activate py3.12
 
 VT_TV_TEST_CMD="\
