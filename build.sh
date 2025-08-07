@@ -220,7 +220,8 @@ fi # End build
 # Run tests
 if [ "$VT_TV_RUN_TESTS" == "ON" ]; then
   mkdir -p "$VT_TV_OUTPUT_DIR"
-  pushd $VT_TV_OUTPUT_DIR
+  pushd "$VT_TV_OUTPUT_DIR"
+
   # Tests
   echo "> Running tests..."
   # Run GTest unit tests and display detail for failing tests
@@ -242,18 +243,15 @@ if [ "$VT_TV_RUN_TESTS" == "ON" ]; then
   popd
 fi
 
-# Coverage
 if [ "$VT_TV_COVERAGE_ENABLED" == "ON" ]; then
   mkdir -p "$VT_TV_OUTPUT_DIR"
-  pushd $VT_TV_OUTPUT_DIR
-  # base coverage files
-  echo "lcov capture:"
-  lcov --capture --directory $VT_TV_BUILD_DIR --output-file lcov_vt-tv_test.info --gcov-tool $GCOV
-  lcov --remove lcov_vt-tv_test.info -o lcov_vt-tv_test_no_deps.info '*/lib/*' '/usr/include/*' '*/vtk/*' '*/tests/*'
-  lcov --list lcov_vt-tv_test_no_deps.info
-  # optional coverage html report
-  if [ "$VT_TV_COVERAGE_REPORT" != "" ]; then
-    genhtml --prefix ./src --ignore-errors source lcov_vt-tv_test_no_deps.info --legend --title "$(git rev-parse HEAD)" --output-directory="$VT_TV_COVERAGE_REPORT"
-  fi
+  pushd "$VT_TV_OUTPUT_DIR"
+
+  # TODO: Move this to workflows
+  apt-get update && apt-get install -y gcov-12
+  lcov --gcov-tool /usr/bin/gcov-12 --directory "$VT_TV_BUILD_DIR" --capture --output-file coverage.info
+  lcov --remove coverage.info '/usr/*' --output-file coverage.info
+  lcov --list coverage.info
+
   popd
 fi
