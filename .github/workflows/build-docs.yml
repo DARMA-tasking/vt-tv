@@ -31,4 +31,4 @@ jobs:
       - name: Generate documentation
         id: run_doxygen
         run: |
-          ./build-docs.sh ${{ secrets.DOCS_TOKEN }}
+          ./ci/build-docs.sh ${{ secrets.DOCS_TOKEN }}
