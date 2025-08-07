@@ -2,8 +2,6 @@ variable "REPO" {
   default = "lifflander1/vt"
 }
 
-variable "GIT_BRANCH" {}
-
 function "arch" {
   params = [item]
   result = lookup(item, "arch", "amd64")
@@ -39,15 +37,20 @@ function "vt-tv-coverage" {
   result = lookup(item, "vt-tv-coverage", "0")
 }
 
+function "vt-tv-docs" {
+  params = [item]
+  result = lookup(item, "vt-tv-docs", "0")
+}
+
 function "vt-tv-werror" {
   params = [item]
   result = lookup(item, "vt-tv-werror", "0")
 }
 
 target "vt-tv-build" {
-  target = "test-python"
+  target = "build"
   context = "."
-  dockerfile = "ci/docker/build-and-test-ubuntu.dockerfile"
+  dockerfile = "ci/docker/vt-tv.dockerfile"
 
   platforms = [
     "linux/amd64",
@@ -55,8 +58,6 @@ target "vt-tv-build" {
   ulimits = [
     "core=0"
   ]
-
-  secret = ["id=GITHUB_TOKEN,env=GITHUB_TOKEN"]
 }
 
 target "vt-tv-build-all" {
@@ -66,13 +67,12 @@ target "vt-tv-build-all" {
 
   args = {
     ARCH = arch(item)
-    GIT_BRANCH = "${GIT_BRANCH}"
     IMAGE = "wf-${item.image}"
     REPO = REPO
-    VT_TV_PYTHON_BINDINGS_ENABLED = vt-tv-python-bindings(item)
-    VT_TV_OPENMP_ENABLED = vt-tv-openmp(item)
-    VT_TV_TESTS_ENABLED = vt-tv-tests(item)
     VT_TV_COVERAGE_ENABLED = vt-tv-coverage(item)
+    VT_TV_OPENMP_ENABLED = vt-tv-openmp(item)
+    VT_TV_PYTHON_BINDINGS_ENABLED = vt-tv-python-bindings(item)
+    VT_TV_TESTS_ENABLED = vt-tv-tests(item)
   }
 
   matrix = {

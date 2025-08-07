@@ -1,54 +1,40 @@
-ARG REPO=lifflander1/vt
-ARG ARCH=amd64
-ARG IMAGE=wf-amd64-ubuntu-22.04-gcc-12-vtk-cpp
-
-ARG BASE_IMAGE=${REPO}:${IMAGE}
-
-FROM --platform=${ARCH} ${BASE_IMAGE} AS base
-
+ARG BASE_IMAGE=lifflander1/vt:ubuntu_22.04-gcc_11-vtk_9.2.2-py_3.8
+ARG VT_TV_TESTS_ENABLED=OFF
 ARG VT_TV_COVERAGE_ENABLED=OFF
-ENV VT_TV_COVERAGE_ENABLED=$VT_TV_COVERAGE_ENABLED
+ARG VT_TV_TEST_PYTHON_BINDINGS=OFF
 
-COPY . /opt/src/vt-tv
+FROM ${BASE_IMAGE} AS base
 
 ENV CONDA_PATH=/opt/conda
-ENV PATH=$CONDA_PATH/bin:$PATH
+ENV PATH=$PATH:$CONDA_PATH/bin
 
-RUN /opt/src/vt-tv/ci/setup_conda.sh
+# Setup python requirements for JSON datafile validation
+RUN pip install PyYAML
+RUN pip install Brotli
+RUN pip install schema
+RUN pip install nanobind
 
+COPY . /opt/src/vt-tv
 RUN mkdir -p /opt/build/vt-tv
 
 # Build
 FROM base AS build
-
-ARG IMAGE
-ARG CACHE_ID=${IMAGE}
+ARG VT_TV_COVERAGE_ENABLED=OFF
 ARG VT_TV_TESTS_ENABLED=OFF
-
-RUN --mount=type=cache,id=BUILD-${CACHE_ID},target=/opt/src/vt-tv/output \
-    /opt/src/vt-tv/ci/build.sh
+RUN VT_TV_COVERAGE_ENABLED=$VT_TV_COVERAGE_ENABLED bash /opt/src/vt-tv/ci/build.sh
 
 # Unit tests
 FROM build AS test-cpp
-
-ARG IMAGE
-ARG CACHE_ID=${IMAGE}
+ARG VT_TV_COVERAGE_ENABLED=OFF
 ARG VT_TV_TESTS_ENABLED=OFF
-
-RUN --mount=type=cache,id=BUILD-${CACHE_ID},target=/opt/src/vt-tv/output \
-    /opt/src/vt-tv/ci/test.sh
+RUN VT_TV_COVERAGE_ENABLED=$VT_TV_COVERAGE_ENABLED bash /opt/src/vt-tv/ci/test.sh
 
 # Python tests (Builds VT-TV with Python bindings & test python package)
 FROM test-cpp AS test-python
-
-ARG IMAGE
-ARG CACHE_ID=${IMAGE}
-
 # Create vizualization output directory (required)
-RUN --mount=type=cache,id=BUILD-${CACHE_ID},target=/opt/src/vt-tv/output \
-    mkdir -p /opt/src/vt-tv/output/python_tests && \
-    /opt/src/vt-tv/ci/python_build.sh && \
-    /opt/src/vt-tv/ci/python_test.sh
+RUN mkdir -p /opt/src/vt-tv/output/python_tests
+RUN VTK_DIR=/opt/build/vtk bash /opt/src/vt-tv/ci/python_build.sh
+RUN VTK_DIR=/opt/build/vtk bash /opt/src/vt-tv/ci/python_test.sh
 
 # Artifacts
 FROM scratch AS artifacts
