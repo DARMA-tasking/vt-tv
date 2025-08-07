@@ -41,6 +41,9 @@ RUN --mount=type=cache,id=BUILD-${CACHE_ID},target=/opt/src/vt-tv/output \
 # Python tests (Builds VT-TV with Python bindings & test python package)
 FROM test-cpp AS test-python
 
+ARG IMAGE
+ARG CACHE_ID=${IMAGE}
+
 # Create vizualization output directory (required)
 RUN --mount=type=cache,id=BUILD-${CACHE_ID},target=/opt/src/vt-tv/output \
     mkdir -p /opt/src/vt-tv/output/python_tests && \

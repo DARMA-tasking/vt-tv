@@ -27,14 +27,14 @@ curl -fsSL "$INSTALLER_URL" -o ~/miniconda.sh
 bash ~/miniconda.sh -b -u -p "$CONDA_PATH"
 rm -f ~/miniconda.sh
 
-"$CONDA_PATH/bin/conda" tos accept --override-channels --channel https://repo.anaconda.com/pkgs/main
-"$CONDA_PATH/bin/conda" tos accept --override-channels --channel https://repo.anaconda.com/pkgs/r
+conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/main
+conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/r
 
-"$CONDA_PATH/bin/conda" config --set always_yes yes
-"$CONDA_PATH/bin/conda" config --set changeps1 no
+conda config --set always_yes yes
+conda config --set changeps1 no
 
-"$CONDA_PATH/bin/conda" init bash
-"$CONDA_PATH/bin/conda" init zsh 2>/dev/null || true
+conda init bash
+conda init zsh 2>/dev/null || true
 
 export PATH="$CONDA_PATH/bin:$PATH"
 source "$CONDA_PATH/etc/profile.d/conda.sh" 2>/dev/null || true

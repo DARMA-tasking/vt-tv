@@ -72,6 +72,8 @@ jobs:
 
           docker buildx build --builder ${{ steps.setup-buildx.outputs.name }} -f tmp_dockerfile --output type=local,dest=build .
 
+          ls build/vt-tv
+
       - name: Upload coverage
         if: ${{ matrix.target == 'vt-tv-build-amd64-ubuntu-22-04-gcc-12-vtk-cpp' }}
         uses: codecov/codecov-action@v5
