@@ -33,13 +33,13 @@ if [ "$VT_TV_RUN_TESTS_FILTER" != "" ]; then
   GTEST_OPTIONS="$GTEST_OPTIONS --gtest_filter=\"$VT_TV_RUN_TESTS_FILTER\""
 fi
 
-gtest_cmd="\"$VT_TV_BUILD_DIR/tests/unit/AllTests\" $GTEST_OPTIONS"
+gtest_cmd="\"$VT_TV_BUILD/tests/unit/AllTests\" $GTEST_OPTIONS"
 echo "Run GTest..."
 eval "$gtest_cmd" || true
 echo "Tests done."
 
 if [ "$VT_TV_COVERAGE_ENABLED" == "ON" ]; then
-  lcov --gcov-tool /usr/bin/gcov-12 --directory "$VT_TV_BUILD_DIR" --capture --output-file coverage.info
+  lcov --gcov-tool /usr/bin/gcov-12 --directory "$VT_TV_BUILD" --capture --output-file coverage.info
   lcov --remove coverage.info '/usr/*' '/opt/vtk/*' --output-file coverage.info
   lcov --list coverage.info
 fi
