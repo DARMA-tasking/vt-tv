@@ -20,25 +20,19 @@ conda activate py3.12
 mkdir -p "$VT_TV_OUTPUT_DIR"
 # Tests
 echo "> Running tests..."
+
 # Run GTest unit tests and display detail for failing tests
-GTEST_OPTIONS=""
-
-if [ "$VT_TV_TEST_REPORT" != "" ]; then
-  echo "Generating JUnit report..."
-  GTEST_OPTIONS="$GTEST_OPTIONS --gtest_output=\"xml:$VT_TV_OUTPUT_DIR/$VT_TV_TEST_REPORT\""
-fi
-
-if [ "$VT_TV_RUN_TESTS_FILTER" != "" ]; then
-  echo "Filtering Tests ($VT_TV_RUN_TESTS_FILTER)..."
-  GTEST_OPTIONS="$GTEST_OPTIONS --gtest_filter=\"$VT_TV_RUN_TESTS_FILTER\""
-fi
-
-gtest_cmd="\"$VT_TV_BUILD/tests/unit/AllTests\" $GTEST_OPTIONS"
+gtest_cmd="\"$VT_TV_BUILD/tests/unit/AllTests\" --gtest_output=\"xml:$VT_TV_OUTPUT_DIR/junit-report.xml\""
 echo "Run GTest..."
-eval "$gtest_cmd" || true
+# Run tests
+if [[ $(uname -a) != *"Darwin"* ]]; then
+    xvfb-run bash -c "$gtest_cmd"
+else
+    bash -c "$gtest_cmd"
+fi
 echo "Tests done."
 
-if [ "$VT_TV_COVERAGE_ENABLED" == "ON" ]; then
+if [ "$VT_TV_COVERAGE_ENABLED" == "1" ]; then
   lcov --gcov-tool /usr/bin/gcov-12 --directory "$VT_TV_BUILD" --capture --output-file coverage.info
   lcov --remove coverage.info '/usr/*' '/opt/vtk/*' --output-file coverage.info
   lcov --list coverage.info
