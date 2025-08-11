@@ -22,6 +22,9 @@ install_conda() {
 [ -x "$CONDA_PATH/bin/conda" ] || install_conda
 export PATH="$CONDA_PATH/bin:$PATH"
 export PIP_ROOT_USER_ACTION=ignore
+
+conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/main
+conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/r
 eval "$("$CONDA_PATH/bin/conda" shell.bash hook)"
 
 IFS=',' read -ra vers <<< "$PYTHON_VERSIONS"

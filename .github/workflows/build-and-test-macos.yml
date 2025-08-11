@@ -71,7 +71,7 @@ jobs:
       - name: Setup Conda
         if: ${{steps.base-cache.outputs.cache-hit != 'true'}}
         env:
-          CONDA_PLUGINS_AUTO_ACCEPT_TOS: true
+          CONDA_ROOT: ${{ env.CONDA_PATH }}
         run: |
           sudo bash ./ci/setup_conda.sh ${{ join(matrix.host.python) }}
 
