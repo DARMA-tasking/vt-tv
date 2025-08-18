@@ -178,7 +178,7 @@ if [[ "${VT_TV_BUILD}" == "ON" ]]; then
     echo "> Cleaning"
     # Remove CMakeCache for fresh build
     rm -rf CMakeCache.txt
-    rm -rf ${VT_TV_BUILD_DIR} # recreate clean and build
+    rm -rf ${VT_TV_BUILD_DIR}/* # recreate clean and build
   fi
 
   mkdir -p ${VT_TV_BUILD_DIR}
@@ -220,14 +220,14 @@ fi # End build
 # Run tests
 if [ "$VT_TV_RUN_TESTS" == "ON" ]; then
   mkdir -p "$VT_TV_OUTPUT_DIR"
-  pushd $VT_TV_OUTPUT_DIR
+
   # Tests
   echo "> Running tests..."
   # Run GTest unit tests and display detail for failing tests
   GTEST_OPTIONS=""
   if [ "$VT_TV_TEST_REPORT" != "" ]; then
     echo "Generating JUnit report..."
-    GTEST_OPTIONS="$GTEST_OPTIONS --gtest_output=\"xml:$VT_TV_TEST_REPORT\""
+    GTEST_OPTIONS="$GTEST_OPTIONS --gtest_output=\"xml:$VT_TV_OUTPUT_DIR/$VT_TV_TEST_REPORT\""
   fi
   if [ "$VT_TV_RUN_TESTS_FILTER" != "" ]; then
     echo "Filtering Tests ($VT_TV_RUN_TESTS_FILTER)..."
@@ -239,21 +239,9 @@ if [ "$VT_TV_RUN_TESTS" == "ON" ]; then
   eval "$gtest_cmd" || true
   echo "Tests done."
 
-  popd
-fi
-
-# Coverage
-if [ "$VT_TV_COVERAGE_ENABLED" == "ON" ]; then
-  mkdir -p "$VT_TV_OUTPUT_DIR"
-  pushd $VT_TV_OUTPUT_DIR
-  # base coverage files
-  echo "lcov capture:"
-  lcov --capture --directory $VT_TV_BUILD_DIR --output-file lcov_vt-tv_test.info --gcov-tool $GCOV
-  lcov --remove lcov_vt-tv_test.info -o lcov_vt-tv_test_no_deps.info '*/lib/*' '/usr/include/*' '*/vtk/*' '*/tests/*'
-  lcov --list lcov_vt-tv_test_no_deps.info
-  # optional coverage html report
-  if [ "$VT_TV_COVERAGE_REPORT" != "" ]; then
-    genhtml --prefix ./src --ignore-errors source lcov_vt-tv_test_no_deps.info --legend --title "$(git rev-parse HEAD)" --output-directory="$VT_TV_COVERAGE_REPORT"
+  if [ "$VT_TV_COVERAGE_ENABLED" == "ON" ]; then
+    lcov --gcov-tool /usr/bin/gcov-12 --directory "$VT_TV_BUILD_DIR" --capture --output-file coverage.info
+    lcov --remove coverage.info '/usr/*' '/opt/vtk/*' --output-file coverage.info
+    lcov --list coverage.info
   fi
-  popd
 fi
