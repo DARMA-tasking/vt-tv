@@ -130,6 +130,37 @@ jobs:
         run: |
           VTK_DIR=${{ env.VTK_BUILD_DIR }} bash ./ci/python_test.sh
 
+      - name: Check pkgbuild
+        run: which pkgbuild && pkgbuild --version
+
+      - name: Build macOS package
+        run: |
+          set -euo pipefail
+          mkdir -p "${{ env.VT_TV_ARTIFACTS_DIR }}"
+
+          # Binary should be here after running ci/build.sh (--install is turned on)
+          BIN_DIR="${{ env.VT_TV_BUILD_DIR }}/install/bin"
+          BIN_PATH="${BIN_DIR}/vttv"
+
+          if [[ ! -x "${BIN_PATH}" ]]; then
+            echo "::error::vttv not found at ${BIN_PATH}. Did build.sh install to ${BIN_DIR}?"
+            ls -la "${BIN_DIR}" || true
+            exit 1
+          fi
+
+          COMMIT_HASH=$(echo "${GITHUB_SHA}" | cut -c1-7)
+          VERSION="1.6.0-${COMMIT_HASH}"
+          PKG_OUT="${{ env.VT_TV_ARTIFACTS_DIR }}/vttv-macos-${VERSION}.pkg"
+
+          /usr/bin/pkgbuild \
+            --root "${BIN_DIR}" \
+            --identifier "darma.vttv" \
+            --version "${VERSION}" \
+            --install-location "/usr/local/bin" \
+            "${PKG_OUT}"
+
+          echo "Built package: ${PKG_OUT}"
+
       - name: Collect artifacts
         run: |
           mkdir -p ${{ env.VT_TV_ARTIFACTS_DIR }}
