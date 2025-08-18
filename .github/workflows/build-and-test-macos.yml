@@ -130,9 +130,6 @@ jobs:
         run: |
           VTK_DIR=${{ env.VTK_BUILD_DIR }} bash ./ci/python_test.sh
 
-      - name: Check pkgbuild
-        run: which pkgbuild && pkgbuild --version
-
       - name: Build macOS package
         run: |
           set -euo pipefail
