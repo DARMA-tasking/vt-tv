@@ -15,14 +15,12 @@ jobs:
           {
             base: macos-13,
             compiler: { cc: clang, cxx: clang++ },
-            gcov: llvm-gcov,
             python: ['3.8', '3.9', '3.10', '3.11', '3.12'],
             vtk: '9.3.1'
           },
           {
             base: macos-14,
             compiler: { cc: clang, cxx: clang++ },
-            gcov: llvm-gcov,
             python: ['3.8', '3.9', '3.10', '3.11', '3.12'],
             vtk: '9.3.1'
           }
@@ -35,8 +33,6 @@ jobs:
         VTK_DIR: /opt/build/vtk
         CACHE_KEY: ${{ matrix.host.base }}-${{ matrix.host.compiler.cc }}-vtk-${{ matrix.host.vtk }}
         VT_TV_BUILD_DIR: /opt/build
-        VT_TV_TESTS_ENABLED: "ON"
-        VT_TV_COVERAGE_ENABLED: ${{ matrix.host.compiler.gcov == '' && 'OFF' || 'ON'  }}
         VT_TV_OUTPUT_DIR: ${{ github.workspace }}/output
         VT_TV_TESTS_OUTPUT_DIR: ${{ github.workspace }}/output/tests
         VT_TV_ARTIFACTS_DIR: /tmp/artifacts
@@ -120,7 +116,6 @@ jobs:
           popd
 
       - name: Unit tests
-        if: ${{ env.VT_TV_TESTS_ENABLED == 'ON' }}
         uses: phoenix-actions/test-reporting@v15
         with:
           name: Tests report
