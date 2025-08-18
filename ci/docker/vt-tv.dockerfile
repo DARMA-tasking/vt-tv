@@ -20,8 +20,8 @@ ARG CACHE_ID=${IMAGE}
 RUN --mount=type=cache,id=conda-${CACHE_ID},target=${CONDA_PATH},sharing=locked \
     --mount=type=cache,id=build-${CACHE_ID},target=/opt/build/vt-tv \
     --mount=target=/opt/src/vt-tv,rw \
-    /opt/src/vt-tv/ci/setup_conda.sh && \
-    /opt/src/vt-tv/ci/build_cpp.sh /opt/src/vt-tv /opt/build && \
-    /opt/src/vt-tv/ci/test_cpp.sh /opt/src/vt-tv /opt/build && \
-    /opt/src/vt-tv/ci/python_build.sh && \
-    /opt/src/vt-tv/ci/python_test.sh
+        /opt/src/vt-tv/ci/setup_conda.sh && \
+        /opt/src/vt-tv/ci/build_cpp.sh /opt/src/vt-tv /opt/build && \
+        /opt/src/vt-tv/ci/test_cpp.sh /opt/src/vt-tv /opt/build && \
+        /opt/src/vt-tv/ci/python_build.sh && \
+        /opt/src/vt-tv/ci/python_test.sh

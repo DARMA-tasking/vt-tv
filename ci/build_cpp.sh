@@ -7,6 +7,9 @@ set -ex
 source_dir=${1}
 build_dir=${2}
 
+export VT_TV=${source_dir}
+export VT_TV_BUILD=${build_dir}/vt-tv
+
 if hash ccache &>/dev/null
 then
     use_ccache=true
@@ -19,12 +22,6 @@ then
 else
     { echo -e "===\n=== ccache not found, compiling without it\n==="; } 2>/dev/null
 fi
-
-mkdir -p "${build_dir}"
-pushd "${build_dir}"
-
-export VT_TV=${source_dir}
-export VT_TV_BUILD=${build_dir}/vt-tv
 
 mkdir -p "$VT_TV_BUILD"
 cd "$VT_TV_BUILD"
