@@ -113,7 +113,7 @@ jobs:
           GCOV="${{ env.GCOV }}" \
           VT_TV_PYTHON_BINDINGS_ENABLED=OFF \
           VT_TV_WERROR_ENABLED=ON \
-          bash ./build.sh
+          bash -c "VT_TV_INSTALL=ON ./build.sh"
 
       - name: Test
         run: |
