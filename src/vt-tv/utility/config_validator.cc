@@ -2,7 +2,7 @@
 //@HEADER
 // *****************************************************************************
 //
-//                                parse_render.h
+//                             config_validator.cc
 //             DARMA/vt-tv => Virtual Transport -- Task Visualizer
 //
 // Copyright 2019-2024 National Technology & Engineering Solutions of Sandia, LLC
@@ -40,53 +40,45 @@
 // *****************************************************************************
 //@HEADER
 */
-
-#if !defined INCLUDED_VT_TV_UTILITY_PARSE_RENDER_H
-#define INCLUDED_VT_TV_UTILITY_PARSE_RENDER_H
-
-#include "vt-tv/api/info.h"
-
-#include <yaml-cpp/yaml.h>
-
-#include <limits>
-#include <memory>
-
 #include "config_validator.h"
 
-#if VT_TV_OPENMP_ENABLED
-#include <omp.h>
-#endif
 namespace vt::tv::utility {
 
-/**
- * \struct ParseRender
- *
- * \brief Parse YAML file and render based on configuration
- */
-struct ParseRender {
-  /**
-   * \brief Construct the class
-   *
-   * \param[in] in_filename the yaml file name to read
-   */
-  ParseRender(std::string const& in_filename) : filename_(in_filename) { }
+void ConfigValidator::validate(const YAML::Node& root) {
+  if (!root || !root.IsMap()) throw ValidationError("Top-level YAML must be a map.");
+  std::vector<std::string> path;
+  validateNode(root, Config::root(), path);
+}
 
-  /**
-   * \brief Parse yaml file and render
-   *
-   * \param[in] phase_id the phase ID
-   * \param[in] info the data to render
-   *
-   * \note If \c phase_id is max then all phases will be rendered
-   */
-  void parseAndRender(
-    PhaseType phase_id = std::numeric_limits<PhaseType>::max(),
-    std::unique_ptr<Info> info = nullptr);
+std::string ConfigValidator::joinPath(const std::vector<std::string>& p) {
+  if (p.empty()) return "<root>";
+  std::string s;
+  for (size_t i=0;i<p.size();++i){ if(i) s+='.'; s+=p[i]; }
+  return s;
+}
 
-private:
-  std::string filename_;
-};
+template <typename Scalar>
+void ConfigValidator::ensureScalar(const YAML::Node& n, const std::vector<std::string>& p, const char* exp) {
+  if (!n || !n.IsScalar()) typeErr(p, exp);
+  try { (void)n.as<Scalar>(); } catch (...) { typeErr(p, exp); }
+}
+
+void ConfigValidator::validateNode(const YAML::Node& n, const Config::Rule& r, std::vector<std::string> p) {
+  if (r.name && *r.name) p.push_back(r.name);
+  switch (r.type) {
+    case Config::KeyType::Map: {
+      if (!n || !n.IsMap()) typeErr(p, "map");
+      for (auto& c : r.children) {
+        YAML::Node ch = n[c.name];
+        if (c.required && !ch) missing(p, c.name);
+        if (ch) validateNode(ch, c, p);
+      }
+    } break;
+    case Config::KeyType::String: ensureScalar<std::string>(n, p, "string"); break;
+    case Config::KeyType::Bool:   ensureScalar<bool>(n, p, "bool"); break;
+    case Config::KeyType::UInt:   ensureScalar<unsigned long long>(n, p, "non-negative integer"); break;
+    case Config::KeyType::Float:  ensureScalar<double>(n, p, "float"); break;
+  }
+}
 
 } /* end namespace vt::tv::utility */
-
-#endif /*INCLUDED_VT_TV_UTILITY_PARSE_RENDER_H*/

@@ -2,7 +2,7 @@
 //@HEADER
 // *****************************************************************************
 //
-//                                parse_render.h
+//                                   config.h
 //             DARMA/vt-tv => Virtual Transport -- Task Visualizer
 //
 // Copyright 2019-2024 National Technology & Engineering Solutions of Sandia, LLC
@@ -40,53 +40,65 @@
 // *****************************************************************************
 //@HEADER
 */
+#if !defined INCLUDED_VT_TV_UTILITY_CONFIG_H
+#define INCLUDED_VT_TV_UTILITY_CONFIG_H
 
-#if !defined INCLUDED_VT_TV_UTILITY_PARSE_RENDER_H
-#define INCLUDED_VT_TV_UTILITY_PARSE_RENDER_H
+#include <stdexcept>
+#include <optional>
+#include <cstdint>
+#include <vector>
 
-#include "vt-tv/api/info.h"
-
-#include <yaml-cpp/yaml.h>
-
-#include <limits>
-#include <memory>
-
-#include "config_validator.h"
-
-#if VT_TV_OPENMP_ENABLED
-#include <omp.h>
-#endif
 namespace vt::tv::utility {
 
+
+struct ValidationError : std::runtime_error { using std::runtime_error::runtime_error; };
+struct SemanticError   : std::runtime_error { using std::runtime_error::runtime_error; };
+
 /**
- * \struct ParseRender
+ * \struct Config
  *
- * \brief Parse YAML file and render based on configuration
+ * \brief Defines schema of vttv input yaml files
  */
-struct ParseRender {
-  /**
-   * \brief Construct the class
-   *
-   * \param[in] in_filename the yaml file name to read
-   */
-  ParseRender(std::string const& in_filename) : filename_(in_filename) { }
+struct Config {
+  enum class KeyType { Map, String, Bool, UInt, Float };
+  struct Rule {
+    const char* name; // key name ("" for root)
+    KeyType           type;
+    bool        required;
+    std::vector<Rule> children; // only when type==Map
+  };
 
-  /**
-   * \brief Parse yaml file and render
-   *
-   * \param[in] phase_id the phase ID
-   * \param[in] info the data to render
-   *
-   * \note If \c phase_id is max then all phases will be rendered
-   */
-  void parseAndRender(
-    PhaseType phase_id = std::numeric_limits<PhaseType>::max(),
-    std::unique_ptr<Info> info = nullptr);
-
-private:
-  std::string filename_;
+  static const Rule& root() {
+    static const Rule ROOT{
+      "", KeyType::Map, true, {
+        {"input", KeyType::Map, true, {
+          {"directory",     KeyType::String, true, {}},
+          {"n_ranks",       KeyType::UInt,   true, {}},
+          {"file_stem",     KeyType::String, false, {}},
+        }},
+        {"viz", KeyType::Map, false, {
+          {"x_ranks",       KeyType::UInt,   false, {}},
+          {"y_ranks",       KeyType::UInt,   false, {}},
+          {"z_ranks",       KeyType::UInt,   false, {}},
+          {"object_jitter", KeyType::Float,  false, {}},
+          {"rank_qoi",      KeyType::String, false, {}},
+          {"object_qoi",    KeyType::String, false, {}},
+          {"save_meshes",   KeyType::Bool,   false, {}},
+          {"save_pngs",     KeyType::Bool,   false, {}},
+          {"force_continuous_object_qoi", KeyType::Bool, false, {}},
+        }},
+        {"output", KeyType::Map, false, {
+          {"directory",     KeyType::String, false, {}},
+          {"file_stem",     KeyType::String, false, {}},
+          {"window_size",   KeyType::UInt,   false, {}},
+          {"font_size",     KeyType::UInt,   false, {}},
+        }},
+      }
+    };
+    return ROOT;
+  }
 };
 
 } /* end namespace vt::tv::utility */
 
-#endif /*INCLUDED_VT_TV_UTILITY_PARSE_RENDER_H*/
+#endif /*INCLUDED_VT_TV_UTILITY_CONFIG_H*/

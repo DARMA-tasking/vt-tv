@@ -2,7 +2,7 @@
 //@HEADER
 // *****************************************************************************
 //
-//                                parse_render.h
+//                              config_validator.h
 //             DARMA/vt-tv => Virtual Transport -- Task Visualizer
 //
 // Copyright 2019-2024 National Technology & Engineering Solutions of Sandia, LLC
@@ -40,52 +40,51 @@
 // *****************************************************************************
 //@HEADER
 */
+#if !defined INCLUDED_VT_TV_UTILITY_CONFIG_VALIDATOR_H
+#define INCLUDED_VT_TV_UTILITY_CONFIG_VALIDATOR_H
 
-#if !defined INCLUDED_VT_TV_UTILITY_PARSE_RENDER_H
-#define INCLUDED_VT_TV_UTILITY_PARSE_RENDER_H
-
-#include "vt-tv/api/info.h"
+#include "config.h"
 
 #include <yaml-cpp/yaml.h>
 
-#include <limits>
-#include <memory>
-
-#include "config_validator.h"
-
-#if VT_TV_OPENMP_ENABLED
-#include <omp.h>
-#endif
 namespace vt::tv::utility {
 
 /**
- * \struct ParseRender
+ * \struct ConfigValidator
  *
- * \brief Parse YAML file and render based on configuration
+ * \brief Validate input yaml configuration file
  */
-struct ParseRender {
+struct ConfigValidator {
   /**
-   * \brief Construct the class
+   * \brief Validate configuration yaml
    *
-   * \param[in] in_filename the yaml file name to read
+   * \param[in] root the root node of the yaml
    */
-  ParseRender(std::string const& in_filename) : filename_(in_filename) { }
-
-  /**
-   * \brief Parse yaml file and render
-   *
-   * \param[in] phase_id the phase ID
-   * \param[in] info the data to render
-   *
-   * \note If \c phase_id is max then all phases will be rendered
-   */
-  void parseAndRender(
-    PhaseType phase_id = std::numeric_limits<PhaseType>::max(),
-    std::unique_ptr<Info> info = nullptr);
+  static void validate(const YAML::Node& root);
 
 private:
-  std::string filename_;
+  /**
+   * \brief Join vector of path strings as a nicer string
+   */
+  static std::string joinPath(const std::vector<std::string>& p);
+
+  static void missing(const std::vector<std::string>& p, const char* k) {
+    throw ValidationError("Missing required key: '" + (joinPath(p) + "." + k) + "'.");
+  }
+
+  static void typeErr(const std::vector<std::string>& p, const char* exp) {
+    throw ValidationError("Invalid type at '" + joinPath(p) + "': expected " + exp + ".");
+  }
+
+  template <typename Scalar>
+  static void ensureScalar(const YAML::Node& n, const std::vector<std::string>& p, const char* exp);
+
+  /**
+   * \brief Validate node of configuration yaml recursively
+   */
+  static void validateNode(const YAML::Node& n, const Config::Rule& r, std::vector<std::string> p);
 };
+
 
 } /* end namespace vt::tv::utility */
 
