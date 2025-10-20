@@ -76,7 +76,7 @@ void ConfigValidator::validateNode(const YAML::Node& n, const Config::Rule& r, s
     } break;
     case Config::KeyType::String: ensureScalar<std::string>(n, p, "string"); break;
     case Config::KeyType::Bool:   ensureScalar<bool>(n, p, "bool"); break;
-    case Config::KeyType::UInt:   ensureScalar<unsigned long long>(n, p, "non-negative integer"); break;
+    case Config::KeyType::UInt:   ensureScalar<uint64_t>(n, p, "non-negative integer"); break;
     case Config::KeyType::Float:  ensureScalar<double>(n, p, "float"); break;
   }
 }
