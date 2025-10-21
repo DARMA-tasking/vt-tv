@@ -11,18 +11,18 @@ struct ConfigReader {
   // Raw values (required + optional)
   struct Input {
     std::string                directory;
-    uint64_t              n_ranks{};
+    uint64_t                   n_ranks{};
     std::optional<std::string> file_stem;
   };
   struct Viz {
-    std::optional<uint64_t> x_ranks, y_ranks;
+    std::optional<uint64_t>      x_ranks, y_ranks;
     std::optional<double>        object_jitter;
     std::optional<std::string>   rank_qoi, object_qoi;
     std::optional<bool>          save_meshes, save_pngs, force_continuous_object_qoi;
   };
   struct Output {
-    std::optional<std::string>   directory, file_stem;
-    std::optional<uint64_t> window_size, font_size;
+    std::optional<std::string> directory, file_stem;
+    std::optional<uint64_t>    window_size, font_size;
   };
 
   // Parsed raw sections
