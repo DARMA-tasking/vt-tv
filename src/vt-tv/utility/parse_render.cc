@@ -53,8 +53,8 @@ namespace vt::tv::utility {
 
 void ParseRender::parseAndRender(
   PhaseType phase_id, std::unique_ptr<Info> info) {
-  YAML::Node config = YAML::LoadFile(filename_);
-  ConfigValidator::validate(config);
+  auto cfg = ConfigReader::from_file(filename_);
+  fmt::print("{}, {}\n", cfg.grid.x, cfg.grid.y);
 //   try {
 //     // Load the yaml file
 //     YAML::Node config = YAML::LoadFile(filename_);

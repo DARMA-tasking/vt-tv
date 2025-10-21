@@ -51,7 +51,7 @@
 #include <limits>
 #include <memory>
 
-#include "config_validator.h"
+#include "config_reader.h"
 
 #if VT_TV_OPENMP_ENABLED
 #include <omp.h>

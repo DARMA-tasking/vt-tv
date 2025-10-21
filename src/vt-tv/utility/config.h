@@ -79,7 +79,6 @@ struct Config {
         {"viz", KeyType::Map, false, {
           {"x_ranks",       KeyType::UInt,   false, {}},
           {"y_ranks",       KeyType::UInt,   false, {}},
-          {"z_ranks",       KeyType::UInt,   false, {}},
           {"object_jitter", KeyType::Float,  false, {}},
           {"rank_qoi",      KeyType::String, false, {}},
           {"object_qoi",    KeyType::String, false, {}},
