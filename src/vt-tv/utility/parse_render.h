@@ -46,8 +46,6 @@
 
 #include "vt-tv/api/info.h"
 
-#include <yaml-cpp/yaml.h>
-
 #include <limits>
 #include <memory>
 
