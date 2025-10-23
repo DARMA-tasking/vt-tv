@@ -77,11 +77,6 @@ void ParseRender::parseAndRender(
         }
       }
 
-      for (auto const& file : data_files)
-      {
-        fmt::print("{}\n", file.string());
-      }
-
       if (data_files.size() != cfg.input.n_ranks) {
         throw SemanticError(
           "Found " + std::to_string(data_files.size()) + " data files in '" + input_dir_abs +
@@ -127,7 +122,6 @@ void ParseRender::parseAndRender(
       if (info->getNumRanks() != cfg.input.n_ranks) {
         throw SemanticError("Number of ranks parsed does not match configuration input.n_ranks.");
       }
-      fmt::print("Num ranks={}\n", info->getNumRanks());
     }
 
     // Prepare rendering parameters
