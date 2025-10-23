@@ -53,189 +53,146 @@ namespace vt::tv::utility {
 
 void ParseRender::parseAndRender(
   PhaseType phase_id, std::unique_ptr<Info> info) {
-  auto cfg = ConfigReader::from_file(filename_);
-  fmt::print("{}, {}\n", cfg.grid.x, cfg.grid.y);
-//   try {
-//     // Load the yaml file
-//     YAML::Node config = YAML::LoadFile(filename_);
+  try {
+    ConfigReader cfg = ConfigReader::from_file(filename_);
+    if (info == nullptr) {
+      // Discover input files
+      std::filesystem::path input_path(cfg.input.directory);
+      // If it's a relative path, prepend the SRC_DIR
+      if (input_path.is_relative()) {
+        input_path = std::filesystem::path(SRC_DIR) / input_path;
+      }
+      const std::string input_dir_abs = std::filesystem::absolute(input_path).string();
 
-//     if (info == nullptr) {
-//       std::string input_dir = config["input"]["directory"].as<std::string>();
-//       std::string data_file_stem = config["input"]["file_stem"].as<std::string>("data");
-//       std::filesystem::path input_path(input_dir);
+      const std::string stem = cfg.input.file_stem.value_or("data");
+      std::regex pattern(stem + R"(\.\d+\.json(\.br)?)");
 
-//       // If it's a relative path, prepend the SRC_DIR
-//       if (input_path.is_relative()) {
-//         input_path = std::filesystem::path(SRC_DIR) / input_path;
-//       }
-//       input_dir = input_path.string();
+      std::vector<std::filesystem::path> data_files;
+      for (const auto& entry : std::filesystem::directory_iterator(input_dir_abs)) {
+        if (entry.is_regular_file()) {
+          const std::string filename = entry.path().filename().string();
+          if (std::regex_match(filename, pattern)) {
+            data_files.push_back(entry.path());
+          }
+        }
+      }
 
-//       // append / to avoid problems with file stems
-//       if (!input_dir.empty() && input_dir.back() != '/') {
-//         input_dir += '/';
-//       }
+      for (auto const& file : data_files)
+      {
+        fmt::print("{}\n", file.string());
+      }
 
-//       // Read JSON file and input data
-//       std::filesystem::path p = input_dir;
-//       std::string path = std::filesystem::absolute(p).string();
+      if (data_files.size() != cfg.input.n_ranks) {
+        throw SemanticError(
+          "Found " + std::to_string(data_files.size()) + " data files in '" + input_dir_abs +
+          "', but input.n_ranks is " + std::to_string(cfg.input.n_ranks) + "."
+        );
+      }
 
-//       // Collect all file paths into a vector
-//       std::vector<std::filesystem::path> data_files;
-//       std::regex pattern(data_file_stem + R"(\.\d+\.json(\.br)?)");
+      // Populate info with data in rank JSONs
+      info = std::make_unique<Info>();
 
-//       for (const auto& entry : std::filesystem::directory_iterator(input_dir)) {
-//         if (entry.is_regular_file()) {
-//           const std::string filename = entry.path().filename().string();
-//           if (std::regex_match(filename, pattern)) {
-//             data_files.push_back(entry.path());
-//           }
-//         }
-//       }
+#if VT_TV_OPENMP_ENABLED
+      const int threads = VT_TV_N_THREADS;
+      omp_set_num_threads(threads);
+      fmt::print("vt-tv: Using {} threads\n", threads);
+#pragma omp parallel for
+#endif // VT_TV_OPENMP_ENABLED
 
-//       std::size_t n_ranks = config["input"]["n_ranks"].as<std::size_t>();
-//       std::size_t x_ranks = config["viz"]["x_ranks"].as<std::size_t>();
-//       std::size_t y_ranks = config["viz"]["y_ranks"].as<std::size_t>();
-//       std::size_t z_ranks = config["viz"]["z_ranks"].as<std::size_t>(1);
+      for (uint64_t i = 0; i < data_files.size(); i++) {
+        const auto filepath = data_files[i].string();
+        const auto filename = data_files[i].filename().string();
 
-//       std::size_t expected_ranks = x_ranks * y_ranks * z_ranks;
+        auto first_dot = filename.find(".");
+        auto next_dot = filename.find(".", first_dot + 1);
+        uint64_t rank =
+          std::stoll(filename.substr(first_dot + 1, next_dot - first_dot - 1));
 
-//       // Validate the number of files matches n_ranks and expected_ranks
-//       if (data_files.size() != n_ranks) {
-//         throw std::runtime_error(
-//           "Number of data files (" + std::to_string(data_files.size()) +
-//           ") does not match the specified n_ranks (" + std::to_string(n_ranks) + ").");
-//       }
+        fmt::print("Reading file for rank {}\n", rank);
+        utility::JSONReader reader{static_cast<NodeType>(rank)};
 
-//       if (n_ranks != expected_ranks) {
-//         throw std::runtime_error(
-//           "n_ranks (" + std::to_string(n_ranks) + ") does not match the product of x_ranks, y_ranks, and z_ranks (" +
-//           std::to_string(expected_ranks) + ").");
-//       }
+        // Validate the JSON data file
+        if (!reader.validate_datafile(filepath)) {
+          throw std::runtime_error("JSON data file is invalid: " + filepath);
+        }
+        reader.readFile(filepath);
+        auto tmpInfo = reader.parse();
 
-//       info = std::make_unique<Info>();
+#if VT_TV_OPENMP_ENABLED
+#pragma omp critical
+#endif
+        { info->addInfo(tmpInfo->getObjectInfo(), tmpInfo->getRank(rank)); }
+      }
 
-// #if VT_TV_OPENMP_ENABLED
-//       const int threads = VT_TV_N_THREADS;
-//       omp_set_num_threads(threads);
-//       fmt::print("vt-tv: Using {} threads\n", threads);
-// #pragma omp parallel for
-// #endif // VT_TV_OPENMP_ENABLED
+      if (info->getNumRanks() != cfg.input.n_ranks) {
+        throw SemanticError("Number of ranks parsed does not match configuration input.n_ranks.");
+      }
+      fmt::print("Num ranks={}\n", info->getNumRanks());
+    }
 
-//       for (uint64_t i = 0; i < data_files.size(); i++) {
-//         auto filepath = data_files[i].string();
-//         auto filename = data_files[i].filename().string();
+    // Prepare rendering parameters
+    std::array<std::string, 3> qoi_request = {
+      cfg.viz.rank_qoi.value_or("load"),
+      "",
+      cfg.viz.object_qoi.value_or("load")
+    };
+    const bool save_meshes = cfg.viz.save_meshes.value_or(true);
+    const bool save_pngs   = cfg.viz.save_pngs.value_or(true);
+    const bool continuous_object_qoi =
+      cfg.viz.force_continuous_object_qoi.value_or(true);
 
-//         int64_t rank;
-//         auto first_dot = filename.find(".");
-//         auto next_dot = filename.find(".", first_dot + 1);
 
-//         rank =
-//           std::stoll(filename.substr(first_dot + 1, next_dot - first_dot - 1));
+    std::array<std::uint64_t,3> grid_size = { cfg.grid.x, cfg.grid.y, 1}; // hard setting z to 1 in grid
+    const double object_jitter = cfg.viz.object_jitter.value_or(0.5);
 
-//         fmt::print("Reading file for rank {}\n", rank);
-//         utility::JSONReader reader{static_cast<NodeType>(rank)};
+    std::string output_dir;
+    std::string output_file_stem = cfg.output.file_stem.value_or("vttv");
+    uint64_t win_size = cfg.output.window_size.value_or(2000);
+    // Use automatic font size if not defined by user
+    // 0.025 is the factor of the window size determined to be ideal for the font size
+    uint64_t font_size = cfg.output.font_size.value_or(static_cast<uint64_t>(0.025 * win_size));
 
-//         // Validate the JSON data file
-//         if (reader.validate_datafile(filepath)) {
-//           reader.readFile(filepath);
-//           auto tmpInfo = reader.parse();
+    if (save_meshes || save_pngs) {
+      std::filesystem::path output_path = cfg.output.directory.value_or("output");
+      // If it's a relative path, prepend the SRC_DIR
+      if (output_path.is_relative()) {
+        output_path = std::filesystem::path(SRC_DIR) / output_path;
+      }
+      output_dir = output_path.string();
+      // append / to avoid problems with file stems
+      if (!output_dir.empty() && output_dir.back() != '/') {
+        output_dir += '/';
+      }
+    } else {
+      fmt::print("Warning: save_pngs and save_meshes are both False "
+                  "(no visualization will be generated).\n");
+    }
 
-// #if VT_TV_OPENMP_ENABLED
-// #pragma omp critical
-// #endif
-//         { info->addInfo(tmpInfo->getObjectInfo(), tmpInfo->getRank(rank)); }
+    // Instantiate render
+    Render r(
+      qoi_request,
+      continuous_object_qoi,
+      *std::move(info),
+      grid_size,
+      object_jitter,
+      output_dir,
+      output_file_stem,
+      1.0,
+      save_meshes,
+      save_pngs,
+      phase_id);
 
-//         } else {
-//           throw std::runtime_error("JSON data file is invalid: " + filepath);
-//         }
-//       }
+    if (save_meshes || save_pngs) {
+      r.generate(font_size, win_size);
+    }
 
-//       if (info->getNumRanks() != n_ranks) {
-//         throw std::runtime_error("Number of ranks does not match expected value.");
-//       }
-
-//       fmt::print("Num ranks={}\n", info->getNumRanks());
-//     }
-
-//     std::array<std::string, 3> qoi_request = {
-//       config["viz"]["rank_qoi"].as<std::string>("load"),
-//       "",
-//       config["viz"]["object_qoi"].as<std::string>("load")};
-
-//     bool save_meshes = config["viz"]["save_meshes"].as<bool>(true);
-//     bool save_pngs = config["viz"]["save_pngs"].as<bool>(true);
-//     bool continuous_object_qoi =
-//       config["viz"]["force_continuous_object_qoi"].as<bool>(true);
-
-//     std::array<uint64_t, 3> grid_size = {
-//       config["viz"]["x_ranks"].as<uint64_t>(),
-//       config["viz"]["y_ranks"].as<uint64_t>(),
-//       config["viz"]["z_ranks"].as<uint64_t>(1)};
-
-//     double object_jitter = config["viz"]["object_jitter"].as<double>(0.5);
-
-//     std::string output_dir;
-//     std::filesystem::path output_path;
-//     std::string output_file_stem;
-//     uint64_t win_size = 2000;
-//     // Use automatic font size if not defined by user
-//     // 0.025 is the factor of the window size determined to be ideal for the font size
-//     uint64_t font_size = 0.025 * win_size;
-
-//     if (save_meshes || save_pngs) {
-//       output_dir = config["output"]["directory"].as<std::string>("output");
-//       output_path = output_dir;
-
-//       // If it's a relative path, prepend the SRC_DIR
-//       if (output_path.is_relative()) {
-//         output_path = std::filesystem::path(SRC_DIR) / output_path;
-//       }
-//       output_dir = output_path.string();
-
-//       // append / to avoid problems with file stems
-//       if (!output_dir.empty() && output_dir.back() != '/') {
-//         output_dir += '/';
-//       }
-
-//       output_file_stem = config["output"]["file_stem"].as<std::string>("vttv");
-
-//       if (config["output"]["window_size"]) {
-//         win_size = config["output"]["window_size"].as<uint64_t>(2000);
-//         // Update font_size with new win_size
-//         font_size = 0.025 * win_size;
-//       }
-
-//       if (config["output"]["font_size"]) {
-//         font_size = config["output"]["font_size"].as<uint64_t>();
-//       }
-//     } else {
-//       fmt::print("Warning: save_pngs and save_meshes are both False "
-//                  "(no visualization will be generated).\n");
-//     }
-
-//     // Instantiate render
-//     Render r(
-//       qoi_request,
-//       continuous_object_qoi,
-//       *std::move(info),
-//       grid_size,
-//       object_jitter,
-//       output_dir,
-//       output_file_stem,
-//       1.0,
-//       save_meshes,
-//       save_pngs,
-//       phase_id);
-
-//     if (save_meshes || save_pngs) {
-//       r.generate(font_size, win_size);
-//     }
-
-//   } catch (std::exception const& e) {
-//     std::cout << "Error reading the configuration file: " << e.what()
-//               << std::endl;
-//   }
+  } catch (const ValidationError& e) {
+    std::cerr << "Config schema error: " << e.what() << "\n";
+  } catch (const SemanticError& e) {
+    std::cerr << "Config semantic error: " << e.what() << "\n";
+  } catch (const std::exception& e) {
+    std::cerr << "Error: " << e.what() << "\n";
+  }
 }
-
 
 } /* end namespace vt::tv::utility */
