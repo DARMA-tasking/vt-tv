@@ -152,6 +152,8 @@ void ParseRender::parseAndRender(
       if (output_path.is_relative()) {
         output_path = std::filesystem::path(SRC_DIR) / output_path;
       }
+      // Create the output directory if it does not already exist
+      std::filesystem::create_directory(output_path);
       output_dir = output_path.string();
       // append / to avoid problems with file stems
       if (!output_dir.empty() && output_dir.back() != '/') {
