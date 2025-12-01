@@ -56,6 +56,78 @@ ConfigReader ConfigReader::from_file(const std::string& filename) {
   return cfg;
 }
 
+ConfigReader ConfigReader::from_binding_inputs(
+    const std::string& viz_yaml_fragment,
+    uint64_t num_ranks)
+{
+  YAML::Node root_in;
+  try {
+    root_in = YAML::Load(viz_yaml_fragment);
+  } catch (const std::exception& e) {
+    throw ValidationError(std::string("Failed to parse binding YAML: ") + e.what());
+  }
+
+  YAML::Node vis = root_in["visualization"];
+  if (!vis || !vis.IsMap()) {
+    throw ValidationError("Binding config must have 'visualization' map at top level.");
+  }
+
+  YAML::Node synthetic;
+  // input
+  synthetic["input"]["directory"] = ""; // dummy, not used (no filesystem discovery)
+  synthetic["input"]["n_ranks"]   = num_ranks;
+  // no file_stem in this mode
+
+  // viz
+  if (vis["x_ranks"])  synthetic["viz"]["x_ranks"]  = vis["x_ranks"];
+  if (vis["y_ranks"])  synthetic["viz"]["y_ranks"]  = vis["y_ranks"];
+  if (vis["z_ranks"])  synthetic["viz"]["z_ranks"]  = vis["z_ranks"];
+  if (vis["object_jitter"]) synthetic["viz"]["object_jitter"] = vis["object_jitter"];
+  if (vis["rank_qoi"])      synthetic["viz"]["rank_qoi"]      = vis["rank_qoi"];
+  if (vis["object_qoi"])    synthetic["viz"]["object_qoi"]    = vis["object_qoi"];
+  if (vis["save_meshes"])   synthetic["viz"]["save_meshes"]   = vis["save_meshes"];
+  // binding always renders PNGs
+  synthetic["viz"]["save_pngs"] = true;
+  if (vis["force_continuous_object_qoi"]) {
+    synthetic["viz"]["force_continuous_object_qoi"] =
+      vis["force_continuous_object_qoi"];
+  }
+
+  // output
+  // required in binding mode:
+  if (!vis["output_visualization_dir"] ||
+      !vis["output_visualization_dir"].IsScalar()) {
+    throw ValidationError("Binding config missing required 'output_visualization_dir'.");
+  }
+  if (!vis["output_visualization_file_stem"] ||
+      !vis["output_visualization_file_stem"].IsScalar()) {
+    throw ValidationError("Binding config missing required 'output_visualization_file_stem'.");
+  }
+
+  synthetic["output"]["directory"] =
+    vis["output_visualization_dir"].as<std::string>();
+  synthetic["output"]["file_stem"] =
+    vis["output_visualization_file_stem"].as<std::string>();
+
+  if (vis["window_size"]) synthetic["output"]["window_size"] = vis["window_size"];
+  if (vis["font_size"])   synthetic["output"]["font_size"]   = vis["font_size"];
+
+  // In binding mode we require absolute output directory
+  {
+    std::string outdir = synthetic["output"]["directory"].as<std::string>();
+    std::filesystem::path p(outdir);
+    if (!p.is_absolute()) {
+      throw SemanticError("Visualization output directory must be absolute: " + outdir);
+    }
+    // We don't prepend SRC_DIR in this mode
+  }
+
+  // Give adapted config to regular config parser
+  ConfigReader cfg = ConfigReader::parse(synthetic);
+  cfg.compute_grid();
+  return cfg;
+}
+
 ConfigReader ConfigReader::parse(const YAML::Node& root) {
   ConfigReader cfg;
 

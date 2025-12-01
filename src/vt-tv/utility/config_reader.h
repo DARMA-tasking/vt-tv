@@ -45,6 +45,8 @@
 
 #include "config_validator.h"
 
+#include <filesystem>
+
 #include <fmt-vt/format.h>
 
 namespace vt::tv::utility {
@@ -81,6 +83,16 @@ struct ConfigReader {
    * \param[in] filename the filename of the yaml configuration
    */
   static ConfigReader from_file(const std::string& filename);
+
+  /**
+   * \brief Read, validate and parse configuration yaml file
+   *        from the python-binded call
+   *
+   * \param[in] filename the filename of the yaml configuration
+   */
+  static ConfigReader from_binding_inputs(
+    const std::string& viz_yaml_fragment,
+    uint64_t num_ranks);
 
 private:
   /**

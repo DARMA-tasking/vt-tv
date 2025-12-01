@@ -52,75 +52,109 @@
 namespace vt::tv::utility {
 
 void ParseRender::parseAndRender(
-  PhaseType phase_id, std::unique_ptr<Info> info) {
+  PhaseType phase_id, std::unique_ptr<Info> external_info) {
   try {
-    ConfigReader cfg = ConfigReader::from_file(filename_);
+    // Load configuration
+    ConfigReader cfg =
+      (mode_ == RunMode::Standalone)
+        ? ConfigReader::from_file(filename_)
+        : ConfigReader::from_binding_inputs(
+            binding_yaml_fragment_,
+            binding_num_ranks_);
+
+    std::unique_ptr<Info> info = std::move(external_info);
+
     if (info == nullptr) {
-      // Discover input files
-      std::filesystem::path input_path(cfg.input.directory);
-      // If it's a relative path, prepend the SRC_DIR
-      if (input_path.is_relative()) {
-        input_path = std::filesystem::path(SRC_DIR) / input_path;
-      }
-      const std::string input_dir_abs = std::filesystem::absolute(input_path).string();
+      if (mode_ == RunMode::Standalone) {
+        // Discover input files
+        std::filesystem::path input_path(cfg.input.directory);
+        // If it's a relative path, prepend the SRC_DIR
+        if (input_path.is_relative()) {
+          input_path = std::filesystem::path(SRC_DIR) / input_path;
+        }
+        const std::string input_dir_abs = std::filesystem::absolute(input_path).string();
 
-      const std::string stem = cfg.input.file_stem.value_or("data");
-      std::regex pattern(stem + R"(\.\d+\.json(\.br)?)");
+        const std::string stem = cfg.input.file_stem.value_or("data");
+        std::regex pattern(stem + R"(\.\d+\.json(\.br)?)");
 
-      std::vector<std::filesystem::path> data_files;
-      for (const auto& entry : std::filesystem::directory_iterator(input_dir_abs)) {
-        if (entry.is_regular_file()) {
-          const std::string filename = entry.path().filename().string();
-          if (std::regex_match(filename, pattern)) {
-            data_files.push_back(entry.path());
+        std::vector<std::filesystem::path> data_files;
+        for (const auto& entry : std::filesystem::directory_iterator(input_dir_abs)) {
+          if (entry.is_regular_file()) {
+            const std::string filename = entry.path().filename().string();
+            if (std::regex_match(filename, pattern)) {
+              data_files.push_back(entry.path());
+            }
           }
         }
-      }
 
-      if (data_files.size() != cfg.input.n_ranks) {
-        throw SemanticError(
-          "Found " + std::to_string(data_files.size()) + " data files in '" + input_dir_abs +
-          "', but input.n_ranks is " + std::to_string(cfg.input.n_ranks) + "."
-        );
-      }
+        if (data_files.size() != cfg.input.n_ranks) {
+          throw SemanticError(
+            "Found " + std::to_string(data_files.size()) + " data files in '" + input_dir_abs +
+            "', but input.n_ranks is " + std::to_string(cfg.input.n_ranks) + "."
+          );
+        }
 
-      // Populate info with data in rank JSONs
-      info = std::make_unique<Info>();
+        info = std::make_unique<Info>();
 
 #if VT_TV_OPENMP_ENABLED
-      const int threads = VT_TV_N_THREADS;
-      omp_set_num_threads(threads);
-      fmt::print("vt-tv: Using {} threads\n", threads);
+        const int threads = VT_TV_N_THREADS;
+        omp_set_num_threads(threads);
+        fmt::print("vt-tv: Using {} threads\n", threads);
 #pragma omp parallel for
 #endif // VT_TV_OPENMP_ENABLED
+        for (uint64_t i = 0; i < data_files.size(); ++i) {
+          const auto filepath = data_files[i].string();
+          const auto filename = data_files[i].filename().string();
 
-      for (uint64_t i = 0; i < data_files.size(); i++) {
-        const auto filepath = data_files[i].string();
-        const auto filename = data_files[i].filename().string();
+          auto first = filename.find('.');
+          auto next  = filename.find('.', first + 1);
+          auto rank  = std::stoll(filename.substr(first + 1, next - first - 1));
 
-        auto first_dot = filename.find(".");
-        auto next_dot = filename.find(".", first_dot + 1);
-        uint64_t rank =
-          std::stoll(filename.substr(first_dot + 1, next_dot - first_dot - 1));
-
-        fmt::print("Reading file for rank {}\n", rank);
-        utility::JSONReader reader{static_cast<NodeType>(rank)};
-
-        // Validate the JSON data file
-        if (!reader.validate_datafile(filepath)) {
-          throw std::runtime_error("JSON data file is invalid: " + filepath);
-        }
-        reader.readFile(filepath);
-        auto tmpInfo = reader.parse();
-
+          fmt::print("Reading file for rank {}\n", rank);
+          utility::JSONReader reader{static_cast<NodeType>(rank)};
+          if (!reader.validate_datafile(filepath)) {
+            throw std::runtime_error("JSON data file is invalid: " + filepath);
+          }
+          reader.readFile(filepath);
+          auto tmpInfo = reader.parse();
 #if VT_TV_OPENMP_ENABLED
 #pragma omp critical
 #endif
-        { info->addInfo(tmpInfo->getObjectInfo(), tmpInfo->getRank(rank)); }
-      }
+          { info->addInfo(tmpInfo->getObjectInfo(), tmpInfo->getRank(rank)); }
+        }
 
-      if (info->getNumRanks() != cfg.input.n_ranks) {
-        throw SemanticError("Number of ranks parsed does not match configuration input.n_ranks.");
+        if (info->getNumRanks() != cfg.input.n_ranks) {
+          throw SemanticError("Parsed ranks do not match n_ranks.");
+        }
+
+      } else { // RunMode::Binding
+        if (binding_json_per_rank_.size() != binding_num_ranks_) {
+          throw SemanticError("Must have same number of rank JSON blobs as num_ranks.");
+        }
+
+        info = std::make_unique<Info>();
+
+#if VT_TV_OPENMP_ENABLED
+        const int threads = VT_TV_N_THREADS;
+        omp_set_num_threads(threads);
+        fmt::print("vt-tv: Using {} threads\n", threads);
+#pragma omp parallel for
+#endif VT_TV_OPENMP_ENABLED // VT_TV_OPENMP_ENABLED
+        for (uint64_t rank_id = 0; rank_id < binding_num_ranks_; ++rank_id) {
+          fmt::print("Reading file for rank {}\n", rank_id);
+          const std::string& rank_json_str = binding_json_per_rank_[rank_id];
+          utility::JSONReader reader{static_cast<NodeType>(rank_id)};
+          reader.readString(rank_json_str);
+          auto tmpInfo = reader.parse();
+#if VT_TV_OPENMP_ENABLED
+#pragma omp critical
+#endif
+          { info->addInfo(tmpInfo->getObjectInfo(), tmpInfo->getRank(rank_id)); }
+        }
+
+        if (info->getNumRanks() != binding_num_ranks_) {
+          throw SemanticError("Parsed ranks do not match num_ranks (binding).");
+        }
       }
     }
 
