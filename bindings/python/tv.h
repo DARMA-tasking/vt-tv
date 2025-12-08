@@ -44,30 +44,11 @@
 #if !defined INCLUDED_VT_TV_BINDINGS_PYTHON_JSON_INTERFACE_H
 #define INCLUDED_VT_TV_BINDINGS_PYTHON_JSON_INTERFACE_H
 
-#include <string>
-
-#include <fmt-vt/format.h>
-#include "vt-tv/render/render.h"
-#include "vt-tv/api/types.h"
-#include "vt-tv/api/info.h"
-#include "vt-tv/utility/decompression_input_container.h"
-#include "vt-tv/utility/input_iterator.h"
-#include "vt-tv/utility/qoi_serializer.h"
-#include "vt-tv/utility/json_reader.h"
-
-#include <nlohmann/json.hpp>
-#include <yaml-cpp/yaml.h>
+#include "vt-tv/utility/parse_render.h"
 
 #include <nanobind/nanobind.h>
 #include <nanobind/stl/string.h>
 #include <nanobind/stl/vector.h>
-
-#include <filesystem>
-#include <map>
-
-#if VT_TV_OPENMP_ENABLED
-#include <omp.h>
-#endif
 
 namespace vt::tv::bindings::python {
 
