@@ -139,7 +139,7 @@ void ParseRender::parseAndRender(
         omp_set_num_threads(threads);
         fmt::print("vt-tv: Using {} threads\n", threads);
 #pragma omp parallel for
-#endif VT_TV_OPENMP_ENABLED // VT_TV_OPENMP_ENABLED
+#endif // VT_TV_OPENMP_ENABLED
         for (uint64_t rank_id = 0; rank_id < binding_num_ranks_; ++rank_id) {
           fmt::print("Reading file for rank {}\n", rank_id);
           const std::string& rank_json_str = binding_json_per_rank_[rank_id];
