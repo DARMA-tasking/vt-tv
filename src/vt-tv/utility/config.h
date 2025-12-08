@@ -63,7 +63,7 @@ struct Config {
   enum class KeyType { Map, String, Bool, UInt, Float };
   struct Rule {
     const char* name; // key name ("" for root)
-    KeyType           type;
+    KeyType     type;
     bool        required;
     std::vector<Rule> children; // only when type==Map
   };

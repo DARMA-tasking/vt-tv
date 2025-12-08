@@ -51,10 +51,19 @@ void ConfigValidator::validate(const YAML::Node& root) {
 }
 
 std::string ConfigValidator::joinPath(const std::vector<std::string>& p) {
-  if (p.empty()) return "<root>";
-  std::string s;
-  for (size_t i=0;i<p.size();++i){ if(i) s+='.'; s+=p[i]; }
-  return s;
+  if (p.empty()) {
+    return "<root>";
+  }
+
+  std::stringstream ss;
+  for (size_t i = 0; i < p.size(); ++i) {
+    if (i > 0) {
+      ss << ".";
+    }
+    ss << p[i];
+  }
+
+  return ss.str();
 }
 
 template <typename Scalar>
