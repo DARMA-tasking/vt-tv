@@ -67,11 +67,6 @@ ConfigReader ConfigReader::from_binding_inputs(
     throw ValidationError(std::string("Failed to parse binding YAML: ") + e.what());
   }
 
-  YAML::Node vis = root_in["visualization"];
-  if (!vis || !vis.IsMap()) {
-    throw ValidationError("Binding config must have 'visualization' map at top level.");
-  }
-
   YAML::Node synthetic;
   // input
   synthetic["input"]["directory"] = ""; // dummy, not used (no filesystem discovery)
@@ -79,38 +74,38 @@ ConfigReader ConfigReader::from_binding_inputs(
   // no file_stem in this mode
 
   // viz
-  if (vis["x_ranks"])  synthetic["viz"]["x_ranks"]  = vis["x_ranks"];
-  if (vis["y_ranks"])  synthetic["viz"]["y_ranks"]  = vis["y_ranks"];
-  if (vis["z_ranks"])  synthetic["viz"]["z_ranks"]  = vis["z_ranks"];
-  if (vis["object_jitter"]) synthetic["viz"]["object_jitter"] = vis["object_jitter"];
-  if (vis["rank_qoi"])      synthetic["viz"]["rank_qoi"]      = vis["rank_qoi"];
-  if (vis["object_qoi"])    synthetic["viz"]["object_qoi"]    = vis["object_qoi"];
-  if (vis["save_meshes"])   synthetic["viz"]["save_meshes"]   = vis["save_meshes"];
+  if (root_in["x_ranks"])  synthetic["viz"]["x_ranks"]  = root_in["x_ranks"];
+  if (root_in["y_ranks"])  synthetic["viz"]["y_ranks"]  = root_in["y_ranks"];
+  if (root_in["z_ranks"])  synthetic["viz"]["z_ranks"]  = root_in["z_ranks"];
+  if (root_in["object_jitter"]) synthetic["viz"]["object_jitter"] = root_in["object_jitter"];
+  if (root_in["rank_qoi"])      synthetic["viz"]["rank_qoi"]      = root_in["rank_qoi"];
+  if (root_in["object_qoi"])    synthetic["viz"]["object_qoi"]    = root_in["object_qoi"];
+  if (root_in["save_meshes"])   synthetic["viz"]["save_meshes"]   = root_in["save_meshes"];
   // binding always renders PNGs
   synthetic["viz"]["save_pngs"] = true;
-  if (vis["force_continuous_object_qoi"]) {
+  if (root_in["force_continuous_object_qoi"]) {
     synthetic["viz"]["force_continuous_object_qoi"] =
-      vis["force_continuous_object_qoi"];
+      root_in["force_continuous_object_qoi"];
   }
 
   // output
   // required in binding mode:
-  if (!vis["output_visualization_dir"] ||
-      !vis["output_visualization_dir"].IsScalar()) {
+  if (!root_in["output_visualization_dir"] ||
+      !root_in["output_visualization_dir"].IsScalar()) {
     throw ValidationError("Binding config missing required 'output_visualization_dir'.");
   }
-  if (!vis["output_visualization_file_stem"] ||
-      !vis["output_visualization_file_stem"].IsScalar()) {
+  if (!root_in["output_visualization_file_stem"] ||
+      !root_in["output_visualization_file_stem"].IsScalar()) {
     throw ValidationError("Binding config missing required 'output_visualization_file_stem'.");
   }
 
   synthetic["output"]["directory"] =
-    vis["output_visualization_dir"].as<std::string>();
+    root_in["output_visualization_dir"].as<std::string>();
   synthetic["output"]["file_stem"] =
-    vis["output_visualization_file_stem"].as<std::string>();
+    root_in["output_visualization_file_stem"].as<std::string>();
 
-  if (vis["window_size"]) synthetic["output"]["window_size"] = vis["window_size"];
-  if (vis["font_size"])   synthetic["output"]["font_size"]   = vis["font_size"];
+  if (root_in["window_size"]) synthetic["output"]["window_size"] = root_in["window_size"];
+  if (root_in["font_size"])   synthetic["output"]["font_size"]   = root_in["font_size"];
 
   // In binding mode we require absolute output directory
   {
