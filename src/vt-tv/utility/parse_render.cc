@@ -170,7 +170,7 @@ void ParseRender::parseAndRender(
       cfg.viz.force_continuous_object_qoi.value_or(true);
 
 
-    std::array<std::uint64_t,3> grid_size = { cfg.grid.x, cfg.grid.y, 1}; // hard setting z to 1 in grid
+    std::array<std::uint64_t, 3> grid_size = { cfg.grid.x, cfg.grid.y, 1 }; // hard setting z to 1 in grid
     const double object_jitter = cfg.viz.object_jitter.value_or(0.5);
 
     std::string output_dir;

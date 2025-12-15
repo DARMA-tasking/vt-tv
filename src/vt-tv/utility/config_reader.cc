@@ -187,9 +187,9 @@ void ConfigReader::compute_grid() {
 
   // Case B: exactly one of x/y is missing -> infer the other
   else if (!grid.x && grid.y) {
-    grid.x = std::ceil(n / static_cast<double>(grid.y));
+    grid.x = static_cast<uint64_t>(std::ceil(n / static_cast<double>(grid.y)));
   } else if (grid.x && !grid.y) {
-    grid.y = std::ceil(n / static_cast<double>(grid.x));
+    grid.y = static_cast<uint64_t>(std::ceil(n / static_cast<double>(grid.x)));
   }
 
   // Case C: both are provided -> nothing to do
