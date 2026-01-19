@@ -78,5 +78,4 @@ setup(
   package_dir={'': build_dir},
   packages=find_packages(build_dir),
   zip_safe=False,
-  # install_requires=["nanobind>=2.0"],
 )
