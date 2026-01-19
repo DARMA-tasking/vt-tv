@@ -1,10 +1,17 @@
 find_package(Python COMPONENTS Interpreter Development.Module REQUIRED)
 
 if(NOT (${Python_VERSION_MAJOR} EQUAL 3 AND
-       (${Python_VERSION_MINOR} GREATER_EQUAL 8)))
-    message(FATAL_ERROR "With Python bindings enabled, vt-tv requires Python version 3.8 or later.")
+       (${Python_VERSION_MINOR} GREATER_EQUAL 9)))
+    message(FATAL_ERROR "With Python bindings enabled, vt-tv requires Python version 3.9 or later.")
 endif()
 
+if (CMAKE_VERSION VERSION_LESS 3.18)
+  set(DEV_MODULE Development)
+else()
+  set(DEV_MODULE Development.Module)
+endif()
+
+find_package(Python 3.9 COMPONENTS Interpreter ${DEV_MODULE} REQUIRED)
 
 # Detect the installed nanobind package and import it into CMake
 message(STATUS "Python executable: ${Python_EXECUTABLE}")
