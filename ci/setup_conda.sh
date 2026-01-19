@@ -2,7 +2,7 @@
 set -euo pipefail
 
 CONDA_PATH=${CONDA_PATH:-"/opt/conda"}
-PYTHON_VERSIONS=${1:-"3.8,3.9,3.10,3.11,3.12"}
+PYTHON_VERSIONS=${1:-"3.9,3.10,3.11,3.12"}
 PACKAGES=${PACKAGES:-"PyYAML Brotli schema nanobind"}
 
 install_conda() {

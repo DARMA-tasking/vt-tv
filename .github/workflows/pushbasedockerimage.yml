@@ -47,7 +47,7 @@ jobs:
           fi
           echo "VTK_VERSION=${CONFIG[5]}" >> $GITHUB_ENV
           if [[ "${CONFIG[7]}" == "3.all" ]]; then
-            echo "PYTHON_VERSIONS=3.8,3.9,3.10,3.11,3.12" >> $GITHUB_ENV
+            echo "PYTHON_VERSIONS=3.9,3.10,3.11,3.12" >> $GITHUB_ENV
           else
             echo "PYTHON_VERSIONS=${CONFIG[7]}" >> $GITHUB_ENV
           fi
