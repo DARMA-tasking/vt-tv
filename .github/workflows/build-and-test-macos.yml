@@ -17,12 +17,6 @@ jobs:
             compiler: { cc: clang, cxx: clang++ },
             python: ['3.9', '3.10', '3.11', '3.12'],
             vtk: '9.3.1'
-          },
-          {
-            base: macos-15,
-            compiler: { cc: clang, cxx: clang++ },
-            python: ['3.9', '3.10', '3.11', '3.12'],
-            vtk: '9.3.1'
           }
         ]
     runs-on: ${{ matrix.host.base }}
