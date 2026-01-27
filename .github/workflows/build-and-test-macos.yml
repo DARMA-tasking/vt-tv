@@ -13,15 +13,9 @@ jobs:
       matrix:
         host: [
           {
-            base: macos-13,
-            compiler: { cc: clang, cxx: clang++ },
-            python: ['3.8', '3.9', '3.10', '3.11', '3.12'],
-            vtk: '9.3.1'
-          },
-          {
             base: macos-14,
             compiler: { cc: clang, cxx: clang++ },
-            python: ['3.8', '3.9', '3.10', '3.11', '3.12'],
+            python: ['3.9', '3.10', '3.11', '3.12'],
             vtk: '9.3.1'
           }
         ]

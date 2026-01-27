@@ -148,7 +148,7 @@ Additionally, DARMA-tasking's Load Balancing Analysis Framework (LBAF) provides 
 
 In addition to the basic `vt-tv` dependencies listed above, you also need:
 
-1. A Python version between 3.8 - 3.11
+1. A Python version 3.9+
 2. [`nanobind`](https://nanobind.readthedocs.io/en/latest/), which can be installed with:
 
 ```sh
