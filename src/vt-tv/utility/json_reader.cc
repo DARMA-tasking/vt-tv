@@ -134,7 +134,13 @@ std::unique_ptr<WorkDistribution> JSONReader::parsePhaseIter(
       assert(node.is_number() && "task node must be a number");
 
       if (etype == "object") {
-        auto object = task["entity"].value("id", task["entity"]["seq_id"]);
+        nlohmann::json object;
+        if (task["entity"].find("id") != task["entity"].end()) {
+          object = task["entity"]["id"];
+        } else {
+          object = task["entity"]["seq_id"];
+        }
+
         auto home = task["entity"]["home"];
         bool migratable = task["entity"]["migratable"];
 
