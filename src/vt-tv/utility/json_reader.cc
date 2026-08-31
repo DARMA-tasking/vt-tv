@@ -65,7 +65,7 @@ bool JSONReader::isCompressed(std::string const& in_filename) const {
   std::ifstream is(in_filename);
   if (not is.good()) {
     auto str = fmt::format("Filename is not valid: {}", in_filename);
-    fmt::print(str);
+    fmt::print("{}", str);
     assert(false && "Invalid file");
     return false;
   }

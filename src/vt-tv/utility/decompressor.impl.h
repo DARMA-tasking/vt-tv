@@ -134,7 +134,7 @@ std::size_t Decompressor<Readable>::read(
         ),
         BrotliDecoderErrorString(error_code)
       );
-      fmt::print(error_str);
+      fmt::print("{}", error_str);
       assert(false);
       break;
     }
