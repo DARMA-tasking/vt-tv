@@ -77,7 +77,7 @@ TEST_P(StandaloneAppTest, test_run) {
   auto cmd =
     fmt::format("{}/apps/vttv --conf={}", BUILD_DIR, config_file);
   const auto [status, output] = Util::exec(cmd.c_str());
-  fmt::print(output);
+  fmt::print("{}", output);
 
   // Load config for some checks
   auto config = YAML::LoadFile(config_file);
