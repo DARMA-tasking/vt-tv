@@ -2,7 +2,7 @@
 //@HEADER
 // *****************************************************************************
 //
-//                               tv.h
+//                                   config.h
 //             DARMA/vt-tv => Virtual Transport -- Task Visualizer
 //
 // Copyright 2019-2024 National Technology & Engineering Solutions of Sandia, LLC
@@ -40,20 +40,64 @@
 // *****************************************************************************
 //@HEADER
 */
+#if !defined INCLUDED_VT_TV_UTILITY_CONFIG_H
+#define INCLUDED_VT_TV_UTILITY_CONFIG_H
 
-#if !defined INCLUDED_VT_TV_BINDINGS_PYTHON_JSON_INTERFACE_H
-#define INCLUDED_VT_TV_BINDINGS_PYTHON_JSON_INTERFACE_H
+#include <stdexcept>
+#include <optional>
+#include <cstdint>
+#include <vector>
 
-#include "vt-tv/utility/parse_render.h"
+namespace vt::tv::utility {
 
-#include <nanobind/nanobind.h>
-#include <nanobind/stl/string.h>
-#include <nanobind/stl/vector.h>
 
-namespace vt::tv::bindings::python {
+struct ValidationError : std::runtime_error { using std::runtime_error::runtime_error; };
+struct SemanticError   : std::runtime_error { using std::runtime_error::runtime_error; };
 
-void tvFromJson(const std::vector<std::string>&, const std::string&, uint64_t);
+/**
+ * \struct Config
+ *
+ * \brief Defines schema of vttv input yaml files
+ */
+struct Config {
+  enum class KeyType { Map, String, Bool, UInt, Float };
+  struct Rule {
+    const char* name; // key name ("" for root)
+    KeyType     type;
+    bool        required;
+    std::vector<Rule> children; // only when type==Map
+  };
 
-} /* end namespace vt::tv::bindings::python */
+  static const Rule& root() {
+    static const Rule ROOT{
+      "", KeyType::Map, true, {
+        {"input", KeyType::Map, true, {
+          {"directory",     KeyType::String, true, {}},
+          {"n_ranks",       KeyType::UInt,   true, {}},
+          {"file_stem",     KeyType::String, false, {}},
+        }},
+        {"viz", KeyType::Map, false, {
+          {"x_ranks",       KeyType::UInt,   false, {}},
+          {"y_ranks",       KeyType::UInt,   false, {}},
+          {"object_jitter", KeyType::Float,  false, {}},
+          {"rank_qoi",      KeyType::String, false, {}},
+          {"object_qoi",    KeyType::String, false, {}},
+          {"save_meshes",   KeyType::Bool,   false, {}},
+          {"save_pngs",     KeyType::Bool,   false, {}},
+          {"force_continuous_object_qoi", KeyType::Bool, false, {}},
+        }},
+        {"output", KeyType::Map, false, {
+          {"directory",     KeyType::String, false, {}},
+          {"file_stem",     KeyType::String, false, {}},
+          {"window_size",   KeyType::UInt,   false, {}},
+          {"font_size",     KeyType::UInt,   false, {}},
+        }},
+      }
+    };
+    return ROOT;
+  }
+};
 
-#endif /*INCLUDED_VT_TV_BINDINGS_PYTHON_JSON_INTERFACE_H*/
+} /* end namespace vt::tv::utility */
+
+#endif /*INCLUDED_VT_TV_UTILITY_CONFIG_H*/

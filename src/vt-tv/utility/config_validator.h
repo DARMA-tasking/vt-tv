@@ -2,7 +2,7 @@
 //@HEADER
 // *****************************************************************************
 //
-//                               tv.h
+//                              config_validator.h
 //             DARMA/vt-tv => Virtual Transport -- Task Visualizer
 //
 // Copyright 2019-2024 National Technology & Engineering Solutions of Sandia, LLC
@@ -40,20 +40,52 @@
 // *****************************************************************************
 //@HEADER
 */
+#if !defined INCLUDED_VT_TV_UTILITY_CONFIG_VALIDATOR_H
+#define INCLUDED_VT_TV_UTILITY_CONFIG_VALIDATOR_H
 
-#if !defined INCLUDED_VT_TV_BINDINGS_PYTHON_JSON_INTERFACE_H
-#define INCLUDED_VT_TV_BINDINGS_PYTHON_JSON_INTERFACE_H
+#include "config.h"
 
-#include "vt-tv/utility/parse_render.h"
+#include <yaml-cpp/yaml.h>
 
-#include <nanobind/nanobind.h>
-#include <nanobind/stl/string.h>
-#include <nanobind/stl/vector.h>
+namespace vt::tv::utility {
 
-namespace vt::tv::bindings::python {
+/**
+ * \struct ConfigValidator
+ *
+ * \brief Validate input yaml configuration file
+ */
+struct ConfigValidator {
+  /**
+   * \brief Validate configuration yaml
+   *
+   * \param[in] root the root node of the yaml
+   */
+  static void validate(const YAML::Node& root);
 
-void tvFromJson(const std::vector<std::string>&, const std::string&, uint64_t);
+private:
+  /**
+   * \brief Join vector of path strings as a nicer string
+   */
+  static std::string joinPath(const std::vector<std::string>& p);
 
-} /* end namespace vt::tv::bindings::python */
+  static void missing(const std::vector<std::string>& p, const char* k) {
+    throw ValidationError("Missing required key: '" + (joinPath(p) + "." + k) + "'.");
+  }
 
-#endif /*INCLUDED_VT_TV_BINDINGS_PYTHON_JSON_INTERFACE_H*/
+  static void typeErr(const std::vector<std::string>& p, const char* exp) {
+    throw ValidationError("Invalid type at '" + joinPath(p) + "': expected " + exp + ".");
+  }
+
+  template <typename Scalar>
+  static void ensureScalar(const YAML::Node& n, const std::vector<std::string>& p, const char* exp);
+
+  /**
+   * \brief Validate node of configuration yaml recursively
+   */
+  static void validateNode(const YAML::Node& n, const Config::Rule& r, std::vector<std::string> p);
+};
+
+
+} /* end namespace vt::tv::utility */
+
+#endif /*INCLUDED_VT_TV_UTILITY_CONFIG_VALIDATOR_H*/

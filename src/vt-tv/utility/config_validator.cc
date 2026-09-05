@@ -2,7 +2,7 @@
 //@HEADER
 // *****************************************************************************
 //
-//                               tv.h
+//                             config_validator.cc
 //             DARMA/vt-tv => Virtual Transport -- Task Visualizer
 //
 // Copyright 2019-2024 National Technology & Engineering Solutions of Sandia, LLC
@@ -40,20 +40,54 @@
 // *****************************************************************************
 //@HEADER
 */
+#include "config_validator.h"
 
-#if !defined INCLUDED_VT_TV_BINDINGS_PYTHON_JSON_INTERFACE_H
-#define INCLUDED_VT_TV_BINDINGS_PYTHON_JSON_INTERFACE_H
+namespace vt::tv::utility {
 
-#include "vt-tv/utility/parse_render.h"
+void ConfigValidator::validate(const YAML::Node& root) {
+  if (!root || !root.IsMap()) throw ValidationError("Top-level YAML must be a map.");
+  std::vector<std::string> path;
+  validateNode(root, Config::root(), path);
+}
 
-#include <nanobind/nanobind.h>
-#include <nanobind/stl/string.h>
-#include <nanobind/stl/vector.h>
+std::string ConfigValidator::joinPath(const std::vector<std::string>& p) {
+  if (p.empty()) {
+    return "<root>";
+  }
 
-namespace vt::tv::bindings::python {
+  std::stringstream ss;
+  for (size_t i = 0; i < p.size(); ++i) {
+    if (i > 0) {
+      ss << ".";
+    }
+    ss << p[i];
+  }
 
-void tvFromJson(const std::vector<std::string>&, const std::string&, uint64_t);
+  return ss.str();
+}
 
-} /* end namespace vt::tv::bindings::python */
+template <typename Scalar>
+void ConfigValidator::ensureScalar(const YAML::Node& n, const std::vector<std::string>& p, const char* exp) {
+  if (!n || !n.IsScalar()) typeErr(p, exp);
+  try { (void)n.as<Scalar>(); } catch (...) { typeErr(p, exp); }
+}
 
-#endif /*INCLUDED_VT_TV_BINDINGS_PYTHON_JSON_INTERFACE_H*/
+void ConfigValidator::validateNode(const YAML::Node& n, const Config::Rule& r, std::vector<std::string> p) {
+  if (r.name && *r.name) p.push_back(r.name);
+  switch (r.type) {
+    case Config::KeyType::Map: {
+      if (!n || !n.IsMap()) typeErr(p, "map");
+      for (auto& c : r.children) {
+        YAML::Node ch = n[c.name];
+        if (c.required && !ch) missing(p, c.name);
+        if (ch) validateNode(ch, c, p);
+      }
+    } break;
+    case Config::KeyType::String: ensureScalar<std::string>(n, p, "string"); break;
+    case Config::KeyType::Bool:   ensureScalar<bool>(n, p, "bool"); break;
+    case Config::KeyType::UInt:   ensureScalar<uint64_t>(n, p, "non-negative integer"); break;
+    case Config::KeyType::Float:  ensureScalar<double>(n, p, "float"); break;
+  }
+}
+
+} /* end namespace vt::tv::utility */
