@@ -88,7 +88,7 @@ Render::Render(Info in_info)
   if (selected_phase_ != std::numeric_limits<PhaseType>::max()) {
     info_.normalizeEdges(selected_phase_);
   } else {
-    for (PhaseType phase = 0; phase < n_phases_; phase++) {
+    for (PhaseType phase = info_.getMinPhase(); phase < info_.getMinPhase() + n_phases_; phase++) {
       info_.normalizeEdges(phase);
     }
   }
@@ -240,7 +240,7 @@ Render::computeObjectQOIRange_() {
       updateQOIRange(objects2, selected_phase_, lb_iter_id);
     }
   } else {
-    for (PhaseType phase = 0; phase < n_phases_; phase++) {
+    for (PhaseType phase = info_.getMinPhase(); phase < info_.getMinPhase() + n_phases_; phase++) {
       auto const& objects = info_.getPhaseObjects(phase, no_lb_iter);
       updateQOIRange(objects, phase, no_lb_iter);
       auto const& lb_iters =
@@ -1287,7 +1287,7 @@ void Render::generate(uint64_t font_size, uint64_t win_size) {
       createMeshAndRender(selected_phase_, id, cur_frame);
     }
   } else {
-    for (PhaseType phase = 0; phase < n_phases_; phase++) {
+    for (PhaseType phase = info_.getMinPhase(); phase < info_.getMinPhase() + n_phases_; phase++) {
       createMeshAndRender(phase, no_lb_iter, cur_frame);
       auto const& lb_iters =
         info_.getRank(0).getPhaseWork().at(phase).getLBIterations();

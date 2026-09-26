@@ -1,0 +1,18 @@
+input:
+  directory: data/ccm_example_phase_1
+  n_ranks: 2
+
+viz:
+  x_ranks: 2
+  y_ranks: 1
+  z_ranks: 1
+  object_jitter: 0.0
+  rank_qoi: load
+  object_qoi: shared_id
+  save_meshes: true
+  save_pngs: true
+  force_continuous_object_qoi: true
+
+output:
+  directory: output/tests
+  file_stem: ccm_example
