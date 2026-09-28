@@ -2,7 +2,7 @@
 //@HEADER
 // *****************************************************************************
 //
-//                               tv.h
+//                               config_reader.h
 //             DARMA/vt-tv => Virtual Transport -- Task Visualizer
 //
 // Copyright 2019-2024 National Technology & Engineering Solutions of Sandia, LLC
@@ -40,20 +40,74 @@
 // *****************************************************************************
 //@HEADER
 */
+#if !defined INCLUDED_VT_TV_UTILITY_CONFIG_READER_H
+#define INCLUDED_VT_TV_UTILITY_CONFIG_READER_H
 
-#if !defined INCLUDED_VT_TV_BINDINGS_PYTHON_JSON_INTERFACE_H
-#define INCLUDED_VT_TV_BINDINGS_PYTHON_JSON_INTERFACE_H
+#include "config_validator.h"
 
-#include "vt-tv/utility/parse_render.h"
+#include <filesystem>
 
-#include <nanobind/nanobind.h>
-#include <nanobind/stl/string.h>
-#include <nanobind/stl/vector.h>
+#include <fmt-vt/format.h>
 
-namespace vt::tv::bindings::python {
+namespace vt::tv::utility {
 
-void tvFromJson(const std::vector<std::string>&, const std::string&, uint64_t);
+struct ConfigReader {
+  // Raw values (required + optional)
+  struct Input {
+    std::string                directory;
+    uint64_t                   n_ranks{};
+    std::optional<std::string> file_stem;
+  };
+  struct Viz {
+    std::optional<uint64_t>      x_ranks, y_ranks;
+    std::optional<double>        object_jitter;
+    std::optional<std::string>   rank_qoi, object_qoi;
+    std::optional<bool>          save_meshes, save_pngs, force_continuous_object_qoi;
+  };
+  struct Output {
+    std::optional<std::string> directory, file_stem;
+    std::optional<uint64_t>    window_size, font_size;
+  };
 
-} /* end namespace vt::tv::bindings::python */
+  // Parsed raw sections
+  Input  input;
+  Viz    viz;
+  Output output;
 
-#endif /*INCLUDED_VT_TV_BINDINGS_PYTHON_JSON_INTERFACE_H*/
+  // Derived grid
+  struct Grid { uint64_t x{1}, y{1}; } grid;
+
+  /**
+   * \brief Read, validate and parse configuration yaml file
+   *
+   * \param[in] filename the filename of the yaml configuration
+   */
+  static ConfigReader from_file(const std::string& filename);
+
+  /**
+   * \brief Read, validate and parse configuration yaml file
+   *        from the python-binded call
+   *
+   * \param[in] filename the filename of the yaml configuration
+   */
+  static ConfigReader from_binding_inputs(
+    const std::string& viz_yaml_fragment,
+    uint64_t num_ranks);
+
+private:
+  /**
+   * \brief Read and save variables from yaml configuration
+   *
+   * \param[in] root the root node of the yaml configuration
+   */
+  static ConfigReader parse(const YAML::Node& root);
+
+  /**
+   * \brief Compute visual grid for ranks
+   */
+  void compute_grid();
+};
+
+} /* end namespace vt::tv::utility */
+
+#endif /*INCLUDED_VT_TV_UTILITY_CONFIG_READER_H*/
