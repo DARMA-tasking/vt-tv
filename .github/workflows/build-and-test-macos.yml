@@ -26,7 +26,7 @@ jobs:
         VTK_BUILD_DIR: /opt/build/vtk
         VTK_DIR: /opt/build/vtk
         VTK_VERSION: ${{ matrix.host.vtk }}
-        CACHE_KEY: ${{ matrix.host.base }}-${{ matrix.host.compiler.cc }}-vtk-${{ matrix.host.vtk }}
+        CACHE_KEY: ${{ matrix.host.base }}-${{ matrix.host.compiler.cc }}-vtk-${{ matrix.host.vtk }}-external-json
         VT_TV_BUILD_DIR: /opt/build
         VT_TV_OUTPUT_DIR: ${{ github.workspace }}/output
         VT_TV_TESTS_OUTPUT_DIR: ${{ github.workspace }}/output/tests
@@ -45,7 +45,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          brew update && brew install coreutils lcov xquartz
+          brew update && brew install coreutils lcov xquartz nlohmann-json
 
       - name: Load cache (VTK, Miniconda3)
         id: base-cache

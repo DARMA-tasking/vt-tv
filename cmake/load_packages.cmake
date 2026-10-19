@@ -1,10 +1,9 @@
 
-# json library always included in the build
-if (NOT TARGET nlohmann_json)
-  set(JSON_BuildTests OFF)
-  set(JSON_MultipleHeaders ON)
-  set(JSON_LIBRARY nlohmann_json)
-  add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/lib/json)
+# Use the same external JSON target that VTK uses. Adding lib/json here can
+# shadow VTK's JSON headers and mix the nlohmann and vtknlohmann namespaces.
+set(JSON_LIBRARY nlohmann_json::nlohmann_json)
+if (NOT TARGET ${JSON_LIBRARY})
+  find_package(nlohmann_json CONFIG REQUIRED)
 endif()
 
 # fmt always included in the build

@@ -18,6 +18,7 @@ cmake \
   -DCMAKE_BUILD_TYPE:STRING=Release \
   -DBUILD_TESTING:BOOL=OFF \
   -DBUILD_SHARED_LIBS:BOOL=OFF \
+  -DVTK_MODULE_USE_EXTERNAL_VTK_nlohmannjson:BOOL=ON \
   -S "$VTK_SRC_DIR" -B "$VTK_DIR"
 cmake --build "$VTK_DIR" -j$(nproc)
 

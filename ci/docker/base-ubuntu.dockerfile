@@ -39,6 +39,7 @@ RUN apt-get update -y -q && \
   pkg-config \
   zlib1g \
   zlib1g-dev \
+  nlohmann-json3-dev \
   m4 \
   gfortran-11 \
   make \
