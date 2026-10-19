@@ -41,6 +41,10 @@
 //@HEADER
 */
 
+// Keep JSON first to catch VTK's bundled JSON namespace/include-guard conflict.
+#include <nlohmann/json.hpp>
+
+#include <vtkAbstractArray.h>
 #include <vtkActor.h>
 #include <vtkNamedColors.h>
 #include <vtkNew.h>

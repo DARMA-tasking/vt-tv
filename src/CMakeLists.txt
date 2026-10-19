@@ -128,14 +128,12 @@ install(
 )
 
 install(TARGETS ${FMT_LIBRARY} EXPORT ${VT_TV_LIBRARY})
-install(TARGETS ${JSON_LIBRARY} EXPORT ${VT_TV_LIBRARY})
 install(TARGETS ${BROTLI_LIBRARY} EXPORT ${VT_TV_LIBRARY})
 install(TARGETS ${YAML_LIBRARY} EXPORT ${VT_TV_LIBRARY})
 
 export(
   TARGETS                   ${VT_TV_LIBRARY}
                             ${FMT_LIBRARY}
-                            ${JSON_LIBRARY}
                             ${BROTLI_LIBRARY}
                             ${YAML_LIBRARY}
   FILE                      "vtTVTargets.cmake"

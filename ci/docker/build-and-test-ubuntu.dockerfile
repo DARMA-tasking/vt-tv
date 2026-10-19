@@ -5,6 +5,10 @@ ARG VT_TV_TEST_PYTHON_BINDINGS=OFF
 
 FROM ${BASE_IMAGE} AS base
 
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends nlohmann-json3-dev && \
+    rm -rf /var/lib/apt/lists/*
+
 ENV CONDA_PATH=/opt/conda
 ENV PATH=$PATH:$CONDA_PATH/bin
 

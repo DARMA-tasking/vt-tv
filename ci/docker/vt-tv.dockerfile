@@ -6,6 +6,11 @@ ARG BASE_IMAGE=${REPO}:${IMAGE}
 
 FROM --platform=${ARCH} ${BASE_IMAGE} AS build
 
+# Existing base images may predate the external JSON dependency.
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends nlohmann-json3-dev && \
+    rm -rf /var/lib/apt/lists/*
+
 ARG VT_TV_COVERAGE_ENABLED
 ENV VT_TV_COVERAGE_ENABLED=$VT_TV_COVERAGE_ENABLED
 

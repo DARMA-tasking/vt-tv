@@ -19,6 +19,23 @@ You need the following dependencies:
 1. A C++ compiler that supports C++17
 2. [`cmake`](https://cmake.org/cmake/help/latest/) >= 3.17
 3. [`VTK`](https://docs.vtk.org/en/latest/index.html) (build instructions [here](https://gitlab.kitware.com/vtk/vtk/-/blob/master/Documentation/docs/build_instructions/build.md))
+4. [`nlohmann_json`](https://nlohmann.github.io/json/integration/cmake/) with its CMake package (Ubuntu: `apt install nlohmann-json3-dev`; macOS: `brew install nlohmann-json`)
+
+VTK 9.4 and newer must be built against the same external `nlohmann_json`
+package as `vt-tv`. Configure VTK with:
+
+```sh
+cmake -S /path/to/vtk -B /path/to/vtk/build \
+  -DVTK_MODULE_USE_EXTERNAL_VTK_nlohmannjson=ON
+cmake --build /path/to/vtk/build --parallel
+```
+
+`ci/setup_vtk.sh` enables this option automatically. Rebuild an existing VTK
+that uses bundled JSON before building `vt-tv`. For a JSON package installed
+under a custom prefix, export `CMAKE_PREFIX_PATH=/path/to/json/prefix` before
+configuring both projects, or pass the same `-Dnlohmann_json_DIR=...` to both
+CMake configurations. `vt-tv` links `nlohmann_json::nlohmann_json` and does not
+add its vendored `lib/json` headers to the include path.
 
 Begin by cloning `vt-tv`:
 
