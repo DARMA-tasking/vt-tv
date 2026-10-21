@@ -46,15 +46,20 @@
 
 #include "vt-tv/api/info.h"
 
-#include <yaml-cpp/yaml.h>
-
 #include <limits>
 #include <memory>
+
+#include "config_reader.h"
 
 #if VT_TV_OPENMP_ENABLED
 #include <omp.h>
 #endif
 namespace vt::tv::utility {
+
+enum class RunMode {
+  Standalone,
+  Binding
+};
 
 /**
  * \struct ParseRender
@@ -63,11 +68,30 @@ namespace vt::tv::utility {
  */
 struct ParseRender {
   /**
-   * \brief Construct the class
+   * \brief Construct the class for standalone mode
    *
    * \param[in] in_filename the yaml file name to read
    */
-  ParseRender(std::string const& in_filename) : filename_(in_filename) { }
+  ParseRender(std::string const& in_filename)
+    : mode_(RunMode::Standalone),
+      filename_(in_filename)
+  { }
+
+  /**
+   * \brief Construct the class for binding mode
+   *
+   * \param[in] json_per_rank the serialized json per ranks
+   * \param[in] viz_yaml_fragment the serialized yaml configuration for the binding
+   * \param[in] num_ranks the number of ranks
+   */
+  ParseRender(std::vector<std::string> json_per_rank,
+              std::string viz_yaml_fragment,
+              uint64_t num_ranks)
+    : mode_(RunMode::Binding),
+      binding_json_per_rank_(std::move(json_per_rank)),
+      binding_yaml_fragment_(std::move(viz_yaml_fragment)),
+      binding_num_ranks_(num_ranks)
+  { }
 
   /**
    * \brief Parse yaml file and render
@@ -79,10 +103,17 @@ struct ParseRender {
    */
   void parseAndRender(
     PhaseType phase_id = std::numeric_limits<PhaseType>::max(),
-    std::unique_ptr<Info> info = nullptr);
+    std::unique_ptr<Info> external_info = nullptr);
 
 private:
+  RunMode mode_;
+  // Standalone fields
   std::string filename_;
+
+  // Binding fields
+  std::vector<std::string> binding_json_per_rank_;
+  std::string              binding_yaml_fragment_;
+  uint64_t                 binding_num_ranks_{0};
 };
 
 } /* end namespace vt::tv::utility */
