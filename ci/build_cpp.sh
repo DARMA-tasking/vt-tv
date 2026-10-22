@@ -2,7 +2,7 @@
 
 # This script builds vt-tv for CI including tests and coverage
 
-set -ex
+set -exo pipefail
 
 source_dir=${1}
 build_dir=${2}
@@ -39,9 +39,9 @@ cmake -B "${VT_TV_BUILD}" \
    -DVT_TV_PYTHON_BINDINGS_ENABLED="${VT_TV_PYTHON_BINDINGS_ENABLED:-OFF}" \
    -DPython_EXECUTABLE="$(which python)" \
    -DPython_INCLUDE_DIRS="$(python -c "import sysconfig; print(sysconfig.get_path('include'))")" \
-   "${VT_TV}"
+   "${VT_TV}" 2>&1 | tee configure.log
 
-time cmake --build . --target install
+time cmake --build . --target install 2>&1 | tee build.log
 
 if test "$use_ccache"
 then
