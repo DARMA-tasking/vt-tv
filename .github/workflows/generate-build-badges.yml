@@ -13,10 +13,20 @@ jobs:
     steps:
       - id: extract
         run: |
-          data=$(gh api /repos/DARMA-tasking/vt-tv/actions/runs/${{ github.event.workflow_run.id }}/jobs)
+          data=$(gh api --paginate --slurp /repos/DARMA-tasking/vt-tv/actions/runs/${{ github.event.workflow_run.id }}/jobs)
 
-          printf "names<<EOF\n%s\nEOF\n"   "$(echo "$data" | jq -r '.jobs[] | select(.name | startswith("bake")) | .name | ltrimstr("bake (vt-tv-build-amd64-") | rtrimstr(")") | gsub("-cpp"; "")')" >>"$GITHUB_OUTPUT"
-          printf "results<<EOF\n%s\nEOF\n" "$(echo "$data" | jq -r '.jobs[] | select(.name | startswith("bake")) | .conclusion')" >>"$GITHUB_OUTPUT"
+          # Keep one badge per compiler/OS, successful only if every Python job succeeds.
+          badges=$(echo "$data" | jq '
+            [.[].jobs[] | select(.name | startswith("bake (vt-tv-build-amd64-")) |
+              {name: (.name | ltrimstr("bake (vt-tv-build-amd64-") | rtrimstr(")") |
+                      sub("-py-[0-9-]+$"; "") | gsub("-cpp"; "")),
+               result: .conclusion}] |
+            group_by(.name) | map({name: .[0].name,
+              result: (if all(.[]; .result == "success") then "success"
+                       else "failure" end)})')
+
+          printf "names<<EOF\n%s\nEOF\n" "$(echo "$badges" | jq -r '.[].name')" >>"$GITHUB_OUTPUT"
+          printf "results<<EOF\n%s\nEOF\n" "$(echo "$badges" | jq -r '.[].result')" >>"$GITHUB_OUTPUT"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
