@@ -14,7 +14,7 @@ pushd "$VT_TV_BUILD"
 
 # Active conda env that contains needed python packages
 eval "$("$CONDA_PATH/bin/conda" shell.bash hook)"
-conda activate py3.12
+conda activate "py${PYTHON_VERSION:-3.12}"
 
 #Run tests
 mkdir -p "$VT_TV_OUTPUT_DIR"
