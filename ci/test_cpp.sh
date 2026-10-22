@@ -26,9 +26,9 @@ gtest_cmd="\"$VT_TV_BUILD/tests/unit/AllTests\" --gtest_output=\"xml:$VT_TV_OUTP
 echo "Run GTest..."
 # Run tests
 if [[ $(uname -a) != *"Darwin"* ]]; then
-    xvfb-run bash -c "$gtest_cmd"
+    xvfb-run bash -c "$gtest_cmd" 2>&1 | tee tests.log
 else
-    bash -c "$gtest_cmd"
+    bash -c "$gtest_cmd" 2>&1 | tee tests.log
 fi
 echo "Tests done."
 
