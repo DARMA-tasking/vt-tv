@@ -43,6 +43,13 @@ jobs:
         id: setup-buildx
         uses: docker/setup-buildx-action@v3
 
+      - name: Read target configuration
+        id: target-config
+        run: |
+          config=$(docker buildx bake --print "${{ matrix.target }}")
+          echo "publish=$(jq -r 'any(.target[]; (.tags // [] | length) > 0)' <<< "$config")" >> "$GITHUB_OUTPUT"
+          echo "coverage=$(jq -r 'any(.target[]; .args.VT_TV_COVERAGE_ENABLED == "1")' <<< "$config")" >> "$GITHUB_OUTPUT"
+
       - uses: actions/cache@v4
         id: ccache-archive
         with:
@@ -78,7 +85,7 @@ jobs:
           source: .
           targets: ${{ matrix.target }}
           files: docker-bake.hcl
-          push: ${{ github.ref == 'refs/heads/master' }}
+          push: ${{ github.ref == 'refs/heads/master' && steps.target-config.outputs.publish == 'true' }}
           set: |
             *.args.CACHE_ID=${{ matrix.target }}
 
@@ -97,7 +104,7 @@ jobs:
           docker buildx build --builder ${{ steps.setup-buildx.outputs.name }} -f tmp_dockerfile --output type=local,dest=build .
 
       - name: Upload coverage
-        if: ${{ matrix.target == 'vt-tv-build-amd64-ubuntu-22-04-gcc-12-vtk-cpp' }}
+        if: ${{ steps.target-config.outputs.coverage == 'true' }}
         uses: codecov/codecov-action@v5
         with:
           files: build/vt-tv/coverage.info

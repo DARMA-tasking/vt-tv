@@ -2,6 +2,10 @@ variable "REPO" {
   default = "lifflander1/vt"
 }
 
+variable "DEFAULT_PYTHON_VERSION" {
+  default = "3.12"
+}
+
 function "arch" {
   params = [item]
   result = lookup(item, "arch", "amd64")
@@ -61,21 +65,23 @@ target "vt-tv-build" {
 }
 
 target "vt-tv-build-all" {
-  name = "vt-tv-build-${replace(item.image, ".", "-")}${target_suffix(item)}"
+  name = "vt-tv-build-${replace(item.image, ".", "-")}${target_suffix(item)}-py-${replace(python, ".", "-")}"
   inherits = ["vt-tv-build"]
-  tags = ["${REPO}:vt-tv-${item.image}"]
+  tags = python == DEFAULT_PYTHON_VERSION ? ["${REPO}:vt-tv-${item.image}"] : []
 
   args = {
     ARCH = arch(item)
     IMAGE = "wf-${item.image}"
     REPO = REPO
-    VT_TV_COVERAGE_ENABLED = vt-tv-coverage(item)
+    PYTHON_VERSION = python
+    VT_TV_COVERAGE_ENABLED = python == DEFAULT_PYTHON_VERSION ? vt-tv-coverage(item) : "0"
     VT_TV_OPENMP_ENABLED = vt-tv-openmp(item)
     VT_TV_PYTHON_BINDINGS_ENABLED = vt-tv-python-bindings(item)
     VT_TV_TESTS_ENABLED = vt-tv-tests(item)
   }
 
   matrix = {
+    python = ["3.9", "3.10", "3.11", "3.12"]
     item = [
       {
         image = "amd64-ubuntu-24.04-clang-16-vtk-cpp"
