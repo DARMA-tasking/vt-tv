@@ -336,7 +336,7 @@ TEST_P(RenderTest, test_render_from_config_with_png) {
 INSTANTIATE_TEST_SUITE_P(
   RenderTests,
   RenderTest,
-  ::testing::Values<std::string>("conf.yaml", "ccm-example.yaml"),
+  ::testing::Values<std::string>("conf.yaml", "ccm-example.yaml", "ccm-example_phase_1.yaml"),
   [](const ::testing::TestParamInfo<std::string>& in_info) {
     // test suffix as slug
     auto suffix = std::regex_replace(in_info.param, std::regex("\\.yaml"), "");
