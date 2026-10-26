@@ -62,6 +62,22 @@ foreach(APP_FULL ${PROJECT_APPS})
   install(
     TARGETS ${APP}
     DESTINATION bin
+    COMPONENT macos-runtime
   )
 
 endforeach()
+
+if(VT_TV_MACOS_PACKAGE_ENABLED)
+  install(
+    FILES
+      "${PROJECT_BASE_DIR}/scripts/json_datafile_validator.py"
+      "${PROJECT_BASE_DIR}/scripts/lb_datafile_schema.py"
+    DESTINATION share/vt-tv/scripts
+    COMPONENT macos-runtime
+  )
+  install(
+    FILES "${PROJECT_BASE_DIR}/LICENSE"
+    DESTINATION share/vt-tv
+    COMPONENT macos-runtime
+  )
+endif()

@@ -87,6 +87,53 @@ jobs:
         run: |
           bash ./ci/python_test.sh
 
+      - name: Build macOS package
+        run: |
+          set -euo pipefail
+          BUILD_DIR="${VT_TV_BUILD_DIR}/vt-tv"
+          PACKAGE_ROOT="$(mktemp -d)"
+
+          # Reuse the tested build, with runtime paths suitable for installation.
+          cmake -S . -B "${BUILD_DIR}" \
+            -DCMAKE_INSTALL_PREFIX=/usr/local \
+            -DBUILD_SHARED_LIBS=OFF \
+            -DVT_TV_MACOS_PACKAGE_ENABLED=ON \
+            -DVT_TV_OPENMP_ENABLED=OFF \
+            -DVT_TV_TESTS_ENABLED=OFF \
+            -DVT_TV_PYTHON_BINDINGS_ENABLED=OFF
+          cmake --build "${BUILD_DIR}" --target vttv --parallel
+          DESTDIR="${PACKAGE_ROOT}" cmake --install "${BUILD_DIR}" --component macos-runtime
+
+          # The package must not depend on libraries installed on the build runner.
+          otool -L "${PACKAGE_ROOT}/usr/local/bin/vttv"
+          if otool -L "${PACKAGE_ROOT}/usr/local/bin/vttv" | tail -n +2 | \
+              awk '{print $1}' | grep -Ev '^(/usr/lib/|/System/Library/)'; then
+            echo "::error::vttv has non-system dynamic dependencies"
+            exit 1
+          fi
+          "${PACKAGE_ROOT}/usr/local/bin/vttv" --help
+
+          # Exercise the installed validator and relative paths outside the checkout.
+          SMOKE_DIR="$(mktemp -d)"
+          cp -R data/lb_test_data "${SMOKE_DIR}/data"
+          mkdir "${SMOKE_DIR}/output"
+          sed -e 's|directory: data/lb_test_data|directory: data|' \
+              -e 's|directory: output/tests/no_png|directory: output|' \
+              tests/config/conf-no-png.yaml > "${SMOKE_DIR}/conf.yaml"
+          pushd "${SMOKE_DIR}"
+          PYTHONDONTWRITEBYTECODE=1 "${CONDA_PATH}/bin/conda" run --no-capture-output -n py3.12 \
+            "${PACKAGE_ROOT}/usr/local/bin/vttv" -c conf.yaml
+          test -n "$(find output -name '*.vtp' -print -quit)"
+          popd
+
+          VERSION=$(sed -nE 's/^project\(vt-tv VERSION ([0-9.]+)\).*/\1/p' CMakeLists.txt)
+          mkdir -p "${VT_TV_ARTIFACTS_DIR}"
+          pkgbuild --root "${PACKAGE_ROOT}/usr/local" \
+            --identifier darma.vttv \
+            --version "${VERSION}" \
+            --install-location /usr/local \
+            "${VT_TV_ARTIFACTS_DIR}/vttv-macos-$(uname -m)-${VERSION}-${GITHUB_SHA:0:7}.pkg"
+
       - name: Collect artifacts
         run: |
           mkdir -p ${{ env.VT_TV_ARTIFACTS_DIR }}
