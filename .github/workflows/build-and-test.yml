@@ -28,6 +28,9 @@ jobs:
 
   bake:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
     needs:
       - prepare
     strategy:
@@ -83,6 +86,8 @@ jobs:
             *.args.CACHE_ID=${{ matrix.target }}
 
       - name: Retrieve build artifacts
+        # Diagnostics are needed even when compilation or tests failed.
+        if: ${{ !cancelled() && (steps.build-image.outcome == 'success' || steps.build-image.outcome == 'failure') }}
         run: |
           # We rely on the persistence of data on cache mounts with identical IDs and builders.
           # This allows us to copy build artifacts from the "bake" step and use the Codecov action within the GitHub environment.
@@ -95,6 +100,37 @@ jobs:
           " >> tmp_dockerfile
 
           docker buildx build --builder ${{ steps.setup-buildx.outputs.name }} -f tmp_dockerfile --output type=local,dest=build .
+
+      - name: Generate comment
+        # Fork and Dependabot PRs have read-only tokens; skip posting for them.
+        if: >-
+          ${{ !cancelled() && github.event_name == 'pull_request' &&
+              github.event.pull_request.head.repo.full_name == github.repository &&
+              github.actor != 'dependabot[bot]' &&
+              (steps.build-image.outcome == 'success' || steps.build-image.outcome == 'failure') }}
+        id: generate-comment
+        env:
+          BUILD_TARGET: ${{ matrix.target }}
+          BUILD_OUTCOME: ${{ steps.build-image.outcome }}
+        run: |
+          comment_content=$(./scripts/generate_comment_body.sh build/vt-tv "$BUILD_TARGET" "$BUILD_OUTCOME")
+          delimiter="comment-$(uuidgen)"
+          {
+            echo "comment_content<<$delimiter"
+            echo "$comment_content"
+            echo "$delimiter"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Comment on PR
+        if: ${{ !cancelled() && steps.generate-comment.outcome == 'success' }}
+        uses: DARMA-tasking/comment-on-pr@master
+        with:
+          repo_owner: ${{ github.event.repository.owner.login }}
+          repo_name: ${{ github.event.repository.name }}
+          pr_number: ${{ github.event.pull_request.number }}
+          comment_title: ${{ matrix.target }}
+          comment_content: ${{ steps.generate-comment.outputs.comment_content }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Upload coverage
         if: ${{ matrix.target == 'vt-tv-build-amd64-ubuntu-22-04-gcc-12-vtk-cpp' }}
