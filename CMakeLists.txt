@@ -33,6 +33,10 @@ option(VT_TV_PYTHON_BINDINGS_ENABLED "Build vt-tv with Python bindings" OFF)
 option(VT_TV_OPENMP_ENABLED "Build vt-tv with openMP support" ON)
 option(VT_TV_TESTS_ENABLED "Build vt-tv with unit tests" ON)
 option(VT_TV_COVERAGE_ENABLED "Build vt-tv with coverage" OFF)
+option(VT_TV_MACOS_PACKAGE_ENABLED "Build the relocatable macOS command-line package" OFF)
+if(VT_TV_MACOS_PACKAGE_ENABLED AND NOT APPLE)
+  message(FATAL_ERROR "VT_TV_MACOS_PACKAGE_ENABLED requires macOS")
+endif()
 set(VT_TV_N_THREADS "2" CACHE STRING "Number of OpenMP threads to use")
 
 # add -fPIC to all targets (if building with nanobind)
@@ -56,10 +60,15 @@ set(PROJECT_APP_DIR      ${CMAKE_CURRENT_SOURCE_DIR}/apps)
 set(PROJECT_BINDINGS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/bindings)
 
 function(add_vttv_definitions TARGET)
+  set(runtime_base_dir "${PROJECT_BASE_DIR}")
+  if(VT_TV_MACOS_PACKAGE_ENABLED)
+    set(runtime_base_dir ".")
+    target_compile_definitions(${TARGET} PRIVATE VT_TV_MACOS_PACKAGE_ENABLED=1)
+  endif()
   target_compile_definitions(${TARGET}
     PRIVATE
       VT_TV_N_THREADS=${VT_TV_N_THREADS}
-      SRC_DIR="${PROJECT_BASE_DIR}"
+      SRC_DIR="${runtime_base_dir}"
       BUILD_DIR="${CMAKE_BINARY_DIR}"
   )
 
@@ -71,7 +80,9 @@ function(add_vttv_definitions TARGET)
 endfunction(add_vttv_definitions TARGET)
 
 add_subdirectory(src)
-link_openmp()
+if(VT_TV_OPENMP_ENABLED)
+  link_openmp()
+endif()
 add_subdirectory(examples)
 
 add_subdirectory(apps)

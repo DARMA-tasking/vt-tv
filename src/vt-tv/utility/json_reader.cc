@@ -56,6 +56,12 @@
 #include <stdlib.h>
 #include <string.h>
 
+#if VT_TV_MACOS_PACKAGE_ENABLED
+#include <mach-o/dyld.h>
+#include <filesystem>
+#include <vector>
+#endif
+
 namespace vt::tv::utility {
 
 bool JSONReader::isCompressed(std::string const& in_filename) const {
@@ -337,6 +343,18 @@ bool JSONReader::validate_datafile(std::string file_path)
 
   // Prepare command line
   std::string cmd;
+#if VT_TV_MACOS_PACKAGE_ENABLED
+  // Locate the installed validator beside the binary, independently of the checkout.
+  uint32_t size = 0;
+  _NSGetExecutablePath(nullptr, &size);
+  std::vector<char> executable(size);
+  if (_NSGetExecutablePath(executable.data(), &size) != 0) {
+    return false;
+  }
+  auto validator = std::filesystem::canonical(executable.data()).parent_path()
+    / "../share/vt-tv/scripts/json_datafile_validator.py";
+  cmd = "python3 \"" + validator.string() + "\" --file_path=\"" + file_path + "\"";
+#else
   cmd += "python";
   cmd += " ";
   cmd += SRC_DIR;
@@ -344,6 +362,7 @@ bool JSONReader::validate_datafile(std::string file_path)
   cmd += " ";
   cmd += " --file_path=";
   cmd += file_path.data();
+#endif
 
   // Exit code
   int exit_code = std::system(cmd.c_str());

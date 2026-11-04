@@ -59,6 +59,26 @@ _From now on, we will assume that the `vt-tv` source is located in `${VTTV_SOURC
 <details>
 <summary><b>Standalone</b></summary>
 
+### macOS binary
+
+Download `vttv-macos-<architecture>-<version>-<commit>.pkg` from the artifacts
+of a successful **Build and Test (macos)** workflow run and open it to install.
+Use the package matching your Mac's architecture (`uname -m`). It installs
+`vttv` in `/usr/local/bin`, with its validation scripts in `/usr/local/share/vt-tv`.
+
+The validator requires Python 3.9+ with `Brotli` and `schema` installed in the
+environment used by `python3`:
+
+```sh
+python3 -m venv ~/.venvs/vttv
+source ~/.venvs/vttv/bin/activate
+python3 -m pip install Brotli schema
+/usr/local/bin/vttv -c /path/to/conf.yaml
+```
+
+For this package, relative configuration, input, and output paths are resolved
+from the current working directory. The output directory must already exist.
+
 ### 1. Build
 
 For the simplest build, run from `${VTTV_SOURCE_DIR}`:
