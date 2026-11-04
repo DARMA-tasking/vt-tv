@@ -991,7 +991,7 @@ void Render::renderPNG(
 
   // Add rank visualization to renderer
   renderer->AddActor(rank_actor);
-  renderer->AddActor2D(rank_qoi_scale_actor);
+  renderer->AddViewProp(rank_qoi_scale_actor);
 
   if (object_qoi_ != "") {
     // Create white to black lookup table
@@ -1020,7 +1020,7 @@ void Render::renderPNG(
       edge_mapper, "Inter-Object Volume", 0.04, 0.04, font_size);
     // Add communications visualization to renderer
     renderer->AddActor(edge_actor);
-    renderer->AddActor2D(volume_actor);
+    renderer->AddViewProp(volume_actor);
 
     // Compute square root of object loads
     vtkSmartPointer<vtkArrayCalculator> sqrtL =
@@ -1130,7 +1130,7 @@ void Render::renderPNG(
           font_size,
           values
         );
-      renderer->AddActor2D(object_qoi_scalar_bar_actor);
+      renderer->AddViewProp(object_qoi_scalar_bar_actor);
     }
   }
 
