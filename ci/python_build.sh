@@ -20,7 +20,14 @@ echo "Conda version: $(conda --version)"
 
 conda deactivate || true
 
-for env in $(conda env list | grep -E '^py' | perl -lane 'print $F[-1]' | xargs ls -ld | perl -lane 'print $F[-1]' | sed -E 's|^.*/(.*)$|\1|'); do
+# CI selects one version; without a selector, retain the local multi-env build.
+if [[ -n "${PYTHON_VERSION:-}" ]]; then
+  python_envs="py${PYTHON_VERSION}"
+else
+  python_envs=$(conda env list | awk '$1 ~ /^py/ {print $1}')
+fi
+
+for env in $python_envs; do
   echo "::group::Build Python Bindings ($env)"
 
   conda activate "$env"
