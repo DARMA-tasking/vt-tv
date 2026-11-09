@@ -122,7 +122,7 @@ jobs:
               -e 's|directory: output/tests/no_png|directory: output|' \
               tests/config/conf-no-png.yaml > "${SMOKE_DIR}/conf.yaml"
           pushd "${SMOKE_DIR}"
-          PYTHONDONTWRITEBYTECODE=1 "${CONDA_PATH}/bin/conda" run --no-capture-output -n py3.12 \
+          PYTHONDONTWRITEBYTECODE=1 "${CONDA_PATH}/bin/conda" run --no-capture-output -n "py${PYTHON_VERSION}" \
             "${PACKAGE_ROOT}/usr/local/bin/vttv" -c conf.yaml
           test -n "$(find output -name '*.vtp' -print -quit)"
           popd
